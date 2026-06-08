@@ -3,43 +3,59 @@
 <head>
   <meta charset="utf-8">
   <title>Exportar colores IFC</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      margin: 12px;
+      color: #1f2937;
+    }
+    button {
+      padding: 6px 12px;
+      margin-right: 6px;
+      cursor: pointer;
+    }
+    #log {
+      white-space: pre-wrap;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: 12px;
+      max-height: 320px;
+      overflow: auto;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
-  <div style="font-family: Arial, sans-serif; font-size: 13px;">
-    <p><strong>Exportar colores IFC</strong></p>
+  <p><strong>Exportar colores IFC</strong></p>
 
-    <button id="export">Exportar CSV</button>
-    <button id="debug">Descargar debug</button>
+  <button id="export">Exportar CSV</button>
 
-    <br><br>
-
-    <label>Código o nombre de revisión, solo si Trimble no detecta la vista:</label><br>
-    <input
-      id="manualRevisionName"
-      style="width: 95%; margin-top: 4px;"
-      placeholder="Ejemplo: RFI_18861 o (RFI_18861) MÓDULO B..."
-    >
-
-    <pre id="log" style="white-space: pre-wrap;"></pre>
-  </div>
+  <pre id="log"></pre>
 
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
 
   <script>
+    const SCRIPT_VERSION = "v3 (2026-06-08)";
     let API = null;
 
     const log = (txt) => {
       document.getElementById("log").textContent += txt + "\n";
     };
 
-    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     function downloadText(filename, text) {
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      // BOM para que Excel abra el CSV con acentos correctamente
+      const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = filename;
       a.click();
+      URL.revokeObjectURL(a.href);
     }
 
     function extractRevisionCode(text) {
@@ -47,123 +63,89 @@
       return match ? match[0].replace(/[\-\s]/g, "_").toUpperCase() : "";
     }
 
+    // ---------------------------------------------------------------
+    // FIX 2: Detección de la revisión (código RFI) desde la vista activa
+    // El único campo de título real en ViewSpec es "name" (y "description").
+    // Si la vista activa no trae nombre, intentamos cruzar su id con getViews().
+    // ---------------------------------------------------------------
     async function getCurrentRevisionCode() {
+      const candidates = [];
       let currentView = null;
-      let viewName = "";
 
       try {
-        if (API.view && API.view.getCurrentView) {
-          currentView = await API.view.getCurrentView();
+        currentView = await API.view.getCurrentView();
+        if (currentView) {
+          if (currentView.name) candidates.push(currentView.name);
+          if (currentView.description) candidates.push(currentView.description);
 
-          viewName =
-            currentView?.name ||
-            currentView?.title ||
-            currentView?.description ||
-            currentView?.topic ||
-            currentView?.viewName ||
-            currentView?.data?.name ||
-            currentView?.data?.title ||
-            "";
+          // Si la vista activa tiene id pero no nombre, lo buscamos en la lista de vistas guardadas
+          if (currentView.id && !currentView.name) {
+            try {
+              const allViews = await API.view.getViews();
+              const match = (allViews || []).find((v) => v.id === currentView.id);
+              if (match) {
+                if (match.name) candidates.push(match.name);
+                if (match.description) candidates.push(match.description);
+              }
+            } catch (e) {
+              log("Aviso: no se ha podido leer la lista de vistas (getViews).");
+            }
+          }
         }
       } catch (e) {
         log("No se ha podido leer automáticamente la vista activa.");
       }
 
-      let revisionCode = extractRevisionCode(viewName);
-
-      if (revisionCode) {
-        log("Vista activa detectada: " + viewName);
-        log("Código de revisión detectado automáticamente: " + revisionCode);
-        return revisionCode;
-      }
-
-      const manualText = document.getElementById("manualRevisionName")?.value || "";
-      revisionCode = extractRevisionCode(manualText);
-
-      if (revisionCode) {
-        log("Código de revisión usado desde campo manual: " + revisionCode);
-        return revisionCode;
+      for (const text of candidates) {
+        const code = extractRevisionCode(text);
+        if (code) {
+          log("Vista activa detectada: " + text);
+          log("Código de revisión detectado automáticamente: " + code);
+          return code;
+        }
       }
 
       log("ERROR: No se ha encontrado código RFI.");
-      log("Trimble no ha devuelto nombre de vista activa.");
-      log("Vista detectada:");
+      log("Trimble no ha devuelto un nombre de vista con formato RFI_XXXXX.");
+      log("Asegúrate de estar situado en la vista cuyo título contiene el código RFI.");
+      log("Vista detectada (para depurar):");
       log(JSON.stringify(currentView, null, 2));
-      log("Introduce manualmente el nombre de la revisión o el código RFI en el campo superior.");
-
       return "";
     }
 
     function colorToText(color) {
       if (!color) return "";
-
-      if (typeof color === "string") {
-        return color;
-      }
-
+      if (typeof color === "string") return color;
       if (typeof color === "object") {
         const r = color.r ?? color.red ?? "";
         const g = color.g ?? color.green ?? "";
         const b = color.b ?? color.blue ?? "";
         const a = color.a ?? color.alpha ?? "";
-
         if (r !== "" && g !== "" && b !== "") {
           return a !== "" ? `rgba(${r},${g},${b},${a})` : `rgb(${r},${g},${b})`;
         }
-
         return JSON.stringify(color);
       }
-
       return String(color);
     }
 
-    async function getColoredObjectEntriesWithRetry() {
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        const entries = await getColoredObjectEntries();
-
-        if (entries.length > 0) {
-          return entries;
-        }
-
-        log("Esperando datos del visor... intento " + attempt + "/5");
-        await sleep(700);
-      }
-
-      return [];
-    }
-
+    // getColoredObjects() devuelve ModelObjects[]:
+    //   [{ modelId: string, objects: ObjectProperties[] }]
+    // y cada ObjectProperties tiene { id: number (runtime id), color?: string, ... }
     async function getColoredObjectEntries() {
       const coloredGroups = await API.viewer.getColoredObjects();
       const entries = [];
 
       for (const group of coloredGroups || []) {
-        const modelId = group.modelId || group.id || "";
-        const objects = group.objects || group.objectIds || [];
+        const modelId = group.modelId || "";
+        const objects = group.objects || [];
 
         for (const obj of objects) {
-          let objectRuntimeId = "";
-          let color = "";
-
-          if (typeof obj === "object") {
-            objectRuntimeId = Number(
-              obj.id ??
-              obj.objectId ??
-              obj.objectRuntimeId ??
-              obj.runtimeId
-            );
-
-            color = colorToText(obj.color || group.color || "");
-          } else {
-            objectRuntimeId = Number(obj);
-            color = colorToText(group.color || "");
-          }
+          const objectRuntimeId = Number(obj.id);
+          const color = colorToText(obj.color);
 
           if (modelId && Number.isFinite(objectRuntimeId)) {
-            entries.push({
-              modelId,
-              objectRuntimeId,
-              color
-            });
+            entries.push({ modelId, objectRuntimeId, color });
           }
         }
       }
@@ -171,43 +153,102 @@
       return entries;
     }
 
-    async function convertRuntimeIdsToIfcGuids(modelId, runtimeIds) {
-      if (!API.viewer.convertToObjectIds) {
-        throw new Error("API.viewer.convertToObjectIds no está disponible en este visor.");
+    async function getColoredObjectEntriesWithRetry() {
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        const entries = await getColoredObjectEntries();
+        if (entries.length > 0) return entries;
+        log("Esperando datos del visor... intento " + attempt + "/5");
+        await sleep(700);
       }
+      return [];
+    }
 
-      const result = await API.viewer.convertToObjectIds(modelId, runtimeIds);
+    // ---------------------------------------------------------------
+    // FIX 3: convertToObjectIds devuelve el GUID SIN COMPRIMIR (tipo "GUID MS",
+    // un UUID 01f1b6a7-5287-48ce-9204-b6296f9b1e7a). Nosotros necesitamos el
+    // "GUID (IFC)" comprimido a 22 caracteres (01yRQdKeT8pf84jYblcnvw), que es
+    // el GlobalId canónico del IFC. Esta función lo comprime.
+    // ---------------------------------------------------------------
+    const IFC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
 
-      return result || [];
+    function ifcB64(v, len) {
+      let s = "";
+      for (let i = 0; i < len; i++) {
+        s += IFC_CHARS[Math.floor(v / Math.pow(64, len - i - 1)) % 64];
+      }
+      return s;
+    }
+
+    function compressIfcGuid(uuid) {
+      const hex = String(uuid).replace(/-/g, "").toLowerCase();
+      if (hex.length !== 32 || /[^0-9a-f]/.test(hex)) return null;
+      const bs = [];
+      for (let i = 0; i < 32; i += 2) bs.push(parseInt(hex.substr(i, 2), 16));
+      let res = ifcB64(bs[0], 2);
+      for (let i = 1; i < 16; i += 3) {
+        res += ifcB64((bs[i] << 16) + (bs[i + 1] << 8) + bs[i + 2], 4);
+      }
+      return res;
+    }
+
+    // Devuelve siempre el GUID IFC comprimido (22 chars).
+    // Acepta tanto el UUID sin comprimir como el comprimido ya hecho.
+    function toIfcGuid(externalId) {
+      if (!externalId) return "";
+      const s = String(externalId).trim();
+      if (s.length === 22 && /^[0-9A-Za-z_$]+$/.test(s)) return s; // ya comprimido
+      const compressed = compressIfcGuid(s);
+      return compressed || s; // si no era un UUID reconocible, lo dejamos tal cual
+    }
+
+    // ---------------------------------------------------------------
+    // FIX 1: Conversión resiliente de runtime IDs -> GUID IFC.
+    // convertToObjectIds LANZA EXCEPCIÓN si algún runtime id del lote no
+    // tiene GUID externo. Para que un único objeto sin GUID no tire el lote
+    // entero, partimos en mitades hasta aislar solo los IDs problemáticos.
+    // Devuelve un array alineado con runtimeIds, con "" donde no hay GUID.
+    // ---------------------------------------------------------------
+    let lastConvertError = "";
+
+    async function convertResilient(modelId, runtimeIds) {
+      if (runtimeIds.length === 0) return [];
+
+      try {
+        const ids = await API.viewer.convertToObjectIds(modelId, runtimeIds);
+        return runtimeIds.map((_, i) => ids[i] || "");
+      } catch (e) {
+        if (!lastConvertError) lastConvertError = String(e && e.message ? e.message : e);
+        if (runtimeIds.length === 1) {
+          // Este objeto no tiene GUID IFC (p.ej. nodo padre / sin external id)
+          return [""];
+        }
+        const mid = Math.floor(runtimeIds.length / 2);
+        const left = await convertResilient(modelId, runtimeIds.slice(0, mid));
+        const right = await convertResilient(modelId, runtimeIds.slice(mid));
+        return left.concat(right);
+      }
     }
 
     async function exportCsv() {
       document.getElementById("log").textContent = "";
+      lastConvertError = "";
+      log("Script versión: " + SCRIPT_VERSION);
 
       const revisionCode = await getCurrentRevisionCode();
-
-      if (!revisionCode) {
-        return;
-      }
+      if (!revisionCode) return;
 
       log("Leyendo objetos coloreados...");
-
       const entries = await getColoredObjectEntriesWithRetry();
 
       if (entries.length === 0) {
         log("No se han encontrado objetos coloreados en la vista activa.");
         return;
       }
-
       log("Objetos coloreados detectados: " + entries.length);
 
       const groupsByModel = new Map();
-
       for (const entry of entries) {
-        if (!groupsByModel.has(entry.modelId)) {
-          groupsByModel.set(entry.modelId, []);
-        }
-
+        if (!groupsByModel.has(entry.modelId)) groupsByModel.set(entry.modelId, []);
         groupsByModel.get(entry.modelId).push(entry);
       }
 
@@ -215,49 +256,34 @@
 
       for (const [modelId, modelEntries] of groupsByModel.entries()) {
         log("Modelo: " + modelId);
-
         const batchSize = 200;
 
         for (let i = 0; i < modelEntries.length; i += batchSize) {
           const batchEntries = modelEntries.slice(i, i + batchSize);
-          const runtimeIds = batchEntries.map(e => e.objectRuntimeId);
+          const runtimeIds = batchEntries.map((e) => e.objectRuntimeId);
 
-          let ifcGuids = [];
-
-          try {
-            ifcGuids = await convertRuntimeIdsToIfcGuids(modelId, runtimeIds);
-          } catch (err) {
-            log("ERROR convirtiendo runtime IDs a GUID IFC:");
-            log(err.message);
-            ifcGuids = [];
-          }
+          const ifcGuids = await convertResilient(modelId, runtimeIds);
 
           for (let j = 0; j < batchEntries.length; j++) {
             const entry = batchEntries[j];
-
             rows.push({
-              guidIfc: ifcGuids[j] || "",
+              guidIfc: toIfcGuid(ifcGuids[j]),
               color: entry.color,
               revisionCode,
               modelId: entry.modelId,
               objectRuntimeId: entry.objectRuntimeId
             });
           }
-
           log("Procesados " + Math.min(i + batchSize, modelEntries.length) + " / " + modelEntries.length);
         }
       }
 
       const csv = [
         "GUID_IFC;color;codigo_revision;modelId;objectRuntimeId",
-        ...rows.map(r =>
-          [
-            r.guidIfc,
-            r.color,
-            r.revisionCode,
-            r.modelId,
-            r.objectRuntimeId
-          ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`).join(";")
+        ...rows.map((r) =>
+          [r.guidIfc, r.color, r.revisionCode, r.modelId, r.objectRuntimeId]
+            .map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`)
+            .join(";")
         )
       ].join("\n");
 
@@ -265,53 +291,23 @@
 
       log("CSV generado.");
       log("Filas exportadas: " + rows.length);
-      log("GUID IFC encontrados: " + rows.filter(r => r.guidIfc).length);
-      log("GUID IFC vacíos: " + rows.filter(r => !r.guidIfc).length);
-    }
-
-    async function exportDebug() {
-      document.getElementById("log").textContent = "";
-
-      log("Leyendo debug del visor...");
-
-      const revisionCode = await getCurrentRevisionCode();
-      const entries = await getColoredObjectEntriesWithRetry();
-
-      if (entries.length === 0) {
-        log("No se han encontrado objetos coloreados.");
-        return;
+      log("GUID IFC encontrados: " + rows.filter((r) => r.guidIfc).length);
+      log("GUID IFC vacíos: " + rows.filter((r) => !r.guidIfc).length);
+      if (lastConvertError) {
+        log("Primer error de convertToObjectIds: " + lastConvertError);
       }
-
-      const firstModelId = entries[0].modelId;
-      const firstEntries = entries.filter(e => e.modelId === firstModelId).slice(0, 20);
-      const runtimeIds = firstEntries.map(e => e.objectRuntimeId);
-
-      let objectIds = [];
-
-      try {
-        objectIds = await convertRuntimeIdsToIfcGuids(firstModelId, runtimeIds);
-      } catch (err) {
-        objectIds = ["ERROR: " + err.message];
-      }
-
-      const debugText =
-        "REVISION DETECTADA\n" +
-        String(revisionCode || "") + "\n\n" +
-        "PRIMER MODELO\n" +
-        firstModelId + "\n\n" +
-        "PRIMEROS OBJETOS COLOREADOS\n" +
-        JSON.stringify(firstEntries, null, 2) + "\n\n" +
-        "CONVERT TO OBJECT IDS\n" +
-        JSON.stringify(objectIds, null, 2);
-
-      downloadText("debug_trimble_export_colores.txt", debugText);
-
-      log("Debug descargado: debug_trimble_export_colores.txt");
     }
 
     async function main() {
-      API = await TrimbleConnectWorkspace.connect(window.parent);
-      log("Conectado a Trimble Connect.");
+      // Conexión defensiva: el global puede llamarse TrimbleConnectWorkspace o WorkspaceAPI
+      const ws = window.TrimbleConnectWorkspace || window.WorkspaceAPI;
+      if (!ws || !ws.connect) {
+        log("ERROR: no se ha cargado la librería Workspace API de Trimble.");
+        return;
+      }
+
+      API = await ws.connect(window.parent);
+      log("Conectado a Trimble Connect. Script versión: " + SCRIPT_VERSION);
 
       document.getElementById("export").onclick = async () => {
         try {
@@ -321,18 +317,9 @@
           log("ERROR: " + err.message);
         }
       };
-
-      document.getElementById("debug").onclick = async () => {
-        try {
-          await exportDebug();
-        } catch (err) {
-          console.error(err);
-          log("ERROR DEBUG: " + err.message);
-        }
-      };
     }
 
-    main().catch(err => {
+    main().catch((err) => {
       console.error(err);
       log("ERROR DE CONEXIÓN: " + err.message);
     });
