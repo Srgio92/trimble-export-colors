@@ -2,6 +2,6 @@
   "title": "Exportar colores IFC",
   "icon": "https://srgio92.github.io/trimble-export-colors/icon.svg",
   "url": "https://srgio92.github.io/trimble-export-colors/",
-  "description": "Exporta objetos coloreados del visor 3D a CSV",
+  "description": "Exporta objetos coloreados del visor 3D a CSV by Sergi Artigas",
   "enabled": true
 }
