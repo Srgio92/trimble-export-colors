@@ -5,8 +5,14 @@
   <title>Exportar colores IFC</title>
 </head>
 <body>
-  <button id="export">Exportar colores a CSV</button>
-  <pre id="log"></pre>
+  <div style="font-family: Arial, sans-serif; font-size: 13px;">
+    <p><strong>Exportar colores IFC</strong></p>
+
+    <button id="export">Exportar CSV</button>
+    <button id="debug">Descargar debug primer objeto</button>
+
+    <pre id="log" style="white-space: pre-wrap;"></pre>
+  </div>
 
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
 
@@ -15,67 +21,309 @@
       document.getElementById("log").textContent += txt + "\n";
     };
 
-    async function main() {
-      const API = await TrimbleConnectWorkspace.connect(window.parent);
-      log("Conectado a Trimble Connect.");
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    }
 
-      document.getElementById("export").onclick = async () => {
-        log("Leyendo objetos coloreados...");
+    function extractRevisionCode(text) {
+      const match = String(text || "").match(/RFI[_\-\s]*\d+/i);
+      return match ? match[0].replace(/[\-\s]/g, "_").toUpperCase() : "";
+    }
 
-        const coloredObjects = await API.viewer.getColoredObjects();
-        console.log(coloredObjects);
+    async function getCurrentRevisionCode(API) {
+      let currentView = null;
+      let viewName = "";
 
-        const rows = [];
+      try {
+        currentView = await API.view.getCurrentView();
 
-        for (const group of coloredObjects) {
-          const modelId = group.modelId || "";
+        viewName =
+          currentView?.name ||
+          currentView?.title ||
+          currentView?.description ||
+          currentView?.topic ||
+          currentView?.viewName ||
+          "";
+      } catch (e) {
+        log("No se ha podido leer automáticamente la vista activa.");
+      }
 
-          const objects = group.objects || group.objectIds || [];
+      const revisionCode = extractRevisionCode(viewName);
 
-          for (const obj of objects) {
-            let objectId = "";
-            let color = "";
+      if (!revisionCode) {
+        log("ERROR: No se ha encontrado código RFI en el nombre de la vista activa.");
+        log("Vista detectada:");
+        log(JSON.stringify(currentView, null, 2));
+        return "";
+      }
 
-            if (typeof obj === "object") {
-              objectId = obj.id || obj.objectId || "";
-              color = obj.color || group.color || "";
-            } else {
-              objectId = obj;
-              color = group.color || "";
-            }
+      log("Vista activa detectada: " + viewName);
+      log("Código de revisión detectado: " + revisionCode);
 
-            rows.push({
+      return revisionCode;
+    }
+
+    function normalizeKey(value) {
+      return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "")
+        .replace(/[()_\-]/g, "");
+    }
+
+    function flattenProperties(obj, path = "", result = []) {
+      if (obj === null || obj === undefined) return result;
+
+      if (Array.isArray(obj)) {
+        obj.forEach((item, index) => {
+          flattenProperties(item, path + "[" + index + "]", result);
+        });
+        return result;
+      }
+
+      if (typeof obj === "object") {
+        const name =
+          obj.name ??
+          obj.Name ??
+          obj.key ??
+          obj.Key ??
+          obj.label ??
+          obj.Label ??
+          obj.propertyName ??
+          obj.PropertyName;
+
+        const value =
+          obj.value ??
+          obj.Value ??
+          obj.displayValue ??
+          obj.DisplayValue ??
+          obj.propertyValue ??
+          obj.PropertyValue;
+
+        if (name !== undefined && value !== undefined) {
+          result.push({
+            path,
+            name: String(name),
+            value: String(value)
+          });
+        }
+
+        for (const k of Object.keys(obj)) {
+          flattenProperties(obj[k], path ? path + "." + k : k, result);
+        }
+      }
+
+      return result;
+    }
+
+    function getIfcGuidFromProperties(props) {
+      const flat = flattenProperties(props);
+
+      // Primero busca nombres exactos equivalentes a GUID (IFC)
+      const exact = flat.find(p => {
+        const n = normalizeKey(p.name);
+        return (
+          n === "guidifc" ||
+          n === "ifcguid" ||
+          n === "ifcglobalid" ||
+          n === "globalid" ||
+          n === "globalidifc"
+        );
+      });
+
+      if (exact) return exact.value;
+
+      // Luego busca cualquier campo que contenga IFC y GUID
+      const candidate = flat.find(p => {
+        const n = normalizeKey(p.name);
+        return n.includes("ifc") && n.includes("guid");
+      });
+
+      if (candidate) return candidate.value;
+
+      return "";
+    }
+
+    async function getColoredObjectEntries(API) {
+      const coloredGroups = await API.viewer.getColoredObjects();
+
+      const entries = [];
+
+      for (const group of coloredGroups || []) {
+        const modelId = group.modelId || group.id || "";
+        const objects = group.objects || group.objectIds || [];
+
+        for (const obj of objects) {
+          let objectRuntimeId = "";
+          let color = "";
+
+          if (typeof obj === "object") {
+            objectRuntimeId = Number(obj.id ?? obj.objectId ?? obj.runtimeId);
+            color = obj.color || group.color || "";
+          } else {
+            objectRuntimeId = Number(obj);
+            color = group.color || "";
+          }
+
+          if (modelId && Number.isFinite(objectRuntimeId)) {
+            entries.push({
               modelId,
-              objectId,
+              objectRuntimeId,
               color
             });
           }
         }
+      }
 
-        const csv = [
-          "modelId;objectId;color",
-          ...rows.map(r =>
-            [
-              r.modelId,
-              r.objectId,
-              r.color
-            ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`).join(";")
-          )
-        ].join("\n");
+      return entries;
+    }
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "trimble_colores_objetos.csv";
-        a.click();
+    async function main() {
+      const API = await TrimbleConnectWorkspace.connect(window.parent);
+      log("Conectado a Trimble Connect.");
 
-        log("CSV generado. Objetos exportados: " + rows.length);
+      document.getElementById("debug").onclick = async () => {
+        document.getElementById("log").textContent = "";
+        log("Buscando primer objeto coloreado...");
+
+        const entries = await getColoredObjectEntries(API);
+
+        if (entries.length === 0) {
+          log("No se han encontrado objetos coloreados.");
+          return;
+        }
+
+        const first = entries[0];
+
+        log("Primer objeto:");
+        log("modelId: " + first.modelId);
+        log("objectRuntimeId: " + first.objectRuntimeId);
+        log("color: " + first.color);
+
+        const propsList = await API.viewer.getObjectProperties(first.modelId, [first.objectRuntimeId]);
+
+        const debugText =
+          "OBJETO CONSULTADO\n" +
+          "modelId: " + first.modelId + "\n" +
+          "objectRuntimeId: " + first.objectRuntimeId + "\n" +
+          "color: " + first.color + "\n\n" +
+          "PROPIEDADES CRUDAS\n" +
+          JSON.stringify(propsList, null, 2) + "\n\n" +
+          "PROPIEDADES APLANADAS\n" +
+          flattenProperties(propsList).map(p =>
+            p.path + " | " + p.name + " = " + p.value
+          ).join("\n");
+
+        downloadText("debug_trimble_primer_objeto.txt", debugText);
+
+        log("Debug descargado: debug_trimble_primer_objeto.txt");
+      };
+
+      document.getElementById("export").onclick = async () => {
+        try {
+          document.getElementById("log").textContent = "";
+
+          const revisionCode = await getCurrentRevisionCode(API);
+
+          if (!revisionCode) {
+            return;
+          }
+
+          log("Leyendo objetos coloreados...");
+
+          const entries = await getColoredObjectEntries(API);
+
+          if (entries.length === 0) {
+            log("No se han encontrado objetos coloreados en la vista activa.");
+            return;
+          }
+
+          log("Objetos coloreados detectados: " + entries.length);
+
+          const rows = [];
+          const groupsByModel = new Map();
+
+          for (const entry of entries) {
+            if (!groupsByModel.has(entry.modelId)) {
+              groupsByModel.set(entry.modelId, []);
+            }
+
+            groupsByModel.get(entry.modelId).push(entry);
+          }
+
+          for (const [modelId, modelEntries] of groupsByModel.entries()) {
+            log("Modelo: " + modelId);
+
+            const batchSize = 50;
+
+            for (let i = 0; i < modelEntries.length; i += batchSize) {
+              const batchEntries = modelEntries.slice(i, i + batchSize);
+              const batchIds = batchEntries.map(e => e.objectRuntimeId);
+
+              const propsList = await API.viewer.getObjectProperties(modelId, batchIds);
+
+              for (let j = 0; j < propsList.length; j++) {
+                const props = propsList[j];
+                const fallbackEntry = batchEntries[j];
+
+                const objectRuntimeId =
+                  Number(props.id ?? props.objectRuntimeId ?? props.runtimeId) ||
+                  fallbackEntry.objectRuntimeId;
+
+                const entry =
+                  batchEntries.find(e => e.objectRuntimeId === objectRuntimeId) ||
+                  fallbackEntry;
+
+                const guidIfc = getIfcGuidFromProperties(props);
+
+                rows.push({
+                  guidIfc,
+                  color: entry.color,
+                  revisionCode,
+                  modelId,
+                  objectRuntimeId: entry.objectRuntimeId
+                });
+              }
+
+              log("Procesados " + Math.min(i + batchSize, modelEntries.length) + " / " + modelEntries.length);
+            }
+          }
+
+          const csv = [
+            "GUID_IFC;color;codigo_revision;modelId;objectRuntimeId",
+            ...rows.map(r =>
+              [
+                r.guidIfc,
+                r.color,
+                r.revisionCode,
+                r.modelId,
+                r.objectRuntimeId
+              ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`).join(";")
+            )
+          ].join("\n");
+
+          downloadText(revisionCode + "_trimble_colores_guid_ifc.csv", csv);
+
+          log("CSV generado.");
+          log("Filas exportadas: " + rows.length);
+          log("GUID IFC encontrados: " + rows.filter(r => r.guidIfc).length);
+          log("GUID IFC vacíos: " + rows.filter(r => !r.guidIfc).length);
+
+        } catch (err) {
+          console.error(err);
+          log("ERROR: " + err.message);
+        }
       };
     }
 
     main().catch(err => {
       console.error(err);
-      log("ERROR: " + err.message);
+      log("ERROR DE CONEXIÓN: " + err.message);
     });
   </script>
 </body>
