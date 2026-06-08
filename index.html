@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Exportar colores IFC</title>
+</head>
+<body>
+  <button id="export">Exportar colores a CSV</button>
+  <pre id="log"></pre>
+
+  <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
+
+  <script>
+    const log = (txt) => {
+      document.getElementById("log").textContent += txt + "\n";
+    };
+
+    async function main() {
+      const API = await TrimbleConnectWorkspace.connect(window.parent);
+      log("Conectado a Trimble Connect.");
+
+      document.getElementById("export").onclick = async () => {
+        log("Leyendo objetos coloreados...");
+
+        const coloredObjects = await API.viewer.getColoredObjects();
+        console.log(coloredObjects);
+
+        const rows = [];
+
+        for (const group of coloredObjects) {
+          const modelId = group.modelId || "";
+
+          const objects = group.objects || group.objectIds || [];
+
+          for (const obj of objects) {
+            let objectId = "";
+            let color = "";
+
+            if (typeof obj === "object") {
+              objectId = obj.id || obj.objectId || "";
+              color = obj.color || group.color || "";
+            } else {
+              objectId = obj;
+              color = group.color || "";
+            }
+
+            rows.push({
+              modelId,
+              objectId,
+              color
+            });
+          }
+        }
+
+        const csv = [
+          "modelId;objectId;color",
+          ...rows.map(r =>
+            [
+              r.modelId,
+              r.objectId,
+              r.color
+            ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`).join(";")
+          )
+        ].join("\n");
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "trimble_colores_objetos.csv";
+        a.click();
+
+        log("CSV generado. Objetos exportados: " + rows.length);
+      };
+    }
+
+    main().catch(err => {
+      console.error(err);
+      log("ERROR: " + err.message);
+    });
+  </script>
+</body>
+</html>
