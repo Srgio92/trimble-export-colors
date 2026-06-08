@@ -39,7 +39,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
 
   <script>
-    const SCRIPT_VERSION = "v3 (2026-06-08)";
+    const SCRIPT_VERSION = "v4 (2026-06-08)";
     let API = null;
 
     const log = (txt) => {
@@ -68,40 +68,51 @@
     // El único campo de título real en ViewSpec es "name" (y "description").
     // Si la vista activa no trae nombre, intentamos cruzar su id con getViews().
     // ---------------------------------------------------------------
+    // Intenta leer la vista activa con reintentos: getCurrentView() devuelve
+    // undefined si el visor aún no ha "registrado" la vista (problema de timing).
+    // Por eso reintentamos con pausas hasta que devuelva algo con nombre.
     async function getCurrentRevisionCode() {
-      const candidates = [];
       let currentView = null;
 
-      try {
-        currentView = await API.view.getCurrentView();
-        if (currentView) {
-          if (currentView.name) candidates.push(currentView.name);
-          if (currentView.description) candidates.push(currentView.description);
+      for (let attempt = 1; attempt <= 6; attempt++) {
+        const candidates = [];
 
-          // Si la vista activa tiene id pero no nombre, lo buscamos en la lista de vistas guardadas
-          if (currentView.id && !currentView.name) {
-            try {
-              const allViews = await API.view.getViews();
-              const match = (allViews || []).find((v) => v.id === currentView.id);
-              if (match) {
-                if (match.name) candidates.push(match.name);
-                if (match.description) candidates.push(match.description);
+        try {
+          currentView = await API.view.getCurrentView();
+          if (currentView) {
+            if (currentView.name) candidates.push(currentView.name);
+            if (currentView.description) candidates.push(currentView.description);
+
+            // Si la vista activa tiene id pero no nombre, lo buscamos en la lista de vistas guardadas
+            if (currentView.id && !currentView.name) {
+              try {
+                const allViews = await API.view.getViews();
+                const match = (allViews || []).find((v) => v.id === currentView.id);
+                if (match) {
+                  if (match.name) candidates.push(match.name);
+                  if (match.description) candidates.push(match.description);
+                }
+              } catch (e) {
+                /* getViews puede no estar disponible; seguimos */
               }
-            } catch (e) {
-              log("Aviso: no se ha podido leer la lista de vistas (getViews).");
             }
           }
+        } catch (e) {
+          /* la vista puede no estar lista todavía; reintentamos */
         }
-      } catch (e) {
-        log("No se ha podido leer automáticamente la vista activa.");
-      }
 
-      for (const text of candidates) {
-        const code = extractRevisionCode(text);
-        if (code) {
-          log("Vista activa detectada: " + text);
-          log("Código de revisión detectado automáticamente: " + code);
-          return code;
+        for (const text of candidates) {
+          const code = extractRevisionCode(text);
+          if (code) {
+            log("Vista activa detectada: " + text);
+            log("Código de revisión detectado: " + code);
+            return code;
+          }
+        }
+
+        if (attempt < 6) {
+          log("La vista activa aún no está lista... intento " + attempt + "/6");
+          await sleep(700);
         }
       }
 
@@ -234,9 +245,8 @@
       lastConvertError = "";
       log("Script versión: " + SCRIPT_VERSION);
 
-      const revisionCode = await getCurrentRevisionCode();
-      if (!revisionCode) return;
-
+      // Leemos primero los objetos coloreados: además de necesitarlos, esto
+      // "calienta" el visor para que getCurrentView() devuelva ya la vista activa.
       log("Leyendo objetos coloreados...");
       const entries = await getColoredObjectEntriesWithRetry();
 
@@ -245,6 +255,9 @@
         return;
       }
       log("Objetos coloreados detectados: " + entries.length);
+
+      const revisionCode = await getCurrentRevisionCode();
+      if (!revisionCode) return;
 
       const groupsByModel = new Map();
       for (const entry of entries) {
