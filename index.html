@@ -9,15 +9,12 @@
     summary { cursor: pointer; font-weight: bold; padding: 8px 10px; user-select: none; }
     .section { padding: 4px 12px 12px; position: relative; }
     .subtitle { font-weight: bold; margin: 10px 0 4px; }
-    details.tool { border: 1px solid #ececec; border-radius: 6px; background: #fff; margin: 8px 0; }
-    details.tool:first-of-type { margin-top: 0; }
-    details.tool > summary.subtitle { margin: 0; padding: 7px 8px; }
 
+    details.tool { border: 1px solid #ececec; border-radius: 6px; background: #fff; margin: 8px 0; }
+    details.tool > summary.subtitle { margin: 0; padding: 7px 8px; }
     details.model-tool > summary.subtitle { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .tool-title-text { flex: 1; }
     .summary-switch { display: inline-flex; align-items: center; gap: 6px; font-weight: normal; }
-    .summary-switch .switch { margin: 0; }
-    .summary-switch.is-disabled { opacity: .45; }
     .tool-body { padding: 4px 10px 10px; }
     .tool-status { border-top: 1px solid #ececec; padding-top: 4px; margin-top: 8px; }
     .row { margin: 6px 0; }
@@ -30,12 +27,9 @@
     .switch input:checked + .slider { background: #1c7fd6; }
     .switch input:checked + .slider:before { transform: translateX(18px); }
     .switch input:disabled + .slider { background: #d1d5db; cursor: not-allowed; }
-    .switch input:disabled + .slider:before { background: #f3f4f6; }
-    .switch input:checked:disabled + .slider { background: #d1d5db; }
     .toggle-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
     .toggle-line label.txt { cursor: pointer; }
     .toggle-line.is-disabled { color: #9ca3af; }
-    .toggle-line.is-disabled label.txt { cursor: not-allowed; }
 
     input[type="text"], select { padding: 4px; box-sizing: border-box; }
     input:disabled, select:disabled { background: #eee; color: #999; }
@@ -50,7 +44,7 @@
     .col-item button { padding: 1px 7px; margin: 0; font-size: 12px; line-height: 1.4; }
 
     .config-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
-    .config-row select, .config-row input { width: 110px; }
+    .config-row select, .config-row input { width: 120px; }
     #nearUnit { color: #000; font-weight: bold; }
 
     #excludeColors label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; font-weight: normal; }
@@ -62,11 +56,11 @@
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
     #debug { position: absolute; top: 6px; right: 10px; background: transparent; border: none; padding: 2px 4px; cursor: pointer; line-height: 0; }
 
-    #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 180px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+    #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
-    .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
     .disabled-area { opacity: .45; }
     .disabled-area input, .disabled-area select, .disabled-area button { pointer-events: none; }
+    .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
   </style>
 </head>
 <body>
@@ -76,11 +70,9 @@
     <div class="section">
 
       <details class="tool model-tool" id="nearTool">
-        <summary class="subtitle" data-tip="Amplía la selección con objetos próximos relacionados con el elemento seleccionado.">
+        <summary class="subtitle" data-tip="Al seleccionar un objeto, añade los elementos de su mismo ensamblaje en contacto (tornillería, soldaduras, chapas).">
           <span class="tool-title-text">Selección cercanos</span>
-          <span class="summary-switch" id="nearSummarySwitch">
-            <label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label>
-          </span>
+          <span class="summary-switch" id="nearSummarySwitch"><label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
           <div class="toggle-line" id="nearCustomLine" data-tip="Limita la búsqueda por parámetro, condición y valor.">
@@ -88,7 +80,7 @@
             <label class="txt" for="nearCustom">Configuración personalizada</label>
           </div>
           <div id="nearConfig">
-            <div class="hint" id="nearDefaultHint">Criterio por defecto: objetos próximos con volumen inferior a 0,001 m³.</div>
+            <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m³.</div>
             <div class="config-row">
               <select id="nearParam" class="placeholder" disabled></select>
               <select id="nearOp" class="placeholder" disabled>
@@ -106,58 +98,43 @@
 
       <details class="tool model-tool" id="excludeTool">
         <summary class="subtitle" data-tip="Quita automáticamente de la selección los objetos con los colores marcados.">
-          <span class="tool-title-text">Excluir de la selección</span>
-          <span class="summary-switch" id="excludeSummarySwitch">
-            <label class="switch"><input type="checkbox" id="excludeToggle"><span class="slider"></span></label>
-          </span>
+          <span class="tool-title-text">Excluir de selección</span>
+          <span class="summary-switch" id="excludeSummarySwitch"><label class="switch"><input type="checkbox" id="excludeToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
-          <div id="excludeConfig">
-            <div class="hint">Marca los colores que no deben entrar en la selección.</div>
-            <div class="row"><button id="excludeRefresh" data-tip="Vuelve a leer los colores aplicados en la vista actual.">Actualizar colores del modelo</button></div>
-            <div id="excludeColors"></div>
-          </div>
+          <div class="hint">Marca los colores que no deben entrar en la selección.</div>
+          <div id="excludeColors"></div>
         </div>
       </details>
 
       <details class="tool model-tool" id="hiddenTool">
-        <summary class="subtitle" data-tip="Marca los objetos ocultos para poder mostrarlos y ocultarlos de forma controlada.">
+        <summary class="subtitle" data-tip="Marca en blanco los objetos ocultos para poder mostrarlos y ocultarlos de forma controlada.">
           <span class="tool-title-text">Selección ocultos</span>
-          <span class="summary-switch" id="hiddenSummarySwitch">
-            <label class="switch"><input type="checkbox" id="hiddenSelectionToggle"><span class="slider"></span></label>
-          </span>
+          <span class="summary-switch" id="hiddenSummarySwitch"><label class="switch"><input type="checkbox" id="hiddenSelectionToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
-          <div class="toggle-line" id="viewHiddenLine" data-tip="Muestra los objetos ocultos marcados en blanco.">
+          <div class="toggle-line" id="viewHiddenLine" data-tip="Muestra u oculta los objetos ocultos marcados en blanco.">
             <label class="switch"><input type="checkbox" id="viewHiddenToggle" disabled><span class="slider"></span></label>
             <label class="txt" for="viewHiddenToggle">Ver ocultos</label>
           </div>
-          <div class="hint">Al activar la herramienta, los objetos ocultos se pintan de blanco y permanecen ocultos. Ver ocultos solo actúa sobre los objetos que sigan en blanco.</div>
         </div>
       </details>
 
       <details class="tool model-tool" id="includeTool">
-        <summary class="subtitle" data-tip="Filtra la selección por el valor Name indicado.">
-          <span class="tool-title-text">Incluir en la selección</span>
-          <span class="summary-switch" id="includeSummarySwitch">
-            <label class="switch"><input type="checkbox" id="includeToggle"><span class="slider"></span></label>
-          </span>
+        <summary class="subtitle" data-tip="Limita la selección a los objetos cuyo Name coincide con el valor elegido.">
+          <span class="tool-title-text">Concentrar selección</span>
+          <span class="summary-switch" id="includeSummarySwitch"><label class="switch"><input type="checkbox" id="includeToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
           <div id="includeConfig">
             <div class="config-row">
-              <select id="includeParam" disabled>
-                <option value="Name" selected>Name</option>
-              </select>
-              <select id="includeValue" class="placeholder" disabled>
-                <option value="" disabled selected hidden>valor</option>
-              </select>
+              <select id="includeParam" disabled><option value="Name" selected>Name</option></select>
+              <select id="includeValue" class="placeholder" disabled><option value="" disabled selected hidden>valor</option></select>
             </div>
-            <div class="row">
-              <button id="includeRefreshValues" disabled data-tip="Lee los valores Name disponibles en el modelo.">Actualizar valores</button>
-              <button id="includeClearCache" disabled data-tip="Borra la caché de lectura y vuelve a calcular los datos.">Actualizar caché</button>
-            </div>
-            <div class="hint">Cuando está activo, la selección queda limitada a los objetos cuyo Name coincide con el valor elegido.</div>
+          </div>
+          <div class="toggle-line" id="showNamesLine" data-tip="Muestra el Name de los objetos en el propio modelo.">
+            <label class="switch"><input type="checkbox" id="showNamesToggle"><span class="slider"></span></label>
+            <label class="txt" for="showNamesToggle">Mostrar nombres</label>
           </div>
         </div>
       </details>
@@ -176,7 +153,6 @@
             <summary>Columnas a exportar</summary>
             <div class="cols-inner"><div id="columnsList"></div></div>
           </details>
-
           <div class="toggle-line" data-tip="Escribe un aviso en codigo_revision cuando no se encuentre el código RFI en el nombre de la vista.">
             <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
             <label class="txt" for="errorCodes">Error codes</label>
@@ -190,32 +166,27 @@
             <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
             <label class="txt" for="extendedExport">Exportación masiva</label>
           </div>
-          <div class="row" data-tip="Permite exportar todas las vistas o un grupo detectado por la API o por el nombre de la vista.">
+          <div class="row" data-tip="Si la API expone carpetas de vistas, aparecerán aquí. Si no, solo estará 'Todas las vistas'.">
             Carpeta: <select id="folderSelect" disabled style="width:60%;"><option value="">Todas las vistas</option></select>
-            <button id="folderRefresh" disabled title="Volver a leer carpetas" style="padding:3px 8px;">&#8635;</button>
           </div>
-
-          <div class="row">
-            <button id="export" data-tip="Exporta los objetos coloreados según la vista activa o la exportación masiva configurada.">Exportar CSV</button>
-          </div>
+          <div class="row"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar CSV</button></div>
         </div>
       </details>
 
       <details class="tool">
         <summary class="subtitle">Importar colores desde CSV</summary>
         <div class="tool-body">
+          <div class="hint">Pinta de rojo los objetos cuyo revisado_deo sea TRUE. Puedes seleccionar uno o varios CSV a la vez.</div>
           <div class="row">
-            <button id="importBtn" data-tip="Lee un CSV y pinta de rojo los objetos marcados como revisado_deo TRUE.">Importar CSV</button>
-            <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;">
+            <button id="importBtn" data-tip="Selecciona uno o varios CSV.">Importar CSV</button>
+            <input type="file" id="importFile" accept=".csv,text/csv" multiple style="display:none;">
           </div>
         </div>
       </details>
 
       <div class="tool-status">
         <div class="subtitle">Estado</div>
-        <div class="row">
-          <button id="cancelOp" style="display:none;">Cancelar</button>
-        </div>
+        <div class="row"><button id="cancelOp" style="display:none;">Cancelar</button></div>
         <div id="progress" class="status-box">Vista cargada con éxito.</div>
       </div>
     </div>
@@ -224,1401 +195,490 @@
   <details open>
     <summary>Desarrollador</summary>
     <div class="section">
-      <button id="debug" data-tip="Descarga un TXT completo con estado, selección, vista, colores, propiedades, errores e historial." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
+      <button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
-        <div class="tool-body">
-          <pre id="log"></pre>
-        </div>
+        <div class="tool-body"><pre id="log"></pre></div>
       </details>
     </div>
   </details>
 
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
-
   <script>
     // ===================== CONSTANTES =====================
-    const VERSION_LABEL = "v8.4.1";
-    const SCRIPT_VERSION = VERSION_LABEL;
-
-    function getLastUpdatedLabel() {
-      const d = new Date(document.lastModified);
-      if (!Number.isNaN(d.getTime())) {
-        try { return d.toLocaleString("es-ES", { timeZone: "Europe/Madrid" }); }
-        catch (e) { return d.toLocaleString("es-ES"); }
-      }
-      return "No disponible";
-    }
+    const SCRIPT_VERSION = "v8.5";
+    function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
-    const IMPORT_COLOR = "#FC0D1BFF";
     const HIDDEN_MARK_COLOR = "#FFFFFFFF";
-    const CONTACT_TOLERANCE = 0.015;
+    const CONTACT_TOLERANCE = 0.012;
     const CONTACT_VOLUME_MAX = 0.001;
     const CANDIDATE_BBOX_BATCH = 400;
     const PROPS_BATCH = 60;
-    const LOG_MAX_LINES = 150;
-    const DEBUG_HISTORY_MAX = 300;
-    const INCLUDE_SCAN_LIMIT = 8000;
+    const LOG_MAX_LINES = 160;
 
-    let API = null;
-    let lastConvertError = "";
-    let cancelRequested = false;
-    let opRunning = false;
-    let selectionTimer = null;
-    let selBusy = false;
-    let suppressSelectionUntil = 0;
-    let prevSel = [];
-
-    const excludedColors = new Set();
-    const logLines = [];
-    const debugHistory = [];
-    const errorHistory = [];
-    const objectPropertiesCache = new Map();        // modelId -> Map(runtimeId -> props)
-    const candidateCache = new Map();               // cacheKey -> [{modelId, objectRuntimeId, hidden}]
-    const includeParameterCache = new Map();        // cacheKey -> Set(param)
-    const includeValueCache = new Map();            // cacheKey|param -> Set(value)
-    const hiddenIdsCache = new Map();               // modelId -> Set(runtimeId)
-    const hiddenWhiteRegistry = new Map();          // modelId -> Set(runtimeId)
+    let API=null, lastConvertError="", cancelRequested=false, opRunning=false;
+    let selectionTimer=null, selBusy=false, suppressSelectionUntil=0, prevSel=[];
+    const excludedColors=new Set();
+    const logLines=[];
+    const errorHistory=[];
+    const propsCache=new Map();             // modelId -> Map(rid -> props)
+    const hiddenWhiteRegistry=new Map();    // modelId -> Set(rid)
 
     // ===================== LOG / DEBUG =====================
-    function uiStateSnapshot() {
-      const get = (id) => document.getElementById(id);
-      return {
-        nearToggle: !!(get("nearToggle") && get("nearToggle").checked),
-        nearCustom: !!(get("nearCustom") && get("nearCustom").checked),
-        nearParam: get("nearParam") ? get("nearParam").value : "",
-        nearOp: get("nearOp") ? get("nearOp").value : "",
-        nearValue: get("nearValue") ? get("nearValue").value : "",
-        excludeToggle: !!(get("excludeToggle") && get("excludeToggle").checked),
-        excludedColors: [...excludedColors],
-        hiddenSelectionToggle: !!(get("hiddenSelectionToggle") && get("hiddenSelectionToggle").checked),
-        includeToggle: !!(get("includeToggle") && get("includeToggle").checked),
-        includeParam: get("includeParam") ? get("includeParam").value : "",
-        includeValue: get("includeValue") ? get("includeValue").value : "",
-        extendedExport: !!(get("extendedExport") && get("extendedExport").checked),
-        folderSelect: get("folderSelect") ? get("folderSelect").value : "",
-        errorCodes: !!(get("errorCodes") && get("errorCodes").checked),
-        customCodes: !!(get("customCodes") && get("customCodes").checked),
-        customCodesText: get("customCodesText") ? get("customCodesText").value : ""
-      };
-    }
-
-    function safeJson(value, space) {
-      try {
-        return JSON.stringify(value, (k, v) => {
-          if (typeof v === "string" && v.length > 5000) return v.slice(0, 5000) + "...[TRUNCADO]";
-          return v;
-        }, space || 0);
-      } catch (e) {
-        return String(value);
-      }
-    }
-
-    function recordDebug(eventName, payload = {}) {
-      const item = {
-        ts: new Date().toISOString(),
-        version: SCRIPT_VERSION,
-        event: eventName,
-        ui: uiStateSnapshot(),
-        payload
-      };
-      debugHistory.push(item);
-      if (debugHistory.length > DEBUG_HISTORY_MAX) debugHistory.shift();
-    }
-
-    function recordError(context, err) {
-      const item = {
-        ts: new Date().toISOString(),
-        context,
-        message: err && err.message ? err.message : String(err),
-        stack: err && err.stack ? String(err.stack).slice(0, 4000) : ""
-      };
-      errorHistory.push(item);
-      if (errorHistory.length > 80) errorHistory.shift();
-      recordDebug("error", item);
-    }
-
-    const log = (t) => {
-      const msg = String(t);
-      logLines.push(msg);
-      if (logLines.length > LOG_MAX_LINES) logLines.splice(0, logLines.length - LOG_MAX_LINES);
-      const el = document.getElementById("log");
-      if (el) {
-        el.textContent = logLines.join("\n") + (logLines.length ? "\n" : "");
-        el.scrollTop = el.scrollHeight;
-      }
-      recordDebug("log", { message: msg });
-    };
-    const clearLog = () => {
-      logLines.length = 0;
-      const el = document.getElementById("log");
-      if (el) el.textContent = "";
-    };
-
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const setProgress = (t) => { const el = document.getElementById("progress"); if (el) el.textContent = t; recordDebug("progress", { text: t }); };
-    function showCancel(on) { const el = document.getElementById("cancelOp"); if (el) el.style.display = on ? "inline-block" : "none"; }
-    function formatETA(sec) { if (!isFinite(sec) || sec < 0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
-    function downloadText(filename, text, mime) { const blob = new Blob(["\uFEFF"+text], { type:(mime||"text/csv")+";charset=utf-8" }); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
-    function sanitizeFilename(name) { return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
-    function extractRevisionCode(text) { const m=String(text||"").match(/RFI[_\-\s]*\d+/i); return m ? m[0].replace(/[\-\s]/g,"_").toUpperCase() : ""; }
+    const log=(t)=>{ const m=String(t); logLines.push(m); if(logLines.length>LOG_MAX_LINES) logLines.splice(0,logLines.length-LOG_MAX_LINES); const el=document.getElementById("log"); if(el){ el.textContent=logLines.join("\n")+"\n"; el.scrollTop=el.scrollHeight; } };
+    const clearLog=()=>{ logLines.length=0; const el=document.getElementById("log"); if(el) el.textContent=""; };
+    const sleep=(ms)=>new Promise((r)=>setTimeout(r,ms));
+    const setProgress=(t)=>{ const el=document.getElementById("progress"); if(el) el.textContent=t; };
+    function showCancel(on){ const el=document.getElementById("cancelOp"); if(el) el.style.display=on?"inline-block":"none"; }
+    function recordError(ctx,err){ errorHistory.push({ts:new Date().toISOString(),ctx,message:err&&err.message?err.message:String(err),stack:err&&err.stack?String(err.stack).slice(0,2000):""}); if(errorHistory.length>80) errorHistory.shift(); }
+    function safeJson(v,sp){ try{ return JSON.stringify(v,(k,val)=>(typeof val==="string"&&val.length>4000)?val.slice(0,4000)+"...[TRUNCADO]":val,sp||0); }catch(e){ return String(v); } }
+    function formatETA(sec){ if(!isFinite(sec)||sec<0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
+    function downloadText(filename,text,mime){ const blob=new Blob(["\uFEFF"+text],{type:(mime||"text/csv")+";charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+    function sanitizeFilename(name){ return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
+    function extractRevisionCode(text){ const m=String(text||"").match(/RFI[_\-\s]*\d+/i); return m?m[0].replace(/[\-\s]/g,"_").toUpperCase():""; }
 
     // ===================== COLOR =====================
-    function clampByte(n) {
-      n = Number(n);
-      if (!Number.isFinite(n)) return null;
-      return Math.max(0, Math.min(255, Math.round(n)));
-    }
-    function hex2(n) { return clampByte(n).toString(16).padStart(2, "0").toUpperCase(); }
-    function analyzeColor(color) {
-      const raw = color;
-      if (color == null || color === "") return { valid:false, raw, text:"", normalizedColor:"", cssColor:"#FFFFFF", reason:"empty" };
-
-      let r, g, b, a = 255;
-      if (typeof color === "object") {
-        r = color.r ?? color.red ?? color.R ?? color.Red;
-        g = color.g ?? color.green ?? color.G ?? color.Green;
-        b = color.b ?? color.blue ?? color.B ?? color.Blue;
-        a = color.a ?? color.alpha ?? color.A ?? color.Alpha ?? 255;
-        const rgb = [Number(r), Number(g), Number(b)];
-        if (rgb.some((x)=>!Number.isFinite(x))) return { valid:false, raw, text:safeJson(raw), normalizedColor:"", cssColor:"#FFFFFF", reason:"invalid-object-rgb" };
-        const scale = Math.max(...rgb) <= 1 ? 255 : 1;
-        r = rgb[0] * scale; g = rgb[1] * scale; b = rgb[2] * scale;
-        a = Number(a);
-        if (!Number.isFinite(a)) a = 255;
-        if (a <= 1) a = a * 255;
+    function clampByte(n){ n=Number(n); if(!Number.isFinite(n)) return null; return Math.max(0,Math.min(255,Math.round(n))); }
+    function hex2(n){ return clampByte(n).toString(16).padStart(2,"0").toUpperCase(); }
+    function analyzeColor(color){
+      if(color==null||color==="") return {valid:false,text:"",normalizedColor:"",cssColor:"#FFFFFF"};
+      let r,g,b,a=255;
+      if(typeof color==="object"){
+        r=color.r??color.red??color.R; g=color.g??color.green??color.G; b=color.b??color.blue??color.B; a=color.a??color.alpha??color.A??255;
+        const rgb=[Number(r),Number(g),Number(b)]; if(rgb.some((x)=>!Number.isFinite(x))) return {valid:false,text:safeJson(color),normalizedColor:"",cssColor:"#FFFFFF"};
+        const scale=Math.max(...rgb)<=1?255:1; r=rgb[0]*scale; g=rgb[1]*scale; b=rgb[2]*scale; a=Number(a); if(!Number.isFinite(a))a=255; if(a<=1)a*=255;
       } else {
-        let s = String(color).trim();
-        const text = s;
-        const hex = s.match(/^#?([0-9a-fA-F]{3,8})$/);
-        if (hex) {
-          let h = hex[1];
-          if (h.length === 3 || h.length === 4) h = h.split("").map((c)=>c+c).join("");
-          if (h.length === 6) h += "FF";
-          if (h.length === 8) {
-            r = parseInt(h.slice(0,2),16); g = parseInt(h.slice(2,4),16); b = parseInt(h.slice(4,6),16); a = parseInt(h.slice(6,8),16);
-          } else {
-            return { valid:false, raw, text, normalizedColor:"", cssColor:"#FFFFFF", reason:"invalid-hex-length" };
-          }
-        } else {
-          const rgba = s.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i);
-          if (!rgba) return { valid:false, raw, text, normalizedColor:"", cssColor:"#FFFFFF", reason:"unparsed-string" };
-          r = Number(rgba[1]); g = Number(rgba[2]); b = Number(rgba[3]); a = rgba[4] == null ? 255 : Number(rgba[4]);
-          if (a <= 1) a *= 255;
-        }
+        let s=String(color).trim(); const hex=s.match(/^#?([0-9a-fA-F]{3,8})$/);
+        if(hex){ let h=hex[1]; if(h.length===3||h.length===4) h=h.split("").map((c)=>c+c).join(""); if(h.length===6) h+="FF"; if(h.length!==8) return {valid:false,text:s,normalizedColor:"",cssColor:"#FFFFFF"}; r=parseInt(h.slice(0,2),16); g=parseInt(h.slice(2,4),16); b=parseInt(h.slice(4,6),16); a=parseInt(h.slice(6,8),16); }
+        else { const rgba=s.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i); if(!rgba) return {valid:false,text:s,normalizedColor:"",cssColor:"#FFFFFF"}; r=Number(rgba[1]); g=Number(rgba[2]); b=Number(rgba[3]); a=rgba[4]==null?255:Number(rgba[4]); if(a<=1)a*=255; }
       }
-      r = clampByte(r); g = clampByte(g); b = clampByte(b); a = clampByte(a);
-      if ([r,g,b,a].some((x)=>x==null)) return { valid:false, raw, text:safeJson(raw), normalizedColor:"", cssColor:"#FFFFFF", reason:"invalid-number" };
-      const normalizedColor = "#" + hex2(r) + hex2(g) + hex2(b) + hex2(a);
-      return {
-        valid:true,
-        raw,
-        text: typeof raw === "string" ? raw : safeJson(raw),
-        normalizedColor,
-        cssColor: "rgba(" + r + "," + g + "," + b + "," + (a/255).toFixed(3).replace(/0+$/,"").replace(/\.$/,"") + ")",
-        rgba:{r,g,b,a}
-      };
+      r=clampByte(r); g=clampByte(g); b=clampByte(b); a=clampByte(a);
+      if([r,g,b,a].some((x)=>x==null)) return {valid:false,text:safeJson(color),normalizedColor:"",cssColor:"#FFFFFF"};
+      return { valid:true, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", rgba:{r,g,b,a} };
     }
-    function normalizeColor(c) { return analyzeColor(c).normalizedColor; }
-    function colorToText(color) { const a = analyzeColor(color); return a.valid ? a.normalizedColor : a.text; }
-    function looksRed(color) {
-      const a = analyzeColor(color);
-      if (!a.valid) return false;
-      return a.rgba.r > 140 && a.rgba.g < 95 && a.rgba.b < 95;
-    }
+    function normalizeColor(c){ return analyzeColor(c).normalizedColor; }
+    function looksRed(c){ const a=analyzeColor(c); return a.valid && a.rgba.r>140 && a.rgba.g<95 && a.rgba.b<95; }
 
     // ===================== GUID IFC =====================
-    const IFC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
-    function ifcB64(v, len) { let s=""; for (let i=0;i<len;i++) s += IFC_CHARS[Math.floor(v/Math.pow(64,len-i-1))%64]; return s; }
-    function compressIfcGuid(uuid) { const hex=String(uuid).replace(/-/g,"").toLowerCase(); if (hex.length!==32||/[^0-9a-f]/.test(hex)) return null; const bs=[]; for (let i=0;i<32;i+=2) bs.push(parseInt(hex.substr(i,2),16)); let res=ifcB64(bs[0],2); for (let i=1;i<16;i+=3) res+=ifcB64((bs[i]<<16)+(bs[i+1]<<8)+bs[i+2],4); return res; }
-    function decompressIfcGuid(g) { if (!g||g.length!==22) return null; const di=(ch)=>IFC_CHARS.indexOf(ch); const bytes=[(di(g[0])*64+di(g[1]))&0xff]; let p=2; for (let k=0;k<5;k++){ let v=0; for (let i=0;i<4;i++) v=v*64+di(g[p++]); bytes.push((v>>16)&0xff,(v>>8)&0xff,v&0xff);} const hex=bytes.map((b)=>b.toString(16).padStart(2,"0")).join(""); return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20,32)].join("-"); }
-    function toIfcGuid(externalId) { if (!externalId) return ""; const s=String(externalId).trim(); if (s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return s; return compressIfcGuid(s)||s; }
-    function toExternalUuid(guid) { const s=String(guid||"").trim(); if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)) return s.toLowerCase(); if (/^[0-9a-fA-F]{32}$/.test(s)) return [s.slice(0,8),s.slice(8,12),s.slice(12,16),s.slice(16,20),s.slice(20)].join("-").toLowerCase(); if (s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return decompressIfcGuid(s); return null; }
-    async function convertResilient(modelId, runtimeIds) { if (runtimeIds.length===0) return []; try { const ids=await API.viewer.convertToObjectIds(modelId, runtimeIds); return runtimeIds.map((_,i)=>ids[i]||""); } catch (e) { if (!lastConvertError) lastConvertError=String(e&&e.message?e.message:e); if (runtimeIds.length===1) return [""]; const mid=Math.floor(runtimeIds.length/2); const left=await convertResilient(modelId, runtimeIds.slice(0,mid)); const right=await convertResilient(modelId, runtimeIds.slice(mid)); return left.concat(right); } }
+    const IFC_CHARS="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
+    function ifcB64(v,len){ let s=""; for(let i=0;i<len;i++) s+=IFC_CHARS[Math.floor(v/Math.pow(64,len-i-1))%64]; return s; }
+    function compressIfcGuid(uuid){ const hex=String(uuid).replace(/-/g,"").toLowerCase(); if(hex.length!==32||/[^0-9a-f]/.test(hex)) return null; const bs=[]; for(let i=0;i<32;i+=2) bs.push(parseInt(hex.substr(i,2),16)); let res=ifcB64(bs[0],2); for(let i=1;i<16;i+=3) res+=ifcB64((bs[i]<<16)+(bs[i+1]<<8)+bs[i+2],4); return res; }
+    function decompressIfcGuid(g){ if(!g||g.length!==22) return null; const di=(ch)=>IFC_CHARS.indexOf(ch); const bytes=[(di(g[0])*64+di(g[1]))&0xff]; let p=2; for(let k=0;k<5;k++){ let v=0; for(let i=0;i<4;i++) v=v*64+di(g[p++]); bytes.push((v>>16)&0xff,(v>>8)&0xff,v&0xff);} const hex=bytes.map((b)=>b.toString(16).padStart(2,"0")).join(""); return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20,32)].join("-"); }
+    function toIfcGuid(externalId){ if(!externalId) return ""; const s=String(externalId).trim(); if(s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return s; return compressIfcGuid(s)||s; }
+    function toExternalUuid(guid){ const s=String(guid||"").trim(); if(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)) return s.toLowerCase(); if(/^[0-9a-fA-F]{32}$/.test(s)) return [s.slice(0,8),s.slice(8,12),s.slice(12,16),s.slice(16,20),s.slice(20)].join("-").toLowerCase(); if(s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return decompressIfcGuid(s); return null; }
+    async function convertResilient(modelId,runtimeIds){ if(runtimeIds.length===0) return []; try{ const ids=await API.viewer.convertToObjectIds(modelId,runtimeIds); return runtimeIds.map((_,i)=>ids[i]||""); }catch(e){ if(!lastConvertError) lastConvertError=String(e&&e.message?e.message:e); if(runtimeIds.length===1) return [""]; const mid=Math.floor(runtimeIds.length/2); const l=await convertResilient(modelId,runtimeIds.slice(0,mid)); const r=await convertResilient(modelId,runtimeIds.slice(mid)); return l.concat(r); } }
 
     // ===================== COLUMNAS =====================
-    let COLUMNS = [
-      { key: "guidIfc", header: "GUID_IFC", checked: true },
-      { key: "color", header: "color", checked: true },
-      { key: "revisionCode", header: "codigo_revision", checked: true },
-      { key: "reviewedDeo", header: "revisado_deo", checked: true },
-      { key: "viewName", header: "View_name", checked: false },
-      { key: "modelId", header: "modelId", checked: false },
-      { key: "objectRuntimeId", header: "objectRuntimeId", checked: false }
+    let COLUMNS=[
+      {key:"guidIfc",header:"GUID_IFC",checked:true},
+      {key:"color",header:"color",checked:true},
+      {key:"revisionCode",header:"codigo_revision",checked:true},
+      {key:"reviewedDeo",header:"revisado_deo",checked:true},
+      {key:"viewName",header:"View_name",checked:false},
+      {key:"modelId",header:"modelId",checked:false},
+      {key:"objectRuntimeId",header:"objectRuntimeId",checked:false}
     ];
-    function buildColumnsUI() {
-      const list = document.getElementById("columnsList"); list.innerHTML = "";
-      COLUMNS.forEach((col, index) => {
-        const item=document.createElement("div"); item.className="col-item";
-        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked; recordDebug("columnToggle",{header:col.header,checked:cb.checked});});
-        const name=document.createElement("span"); name.className="name"; name.textContent=col.header;
-        const up=document.createElement("button"); up.textContent="\u2191"; up.title="Subir"; up.disabled=index===0; up.onclick=()=>moveColumn(index,-1);
-        const down=document.createElement("button"); down.textContent="\u2193"; down.title="Bajar"; down.disabled=index===COLUMNS.length-1; down.onclick=()=>moveColumn(index,1);
-        item.appendChild(cb); item.appendChild(name); item.appendChild(up); item.appendChild(down); list.appendChild(item);
-      });
-    }
-    function moveColumn(i, dir) { const j=i+dir; if (j<0||j>=COLUMNS.length) return; const t=COLUMNS[i]; COLUMNS[i]=COLUMNS[j]; COLUMNS[j]=t; buildColumnsUI(); recordDebug("moveColumn",{from:i,to:j}); }
-    function selectedColumns() { return COLUMNS.filter((c)=>c.checked); }
+    function buildColumnsUI(){ const list=document.getElementById("columnsList"); list.innerHTML=""; COLUMNS.forEach((col,index)=>{ const item=document.createElement("div"); item.className="col-item"; const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked;}); const name=document.createElement("span"); name.className="name"; name.textContent=col.header; const up=document.createElement("button"); up.textContent="\u2191"; up.disabled=index===0; up.onclick=()=>moveColumn(index,-1); const down=document.createElement("button"); down.textContent="\u2193"; down.disabled=index===COLUMNS.length-1; down.onclick=()=>moveColumn(index,1); item.appendChild(cb); item.appendChild(name); item.appendChild(up); item.appendChild(down); list.appendChild(item); }); }
+    function moveColumn(i,dir){ const j=i+dir; if(j<0||j>=COLUMNS.length) return; const t=COLUMNS[i]; COLUMNS[i]=COLUMNS[j]; COLUMNS[j]=t; buildColumnsUI(); }
+    function selectedColumns(){ return COLUMNS.filter((c)=>c.checked); }
 
-    // ===================== VISTA / REVISIÓN / CARPETAS =====================
-    async function getCurrentViewSpecWithRetry() {
-      let cv=null;
-      for (let a=1;a<=6;a++) {
-        try {
-          cv=await API.view.getCurrentView();
-          if (cv&&(cv.name||cv.description||cv.id)) {
-            if (cv.id&&!cv.name){
-              try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){}
-            }
-            return cv;
-          }
-        } catch (e) { recordError("getCurrentViewSpecWithRetry", e); }
-        if (a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);}
-      }
-      return cv;
-    }
-    function viewFullName(v) { return v ? (v.name||v.description||"") : ""; }
-
-    const FOLDER_KEYS = ["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection","tag","tags"];
-    let folderDetectionMode = "none";
-
-    function detectFolder(view) {
-      if (!view || typeof view!=="object") return "";
-      for (const k of Object.keys(view)) {
-        if (FOLDER_KEYS.includes(k.toLowerCase())) {
-          const val = view[k];
-          if (val==null || val==="") continue;
-          if (typeof val!=="object") return String(val);
-          if (Array.isArray(val)) { const first=val.find((x)=>x); if (first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); }
-          else return String(val.name||val.title||val.groupName||val.id||"");
-        }
-      }
-      return "";
-    }
-
-    function inferVirtualFolder(viewName) {
-      const s = String(viewName||"").trim();
-      if (!s) return "";
-      const separators = ["/", "\\", ">", "::"];
-      for (const sep of separators) {
-        const i = s.lastIndexOf(sep);
-        if (i > 0) return s.slice(0, i).trim();
-      }
-      if (s.includes(" - ")) {
-        const first = s.split(" - ")[0].trim();
-        if (first && first.length <= 35) return first;
-      }
-      return "";
-    }
-
-    async function populateFolders() {
-      const sel=document.getElementById("folderSelect"); if (!sel) return;
+    // ===================== VISTA / CARPETAS =====================
+    async function getCurrentViewSpecWithRetry(){ let cv=null; for(let a=1;a<=6;a++){ try{ cv=await API.view.getCurrentView(); if(cv&&(cv.name||cv.description||cv.id)){ if(cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } return cv; } }catch(e){ recordError("getCurrentView",e); } if(a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} } return cv; }
+    function viewFullName(v){ return v?(v.name||v.description||""):""; }
+    const FOLDER_KEYS=["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection"];
+    function detectFolder(view){ if(!view||typeof view!=="object") return ""; for(const k of Object.keys(view)){ if(FOLDER_KEYS.includes(k.toLowerCase())){ const val=view[k]; if(val==null||val==="") continue; if(typeof val!=="object") return String(val); if(Array.isArray(val)){ const first=val.find((x)=>x); if(first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); } else return String(val.name||val.title||val.groupName||val.id||""); } } return ""; }
+    async function populateFolders(){
+      const sel=document.getElementById("folderSelect"); if(!sel) return;
       const keep=sel.value; sel.innerHTML="";
       const optAll=document.createElement("option"); optAll.value=""; optAll.textContent="Todas las vistas"; sel.appendChild(optAll);
-      let views=[]; try { views=await API.view.getViews(); } catch (e) { recordError("populateFolders.getViews", e); }
-
-      const realFolders=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
-      if (realFolders.length>0) {
-        folderDetectionMode = "real";
-        for (const f of realFolders){ const o=document.createElement("option"); o.value="real|"+f; o.textContent=f; sel.appendChild(o);}
-        log("Carpetas reales detectadas: "+realFolders.length);
-      } else {
-        const virtualFolders=[...new Set((views||[]).map((v)=>inferVirtualFolder(viewFullName(v))).filter(Boolean))].sort();
-        folderDetectionMode = virtualFolders.length ? "virtual" : "none";
-        for (const f of virtualFolders){ const o=document.createElement("option"); o.value="virtual|"+f; o.textContent=f+"  [virtual]"; sel.appendChild(o);}
-        const no=document.createElement("option"); no.value="none|__NO_FOLDER__"; no.textContent="Sin carpeta / no detectable"; sel.appendChild(no);
-        if (virtualFolders.length) log("La API no devuelve carpetas reales. Se usan carpetas virtuales por nombre: "+virtualFolders.length);
-        else log("La API no devuelve carpetas reales ni se han podido inferir carpetas virtuales.");
-      }
-      if (keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
-      recordDebug("populateFolders",{mode:folderDetectionMode,totalViews:(views||[]).length,options:[...sel.options].map((o)=>o.value)});
+      let views=[]; try{ views=await API.view.getViews(); }catch(e){ recordError("populateFolders",e); }
+      const real=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
+      if(real.length>0){ for(const f of real){ const o=document.createElement("option"); o.value="real|"+f; o.textContent=f; sel.appendChild(o);} log("Carpetas detectadas por la API: "+real.length); }
+      else { log("Aviso: la Workspace API no expone carpetas/grupos de vistas (solo devuelve la lista de vistas). Se exportarán todas. Ejecuta el debug 🐞 y mándame el TXT para confirmar si tus vistas traen algún campo de grupo."); }
+      if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
     }
-
-    function viewMatchesFolder(view, folderValue) {
-      if (!folderValue) return true;
-      const [kind, value] = folderValue.split("|");
-      if (kind === "real") return detectFolder(view) === value;
-      if (kind === "virtual") return inferVirtualFolder(viewFullName(view)) === value;
-      if (kind === "none") return !detectFolder(view) && !inferVirtualFolder(viewFullName(view));
-      return true;
-    }
-
-    function computeRevisionBase(viewName) {
-      const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked;
-      if (customOn&&customText) return customText.toUpperCase();
-      const auto=extractRevisionCode(viewName); if (auto) return auto;
-      if (customOn&&!customText) log("Aviso: no es posible extraer el código del título y tampoco hay contenido en Custom codes.");
-      if (errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")";
-      log("Aviso: no se ha podido determinar el código de revisión. codigo_revision quedará vacío."); return "";
-    }
+    function viewMatchesFolder(view,folderValue){ if(!folderValue) return true; const [kind,value]=folderValue.split("|"); if(kind==="real") return detectFolder(view)===value; return true; }
+    function computeRevisionBase(viewName){ const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked; if(customOn&&customText) return customText.toUpperCase(); const auto=extractRevisionCode(viewName); if(auto) return auto; if(errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")"; return ""; }
 
     // ===================== OBJETOS COLOREADOS =====================
-    async function getColoredObjectEntries() {
-      const groups=await API.viewer.getColoredObjects();
-      const entries=[];
-      for (const g of groups||[]){
-        const modelId=g.modelId||"";
-        for (const obj of (g.objects||[])){
-          const rid=Number(obj.id);
-          const analysis=analyzeColor(obj.color);
-          if (modelId&&Number.isFinite(rid)) entries.push({
-            modelId,
-            objectRuntimeId:rid,
-            originalColor:obj.color,
-            color: analysis.valid ? analysis.normalizedColor : analysis.text,
-            normalizedColor: analysis.normalizedColor,
-            cssColor: analysis.cssColor,
-            colorValid: analysis.valid,
-            colorReason: analysis.reason || ""
-          });
-        }
-      }
-      return entries;
-    }
-    async function getColoredObjectEntriesWithRetry() { for (let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if (e.length>0) return e; await sleep(600);} return []; }
-    async function probeColor(modelId, runtimeId) { try { const colored=await getColoredObjectEntries(); const hit=colored.find((c)=>c.modelId===modelId&&c.objectRuntimeId===runtimeId); return hit?hit.normalizedColor:""; } catch (e){ recordError("probeColor", e); return ""; } }
+    async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,colorValid:an.valid}); } } return entries; }
+    async function getColoredObjectEntriesWithRetry(){ for(let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if(e.length>0) return e; await sleep(600);} return []; }
+    async function probeColor(modelId,rid){ try{ const c=await getColoredObjectEntries(); const h=c.find((x)=>x.modelId===modelId&&x.objectRuntimeId===rid); return h?h.normalizedColor:""; }catch(e){ return ""; } }
 
-    // ===================== FILAS / CSV =====================
-    async function buildRows(entries, revisionBase, viewName, wantGuid) {
-      const byModel=new Map(); for (const e of entries){ if (!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e); }
-      const rows=[];
-      for (const [modelId,list] of byModel.entries()) {
-        const bs=200;
-        for (let i=0;i<list.length;i+=bs){
-          const batch=list.slice(i,i+bs);
-          let guids=[]; if (wantGuid) guids=await convertResilient(modelId, batch.map((e)=>e.objectRuntimeId));
-          for (let j=0;j<batch.length;j++){
-            const e=batch[j]; const cn=e.normalizedColor;
-            rows.push({
-              guidIfc: wantGuid?toIfcGuid(guids[j]):"",
-              color:e.color,
-              revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"",
-              reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE",
-              viewName:viewName,
-              modelId:e.modelId,
-              objectRuntimeId:e.objectRuntimeId
-            });
-          }
-        }
-      }
-      return rows;
-    }
-    function rowsToCsv(rows, cols) { const header=cols.map((c)=>c.header).join(";"); const lines=rows.map((r)=>cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";")); return [header].concat(lines).join("\n"); }
-    function logColorSummary(rows) { const counts={}; for (const r of rows){ const c=normalizeColor(r.color)||String(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n+(REVISION_CODE_COLORS.has(c)?"  [revision]":"")+(REVIEWED_DEO_COLORS.has(c)?"  [revisado]":""))); }
+    // ===================== CSV =====================
+    async function buildRows(entries,revisionBase,viewName,wantGuid){ const byModel=new Map(); for(const e of entries){ if(!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e);} const rows=[]; for(const [modelId,list] of byModel.entries()){ const bs=200; for(let i=0;i<list.length;i+=bs){ const batch=list.slice(i,i+bs); let guids=[]; if(wantGuid) guids=await convertResilient(modelId,batch.map((e)=>e.objectRuntimeId)); for(let j=0;j<batch.length;j++){ const e=batch[j]; const cn=e.normalizedColor; rows.push({guidIfc:wantGuid?toIfcGuid(guids[j]):"",color:e.color,revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"",reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE",viewName,modelId:e.modelId,objectRuntimeId:e.objectRuntimeId}); } } } return rows; }
+    function rowsToCsv(rows,cols){ const header=cols.map((c)=>c.header).join(";"); const lines=rows.map((r)=>cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";")); return [header].concat(lines).join("\n"); }
+    function logColorSummary(rows){ const counts={}; for(const r of rows){ const c=normalizeColor(r.color)||String(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n)); }
+    function parseCsvLine(line){ const out=[]; let cur=""; let inQ=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(inQ){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; } else { if(ch==='"') inQ=true; else if(ch===';'){ out.push(cur); cur=""; } else cur+=ch; } } out.push(cur); return out; }
 
-    // ===================== EXPORTAR VISTA ACTIVA =====================
-    async function exportActiveView() {
-      clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log(SCRIPT_VERSION); recordDebug("exportActiveView.start");
-      const cols=selectedColumns(); if (cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas seleccionadas."); return; }
+    // ===================== EXPORTAR =====================
+    async function exportActiveView(){
+      clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log(SCRIPT_VERSION);
+      const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
-      log("Leyendo objetos coloreados...");
       const entries=await getColoredObjectEntriesWithRetry();
-      if (entries.length===0){ log("No se han encontrado objetos coloreados."); setProgress("No hay objetos coloreados en la vista."); return; }
+      if(entries.length===0){ log("No hay objetos coloreados."); setProgress("No hay objetos coloreados."); return; }
       log("Objetos coloreados: "+entries.length);
-      const invalid=entries.filter((e)=>!e.colorValid);
-      if (invalid.length) log("Colores no normalizables: "+invalid.length+" (ver debug).");
-      const viewSpec=await getCurrentViewSpecWithRetry(); const viewName=viewFullName(viewSpec);
-      log("Vista activa: "+(viewName||"(sin nombre)"));
-      const revisionBase=computeRevisionBase(viewName); log("Código de revisión base: "+(revisionBase||"(vacío)"));
-      const rows=await buildRows(entries, revisionBase, viewName, wantGuid); logColorSummary(rows);
-      const csv=rowsToCsv(rows, cols);
+      const viewName=viewFullName(await getCurrentViewSpecWithRetry()); log("Vista activa: "+(viewName||"(sin nombre)"));
+      const revisionBase=computeRevisionBase(viewName);
+      const rows=await buildRows(entries,revisionBase,viewName,wantGuid); logColorSummary(rows);
+      const csv=rowsToCsv(rows,cols);
       const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim();
-      let prefix=extractRevisionCode(viewName)||"EXPORT"; if (customOn&&customText) prefix=sanitizeFilename(customText); else if (revisionBase&&!revisionBase.startsWith("ERROR")) prefix=sanitizeFilename(revisionBase);
-      downloadText(prefix+"_trimble_colores_guid_ifc.csv", csv);
-      log("CSV generado. Filas: "+rows.length);
-      if (wantGuid){ log("GUID encontrados: "+rows.filter((r)=>r.guidIfc).length+" | vacíos: "+rows.filter((r)=>!r.guidIfc).length); if (lastConvertError) log("Primer error convertToObjectIds: "+lastConvertError); }
-      setProgress("Exportación completada: "+rows.length+" filas.");
-      recordDebug("exportActiveView.done",{rows:rows.length,invalidColors:invalid.length});
+      let prefix=extractRevisionCode(viewName)||"EXPORT"; if(customOn&&customText) prefix=sanitizeFilename(customText); else if(revisionBase&&!revisionBase.startsWith("ERROR")) prefix=sanitizeFilename(revisionBase);
+      downloadText(prefix+"_trimble_colores_guid_ifc.csv",csv);
+      log("CSV generado. Filas: "+rows.length); setProgress("Exportación completada: "+rows.length+" filas.");
     }
-
-    // ===================== EXPORTACIÓN MASIVA =====================
-    async function exportMassive() {
-      clearLog(); setProgress("Preparando exportación masiva..."); lastConvertError=""; cancelRequested=false; log(SCRIPT_VERSION+" - Exportación masiva"); recordDebug("exportMassive.start");
-      if (!API.view||typeof API.view.selectView!=="function"){ log("La API disponible no permite cargar vistas automáticamente."); setProgress("No disponible en este entorno."); return; }
-      const cols=selectedColumns(); if (cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
+    async function exportMassive(){
+      clearLog(); setProgress("Preparando exportación masiva..."); lastConvertError=""; cancelRequested=false; log(SCRIPT_VERSION+" - Exportación masiva");
+      if(!API.view||typeof API.view.selectView!=="function"){ log("La API no permite cargar vistas automáticamente."); setProgress("No disponible."); return; }
+      const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
-      let views=[]; try { views=await API.view.getViews(); } catch (e){ recordError("exportMassive.getViews", e); log("ERROR getViews(): "+e.message); setProgress("Error al leer vistas."); return; }
-      if (!views||views.length===0){ log("No hay vistas en el proyecto."); setProgress("Sin vistas."); return; }
+      let views=[]; try{ views=await API.view.getViews(); }catch(e){ recordError("exportMassive.getViews",e); log("ERROR getViews(): "+e.message); return; }
+      if(!views||views.length===0){ log("No hay vistas."); setProgress("Sin vistas."); return; }
       const folder=document.getElementById("folderSelect").value;
-      let target=views.filter((v)=>viewMatchesFolder(v, folder));
-      if (!folder) { const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if (withRfi.length>0) target=withRfi; }
-      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (filtro: \""+folder+"\")":"")); if (total===0){ log("Ninguna vista en esa carpeta/filtro."); setProgress("Sin coincidencias."); return; }
-
+      let target=views.filter((v)=>viewMatchesFolder(v,folder));
+      if(!folder){ const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if(withRfi.length>0) target=withRfi; }
+      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (carpeta)":"")); if(total===0){ log("Ninguna vista coincide."); setProgress("Sin coincidencias."); return; }
       showCancel(true); setProgress("Vistas exportadas 0/"+total+" (ETA: calculando...)");
       const allRows=[]; const exported=[]; const empty=[]; const errored=[]; const startTime=Date.now();
-      for (let i=0;i<total;i++) {
-        if (cancelRequested){ log("Exportación cancelada por el usuario."); break; }
+      for(let i=0;i<total;i++){
+        if(cancelRequested){ log("Exportación cancelada."); break; }
         const v=target[i]; const viewName=viewFullName(v);
-        try {
-          await API.view.selectView(v.id); await sleep(900);
-          const entries=await getColoredObjectEntriesWithRetry();
-          if (entries.length===0){ empty.push(viewName||v.id); }
-          else { const revisionBase=computeRevisionBase(viewName); const rows=await buildRows(entries, revisionBase, viewName, wantGuid); allRows.push(...rows); exported.push({name:viewName||v.id, rows:rows.length}); }
-        } catch (e){ recordError("exportMassive.view", e); errored.push({name:viewName||v.id, error:(e&&e.message?e.message:String(e))}); }
+        try{ await API.view.selectView(v.id); await sleep(900); const entries=await getColoredObjectEntriesWithRetry();
+          if(entries.length===0) empty.push(viewName||v.id);
+          else { const revisionBase=computeRevisionBase(viewName); const rows=await buildRows(entries,revisionBase,viewName,wantGuid); allRows.push(...rows); exported.push({name:viewName||v.id,rows:rows.length}); }
+        }catch(e){ recordError("exportMassive.view",e); errored.push({name:viewName||v.id,error:(e&&e.message?e.message:String(e))}); }
         const done=i+1; const elapsed=(Date.now()-startTime)/1000; const eta=done>0?(elapsed/done)*(total-done):Infinity;
         setProgress("Vistas exportadas "+done+"/"+total+" (ETA: "+formatETA(eta)+")");
       }
       showCancel(false);
-
-      if (allRows.length>0){ const csv=rowsToCsv(allRows, cols); let name="DEO_extended_export"; if (folder) name+="_"+sanitizeFilename(folder); downloadText(name+"_trimble_colores_guid_ifc.csv", csv); }
+      if(allRows.length>0){ const csv=rowsToCsv(allRows,cols); let name="DEO_extended_export"; if(folder) name+="_"+sanitizeFilename(folder); downloadText(name+"_trimble_colores_guid_ifc.csv",csv); }
       else log("No se ha generado ninguna fila.");
-
-      const report=[];
-      report.push("DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva");
-      report.push("Fecha: "+new Date().toLocaleString()); report.push("Filtro carpeta: "+(folder||"(todas)")); report.push("Modo carpetas: "+folderDetectionMode);
-      report.push(cancelRequested?"ESTADO: CANCELADA POR EL USUARIO":"ESTADO: COMPLETADA");
-      report.push("Total de vistas consideradas: "+total); report.push("Vistas exportadas con datos: "+exported.length); report.push("Vistas sin objetos coloreados: "+empty.length); report.push("Vistas con error: "+errored.length); report.push("Filas totales exportadas: "+allRows.length); report.push("");
-      report.push("== VISTAS EXPORTADAS =="); exported.forEach((e)=>report.push("- "+e.name+"  (filas: "+e.rows+")")); report.push("");
-      report.push("== VISTAS SIN OBJETOS COLOREADOS =="); empty.forEach((n)=>report.push("- "+n)); report.push("");
-      report.push("== VISTAS CON ERROR (no exportadas) =="); errored.forEach((e)=>report.push("- "+e.name+"  ->  "+e.error));
-      let rname="DEO_extended_export"; if (folder) rname+="_"+sanitizeFilename(folder); downloadText(rname+"_informe.txt", report.join("\n"), "text/plain");
-
-      setProgress("Hecho: "+exported.length+" exportadas, "+empty.length+" sin objetos, "+errored.length+" con error"+(cancelRequested?" (cancelada)":""));
-      log("Exportación masiva finalizada. Filas: "+allRows.length+". Informe TXT descargado.");
-      if (lastConvertError) log("Primer error convertToObjectIds: "+lastConvertError);
-      recordDebug("exportMassive.done",{rows:allRows.length, exported:exported.length, empty:empty.length, errored:errored.length});
+      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Carpeta: "+(folder||"(todas)"),(cancelRequested?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),"Total vistas: "+total,"Exportadas: "+exported.length,"Sin objetos: "+empty.length,"Con error: "+errored.length,"Filas: "+allRows.length,"","== EXPORTADAS =="]; exported.forEach((e)=>report.push("- "+e.name+" (filas: "+e.rows+")")); report.push("","== SIN OBJETOS =="); empty.forEach((n)=>report.push("- "+n)); report.push("","== CON ERROR =="); errored.forEach((e)=>report.push("- "+e.name+" -> "+e.error));
+      let rname="DEO_extended_export"; if(folder) rname+="_"+sanitizeFilename(folder); downloadText(rname+"_informe.txt",report.join("\n"),"text/plain");
+      setProgress("Hecho: "+exported.length+" exportadas, "+empty.length+" sin objetos, "+errored.length+" con error.");
     }
 
-    // ===================== IMPORTAR CSV =====================
-    function parseCsvLine(line) { const out=[]; let cur=""; let inQ=false; for (let i=0;i<line.length;i++){ const ch=line[i]; if (inQ){ if (ch==='"'){ if (line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; } else { if (ch==='"') inQ=true; else if (ch===';'){ out.push(cur); cur=""; } else cur+=ch; } } out.push(cur); return out; }
-    async function importCsv(file) {
-      clearLog(); setProgress("Importando: leyendo archivo..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV"); recordDebug("importCsv.start",{fileName:file.name,size:file.size});
-      let text=""; try { text=await file.text(); } catch (e){ recordError("importCsv.fileText", e); log("No se ha podido leer el archivo: "+e.message); setProgress("Error al leer el archivo."); return; }
-      text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
-      if (lines.length<2){ log("El CSV está vacío."); setProgress("CSV vacío."); return; }
-      const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
-      const gi=header.findIndex((h)=>h.includes("guid")); const ri=header.findIndex((h)=>h==="revisado_deo");
-      if (gi<0){ log("El CSV debe tener una columna de GUID."); setProgress("Falta columna GUID."); return; }
-      if (ri<0){ log("El CSV debe tener una columna 'revisado_deo'."); setProgress("Falta columna revisado_deo."); return; }
-      const uuids=[]; const raws=[]; let trueCount=0;
-      for (let i=1;i<lines.length;i++){ const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); const reviewed=(cells[ri]||"").trim().toUpperCase(); if (reviewed!=="TRUE") continue; trueCount++; const uuid=toExternalUuid(guid); if (uuid){ uuids.push(uuid); raws.push(guid); } }
-      log("Filas con revisado_deo = TRUE: "+trueCount);
-      if (uuids.length===0){ log("No hay GUID válidos marcados como TRUE."); setProgress("Sin GUID TRUE válidos."); return; }
-      log("Ejemplo GUID CSV: "+raws[0]+"  ->  UUID: "+uuids[0]);
+    // ===================== IMPORTAR (uno o varios CSV) =====================
+    async function importCsvFiles(files){
+      clearLog(); setProgress("Importando: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV ("+files.length+" archivo/s)");
+      const uuids=[]; const raws=[]; const seen=new Set(); let trueTotal=0;
+      for(const file of files){
+        let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); continue; }
+        text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
+        if(lines.length<2){ log(file.name+": vacío."); continue; }
+        const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
+        const gi=header.findIndex((h)=>h.includes("guid")); const ri=header.findIndex((h)=>h==="revisado_deo");
+        if(gi<0||ri<0){ log(file.name+": faltan columnas GUID/revisado_deo. Omitido."); continue; }
+        let fileTrue=0;
+        for(let i=1;i<lines.length;i++){ const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); const reviewed=(cells[ri]||"").trim().toUpperCase(); if(reviewed!=="TRUE") continue; fileTrue++; const uuid=toExternalUuid(guid); if(uuid && !seen.has(uuid)){ seen.add(uuid); uuids.push(uuid); raws.push(guid); } }
+        trueTotal+=fileTrue; log(file.name+": "+fileTrue+" filas TRUE.");
+      }
+      log("Total GUID únicos TRUE: "+uuids.length+" (de "+trueTotal+" filas TRUE).");
+      if(uuids.length===0){ log("No hay GUID válidos marcados como TRUE."); setProgress("Sin GUID TRUE válidos."); showCancel(false); return; }
 
       showCancel(true); setProgress("Importando: detectando modelos...");
-      let modelIds=[]; try { const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); } catch (e) { recordError("importCsv.getModels", e); }
-      try { const colored=await API.viewer.getColoredObjects(); for (const g of colored||[]) if (g.modelId) modelIds.push(g.modelId); } catch (e) { recordError("importCsv.getColoredObjects", e); }
+      let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
+      try{ const colored=await API.viewer.getColoredObjects(); for(const g of colored||[]) if(g.modelId) modelIds.push(g.modelId); }catch(e){}
       modelIds=[...new Set(modelIds)];
-      if (modelIds.length===0){ log("No se han detectado modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
-      log("Modelos cargados: "+modelIds.length+" -> "+JSON.stringify(modelIds));
+      if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
+      log("Modelos: "+modelIds.length);
 
       const byModel=new Map(); let totalFound=0; let mi=0;
-      for (const modelId of modelIds) {
-        if (cancelRequested){ log("Importación cancelada por el usuario."); break; }
+      for(const modelId of modelIds){
+        if(cancelRequested){ log("Importación cancelada."); break; }
         setProgress("Importando: modelo "+(++mi)+"/"+modelIds.length+" (encontrados: "+totalFound+")");
-        let ridsU=[]; try { ridsU=await API.viewer.convertToObjectRuntimeIds(modelId, uuids); } catch (e){ recordError("importCsv.convertUUID", e); ridsU=[]; }
-        let ridsR=[]; try { ridsR=await API.viewer.convertToObjectRuntimeIds(modelId, raws); } catch (e){ recordError("importCsv.convertRaw", e); ridsR=[]; }
-        const foundU=(ridsU||[]).filter((r)=>r!==null&&r!==undefined).length;
-        const foundR=(ridsR||[]).filter((r)=>r!==null&&r!==undefined).length;
-        const rids=foundR>foundU?ridsR:ridsU;
-        log("   "+modelId+": UUID="+foundU+", GUID="+foundR+" coincidencias");
-        const ids=[]; for (let i=0;i<(rids||[]).length;i++){ const rid=rids[i]; if (rid!==null&&rid!==undefined) ids.push(Number(rid)); }
-        if (ids.length>0){ byModel.set(modelId, ids); totalFound+=ids.length; }
+        let ridsU=[]; try{ ridsU=await API.viewer.convertToObjectRuntimeIds(modelId,uuids); }catch(e){ ridsU=[]; }
+        let ridsR=[]; try{ ridsR=await API.viewer.convertToObjectRuntimeIds(modelId,raws); }catch(e){ ridsR=[]; }
+        const fU=(ridsU||[]).filter((r)=>r!=null).length; const fR=(ridsR||[]).filter((r)=>r!=null).length;
+        const rids=fR>fU?ridsR:ridsU; log("   "+modelId+": UUID="+fU+", GUID="+fR);
+        const ids=[]; for(let i=0;i<(rids||[]).length;i++){ const rid=rids[i]; if(rid!=null) ids.push(Number(rid)); }
+        if(ids.length>0){ byModel.set(modelId,ids); totalFound+=ids.length; }
       }
-      log("Objetos encontrados: "+totalFound+" / "+uuids.length+" (los no encontrados se omiten)");
-      if (totalFound===0){ log("Ningún GUID del CSV está en el modelo activo. ¿Es el mismo modelo/versión del que se exportó?"); setProgress("Ningún GUID coincide con el modelo."); showCancel(false); return; }
+      log("Objetos encontrados: "+totalFound+" / "+uuids.length);
+      if(totalFound===0){ log("Ningún GUID está en el modelo. ¿Es el mismo modelo/versión?"); setProgress("Ningún GUID coincide."); showCancel(false); return; }
 
       setProgress("Importando: calibrando color...");
-      const firstEntry=[...byModel.entries()][0];
-      const probeModel=firstEntry[0]; const probeId=firstEntry[1][0];
-      const colorFormats=[ "#FC0D1BFF", "#FC0D1B", {r:252,g:13,b:27,a:255}, {r:252,g:13,b:27}, {r:252,g:13,b:27,a:1} ];
+      const first=[...byModel.entries()][0]; const pModel=first[0]; const pId=first[1][0];
+      const formats=["#FC0D1BFF","#FC0D1B",{r:252,g:13,b:27,a:255},{r:252,g:13,b:27},{r:252,g:13,b:27,a:1}];
       let chosen=null;
-      for (const fmt of colorFormats) {
-        if (cancelRequested) break;
-        try { await API.viewer.setObjectState({modelObjectIds:[{modelId:probeModel,objectRuntimeIds:[probeId]}]},{color:fmt}); } catch (e){ log("   formato "+JSON.stringify(fmt)+" -> error: "+e.message); recordError("importCsv.colorFormat", e); continue; }
-        await sleep(220);
-        const applied=await probeColor(probeModel, probeId);
-        log("   formato "+JSON.stringify(fmt)+" -> visor: "+(applied||"(no detectado)"));
-        if (looksRed(applied)) { chosen=fmt; break; }
-      }
-      if (!chosen) { chosen=colorFormats[0]; log("No se pudo verificar el formato vía getColoredObjects; aplico "+JSON.stringify(chosen)+" igualmente."); }
-      else log("Formato de color válido: "+JSON.stringify(chosen));
+      for(const fmt of formats){ if(cancelRequested) break; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId:pModel,objectRuntimeIds:[pId]}]},{color:fmt}); }catch(e){ continue; } await sleep(220); const ap=await probeColor(pModel,pId); log("   formato "+JSON.stringify(fmt)+" -> "+(ap||"(no detectado)")); if(looksRed(ap)){ chosen=fmt; break; } }
+      if(!chosen){ chosen=formats[0]; log("No se pudo verificar el formato; aplico "+JSON.stringify(chosen)+"."); } else log("Formato válido: "+JSON.stringify(chosen));
 
       let applied=0;
-      for (const [modelId, ids] of byModel.entries()) {
-        if (cancelRequested){ break; }
-        const selector={ modelObjectIds:[{ modelId, objectRuntimeIds: ids }] };
-        try { await API.viewer.setObjectState(selector, { color: chosen }); applied+=ids.length; } catch (e){ recordError("importCsv.applyColor", e); log("Error aplicando color en "+modelId+": "+e.message); }
-      }
+      for(const [modelId,ids] of byModel.entries()){ if(cancelRequested) break; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:chosen}); applied+=ids.length; }catch(e){ recordError("import.apply",e); log("Error color en "+modelId+": "+e.message); } }
       showCancel(false);
-      log("Pintados de rojo: "+applied+" objetos.");
-      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados de rojo.");
-      recordDebug("importCsv.done",{applied});
+      log("Pintados de rojo: "+applied+" objetos."); setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados.");
     }
 
-    // ===================== PROPIEDADES / CANDIDATOS =====================
-    function flattenProps(propsList) {
-      const flat=[];
-      const walk=(obj, path=[])=>{
-        if (!obj||typeof obj!=="object") return;
-        if (Array.isArray(obj)){ obj.forEach((x)=>walk(x,path)); return; }
-        const name=obj.name??obj.Name??obj.key??obj.propertyName??obj.label;
-        const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue;
-        const unit=obj.unit??obj.units??obj.Unit??"";
-        if (name!==undefined&&value!==undefined&&typeof value!=="object") {
-          flat.push({name:String(name),value:String(value),unit:String(unit||""),path:path.concat(String(name)).join(".")});
-        }
-        for (const k of Object.keys(obj)) if (typeof obj[k]==="object") walk(obj[k], path.concat(k));
-      };
-      walk(propsList);
-      return flat;
-    }
-    function propsSearchText(propObj) {
-      const chunks = [];
-      try { if (propObj.class) chunks.push(propObj.class); } catch(e){}
-      try { if (propObj.product) chunks.push(safeJson(propObj.product)); } catch(e){}
-      for (const p of flattenProps(propObj)) chunks.push(p.name, p.value);
-      return chunks.join(" ").toLowerCase();
-    }
-    function isNumericValue(v) { if (typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
-    function toNumber(v) { return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
+    // ===================== PROPIEDADES =====================
+    function flattenProps(propsList){ const flat=[]; const walk=(obj)=>{ if(!obj||typeof obj!=="object") return; if(Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key??obj.propertyName; const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue; const unit=obj.unit??obj.units??obj.Unit??""; if(name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value:String(value),unit:String(unit||"")}); for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
+    function propsSearchText(p){ const chunks=[]; try{ if(p.class) chunks.push(p.class);}catch(e){} for(const x of flattenProps(p)) chunks.push(x.name,x.value); return chunks.join(" ").toLowerCase(); }
+    function isNumericValue(v){ if(typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
+    function toNumber(v){ return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
+    function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
 
-    async function safeGetSelection() {
-      let sel=[]; try { sel=await API.viewer.getSelection(); } catch (e){ recordError("safeGetSelection", e); return []; }
-      const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[];
-      for (const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for (const id of ids) out.push({modelId, runtimeId:Number(id)}); }
-      return out.filter((o)=>o.modelId && Number.isFinite(o.runtimeId));
-    }
+    async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
 
-    function bboxOf(box) {
-      const b=box&&box.boundingBox?box.boundingBox:box;
-      if (!b) return null;
-      const min=b.min||b.minPoint||b.start||b.minimum;
-      const max=b.max||b.maxPoint||b.end||b.maximum;
-      if (!min||!max) return null;
-      return { min:{x:Number(min.x),y:Number(min.y),z:Number(min.z)}, max:{x:Number(max.x),y:Number(max.y),z:Number(max.z)} };
-    }
-    function boxesOverlap(a, b, tol) { return a.min.x-tol<=b.max.x&&a.max.x+tol>=b.min.x&&a.min.y-tol<=b.max.y&&a.max.y+tol>=b.min.y&&a.min.z-tol<=b.max.z&&a.max.z+tol>=b.min.z; }
-    function expandBox(b, tol) { return {min:{x:b.min.x-tol,y:b.min.y-tol,z:b.min.z-tol},max:{x:b.max.x+tol,y:b.max.y+tol,z:b.max.z+tol}}; }
-    function unionBox(boxes) { const u={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}}; for (const b of boxes){u.min.x=Math.min(u.min.x,b.min.x);u.min.y=Math.min(u.min.y,b.min.y);u.min.z=Math.min(u.min.z,b.min.z);u.max.x=Math.max(u.max.x,b.max.x);u.max.y=Math.max(u.max.y,b.max.y);u.max.z=Math.max(u.max.z,b.max.z);} return u; }
-    function boxVolume(b) { return Math.max(0,(b.max.x-b.min.x))*Math.max(0,(b.max.y-b.min.y))*Math.max(0,(b.max.z-b.min.z)); }
+    async function safeGetSelection(){ let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
+
+    function bboxOf(box){ const b=box&&box.boundingBox?box.boundingBox:box; if(!b) return null; const min=b.min||b.minPoint||b.start; const max=b.max||b.maxPoint||b.end; if(!min||!max) return null; return {min:{x:Number(min.x),y:Number(min.y),z:Number(min.z)},max:{x:Number(max.x),y:Number(max.y),z:Number(max.z)}}; }
+    function boxesOverlap(a,b,tol){ return a.min.x-tol<=b.max.x&&a.max.x+tol>=b.min.x&&a.min.y-tol<=b.max.y&&a.max.y+tol>=b.min.y&&a.min.z-tol<=b.max.z&&a.max.z+tol>=b.min.z; }
+    function unionBox(boxes){ const u={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}}; for(const b of boxes){ u.min.x=Math.min(u.min.x,b.min.x);u.min.y=Math.min(u.min.y,b.min.y);u.min.z=Math.min(u.min.z,b.min.z);u.max.x=Math.max(u.max.x,b.max.x);u.max.y=Math.max(u.max.y,b.max.y);u.max.z=Math.max(u.max.z,b.max.z);} return u; }
+    function boxVolume(b){ return Math.max(0,(b.max.x-b.min.x))*Math.max(0,(b.max.y-b.min.y))*Math.max(0,(b.max.z-b.min.z)); }
     const keyOf=(o)=>o.modelId+":"+o.runtimeId;
-    const keyOfId=(modelId,id)=>modelId+":"+id;
     const keyList=(list)=>JSON.stringify(list.map(keyOf).sort());
+    function addToMapSet(map,modelId,ids){ if(!ids||ids.length===0) return; if(!map.has(modelId)) map.set(modelId,new Set()); for(const id of ids) if(Number.isFinite(Number(id))) map.get(modelId).add(Number(id)); }
+    function mapSetCount(map){ let n=0; for(const s of map.values()) n+=s.size; return n; }
+    function mapSetToSelector(map){ return {modelObjectIds:[...map.entries()].map(([modelId,set])=>({modelId,objectRuntimeIds:[...set]})).filter((x)=>x.objectRuntimeIds.length>0)}; }
 
-    function modelObjectsToEntries(groups, hidden=false) {
-      const out=[];
-      for (const g of groups||[]) {
-        const modelId = g.modelId || g.id || g.modelID || "";
-        for (const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])) {
-          const rid = typeof o === "object" ? Number(o.id ?? o.objectRuntimeId ?? o.runtimeId) : Number(o);
-          if (modelId && Number.isFinite(rid)) out.push({modelId, objectRuntimeId:rid, hidden});
-        }
-      }
-      return out;
-    }
+    // ===================== SELECCIÓN CERCANOS (por ensamblaje + contacto) =====================
+    function isFastenerOrWeld(propObj,bb){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<CONTACT_VOLUME_MAX) return true; return false; }
+    function customFilterMatches(propObj){ const customOn=document.getElementById("nearCustom").checked&&document.getElementById("nearToggle").checked; if(!customOn) return null; const paramName=document.getElementById("nearParam").value; const op=document.getElementById("nearOp").value; const target=toNumber(document.getElementById("nearValue").value); if(!paramName||!op||!Number.isFinite(target)){ log("Configuración personalizada incompleta."); return false; } const hit=flattenProps(propObj).find((p)=>p.name.toLowerCase()===paramName.toLowerCase()); if(!hit||!isNumericValue(hit.value)) return false; const v=toNumber(hit.value); if(op==="menos") return v<target; if(op==="mas") return v>target; if(op==="igual") return Math.abs(v-target)<=Math.max(1e-9,Math.abs(target)*0.001); return false; }
 
-    function includeHiddenInSearch() {
-      return false;
-    }
-
-    async function getCandidateEntries(includeHidden) {
-      const cacheKey = includeHidden ? "all+hidden" : "visible";
-      if (candidateCache.has(cacheKey)) return candidateCache.get(cacheKey);
-
-      let entries=[];
-      try {
-        entries = modelObjectsToEntries(await API.viewer.getObjects(undefined, { visible:true }), false);
-      } catch (e) {
-        recordError("getCandidateEntries.visible", e);
-        try { entries = modelObjectsToEntries(await API.viewer.getObjects(), false); }
-        catch (e2) { recordError("getCandidateEntries.all", e2); }
-      }
-
-      if (includeHidden) {
-        try {
-          const hidden = modelObjectsToEntries(await API.viewer.getObjects(undefined, { visible:false }), true);
-          for (const h of hidden) {
-            entries.push(h);
-            if (!hiddenIdsCache.has(h.modelId)) hiddenIdsCache.set(h.modelId, new Set());
-            hiddenIdsCache.get(h.modelId).add(h.objectRuntimeId);
-          }
-        } catch (e) { recordError("getCandidateEntries.hidden", e); }
-      }
-
-      if (entries.length===0) {
-        try {
-          const colored=await getColoredObjectEntries();
-          entries=colored.map((c)=>({modelId:c.modelId, objectRuntimeId:c.objectRuntimeId, hidden:false}));
-          log("Aviso: no se pudieron obtener todos los objetos. Fallback con objetos coloreados: "+entries.length);
-        } catch (e) { recordError("getCandidateEntries.coloredFallback", e); }
-      }
-
-      const seen=new Set();
-      entries=entries.filter((e)=>{
-        const k=e.modelId+":"+e.objectRuntimeId;
-        if (seen.has(k)) return false;
-        seen.add(k); return true;
-      });
-      candidateCache.set(cacheKey, entries);
-      recordDebug("candidateEntries",{includeHidden,count:entries.length,hiddenCount:entries.filter((e)=>e.hidden).length});
-      return entries;
-    }
-
-    async function getHiddenObjectEntries() {
-      const attempts = [
-        () => API.viewer.getObjects(undefined, { visible:false }),
-        () => API.viewer.getObjects(undefined, { hidden:true }),
-        () => API.viewer.getObjects({ visible:false }),
-        () => API.viewer.getObjects({ hidden:true })
-      ];
-      let entries=[];
-      for (const fn of attempts) {
-        try {
-          entries = modelObjectsToEntries(await fn(), true);
-          if (entries.length) break;
-        } catch (e) { recordError("getHiddenObjectEntries", e); }
-      }
-      const seen=new Set();
-      entries=entries.filter((e)=>{ const k=e.modelId+":"+e.objectRuntimeId; if(seen.has(k)) return false; seen.add(k); return true; });
-      recordDebug("getHiddenObjectEntries",{count:entries.length});
-      return entries;
-    }
-
-    async function markHiddenObjectsWhite() {
-      const entries=await getHiddenObjectEntries();
-      hiddenWhiteRegistry.clear();
-      if (!entries.length) {
-        log("Selección ocultos: no se han detectado objetos ocultos mediante la API.");
-        recordDebug("markHiddenObjectsWhite",{count:0});
-        return 0;
-      }
-      const byModel=new Map();
-      for (const e of entries) addToMapSet(byModel, e.modelId, [e.objectRuntimeId]);
-      let marked=0;
-      for (const [modelId,set] of byModel.entries()) {
-        const ids=[...set];
-        try {
-          await API.viewer.setObjectState({modelObjectIds:[{modelId, objectRuntimeIds:ids}]},{color:HIDDEN_MARK_COLOR, visible:false});
-          hiddenWhiteRegistry.set(modelId, new Set(ids));
-          marked += ids.length;
-        } catch (e) { recordError("markHiddenObjectsWhite.setObjectState", e); }
-      }
-      log("Selección ocultos: objetos ocultos marcados en blanco: "+marked+".");
-      recordDebug("markHiddenObjectsWhite",{marked});
-      return marked;
-    }
-
-    async function hiddenWhiteMapStillWhite() {
-      const out=new Map();
-      const colorMap=new Map();
-      let colored=[];
-      try { colored=await getColoredObjectEntriesWithRetry(); } catch (e) { recordError("hiddenWhiteMapStillWhite.colors", e); }
-      for (const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId, c.normalizedColor);
-      for (const [modelId,set] of hiddenWhiteRegistry.entries()) {
-        for (const id of set) {
-          const k=modelId+":"+id;
-          const col=colorMap.get(k);
-          if (col===HIDDEN_MARK_COLOR || (!col && colored.length===0)) addToMapSet(out, modelId, [id]);
-        }
-      }
-      return out;
-    }
-
-    async function setHiddenWhitesVisible(visible) {
-      const map=await hiddenWhiteMapStillWhite();
-      let count=0;
-      for (const [modelId,set] of map.entries()) {
-        const ids=[...set];
-        if (!ids.length) continue;
-        try {
-          await API.viewer.setObjectState({modelObjectIds:[{modelId, objectRuntimeIds:ids}]},{visible:!!visible});
-          count += ids.length;
-        } catch (e) { recordError("setHiddenWhitesVisible", e); }
-      }
-      log((visible?"Ver ocultos: visibles ":"Ver ocultos: ocultos ")+count+" objeto(s) blancos.");
-      recordDebug("setHiddenWhitesVisible",{visible,count});
-      return count;
-    }
-
-    function syncHiddenUiState() {
-      const on=document.getElementById("hiddenSelectionToggle").checked;
-      const view=document.getElementById("viewHiddenToggle");
-      const line=document.getElementById("viewHiddenLine");
-      if (view) view.disabled=!on;
-      if (line) line.classList.toggle("is-disabled", !on);
-      recordDebug("syncHiddenUiState",{on,viewHidden:view?view.checked:false});
-    }
-
-    async function getCandidateRuntimeIds(modelId, includeHidden) {
-      const entries=await getCandidateEntries(includeHidden);
-      return entries.filter((e)=>e.modelId===modelId).map((e)=>e.objectRuntimeId);
-    }
-
-    async function getPropertiesCached(modelId, ids) {
-      if (!objectPropertiesCache.has(modelId)) objectPropertiesCache.set(modelId, new Map());
-      const cache=objectPropertiesCache.get(modelId);
-      const result = new Map();
-      const missing = [];
-      for (const id of ids) {
-        if (cache.has(id)) result.set(id, cache.get(id));
-        else missing.push(id);
-      }
-      for (let i=0;i<missing.length;i+=PROPS_BATCH) {
-        const chunk=missing.slice(i,i+PROPS_BATCH);
-        try {
-          const props=await API.viewer.getObjectProperties(modelId, chunk);
-          for (let j=0;j<chunk.length;j++) {
-            const p=props && props[j] ? props[j] : {};
-            cache.set(chunk[j], p);
-            result.set(chunk[j], p);
-          }
-        } catch (e) { recordError("getPropertiesCached", e); }
-      }
-      return result;
-    }
-
-    function isFastenerOrWeld(propObj, bb) {
-      const t = propsSearchText(propObj);
-      const semanticTerms = [
-        "ifcfastener","ifcmechanicalfastener","fastener","mechanical fastener",
-        "weld","welding","weld seam","welds","soldadura","cordon","cordón",
-        "bolt","screw","nut","washer","anchor","anchorage","perno","tornillo","tuerca","arandela","anclaje","varilla","rod"
-      ];
-      if (semanticTerms.some((term)=>t.includes(term))) return true;
-      if (bb && boxVolume(bb) < CONTACT_VOLUME_MAX) return true;
-      return false;
-    }
-
-    function customFilterMatches(propObj) {
-      const customOn = document.getElementById("nearCustom").checked && document.getElementById("nearToggle").checked;
-      if (!customOn) return true;
-      const paramName=document.getElementById("nearParam").value;
-      const op=document.getElementById("nearOp").value;
-      const target=toNumber(document.getElementById("nearValue").value);
-      if (!paramName||!op||!Number.isFinite(target)){ log("Configuración personalizada incompleta: parámetro, condición y valor."); return false; }
-      const hit=flattenProps(propObj).find((p)=>p.name.toLowerCase()===paramName.toLowerCase());
-      if (!hit||!isNumericValue(hit.value)) return false;
-      const v=toNumber(hit.value);
-      if (op==="menos") return v<target;
-      if (op==="mas") return v>target;
-      if (op==="igual") return Math.abs(v-target)<=Math.max(1e-9,Math.abs(target)*0.001);
-      return false;
-    }
-
-    async function getHierarchyCandidateIds(modelId, seedIds) {
+    async function assemblyCandidateIds(modelId,seedIds){
       const ids=new Set();
-      const add=(arr)=>{ for (const x of arr||[]) { const id=Number(typeof x==="object" ? (x.id ?? x.runtimeId ?? x.objectRuntimeId) : x); if (Number.isFinite(id)) ids.add(id); } };
-      try {
-        const parents=await API.viewer.getHierarchyParents(modelId, seedIds, undefined, true, false);
-        const rootIds=(parents&&parents.length>0)?parents.map((p)=>p.id??p.runtimeId??p.objectRuntimeId).filter((x)=>x!=null):seedIds;
-        const children=await API.viewer.getHierarchyChildren(modelId, rootIds, undefined, true);
-        add(children);
-      } catch (e) { recordError("getHierarchyCandidateIds.parentsChildren", e); }
-      if (ids.size===0) {
-        try { add(await API.viewer.getHierarchyChildren(modelId, seedIds, undefined, true)); }
-        catch (e) { recordError("getHierarchyCandidateIds.seedChildren", e); }
-      }
-      recordDebug("getHierarchyCandidateIds",{modelId,count:ids.size});
+      const add=(arr)=>{ for(const x of arr||[]){ const id=Number(typeof x==="object"?(x.id??x.runtimeId??x.objectRuntimeId):x); if(Number.isFinite(id)) ids.add(id); } };
+      try{
+        // Padres directos (el ensamblaje) y luego todos sus descendientes
+        const parents=await API.viewer.getHierarchyParents(modelId,seedIds,undefined,false,false);
+        const parentIds=(parents||[]).map((p)=>Number(p.id??p.runtimeId??p.objectRuntimeId)).filter(Number.isFinite);
+        const roots=parentIds.length?parentIds:seedIds;
+        add(await API.viewer.getHierarchyChildren(modelId,roots,undefined,true));
+      }catch(e){ recordError("assemblyCandidateIds",e); }
+      if(ids.size===0){ try{ add(await API.viewer.getHierarchyChildren(modelId,seedIds,undefined,true)); }catch(e){} }
       return [...ids];
     }
 
-    async function getNeighborCandidateIds(modelId, seedIds) {
-      const ids=new Set();
-      try { for (const id of await getCandidateRuntimeIds(modelId, false)) ids.add(id); }
-      catch (e) { recordError("getNeighborCandidateIds.getObjects", e); }
-      const hierarchy=await getHierarchyCandidateIds(modelId, seedIds);
-      for (const id of hierarchy) ids.add(id);
-      const out=[...ids];
-      recordDebug("getNeighborCandidateIds",{modelId,total:out.length, hierarchy:hierarchy.length});
-      return out;
-    }
-
-    async function computeNeighbors(modelId, seedIds) {
-      if (seedIds.length===0) return [];
-      const stats = { seed:seedIds.length, candidates:0, bbox:0, semantic:0, custom:0, added:0 };
-      let seedBoxesRaw=[];
-      try { seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId, seedIds); }
-      catch(e){ recordError("computeNeighbors.seedBbox", e); return []; }
-      const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean);
-      if (seedBoxes.length===0) return [];
-      const searchBox=expandBox(unionBox(seedBoxes), CONTACT_TOLERANCE);
-      let candidateIds=await getNeighborCandidateIds(modelId, seedIds);
+    async function computeNeighbors(modelId,seedIds){
+      if(seedIds.length===0) return [];
+      let seedBoxesRaw=[]; try{ seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId,seedIds); }catch(e){ recordError("computeNeighbors.seedBbox",e); return []; }
+      const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if(seedBoxes.length===0) return [];
+      const seedBox=unionBox(seedBoxes);
       const seedSet=new Set(seedIds);
-      candidateIds=[...new Set(candidateIds)].filter((id)=>!seedSet.has(id));
-      stats.candidates=candidateIds.length;
-
+      let candidateIds=(await assemblyCandidateIds(modelId,seedIds)).filter((id)=>!seedSet.has(id));
+      if(candidateIds.length===0){ log("Selección cercanos: el objeto no tiene ensamblaje con más piezas (o la jerarquía no está disponible)."); return []; }
+      // contacto con la caja del objeto seleccionado (tolerancia ajustada)
       const contact=[]; const bboxById=new Map();
-      for (let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){
-        const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH);
-        let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId, chunk);}catch(e){ recordError("computeNeighbors.candidateBbox", e); continue; }
-        for (let j=0;j<chunk.length;j++){
-          const bb=boxes[j]?bboxOf(boxes[j]):null;
-          if (bb&&boxesOverlap(searchBox,bb,CONTACT_TOLERANCE)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);}
-        }
-      }
-      stats.bbox=contact.length;
-
-      const propsMap=await getPropertiesCached(modelId, contact);
+      for(let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){ const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,chunk); }catch(e){ continue; } for(let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if(bb&&boxesOverlap(seedBox,bb,CONTACT_TOLERANCE)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
+      const custom=document.getElementById("nearCustom").checked&&document.getElementById("nearToggle").checked;
+      const propsMap=custom?await getPropertiesCached(modelId,contact):await getPropertiesCached(modelId,contact);
       const matches=[];
-      for (const id of contact) {
-        const prop=propsMap.get(id)||{};
-        if (!isFastenerOrWeld(prop,bboxById.get(id))) continue;
-        stats.semantic++;
-        if (!customFilterMatches(prop)) continue;
-        stats.custom++;
-        matches.push(id);
-      }
-      stats.added=matches.length;
-      recordDebug("computeNeighbors", {modelId, stats});
-      log("Selección cercanos: candidatos="+stats.candidates+", bbox="+stats.bbox+", tipo/tamaño="+stats.semantic+", añadidos="+stats.added+" ("+modelId+").");
+      for(const id of contact){ const prop=propsMap.get(id)||{}; if(custom){ if(customFilterMatches(prop)===true) matches.push(id); } else { if(isFastenerOrWeld(prop,bboxById.get(id))) matches.push(id); } }
+      log("Selección cercanos: ensamblaje="+candidateIds.length+", en contacto="+contact.length+", añadidos="+matches.length+" ("+modelId+").");
       return matches;
     }
 
-    // ===================== PARÁMETROS UI / INCLUIR =====================
-    function collectParamValues(propObj) {
-      const map = new Map();
-      for (const p of flattenProps(propObj)) {
-        const name = String(p.name||"").trim();
-        const value = String(p.value||"").trim();
-        if (!name || value==="") continue;
-        if (!map.has(name)) map.set(name, new Set());
-        map.get(name).add(value);
-      }
-      if (propObj && propObj.class) {
-        if (!map.has("class")) map.set("class", new Set());
-        map.get("class").add(String(propObj.class));
-      }
-      try {
-        if (propObj.product) {
-          for (const [k,v] of Object.entries(propObj.product)) {
-            if (v == null || typeof v === "object") continue;
-            const name = "product."+k;
-            if (!map.has(name)) map.set(name, new Set());
-            map.get(name).add(String(v));
-          }
-        }
-      } catch(e){}
-      return map;
-    }
-
-    function getNameValues(propObj) {
-      const values=[];
-      for (const p of flattenProps(propObj)) {
-        const n=String(p.name||"").trim().toLowerCase();
-        if (n==="name") values.push(String(p.value||"").trim());
-      }
-      try { if (propObj && propObj.name != null) values.push(String(propObj.name).trim()); } catch(e){}
-      try { if (propObj && propObj.Name != null) values.push(String(propObj.Name).trim()); } catch(e){}
-      try { if (propObj && propObj.product && propObj.product.name != null) values.push(String(propObj.product.name).trim()); } catch(e){}
-      try { if (propObj && propObj.product && propObj.product.Name != null) values.push(String(propObj.product.Name).trim()); } catch(e){}
-      return [...new Set(values.filter(Boolean))];
-    }
-
-    async function populateParameters() {
-      const sel=document.getElementById("nearParam"); sel.innerHTML="";
-      const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph);
-      const found=new Map();
-      try {
-        let sample=(await safeGetSelection()).slice(0,10).map((s)=>({modelId:s.modelId,objectRuntimeId:s.runtimeId}));
-        if (sample.length===0){ const candidates=await getCandidateEntries(false); sample=candidates.slice(0,80); }
-        const byModel=new Map();
-        for (const s of sample){ if (!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.objectRuntimeId); }
-        for (const [modelId, ids] of byModel.entries()) {
-          const propsMap=await getPropertiesCached(modelId, ids);
-          for (const pObj of propsMap.values()) for (const p of flattenProps(pObj)) if (isNumericValue(p.value)&&!found.has(p.name)) found.set(p.name,p.unit);
-        }
-      } catch (e) { recordError("populateParameters", e); }
-      for (const [name,unit] of found.entries()){ const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); }
-      if (found.size===0) log("No se han detectado parámetros numéricos en la muestra. Selecciona un objeto y reactiva 'Configuración personalizada'.");
-      updateUnitLabel();
-    }
-
-    async function buildIncludeCaches() {
-      setProgress("Leyendo valores Name del modelo...");
-      const entries=(await getCandidateEntries(false)).slice(0, INCLUDE_SCAN_LIMIT);
-      const byModel=new Map();
-      for (const e of entries) { if (!byModel.has(e.modelId)) byModel.set(e.modelId, []); byModel.get(e.modelId).push(e.objectRuntimeId); }
-      const globalParams=new Set(["Name"]);
-
-      let processed=0;
-      for (const [modelId, ids] of byModel.entries()) {
-        const cacheKey="visible|"+modelId+"|Name";
-        if (!includeValueCache.has(cacheKey)) includeValueCache.set(cacheKey, new Set());
-        for (let i=0;i<ids.length;i+=PROPS_BATCH) {
-          if (cancelRequested) break;
-          const chunk=ids.slice(i,i+PROPS_BATCH);
-          const propsMap=await getPropertiesCached(modelId, chunk);
-          for (const propObj of propsMap.values()) {
-            for (const v of getNameValues(propObj)) includeValueCache.get(cacheKey).add(v);
-          }
-          processed += chunk.length;
-          if (processed % 500 === 0) setProgress("Leyendo valores Name: "+processed+"/"+entries.length);
-        }
-      }
-      includeParameterCache.set("visible", globalParams);
-      setProgress("Valores Name cargados.");
-      recordDebug("buildIncludeCaches",{scanned:entries.length, param:"Name"});
-    }
-
-    async function populateIncludeParameters() {
-      const sel=document.getElementById("includeParam"); if (!sel) return;
-      sel.innerHTML='<option value="Name" selected>Name</option>';
-      sel.value="Name";
-      sel.classList.remove("placeholder");
-      if (!includeParameterCache.has("visible")) await buildIncludeCaches();
-      recordDebug("populateIncludeParameters",{fixed:"Name"});
-    }
-
-    async function populateIncludeValues() {
-      const vsel=document.getElementById("includeValue");
-      if (!vsel) return;
-      vsel.innerHTML='<option value="" disabled selected hidden>valor</option>';
-      if (!includeParameterCache.has("visible")) await buildIncludeCaches();
-      const values=new Set();
-      let modelIds=[];
-      try { modelIds=(await API.viewer.getModels()||[]).map((m)=>m.id).filter(Boolean); } catch(e){}
-      const entries=await getCandidateEntries(false);
-      for (const e of entries) if (!modelIds.includes(e.modelId)) modelIds.push(e.modelId);
-      for (const modelId of [...new Set(modelIds)]) {
-        const cacheKey="visible|"+modelId+"|Name";
-        for (const v of (includeValueCache.get(cacheKey)||[])) values.add(v);
-      }
-      [...values].sort((a,b)=>a.localeCompare(b)).slice(0,1500).forEach((v)=>{
-        const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o);
-      });
-      vsel.classList.toggle("placeholder",!vsel.value);
-      recordDebug("populateIncludeValues",{param:"Name",count:values.size});
-    }
-
-    async function computeIncludeFilterRemovals(currentSelection) {
-      const includeOn=document.getElementById("includeToggle").checked;
+    // ===================== EXCLUIR / CONCENTRAR =====================
+    async function computeExcludedRemovals(current,addMap){
       const removeMap=new Map();
-      if (!includeOn) return removeMap;
-      const value=document.getElementById("includeValue").value;
-      if (!value) { log("Incluir en la selección: falta seleccionar un valor Name."); return removeMap; }
-
-      const byModel=new Map();
-      for (const o of currentSelection) {
-        if (!byModel.has(o.modelId)) byModel.set(o.modelId, []);
-        byModel.get(o.modelId).push(o.runtimeId);
-      }
-
-      let checked=0, removed=0, kept=0;
-      const wanted=String(value).trim().toLowerCase();
-      for (const [modelId, ids] of byModel.entries()) {
-        for (let i=0;i<ids.length;i+=PROPS_BATCH) {
-          const chunk=ids.slice(i,i+PROPS_BATCH);
-          const propsMap=await getPropertiesCached(modelId, chunk);
-          for (const id of chunk) {
-            checked++;
-            const propObj=propsMap.get(id)||{};
-            const values=getNameValues(propObj).map((v)=>String(v).trim().toLowerCase());
-            const ok=values.includes(wanted);
-            if (ok) kept++;
-            else { addToMapSet(removeMap, modelId, [id]); removed++; }
-          }
-        }
-      }
-      if (removed) log("Incluir en la selección: mantenidos "+kept+" objeto(s) con Name = "+value+". Quitados "+removed+".");
-      recordDebug("computeIncludeFilterRemovals",{value,checked,kept,removed});
+      const exclOn=document.getElementById("excludeToggle").checked&&excludedColors.size>0;
+      if(!exclOn) return removeMap;
+      let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ colored=[]; }
+      const colorMap=new Map(); for(const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor);
+      // solo sobre lo recién añadido en la última selección (usuario + cercanos)
+      for(const o of current){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); }
+      for(const [modelId,set] of addMap.entries()){ for(const id of [...set]){ const col=colorMap.get(modelId+":"+id); if(col&&excludedColors.has(col)){ set.delete(id); addToMapSet(removeMap,modelId,[id]); } } }
+      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: quitados "+n+" objeto(s) por color.");
       return removeMap;
     }
-
-    function clearSelectionCaches() {
-      objectPropertiesCache.clear();
-      candidateCache.clear();
-      includeParameterCache.clear();
-      includeValueCache.clear();
-      hiddenIdsCache.clear();
-      log("Cachés de selección limpiadas.");
-      recordDebug("clearSelectionCaches");
-    }
-
-    function updateUnitLabel() { const sel=document.getElementById("nearParam"); const opt=sel.options[sel.selectedIndex]; sel.classList.toggle("placeholder",!sel.value); document.getElementById("nearUnit").textContent=(opt&&opt.dataset&&opt.dataset.unit)?opt.dataset.unit:""; }
-
-    function syncNearUiState() {
-      const nearOn=document.getElementById("nearToggle").checked;
-      const nearCustom=document.getElementById("nearCustom");
-      const customOn=nearCustom.checked;
-      const active=nearOn && customOn;
-      const config=document.getElementById("nearConfig");
-      const customLine=document.getElementById("nearCustomLine");
-      const defaultHint=document.getElementById("nearDefaultHint");
-      nearCustom.disabled=!nearOn;
-      if (customLine) customLine.classList.toggle("is-disabled", !nearOn);
-      document.getElementById("nearParam").disabled=!active;
-      document.getElementById("nearOp").disabled=!active;
-      document.getElementById("nearValue").disabled=!active;
-      if (config) config.classList.toggle("disabled-area", !active);
-      if (defaultHint) defaultHint.style.display=customOn ? "none" : "block";
-      recordDebug("syncNearUiState",{nearOn,customOn,active,nearCustomDisabled:nearCustom.disabled});
-    }
-
-    function syncIncludeUiState() {
-      const on=document.getElementById("includeToggle").checked;
-      const p=document.getElementById("includeParam"); if (p) p.disabled=true;
-      ["includeValue","includeRefreshValues","includeClearCache"].forEach((id)=>{
-        const el=document.getElementById(id); if (el) el.disabled=!on;
-      });
-      const c=document.getElementById("includeConfig"); if (c) c.classList.toggle("disabled-area", !on);
-      recordDebug("syncIncludeUiState",{on,param:"Name"});
-    }
-
-    async function populateExcludeColors() {
-      const cont=document.getElementById("excludeColors"); cont.innerHTML="";
-      let colored=[]; try { colored=await getColoredObjectEntriesWithRetry(); } catch (e) { recordError("populateExcludeColors", e); }
-      const byColor=new Map();
-      const invalid=[];
-      for (const c of colored) {
-        if (!c.colorValid) { invalid.push(c); continue; }
-        if (!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor, {css:c.cssColor, count:0});
-        byColor.get(c.normalizedColor).count++;
-      }
-      const colors=[...byColor.keys()].sort();
-      if (colors.length===0){ cont.textContent="No hay colores aplicados en el modelo."; return; }
-      for (const col of colors){
-        const row=document.createElement("label");
-        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedColors.has(col); cb.addEventListener("change",()=>{ if (cb.checked) excludedColors.add(col); else excludedColors.delete(col); recordDebug("excludedColorToggle",{color:col,checked:cb.checked}); });
-        const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css;
-        const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"+(REVIEWED_DEO_COLORS.has(col)?"  [revisado]":"");
-        row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row);
-      }
-      if (invalid.length) {
-        const div=document.createElement("div"); div.className="hint"; div.textContent="Colores inválidos detectados: "+invalid.length+" (ver debug)."; cont.appendChild(div);
-      }
-      recordDebug("populateExcludeColors",{colors:colors.length, invalid:invalid.slice(0,20)});
+    async function computeIncludeRemovals(current){
+      const removeMap=new Map();
+      if(!document.getElementById("includeToggle").checked) return removeMap;
+      const value=document.getElementById("includeValue").value; if(!value){ log("Concentrar selección: falta elegir un valor Name."); return removeMap; }
+      const byModel=new Map(); for(const o of current){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
+      const wanted=String(value).trim().toLowerCase(); let kept=0,removed=0;
+      for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(values.includes(wanted)) kept++; else { addToMapSet(removeMap,modelId,[id]); removed++; } } } }
+      if(removed) log("Concentrar selección: mantenidos "+kept+" con Name="+value+", quitados "+removed+".");
+      return removeMap;
     }
 
     // ===================== MOTOR DE SELECCIÓN =====================
-    function toolsActive() {
-      return !!(
-        document.getElementById("nearToggle").checked ||
-        document.getElementById("excludeToggle").checked ||
-        document.getElementById("includeToggle").checked
-      );
-    }
-
-    function addToMapSet(map, modelId, ids) {
-      if (!ids || ids.length===0) return;
-      if (!map.has(modelId)) map.set(modelId,new Set());
-      for (const id of ids) if (Number.isFinite(Number(id))) map.get(modelId).add(Number(id));
-    }
-    function mapSetCount(map) { let n=0; for (const s of map.values()) n+=s.size; return n; }
-    function mapSetToSelector(map) {
-      return { modelObjectIds:[...map.entries()].map(([modelId,set])=>({modelId, objectRuntimeIds:[...set]})).filter((x)=>x.objectRuntimeIds.length>0) };
-    }
-    function currentSelectionSet(current) {
-      const s=new Set();
-      for (const o of current) s.add(keyOf(o));
-      return s;
-    }
-
-    async function applySelectionMap(map, mode) {
-      if (mapSetCount(map)===0) return;
-      const selector=mapSetToSelector(map);
-      suppressSelectionUntil = Date.now()+500;
-      try { await API.viewer.setSelection(selector, mode); }
-      catch (e) { recordError("applySelectionMap."+mode, e); log("Error setSelection("+mode+"): "+e.message); }
-    }
-
-    async function makeHiddenAdditionsVisible(addMap) {
-      if (!includeHiddenInSearch()) return 0;
-      let changed=0;
-      for (const [modelId,set] of addMap.entries()) {
-        const hiddenSet=hiddenIdsCache.get(modelId);
-        if (!hiddenSet || hiddenSet.size===0) continue;
-        const ids=[...set].filter((id)=>hiddenSet.has(id));
-        if (ids.length===0) continue;
-        try {
-          await API.viewer.setObjectState({modelObjectIds:[{modelId, objectRuntimeIds:ids}]},{visible:true});
-          changed += ids.length;
-        } catch (e) { recordError("makeHiddenAdditionsVisible", e); }
-      }
-      if (changed) log("Selección ocultos: objetos ocultos hechos visibles para poder seleccionarlos: "+changed);
-      recordDebug("makeHiddenAdditionsVisible",{changed});
-      return changed;
-    }
-
-    function mergeMapSets(target, source) {
-      for (const [modelId,set] of source.entries()) addToMapSet(target, modelId, [...set]);
-      return target;
-    }
-
-    async function applyFinalSelection(finalMap, reason) {
-      const selector=mapSetToSelector(finalMap);
-      suppressSelectionUntil = Date.now()+600;
-      try { await API.viewer.setSelection(selector, "set"); }
-      catch (e) { recordError("applyFinalSelection."+reason, e); log("Error filtrando selección: "+e.message); }
-    }
-
-    async function computeExcludedRemovals(current, addMap) {
-      const removeMap=new Map();
-      const exclOn=document.getElementById("excludeToggle").checked && excludedColors.size>0;
-      if (!exclOn) return removeMap;
-
-      let colored=[];
-      try { colored=await getColoredObjectEntriesWithRetry(); }
-      catch (e) { recordError("computeExcludedRemovals.colors", e); colored=[]; }
-      const colorMap=new Map();
-      for (const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId, c.normalizedColor);
-
-      let checked=0;
-      for (const o of current) {
-        checked++;
-        const col=colorMap.get(o.modelId+":"+o.runtimeId);
-        if (col && excludedColors.has(col)) addToMapSet(removeMap, o.modelId, [o.runtimeId]);
-      }
-      for (const [modelId,set] of addMap.entries()) {
-        for (const id of [...set]) {
-          checked++;
-          const col=colorMap.get(modelId+":"+id);
-          if (col && excludedColors.has(col)) {
-            set.delete(id);
-            addToMapSet(removeMap, modelId, [id]);
-          }
-        }
-      }
-      const n=mapSetCount(removeMap);
-      if (n) log("Excluir de la selección: quitados "+n+" objeto(s) por color.");
-      if (!colored.length) log("Excluir de la selección: no se han podido leer colores aplicados en esta vista.");
-      recordDebug("computeExcludedRemovals",{checked,removed:n,colored:colored.length,excludedColors:[...excludedColors]});
-      return removeMap;
-    }
-
-    async function processSelectionNow() {
-      if (!toolsActive()) return;
-      if (selBusy) return;
-      if (Date.now() < suppressSelectionUntil) return;
-
+    function toolsActive(){ return !!(document.getElementById("nearToggle").checked||document.getElementById("excludeToggle").checked||document.getElementById("includeToggle").checked); }
+    async function processSelectionNow(){
+      if(!toolsActive()){ return; }
+      if(selBusy) return;
+      if(Date.now()<suppressSelectionUntil) return;
       selBusy=true;
-      try {
+      try{
         const current=await safeGetSelection();
-        if (current.length===0){ prevSel=[]; return; }
-        const currentKey=keyList(current);
+        if(current.length===0){ prevSel=[]; return; }
         const prevSet=new Set(prevSel.map(keyOf));
         const added=current.filter((o)=>!prevSet.has(keyOf(o)));
-        const seedsByModel=new Map();
-        for (const o of (added.length?added:current)) addToMapSet(seedsByModel, o.modelId, [o.runtimeId]);
+        const seedsByModel=new Map(); for(const o of (added.length?added:current)) addToMapSet(seedsByModel,o.modelId,[o.runtimeId]);
+        const currentKeys=new Set(current.map(keyOf));
 
-        recordDebug("selectionDetected",{currentCount:current.length, addedCount:added.length, currentKey});
-
+        // añadir cercanos
         const addMap=new Map();
-        if (document.getElementById("nearToggle").checked) {
-          for (const [modelId,set] of seedsByModel.entries()) {
-            const neighbors=await computeNeighbors(modelId, [...set]);
-            const currentSet=currentSelectionSet(current);
-            const filtered=neighbors.filter((id)=>!currentSet.has(keyOfId(modelId,id)));
-            addToMapSet(addMap, modelId, filtered);
-          }
-        }
+        if(document.getElementById("nearToggle").checked){ for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set]); const filtered=neighbors.filter((id)=>!currentKeys.has(modelId+":"+id)); addToMapSet(addMap,modelId,filtered); } }
 
+        // quitar por color / por Name
         const removeMap=new Map();
-        mergeMapSets(removeMap, await computeExcludedRemovals(current, addMap));
-        mergeMapSets(removeMap, await computeIncludeFilterRemovals(current));
+        for(const [m,s] of (await computeExcludedRemovals(current,addMap)).entries()) addToMapSet(removeMap,m,[...s]);
+        for(const [m,s] of (await computeIncludeRemovals(current)).entries()) addToMapSet(removeMap,m,[...s]);
 
-        const addCount=mapSetCount(addMap);
-        const removeCount=mapSetCount(removeMap);
-        if (addCount===0 && removeCount===0) {
-          recordDebug("selectionProcessed.noChange",{currentCount:current.length});
-          prevSel=current;
-          return;
-        }
+        const addCount=mapSetCount(addMap), removeCount=mapSetCount(removeMap);
+        if(addCount===0 && removeCount===0){ prevSel=current; return; }  // no tocar la selección (mantiene el panel de propiedades)
 
-        const finalMap=new Map();
-        for (const o of current) addToMapSet(finalMap,o.modelId,[o.runtimeId]);
-        for (const [m,s] of addMap.entries()) addToMapSet(finalMap,m,[...s]);
-        for (const [m,s] of removeMap.entries()) {
-          if (!finalMap.has(m)) continue;
-          for (const id of s) finalMap.get(m).delete(id);
-        }
+        // aplicar de forma mínima: add y remove (nunca un set completo)
+        suppressSelectionUntil=Date.now()+650;
+        if(addCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(addMap),"add"); }catch(e){ recordError("setSelection.add",e); } }
+        if(removeCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(removeMap),"remove"); }catch(e){ recordError("setSelection.remove",e); } }
 
-        if (addCount>0 && removeCount===0) await applySelectionMap(addMap, "add");
-        else await applyFinalSelection(finalMap, "filter");
+        // recalcular prevSel
+        const finalMap=new Map(); for(const o of current) addToMapSet(finalMap,o.modelId,[o.runtimeId]); for(const [m,s] of addMap.entries()) addToMapSet(finalMap,m,[...s]); for(const [m,s] of removeMap.entries()){ if(finalMap.has(m)) for(const id of s) finalMap.get(m).delete(id); }
+        prevSel=[]; for(const [m,s] of finalMap.entries()) for(const id of s) prevSel.push({modelId:m,runtimeId:id});
+      }catch(err){ recordError("processSelectionNow",err); log("Selección: "+(err&&err.message?err.message:err)); }
+      finally{ selBusy=false; }
+    }
+    function scheduleProcessSelection(){ if(!toolsActive()) return; if(Date.now()<suppressSelectionUntil) return; clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,220); }
 
-        prevSel=[];
-        for (const [modelId,set] of finalMap.entries()) for (const id of set) prevSel.push({modelId,runtimeId:id});
-        recordDebug("selectionProcessed",{addCount,removeCount,finalCount:prevSel.length});
-      } catch (err){ recordError("processSelectionNow", err); log("Selección: "+(err&&err.message?err.message:err)); }
-      finally { selBusy=false; }
+    // ===================== OCULTOS =====================
+    async function getHiddenObjectEntries(){
+      const attempts=[ ()=>API.viewer.getObjects(undefined,{visible:false}), ()=>API.viewer.getObjects(undefined,{hidden:true}), ()=>API.viewer.getObjects({visible:false}) ];
+      let entries=[];
+      for(const fn of attempts){ try{ const groups=await fn(); const out=[]; for(const g of groups||[]){ const modelId=g.modelId||g.id||""; for(const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])){ const rid=Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o); if(modelId&&Number.isFinite(rid)) out.push({modelId,objectRuntimeId:rid}); } } if(out.length){ entries=out; break; } }catch(e){ recordError("getHiddenObjects",e); } }
+      const seen=new Set(); return entries.filter((e)=>{ const k=e.modelId+":"+e.objectRuntimeId; if(seen.has(k)) return false; seen.add(k); return true; });
+    }
+    async function markHiddenObjectsWhite(){
+      const entries=await getHiddenObjectEntries(); hiddenWhiteRegistry.clear();
+      if(!entries.length){ log("Selección ocultos: no se han detectado objetos ocultos."); return 0; }
+      const byModel=new Map(); for(const e of entries) addToMapSet(byModel,e.modelId,[e.objectRuntimeId]);
+      let marked=0;
+      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:HIDDEN_MARK_COLOR,visible:false}); hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=ids.length; }catch(e){ recordError("markHiddenWhite",e); } }
+      log("Selección ocultos: "+marked+" objeto(s) ocultos marcados en blanco.");
+      return marked;
+    }
+    async function setRegistryVisible(visible){
+      let count=0;
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:!!visible}); count+=ids.length; }catch(e){ recordError("setRegistryVisible",e); } }
+      log((visible?"Ver ocultos ON: mostrados ":"Ver ocultos OFF: ocultados ")+count+" objeto(s).");
+      return count;
+    }
+    async function clearHiddenWhite(){
+      // intenta quitar el blanco y volver a ocultar
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue;
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); }catch(e){ recordError("clearHidden.hide",e); }
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:null}); }catch(e){ /* algunos visores no aceptan null */ }
+      }
+      hiddenWhiteRegistry.clear();
+    }
+    function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); if(view) view.disabled=!on; if(line) line.classList.toggle("is-disabled",!on); }
+
+    // ===================== MOSTRAR NOMBRES (#11) =====================
+    let nameMarkupSupported=null;
+    async function showObjectNames(on){
+      // Intento con posibles APIs de marcado/etiquetas; si no existen, lo registramos para confirmarlo con el debug.
+      const viewer=API.viewer||{};
+      const labelFns=["setObjectLabels","setLabels","addTextMarkup","setText","showLabels"];
+      const found=labelFns.filter((f)=>typeof viewer[f]==="function");
+      nameMarkupSupported=found.length>0;
+      if(!on){ log("Mostrar nombres OFF."); return; }
+      if(!nameMarkupSupported){
+        log("Mostrar nombres: la Workspace API de este entorno no expone un método de etiquetas 3D ("+labelFns.join(", ")+"). Aún no se puede pintar el Name sobre el modelo.");
+        log("Pulsa el debug 🐞 y mándame el TXT: ahí salen los métodos reales de API.viewer y, si hay uno de marcado, lo conecto.");
+        const sel=await safeGetSelection();
+        if(sel.length){ const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId);} for(const [modelId,ids] of byModel.entries()){ const pm=await getPropertiesCached(modelId,ids.slice(0,30)); for(const p of pm.values()){ const n=getNameValues(p); if(n.length) log("   Name: "+n.join(" | ")); } } }
+        return;
+      }
+      log("Mostrar nombres: método de etiquetas detectado ("+found[0]+"). (Conexión pendiente de confirmar con tu modelo.)");
     }
 
-    function scheduleProcessSelection() {
-      if (!toolsActive()) return;
-      if (Date.now() < suppressSelectionUntil) return;
-      clearTimeout(selectionTimer);
-      selectionTimer=setTimeout(processSelectionNow, 200);
-    }
+    // ===================== PARÁMETROS / VALORES UI =====================
+    function updateUnitLabel(){ const sel=document.getElementById("nearParam"); const opt=sel.options[sel.selectedIndex]; sel.classList.toggle("placeholder",!sel.value); document.getElementById("nearUnit").textContent=(opt&&opt.dataset&&opt.dataset.unit)?opt.dataset.unit:""; }
+    function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); document.getElementById("nearParam").disabled=!active; document.getElementById("nearOp").disabled=!active; document.getElementById("nearValue").disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; }
+    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; document.getElementById("includeValue").disabled=!on; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
+    async function populateParameters(){ const sel=document.getElementById("nearParam"); sel.innerHTML=""; const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph); const found=new Map(); try{ let sample=(await safeGetSelection()).slice(0,10); if(sample.length===0){ const c=await getColoredObjectEntries().catch(()=>[]); sample=c.slice(0,40).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ const pm=await getPropertiesCached(modelId,ids); for(const p of pm.values()) for(const x of flattenProps(p)) if(isNumericValue(x.value)&&!found.has(x.name)) found.set(x.name,x.unit); } }catch(e){ recordError("populateParameters",e); } for(const [name,unit] of found.entries()){ const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); } if(found.size===0) log("No se han detectado parámetros numéricos. Selecciona un objeto y reactiva la configuración."); updateUnitLabel(); }
+    async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>valor</option>'; setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b)).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); vsel.classList.toggle("placeholder",!vsel.value); setProgress("Valores Name cargados: "+values.size+"."); }
+
+    async function populateExcludeColors(){ const cont=document.getElementById("excludeColors"); cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateExclude",e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent="No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedColors.has(col); cb.addEventListener("change",()=>{ if(cb.checked) excludedColors.add(col); else excludedColors.delete(col); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"; row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); } }
 
     // ===================== TOOLTIPS =====================
-    function initTooltips() {
-      const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null;
-      document.querySelectorAll("[data-tip]").forEach((el)=>{
-        el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if (left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); });
-        el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; });
-      });
-    }
+    function initTooltips(){ const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null; document.querySelectorAll("[data-tip]").forEach((el)=>{ el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if(left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); }); el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; }); }); }
 
     // ===================== WIRING =====================
-    function wireModelSummarySwitch(switchWrapId, toggleId, detailsId) {
-      const wrap=document.getElementById(switchWrapId);
-      const toggle=document.getElementById(toggleId);
-      const details=document.getElementById(detailsId);
-      if (wrap) wrap.addEventListener("click",(ev)=>ev.stopPropagation());
-      if (toggle) toggle.addEventListener("change",()=>{
-        if (details) details.open = !!toggle.checked;
-        recordDebug("modelToolPanelToggle", { toggleId, checked: !!toggle.checked, detailsId, open: details ? !!details.open : null });
-      });
-    }
-
-    function wireUI() {
-      wireModelSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
-      wireModelSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
-      wireModelSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");
-      wireModelSummarySwitch("includeSummarySwitch","includeToggle","includeTool");
+    function wireSummarySwitch(switchWrapId,toggleId,detailsId){ const wrap=document.getElementById(switchWrapId); const toggle=document.getElementById(toggleId); const details=document.getElementById(detailsId); if(wrap) wrap.addEventListener("click",(ev)=>ev.stopPropagation()); if(toggle) toggle.addEventListener("change",()=>{ if(details) details.open=!!toggle.checked; }); }
+    function wireUI(){
+      wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
+      wireSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
+      wireSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");
+      wireSummarySwitch("includeSummarySwitch","includeToggle","includeTool");
 
       const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
-      custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if (!custom.checked) customText.value=""; recordDebug("customCodesToggle",{checked:custom.checked}); });
+      custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if(!custom.checked) customText.value=""; });
 
-      const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect"); const folderRefresh=document.getElementById("folderRefresh");
-      ext.addEventListener("change",()=>{ const on=ext.checked; folderSel.disabled=!on; folderRefresh.disabled=!on; recordDebug("extendedExportToggle",{on}); if (on) populateFolders(); });
-      folderRefresh.onclick=()=>populateFolders();
+      const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect");
+      ext.addEventListener("change",()=>{ folderSel.disabled=!ext.checked; if(ext.checked) populateFolders(); });
 
-      document.getElementById("nearParam").addEventListener("change", ()=>{ updateUnitLabel(); recordDebug("nearParamChange",{value:document.getElementById("nearParam").value}); });
-      const nearOp=document.getElementById("nearOp"); const opGray=()=>nearOp.classList.toggle("placeholder",!nearOp.value); nearOp.addEventListener("change",()=>{opGray(); recordDebug("nearOpChange",{value:nearOp.value});}); opGray();
-
+      document.getElementById("nearParam").addEventListener("change",updateUnitLabel);
+      const nearOp=document.getElementById("nearOp"); const opGray=()=>nearOp.classList.toggle("placeholder",!nearOp.value); nearOp.addEventListener("change",opGray); opGray();
       const nearCustom=document.getElementById("nearCustom");
-      nearCustom.addEventListener("change",()=>{ syncNearUiState(); if (nearCustom.checked && document.getElementById("nearToggle").checked) populateParameters(); });
+      nearCustom.addEventListener("change",()=>{ syncNearUiState(); if(nearCustom.checked&&document.getElementById("nearToggle").checked) populateParameters(); });
       const nearToggle=document.getElementById("nearToggle");
-      nearToggle.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; recordDebug("nearToggleChange",{checked:nearToggle.checked}); if (nearToggle.checked && nearCustom.checked) populateParameters(); if (nearToggle.checked) scheduleProcessSelection(); });
+      nearToggle.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; if(nearToggle.checked&&nearCustom.checked) populateParameters(); if(nearToggle.checked) scheduleProcessSelection(); });
 
       const excludeToggle=document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change",()=>{ document.getElementById("excludeConfig").style.display=excludeToggle.checked?"block":"none"; prevSel=[]; recordDebug("excludeToggleChange",{checked:excludeToggle.checked}); if (excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
-      document.getElementById("excludeRefresh").onclick=()=>populateExcludeColors();
-      document.getElementById("excludeConfig").style.display="none";
+      excludeToggle.addEventListener("change",()=>{ prevSel=[]; if(excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
 
-      const hiddenToggle=document.getElementById("hiddenSelectionToggle");
-      const viewHidden=document.getElementById("viewHiddenToggle");
-      hiddenToggle.addEventListener("change",async ()=>{
-        clearSelectionCaches();
-        recordDebug("hiddenSelectionToggleChange",{checked:hiddenToggle.checked});
-        if (hiddenToggle.checked) {
-          syncHiddenUiState();
-          await markHiddenObjectsWhite();
-        } else {
-          if (viewHidden && viewHidden.checked) await setHiddenWhitesVisible(false);
-          if (viewHidden) viewHidden.checked=false;
-          syncHiddenUiState();
-        }
-      });
-      if (viewHidden) viewHidden.addEventListener("change",async ()=>{ await setHiddenWhitesVisible(viewHidden.checked); });
+      const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
+      hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; await clearHiddenWhite(); syncHiddenUiState(); log("Selección ocultos OFF: objetos vueltos a ocultar."); } });
+      if(viewHidden) viewHidden.addEventListener("change",async ()=>{ await setRegistryVisible(viewHidden.checked); });
 
       const includeToggle=document.getElementById("includeToggle");
-      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; recordDebug("includeToggleChange",{checked:includeToggle.checked}); if (includeToggle.checked) populateIncludeValues(); scheduleProcessSelection(); });
-      document.getElementById("includeValue").addEventListener("change",()=>{ document.getElementById("includeValue").classList.toggle("placeholder",!document.getElementById("includeValue").value); recordDebug("includeValueChange",{value:document.getElementById("includeValue").value}); });
-      document.getElementById("includeRefreshValues").onclick=()=>populateIncludeValues();
-      document.getElementById("includeClearCache").onclick=()=>{ clearSelectionCaches(); populateIncludeValues(); };
+      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; if(includeToggle.checked) populateIncludeValues(); scheduleProcessSelection(); });
+      document.getElementById("includeValue").addEventListener("change",()=>{ document.getElementById("includeValue").classList.toggle("placeholder",!document.getElementById("includeValue").value); scheduleProcessSelection(); });
+      const showNames=document.getElementById("showNamesToggle");
+      showNames.addEventListener("change",()=>showObjectNames(showNames.checked));
 
-      document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); recordDebug("cancelRequested"); };
-      syncNearUiState();
-      syncIncludeUiState();
-      syncHiddenUiState();
+      document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
+      syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
     }
+    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged") scheduleProcessSelection(); }
 
-    function handleWorkspaceEvent(event, data) {
-      recordDebug("workspaceEvent",{event, data: data ? safeJson(data).slice(0,1000) : ""});
-      if (event==="viewer.onSelectionChanged") scheduleProcessSelection();
-      if (event==="view.onViewAction" || event==="viewer.onSettingsChanged") { clearSelectionCaches(); }
-    }
-
-    async function main() {
+    async function main(){
       buildColumnsUI(); wireUI(); initTooltips();
       document.getElementById("devVersion").textContent="Versión: "+SCRIPT_VERSION;
       document.getElementById("devUpdated").textContent="Última modificación del archivo: "+getLastUpdatedLabel();
       const ws=window.TrimbleConnectWorkspace||window.WorkspaceAPI;
-      if (!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API de Trimble."); return; }
-      API=await ws.connect(window.parent,(event, data)=>{ try{ handleWorkspaceEvent(event, data);}catch(e){ recordError("workspaceCallback", e); } });
+      if(!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API."); return; }
+      API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
       log("Conectado a Trimble Connect. "+SCRIPT_VERSION);
-      recordDebug("main.connected", {apiKeys:Object.keys(API||{}), viewerKeys:Object.keys((API&&API.viewer)||{}), viewKeys:Object.keys((API&&API.view)||{})});
 
-      document.getElementById("export").onclick=async ()=>{ if (opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try { if (document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); } catch (err){ recordError("export.onclick", err); console.error(err); log("ERROR: "+err.message); } finally { opRunning=false; btn.disabled=false; showCancel(false); } };
-      document.getElementById("debug").onclick=async ()=>{ try{ await exportDebug();}catch(err){ recordError("debug.onclick", err); console.error(err); log("ERROR DEBUG: "+err.message);} };
+      document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
+      document.getElementById("debug").onclick=async ()=>{ try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
-      document.getElementById("importFile").onchange=async (ev)=>{ const file=ev.target.files&&ev.target.files[0]; ev.target.value=""; if (!file) return; if (opRunning) return; opRunning=true; try { await importCsv(file); } catch (err){ recordError("importFile.onchange", err); console.error(err); log("ERROR IMPORT: "+err.message); } finally { opRunning=false; showCancel(false); } };
+      document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; try{ await importCsvFiles(files); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showCancel(false); } };
     }
 
     // ===================== DEBUG =====================
-    async function exportDebug() {
-      recordDebug("debug.requested");
+    async function exportDebug(){
       log("Generando debug...");
-      const out=[];
-      const addSection=(title, data)=>{ out.push("\n\n==================== "+title+" ====================\n"); out.push(typeof data==="string"?data:safeJson(data,2)); };
-
-      addSection("VERSION", {
-        SCRIPT_VERSION,
-        VERSION_LABEL,
-        documentLastModified: document.lastModified,
-        lastUpdatedLabel:getLastUpdatedLabel(),
-        now:new Date().toString(),
-        nowISO:new Date().toISOString(),
-        userAgent:navigator.userAgent,
-        url:location.href
-      });
-      addSection("UI STATE", uiStateSnapshot());
-      addSection("LOG VISUAL", logLines);
-
-      try { addSection("Object.keys(API)", Object.keys(API||{})); } catch (e) {}
-      try { addSection("Object.keys(API.viewer)", Object.keys((API&&API.viewer)||{})); } catch (e) {}
-      try { addSection("Object.keys(API.view)", Object.keys((API&&API.view)||{})); } catch (e) {}
-      try { if (API.propertyPanel) addSection("Object.keys(API.propertyPanel)", Object.keys(API.propertyPanel)); } catch (e) {}
-
-      try { addSection("VISTA ACTIVA", await API.view.getCurrentView()); } catch (e){ addSection("getCurrentView ERROR", e.message); }
-      try { if (API.viewer.getPresentation) addSection("PRESENTATION", await API.viewer.getPresentation()); } catch (e){ addSection("getPresentation ERROR", e.message); }
-      try { if (API.viewer.getCamera) addSection("CAMERA", await API.viewer.getCamera()); } catch (e){ addSection("getCamera ERROR", e.message); }
-      try { if (API.viewer.getSettings) addSection("VIEWER SETTINGS", await API.viewer.getSettings()); } catch (e){ addSection("getSettings ERROR", e.message); }
-      try {
-        if (API.viewer.getSnapshot) {
-          const snap=await API.viewer.getSnapshot();
-          addSection("SNAPSHOT", {length:String(snap||"").length, prefix:String(snap||"").slice(0,120)});
-        }
-      } catch (e){ addSection("getSnapshot ERROR", e.message); }
-
-      let selection=[];
-      try { selection=await safeGetSelection(); addSection("SELECCIÓN ACTUAL NORMALIZADA", selection); } catch (e){ addSection("getSelection ERROR", e.message); }
-
-      const byModel=new Map();
-      for (const s of selection) { if (!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
-      for (const [modelId, ids] of byModel.entries()) {
-        try { addSection("BOUNDING BOXES SELECCIÓN "+modelId, await API.viewer.getObjectBoundingBoxes(modelId, ids)); } catch (e){ addSection("BBOX ERROR "+modelId, e.message); }
-        try { addSection("PROPIEDADES SELECCIÓN "+modelId, await API.viewer.getObjectProperties(modelId, ids)); } catch (e){ addSection("PROPS ERROR "+modelId, e.message); }
-      }
-
-      let colored=[];
-      try { colored=await getColoredObjectEntries(); } catch (e){ addSection("getColoredObjects ERROR", e.message); }
-      const colorSummary={};
-      const invalidColors=[];
-      for (const c of colored) {
-        const key=c.normalizedColor||"INVALID";
-        colorSummary[key]=(colorSummary[key]||0)+1;
-        if (!c.colorValid) invalidColors.push(c);
-      }
-      addSection("COLORES RESUMEN", {totalObjects:colored.length, colorSummary, invalidColors:invalidColors.slice(0,50), first50:colored.slice(0,50)});
-
-      let views=[];
-      try { views=await API.view.getViews(); } catch (e){ addSection("getViews ERROR", e.message); }
-      addSection("GETVIEWS", {
-        total:(views||[]).length,
-        firstKeys:views&&views[0]?Object.keys(views[0]):[],
-        first10:(views||[]).slice(0,10),
-        realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))],
-        virtualFolders:[...new Set((views||[]).map((v)=>inferVirtualFolder(viewFullName(v))).filter(Boolean))],
-        folderDetectionMode
-      });
-
-      try { addSection("CANDIDATE CACHE STATUS", {candidateCacheKeys:[...candidateCache.keys()], propsModels:[...objectPropertiesCache.keys()], includeParamKeys:[...includeParameterCache.keys()], includeValueKeys:[...includeValueCache.keys()].slice(0,100), hiddenModels:[...hiddenIdsCache.entries()].map(([m,s])=>({modelId:m,count:s.size}))}); } catch (e) {}
-      addSection("DEBUG HISTORY", debugHistory);
-      addSection("ERROR HISTORY", errorHistory);
-
-      downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt", out.join("\n"), "text/plain");
+      const out=[]; const add=(title,data)=>{ out.push("\n\n==================== "+title+" ====================\n"); out.push(typeof data==="string"?data:safeJson(data,2)); };
+      add("VERSION",{SCRIPT_VERSION,documentLastModified:document.lastModified,now:new Date().toString(),url:location.href,userAgent:navigator.userAgent});
+      add("LOG",logLines);
+      try{ add("Object.keys(API)",Object.keys(API||{})); }catch(e){}
+      try{ add("Object.keys(API.viewer)",Object.keys((API&&API.viewer)||{})); }catch(e){}
+      try{ add("Object.keys(API.view)",Object.keys((API&&API.view)||{})); }catch(e){}
+      try{ add("VISTA ACTIVA",await API.view.getCurrentView()); }catch(e){ add("getCurrentView ERROR",e.message); }
+      let selection=[]; try{ selection=await safeGetSelection(); add("SELECCIÓN",selection); }catch(e){ add("getSelection ERROR",e.message); }
+      const byModel=new Map(); for(const s of selection){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
+      for(const [modelId,ids] of byModel.entries()){ try{ add("BBOX "+modelId,await API.viewer.getObjectBoundingBoxes(modelId,ids)); }catch(e){ add("BBOX ERROR",e.message); } try{ add("PROPS "+modelId,await API.viewer.getObjectProperties(modelId,ids)); }catch(e){ add("PROPS ERROR",e.message); } try{ add("PARENTS "+modelId,await API.viewer.getHierarchyParents(modelId,ids,undefined,false,false)); }catch(e){ add("PARENTS ERROR",e.message); } }
+      let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ add("getColoredObjects ERROR",e.message); }
+      const colorSummary={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; colorSummary[k]=(colorSummary[k]||0)+1; }
+      add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
+      let views=[]; try{ views=await API.view.getViews(); }catch(e){ add("getViews ERROR",e.message); }
+      add("VISTAS",{total:(views||[]).length,firstKeys:views&&views[0]?Object.keys(views[0]):[],first10:(views||[]).slice(0,10),realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))]});
+      try{ add("HIDDEN SAMPLE",(await getHiddenObjectEntries()).slice(0,20)); }catch(e){ add("HIDDEN ERROR",e.message); }
+      add("ERRORES",errorHistory);
+      downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt",out.join("\n"),"text/plain");
       log("Debug descargado.");
     }
 
-    main().catch((err)=>{ recordError("main.catch", err); console.error(err); log("ERROR DE CONEXIÓN: "+err.message); });
+    main().catch((err)=>{ recordError("main",err); log("ERROR DE CONEXIÓN: "+err.message); });
   </script>
 </body>
 </html>
