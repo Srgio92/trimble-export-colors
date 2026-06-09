@@ -2,340 +2,835 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Exportar colores IFC</title>
+  <title>DEO Tools</title>
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 13px;
-      margin: 12px;
-      color: #1f2937;
-    }
-    button {
-      padding: 6px 12px;
-      margin-right: 6px;
-      cursor: pointer;
-    }
-    #log {
-      white-space: pre-wrap;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      border-radius: 4px;
-      padding: 8px;
-      margin-top: 12px;
-      max-height: 320px;
-      overflow: auto;
-      font-family: Consolas, "Courier New", monospace;
-      font-size: 12px;
-    }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; margin: 10px; color: #1f2937; }
+    details { border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; background: #fafafa; }
+    summary { cursor: pointer; font-weight: bold; padding: 8px 10px; user-select: none; }
+    .section { padding: 4px 12px 12px; position: relative; }
+    .subtitle { font-weight: bold; margin: 8px 0 4px; }
+    .row { margin: 6px 0; }
+    button { padding: 6px 12px; margin: 2px 0; cursor: pointer; }
+
+    /* Toggle estilo nativo Trimble */
+    .switch { position: relative; display: inline-block; width: 38px; height: 20px; vertical-align: middle; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #c4c9d1; border-radius: 20px; transition: .2s; }
+    .slider:before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .switch input:checked + .slider { background: #1c7fd6; }
+    .switch input:checked + .slider:before { transform: translateX(18px); }
+    .toggle-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+    .toggle-line label.txt { cursor: pointer; }
+
+    input[type="text"], select { padding: 4px; box-sizing: border-box; }
+    input:disabled, select:disabled { background: #eee; color: #999; }
+    select.placeholder { color: #aaa; }
+    #nearParam option, #nearOp option { color: #000; }
+
+    /* Columnas reordenables */
+    .columns-box { padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff; margin: 6px 0; }
+    .col-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+    .col-item .name { flex: 1; }
+    .col-item button { padding: 1px 7px; margin: 0; font-size: 12px; line-height: 1.4; }
+
+    /* Configuración selección cercanos */
+    .config-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+    .config-row select, .config-row input { width: 110px; }
+    #nearUnit { color: #000; font-weight: bold; }
+
+    /* Desarrollador */
+    .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
+    #debug { position: absolute; top: 6px; right: 10px; background: transparent; color: #000; border: none; font-size: 18px; padding: 2px 6px; cursor: pointer; }
+
+    #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 12px; max-height: 300px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+    .hint { color: #666; font-size: 11px; }
+
+    /* Tooltip flotante */
+    .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
   </style>
 </head>
 <body>
-  <p><strong>Exportar colores IFC</strong></p>
 
-  <button id="export">Exportar CSV</button>
+  <!-- ============ HERRAMIENTAS DEL MODELO ============ -->
+  <details>
+    <summary>Herramientas del modelo</summary>
+    <div class="section">
+      <div class="toggle-line" data-tip="Selecciona los objetos en contacto (aproximado por bounding box) con el objeto seleccionado que cumplan la condición indicada.">
+        <label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label>
+        <label class="txt" for="nearToggle">Selección cercanos</label>
+      </div>
+      <div id="nearConfig">
+        <div class="subtitle">Configuración</div>
+        <div class="config-row">
+          <select id="nearParam" class="placeholder"></select>
+          <select id="nearOp" class="placeholder">
+            <option value="" disabled selected hidden>condición</option>
+            <option value="menos">menos</option>
+            <option value="igual">igual</option>
+            <option value="mas">más</option>
+          </select>
+          <input type="text" id="nearValue" placeholder="Valor">
+          <span id="nearUnit"></span>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ HERRAMIENTAS DEL ARCHIVO ============ -->
+  <details open>
+    <summary>Herramientas del archivo</summary>
+    <div class="section">
+      <div class="subtitle">Exportar colores a CSV</div>
+
+      <div class="columns-box">
+        <div style="font-weight:bold; margin-bottom:4px;">Columnas a exportar (ordena con las flechas):</div>
+        <div id="columnsList"></div>
+      </div>
+
+      <div class="toggle-line" data-tip="Si no se encuentra el código RFI en el título de la vista, escribe ERROR (nombre de la vista) en codigo_revision.">
+        <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
+        <label class="txt" for="errorCodes">Error codes</label>
+      </div>
+
+      <div class="toggle-line" data-tip="Usa el texto del cuadro como código de revisión en lugar de extraerlo del título de la vista.">
+        <label class="switch"><input type="checkbox" id="customCodes"><span class="slider"></span></label>
+        <label class="txt" for="customCodes">Custom codes</label>
+      </div>
+      <div class="row">
+        <input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;">
+      </div>
+
+      <div class="toggle-line" data-tip="Recorre automáticamente varias vistas, carga cada una y genera un único CSV combinado.">
+        <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
+        <label class="txt" for="extendedExport">Extended export</label>
+      </div>
+      <div class="row">
+        Alcance: <select id="extendedScope" disabled></select>
+      </div>
+
+      <div class="row">
+        <button id="export" data-tip="Exporta los objetos coloreados de la vista activa (o de varias vistas si Extended export está activo).">Exportar CSV</button>
+      </div>
+
+      <div class="subtitle">Importar colores desde CSV</div>
+      <div class="row">
+        <button id="importBtn" data-tip="Abre un CSV con GUID y color y aplica esos colores a los objetos del modelo cargado. Los GUID que no estén en el modelo se omiten.">Importar CSV</button>
+        <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;">
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ DESARROLLADOR ============ -->
+  <details>
+    <summary>Desarrollador</summary>
+    <div class="section">
+      <button id="debug" data-tip="Descarga un TXT con información técnica para diagnóstico.">&#128030;</button>
+      <div class="dev-meta" id="devVersion"></div>
+      <div class="dev-meta" id="devUpdated"></div>
+    </div>
+  </details>
 
   <pre id="log"></pre>
 
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
 
   <script>
-    const SCRIPT_VERSION = "v4 (2026-06-08)";
+    // ===================== CONSTANTES =====================
+    const SCRIPT_VERSION = "v7";
+    const LAST_UPDATED = "2026-06-09";
+
+    const REVISION_CODE_COLORS = new Set([
+      "#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"
+    ]);
+    const REVIEWED_DEO_COLORS = new Set([
+      "#FC0D1BFF","#D50002FF","#E67C73FF"
+    ]);
+    const CONTACT_TOLERANCE = 0.01;
+
     let API = null;
+    let lastConvertError = "";
 
-    const log = (txt) => {
-      document.getElementById("log").textContent += txt + "\n";
-    };
-
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    // ===================== UTILIDADES =====================
+    const log = (t) => { document.getElementById("log").textContent += t + "\n"; };
+    const clearLog = () => { document.getElementById("log").textContent = ""; };
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     function downloadText(filename, text) {
-      // BOM para que Excel abra el CSV con acentos correctamente
       const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" });
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
+      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
       URL.revokeObjectURL(a.href);
     }
-
+    function sanitizeFilename(name) {
+      return String(name || "").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_")
+        .replace(/_+/g, "_").replace(/^_+|_+$/g, "").slice(0, 120);
+    }
+    function normalizeColor(c) { return String(c || "").trim().toUpperCase(); }
     function extractRevisionCode(text) {
-      const match = String(text || "").match(/RFI[_\-\s]*\d+/i);
-      return match ? match[0].replace(/[\-\s]/g, "_").toUpperCase() : "";
+      const m = String(text || "").match(/RFI[_\-\s]*\d+/i);
+      return m ? m[0].replace(/[\-\s]/g, "_").toUpperCase() : "";
     }
 
-    // ---------------------------------------------------------------
-    // FIX 2: Detección de la revisión (código RFI) desde la vista activa
-    // El único campo de título real en ViewSpec es "name" (y "description").
-    // Si la vista activa no trae nombre, intentamos cruzar su id con getViews().
-    // ---------------------------------------------------------------
-    // Intenta leer la vista activa con reintentos: getCurrentView() devuelve
-    // undefined si el visor aún no ha "registrado" la vista (problema de timing).
-    // Por eso reintentamos con pausas hasta que devuelva algo con nombre.
-    async function getCurrentRevisionCode() {
-      let currentView = null;
-
-      for (let attempt = 1; attempt <= 6; attempt++) {
-        const candidates = [];
-
-        try {
-          currentView = await API.view.getCurrentView();
-          if (currentView) {
-            if (currentView.name) candidates.push(currentView.name);
-            if (currentView.description) candidates.push(currentView.description);
-
-            // Si la vista activa tiene id pero no nombre, lo buscamos en la lista de vistas guardadas
-            if (currentView.id && !currentView.name) {
-              try {
-                const allViews = await API.view.getViews();
-                const match = (allViews || []).find((v) => v.id === currentView.id);
-                if (match) {
-                  if (match.name) candidates.push(match.name);
-                  if (match.description) candidates.push(match.description);
-                }
-              } catch (e) {
-                /* getViews puede no estar disponible; seguimos */
-              }
-            }
-          }
-        } catch (e) {
-          /* la vista puede no estar lista todavía; reintentamos */
-        }
-
-        for (const text of candidates) {
-          const code = extractRevisionCode(text);
-          if (code) {
-            log("Vista activa detectada: " + text);
-            log("Código de revisión detectado: " + code);
-            return code;
-          }
-        }
-
-        if (attempt < 6) {
-          log("La vista activa aún no está lista... intento " + attempt + "/6");
-          await sleep(700);
-        }
-      }
-
-      log("ERROR: No se ha encontrado código RFI.");
-      log("Trimble no ha devuelto un nombre de vista con formato RFI_XXXXX.");
-      log("Asegúrate de estar situado en la vista cuyo título contiene el código RFI.");
-      log("Vista detectada (para depurar):");
-      log(JSON.stringify(currentView, null, 2));
-      return "";
-    }
-
-    function colorToText(color) {
-      if (!color) return "";
-      if (typeof color === "string") return color;
-      if (typeof color === "object") {
-        const r = color.r ?? color.red ?? "";
-        const g = color.g ?? color.green ?? "";
-        const b = color.b ?? color.blue ?? "";
-        const a = color.a ?? color.alpha ?? "";
-        if (r !== "" && g !== "" && b !== "") {
-          return a !== "" ? `rgba(${r},${g},${b},${a})` : `rgb(${r},${g},${b})`;
-        }
-        return JSON.stringify(color);
-      }
-      return String(color);
-    }
-
-    // getColoredObjects() devuelve ModelObjects[]:
-    //   [{ modelId: string, objects: ObjectProperties[] }]
-    // y cada ObjectProperties tiene { id: number (runtime id), color?: string, ... }
-    async function getColoredObjectEntries() {
-      const coloredGroups = await API.viewer.getColoredObjects();
-      const entries = [];
-
-      for (const group of coloredGroups || []) {
-        const modelId = group.modelId || "";
-        const objects = group.objects || [];
-
-        for (const obj of objects) {
-          const objectRuntimeId = Number(obj.id);
-          const color = colorToText(obj.color);
-
-          if (modelId && Number.isFinite(objectRuntimeId)) {
-            entries.push({ modelId, objectRuntimeId, color });
-          }
-        }
-      }
-
-      return entries;
-    }
-
-    async function getColoredObjectEntriesWithRetry() {
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        const entries = await getColoredObjectEntries();
-        if (entries.length > 0) return entries;
-        log("Esperando datos del visor... intento " + attempt + "/5");
-        await sleep(700);
-      }
-      return [];
-    }
-
-    // ---------------------------------------------------------------
-    // FIX 3: convertToObjectIds devuelve el GUID SIN COMPRIMIR (tipo "GUID MS",
-    // un UUID 01f1b6a7-5287-48ce-9204-b6296f9b1e7a). Nosotros necesitamos el
-    // "GUID (IFC)" comprimido a 22 caracteres (01yRQdKeT8pf84jYblcnvw), que es
-    // el GlobalId canónico del IFC. Esta función lo comprime.
-    // ---------------------------------------------------------------
+    // ---- GUID IFC: comprimir / descomprimir ----
     const IFC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
-
-    function ifcB64(v, len) {
-      let s = "";
-      for (let i = 0; i < len; i++) {
-        s += IFC_CHARS[Math.floor(v / Math.pow(64, len - i - 1)) % 64];
-      }
-      return s;
-    }
-
+    function ifcB64(v, len) { let s=""; for (let i=0;i<len;i++) s += IFC_CHARS[Math.floor(v/Math.pow(64,len-i-1))%64]; return s; }
     function compressIfcGuid(uuid) {
       const hex = String(uuid).replace(/-/g, "").toLowerCase();
       if (hex.length !== 32 || /[^0-9a-f]/.test(hex)) return null;
-      const bs = [];
-      for (let i = 0; i < 32; i += 2) bs.push(parseInt(hex.substr(i, 2), 16));
-      let res = ifcB64(bs[0], 2);
-      for (let i = 1; i < 16; i += 3) {
-        res += ifcB64((bs[i] << 16) + (bs[i + 1] << 8) + bs[i + 2], 4);
-      }
+      const bs = []; for (let i=0;i<32;i+=2) bs.push(parseInt(hex.substr(i,2),16));
+      let res = ifcB64(bs[0],2);
+      for (let i=1;i<16;i+=3) res += ifcB64((bs[i]<<16)+(bs[i+1]<<8)+bs[i+2],4);
       return res;
     }
-
-    // Devuelve siempre el GUID IFC comprimido (22 chars).
-    // Acepta tanto el UUID sin comprimir como el comprimido ya hecho.
+    function decompressIfcGuid(g) {
+      if (!g || g.length !== 22) return null;
+      const di = (ch) => IFC_CHARS.indexOf(ch);
+      const bytes = [(di(g[0])*64 + di(g[1])) & 0xff];
+      let p = 2;
+      for (let k=0;k<5;k++) { let v=0; for (let i=0;i<4;i++) v = v*64 + di(g[p++]); bytes.push((v>>16)&0xff,(v>>8)&0xff,v&0xff); }
+      const hex = bytes.map((b)=>b.toString(16).padStart(2,"0")).join("");
+      return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20,32)].join("-");
+    }
     function toIfcGuid(externalId) {
       if (!externalId) return "";
       const s = String(externalId).trim();
-      if (s.length === 22 && /^[0-9A-Za-z_$]+$/.test(s)) return s; // ya comprimido
-      const compressed = compressIfcGuid(s);
-      return compressed || s; // si no era un UUID reconocible, lo dejamos tal cual
+      if (s.length === 22 && /^[0-9A-Za-z_$]+$/.test(s)) return s;
+      return compressIfcGuid(s) || s;
     }
-
-    // ---------------------------------------------------------------
-    // FIX 1: Conversión resiliente de runtime IDs -> GUID IFC.
-    // convertToObjectIds LANZA EXCEPCIÓN si algún runtime id del lote no
-    // tiene GUID externo. Para que un único objeto sin GUID no tire el lote
-    // entero, partimos en mitades hasta aislar solo los IDs problemáticos.
-    // Devuelve un array alineado con runtimeIds, con "" donde no hay GUID.
-    // ---------------------------------------------------------------
-    let lastConvertError = "";
+    // GUID (cualquier formato) -> UUID externo sin comprimir (para convertToObjectRuntimeIds)
+    function toExternalUuid(guid) {
+      const s = String(guid || "").trim();
+      if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)) return s.toLowerCase();
+      if (/^[0-9a-fA-F]{32}$/.test(s)) return [s.slice(0,8),s.slice(8,12),s.slice(12,16),s.slice(16,20),s.slice(20)].join("-").toLowerCase();
+      if (s.length === 22 && /^[0-9A-Za-z_$]+$/.test(s)) return decompressIfcGuid(s);
+      return null;
+    }
 
     async function convertResilient(modelId, runtimeIds) {
       if (runtimeIds.length === 0) return [];
-
       try {
         const ids = await API.viewer.convertToObjectIds(modelId, runtimeIds);
         return runtimeIds.map((_, i) => ids[i] || "");
       } catch (e) {
         if (!lastConvertError) lastConvertError = String(e && e.message ? e.message : e);
-        if (runtimeIds.length === 1) {
-          // Este objeto no tiene GUID IFC (p.ej. nodo padre / sin external id)
-          return [""];
-        }
-        const mid = Math.floor(runtimeIds.length / 2);
-        const left = await convertResilient(modelId, runtimeIds.slice(0, mid));
+        if (runtimeIds.length === 1) return [""];
+        const mid = Math.floor(runtimeIds.length/2);
+        const left = await convertResilient(modelId, runtimeIds.slice(0,mid));
         const right = await convertResilient(modelId, runtimeIds.slice(mid));
         return left.concat(right);
       }
     }
 
-    async function exportCsv() {
-      document.getElementById("log").textContent = "";
-      lastConvertError = "";
-      log("Script versión: " + SCRIPT_VERSION);
+    // ===================== COLUMNAS (reordenables) =====================
+    let COLUMNS = [
+      { key: "guidIfc", header: "GUID_IFC", checked: true },
+      { key: "color", header: "color", checked: true },
+      { key: "revisionCode", header: "codigo_revision", checked: true },
+      { key: "reviewedDeo", header: "revisado_deo", checked: true },
+      { key: "viewName", header: "View_name", checked: true },
+      { key: "modelId", header: "modelId", checked: false },
+      { key: "objectRuntimeId", header: "objectRuntimeId", checked: false }
+    ];
 
-      // Leemos primero los objetos coloreados: además de necesitarlos, esto
-      // "calienta" el visor para que getCurrentView() devuelva ya la vista activa.
-      log("Leyendo objetos coloreados...");
-      const entries = await getColoredObjectEntriesWithRetry();
+    function buildColumnsUI() {
+      const list = document.getElementById("columnsList");
+      list.innerHTML = "";
+      COLUMNS.forEach((col, index) => {
+        const item = document.createElement("div");
+        item.className = "col-item";
 
-      if (entries.length === 0) {
-        log("No se han encontrado objetos coloreados en la vista activa.");
-        return;
-      }
-      log("Objetos coloreados detectados: " + entries.length);
+        const cb = document.createElement("input");
+        cb.type = "checkbox"; cb.checked = col.checked;
+        cb.addEventListener("change", () => { col.checked = cb.checked; });
 
-      const revisionCode = await getCurrentRevisionCode();
-      if (!revisionCode) return;
+        const name = document.createElement("span");
+        name.className = "name"; name.textContent = col.header;
 
-      const groupsByModel = new Map();
-      for (const entry of entries) {
-        if (!groupsByModel.has(entry.modelId)) groupsByModel.set(entry.modelId, []);
-        groupsByModel.get(entry.modelId).push(entry);
-      }
+        const up = document.createElement("button");
+        up.textContent = "\u2191"; up.title = "Subir";
+        up.disabled = index === 0;
+        up.onclick = () => { moveColumn(index, -1); };
 
-      const rows = [];
+        const down = document.createElement("button");
+        down.textContent = "\u2193"; down.title = "Bajar";
+        down.disabled = index === COLUMNS.length - 1;
+        down.onclick = () => { moveColumn(index, 1); };
 
-      for (const [modelId, modelEntries] of groupsByModel.entries()) {
-        log("Modelo: " + modelId);
-        const batchSize = 200;
+        item.appendChild(cb); item.appendChild(name); item.appendChild(up); item.appendChild(down);
+        list.appendChild(item);
+      });
+    }
+    function moveColumn(index, dir) {
+      const j = index + dir;
+      if (j < 0 || j >= COLUMNS.length) return;
+      const tmp = COLUMNS[index]; COLUMNS[index] = COLUMNS[j]; COLUMNS[j] = tmp;
+      buildColumnsUI();
+    }
+    function selectedColumns() { return COLUMNS.filter((c) => c.checked); }
 
-        for (let i = 0; i < modelEntries.length; i += batchSize) {
-          const batchEntries = modelEntries.slice(i, i + batchSize);
-          const runtimeIds = batchEntries.map((e) => e.objectRuntimeId);
-
-          const ifcGuids = await convertResilient(modelId, runtimeIds);
-
-          for (let j = 0; j < batchEntries.length; j++) {
-            const entry = batchEntries[j];
-            rows.push({
-              guidIfc: toIfcGuid(ifcGuids[j]),
-              color: entry.color,
-              revisionCode,
-              modelId: entry.modelId,
-              objectRuntimeId: entry.objectRuntimeId
-            });
+    // ===================== VISTA / REVISIÓN =====================
+    async function getCurrentViewSpecWithRetry() {
+      let cv = null;
+      for (let attempt=1; attempt<=6; attempt++) {
+        try {
+          cv = await API.view.getCurrentView();
+          if (cv && (cv.name || cv.description || cv.id)) {
+            if (cv.id && !cv.name) {
+              try { const all = await API.view.getViews(); const m = (all||[]).find((v)=>v.id===cv.id);
+                if (m) { cv.name = cv.name || m.name; cv.description = cv.description || m.description; } } catch (e) {}
+            }
+            if (cv.name || cv.description) return cv;
           }
-          log("Procesados " + Math.min(i + batchSize, modelEntries.length) + " / " + modelEntries.length);
+        } catch (e) {}
+        if (attempt < 6) { log("La vista activa aún no está lista... intento " + attempt + "/6"); await sleep(700); }
+      }
+      return cv;
+    }
+    function viewFullName(v) { return v ? (v.name || v.description || "") : ""; }
+
+    function computeRevisionBase(viewName) {
+      const customOn = document.getElementById("customCodes").checked;
+      const customText = document.getElementById("customCodesText").value.trim();
+      const errorOn = document.getElementById("errorCodes").checked;
+      if (customOn && customText) return customText.toUpperCase();
+      const auto = extractRevisionCode(viewName);
+      if (auto) return auto;
+      if (customOn && !customText) log("Aviso: no es posible extraer el código del título y tampoco hay contenido en Custom codes.");
+      if (errorOn) return "ERROR (" + (viewName ? viewName : "VIEW_NAME_NOT_FOUND") + ")";
+      log("Aviso: no se ha podido determinar el código de revisión. codigo_revision quedará vacío.");
+      return "";
+    }
+
+    // ===================== OBJETOS COLOREADOS =====================
+    function colorToText(color) {
+      if (!color) return "";
+      if (typeof color === "string") return color;
+      if (typeof color === "object") {
+        const r=color.r??color.red??"", g=color.g??color.green??"", b=color.b??color.blue??"", a=color.a??color.alpha??"";
+        if (r!==""&&g!==""&&b!=="") return a!=="" ? "rgba("+r+","+g+","+b+","+a+")" : "rgb("+r+","+g+","+b+")";
+        return JSON.stringify(color);
+      }
+      return String(color);
+    }
+    async function getColoredObjectEntries() {
+      const groups = await API.viewer.getColoredObjects();
+      const entries = [];
+      for (const g of groups || []) {
+        const modelId = g.modelId || "";
+        for (const obj of (g.objects || [])) {
+          const rid = Number(obj.id); const color = colorToText(obj.color);
+          if (modelId && Number.isFinite(rid)) entries.push({ modelId, objectRuntimeId: rid, color });
         }
       }
+      return entries;
+    }
+    async function getColoredObjectEntriesWithRetry() {
+      for (let a=1;a<=5;a++){ const e = await getColoredObjectEntries(); if (e.length>0) return e; await sleep(600); }
+      return [];
+    }
 
-      const csv = [
-        "GUID_IFC;color;codigo_revision;modelId;objectRuntimeId",
-        ...rows.map((r) =>
-          [r.guidIfc, r.color, r.revisionCode, r.modelId, r.objectRuntimeId]
-            .map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`)
-            .join(";")
-        )
-      ].join("\n");
-
-      downloadText(revisionCode + "_trimble_colores_guid_ifc.csv", csv);
-
-      log("CSV generado.");
-      log("Filas exportadas: " + rows.length);
-      log("GUID IFC encontrados: " + rows.filter((r) => r.guidIfc).length);
-      log("GUID IFC vacíos: " + rows.filter((r) => !r.guidIfc).length);
-      if (lastConvertError) {
-        log("Primer error de convertToObjectIds: " + lastConvertError);
+    // ===================== FILAS / CSV =====================
+    async function buildRows(entries, revisionBase, viewName, wantGuid) {
+      const byModel = new Map();
+      for (const e of entries) { if (!byModel.has(e.modelId)) byModel.set(e.modelId, []); byModel.get(e.modelId).push(e); }
+      const rows = [];
+      for (const [modelId, list] of byModel.entries()) {
+        const bs = 200;
+        for (let i=0;i<list.length;i+=bs) {
+          const batch = list.slice(i, i+bs);
+          let guids = [];
+          if (wantGuid) guids = await convertResilient(modelId, batch.map((e)=>e.objectRuntimeId));
+          for (let j=0;j<batch.length;j++) {
+            const e = batch[j]; const cn = normalizeColor(e.color);
+            rows.push({
+              guidIfc: wantGuid ? toIfcGuid(guids[j]) : "",
+              color: e.color,
+              revisionCode: REVISION_CODE_COLORS.has(cn) ? revisionBase : "",
+              reviewedDeo: REVIEWED_DEO_COLORS.has(cn) ? "TRUE" : "FALSE",
+              viewName: viewName,
+              modelId: e.modelId,
+              objectRuntimeId: e.objectRuntimeId
+            });
+          }
+          log("Procesados " + Math.min(i+bs, list.length) + " / " + list.length + " (" + modelId + ")");
+        }
       }
+      return rows;
+    }
+    function rowsToCsv(rows, cols) {
+      const header = cols.map((c)=>c.header).join(";");
+      const lines = rows.map((r)=> cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";"));
+      return [header].concat(lines).join("\n");
+    }
+    function logColorSummary(rows) {
+      const counts = {};
+      for (const r of rows) { const c = normalizeColor(r.color); counts[c]=(counts[c]||0)+1; }
+      log("Colores detectados (" + Object.keys(counts).length + "):");
+      Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15)
+        .forEach(([c,n]) => log("   "+c+" -> "+n+(REVISION_CODE_COLORS.has(c)?"  [revision]":"")+(REVIEWED_DEO_COLORS.has(c)?"  [revisado]":"")));
+    }
+
+    // ===================== EXPORTAR VISTA ACTIVA =====================
+    async function exportActiveView() {
+      clearLog(); lastConvertError = ""; log("DEO " + SCRIPT_VERSION);
+      const cols = selectedColumns();
+      if (cols.length === 0) { log("Selecciona al menos una columna."); return; }
+      const wantGuid = cols.some((c)=>c.key==="guidIfc");
+
+      log("Leyendo objetos coloreados...");
+      const entries = await getColoredObjectEntriesWithRetry();
+      if (entries.length === 0) { log("No se han encontrado objetos coloreados."); return; }
+      log("Objetos coloreados: " + entries.length);
+
+      const viewSpec = await getCurrentViewSpecWithRetry();
+      const viewName = viewFullName(viewSpec);
+      log("Vista activa: " + (viewName || "(sin nombre)"));
+      const revisionBase = computeRevisionBase(viewName);
+      log("Código de revisión base: " + (revisionBase || "(vacío)"));
+
+      const rows = await buildRows(entries, revisionBase, viewName, wantGuid);
+      logColorSummary(rows);
+      const csv = rowsToCsv(rows, cols);
+
+      const customOn = document.getElementById("customCodes").checked;
+      const customText = document.getElementById("customCodesText").value.trim();
+      let prefix = extractRevisionCode(viewName) || "EXPORT";
+      if (customOn && customText) prefix = sanitizeFilename(customText);
+      else if (revisionBase && !revisionBase.startsWith("ERROR")) prefix = sanitizeFilename(revisionBase);
+      downloadText(prefix + "_trimble_colores_guid_ifc.csv", csv);
+
+      log("CSV generado. Filas: " + rows.length);
+      if (wantGuid) {
+        log("GUID encontrados: " + rows.filter((r)=>r.guidIfc).length + " | vacíos: " + rows.filter((r)=>!r.guidIfc).length);
+        if (lastConvertError) log("Primer error convertToObjectIds: " + lastConvertError);
+      }
+    }
+
+    // ===================== EXPORTAR EXTENDIDO =====================
+    function detectViewFolders(views) {
+      const f = new Set();
+      for (const v of views || []) {
+        const x = v.folder || v.folderId || v.folderName || v.group || v.groupName || v.parent || v.parentId;
+        if (x) f.add(String(x));
+      }
+      return Array.from(f);
+    }
+    function viewBelongsToFolder(v, folder) {
+      const x = v.folder || v.folderId || v.folderName || v.group || v.groupName || v.parent || v.parentId;
+      return String(x || "") === folder;
+    }
+    async function exportExtended() {
+      clearLog(); lastConvertError = ""; log("DEO " + SCRIPT_VERSION + " - Extended export");
+      if (!API.view || typeof API.view.selectView !== "function") {
+        log("La API disponible no permite cargar vistas automáticamente. Exportación extendida no disponible en este entorno.");
+        return;
+      }
+      const cols = selectedColumns();
+      if (cols.length === 0) { log("Selecciona al menos una columna."); return; }
+      const wantGuid = cols.some((c)=>c.key==="guidIfc");
+
+      let views = [];
+      try { views = await API.view.getViews(); } catch (e) { log("ERROR getViews(): " + e.message); return; }
+      if (!views || views.length === 0) { log("No hay vistas en el proyecto."); return; }
+
+      const scope = document.getElementById("extendedScope").value;
+      let target = views;
+      if (scope && scope !== "__ALL__") target = views.filter((v)=>viewBelongsToFolder(v, scope));
+      const withRfi = target.filter((v)=>extractRevisionCode(viewFullName(v)));
+      if (withRfi.length > 0) target = withRfi;
+      log("Vistas a recorrer: " + target.length);
+
+      const allRows = [];
+      for (let i=0;i<target.length;i++) {
+        const v = target[i]; const viewName = viewFullName(v);
+        log("[" + (i+1) + "/" + target.length + "] " + (viewName || v.id));
+        try {
+          await API.view.selectView(v.id);
+          await sleep(900);
+          const entries = await getColoredObjectEntriesWithRetry();
+          if (entries.length === 0) { log("   (sin objetos coloreados)"); continue; }
+          const revisionBase = computeRevisionBase(viewName);
+          const rows = await buildRows(entries, revisionBase, viewName, wantGuid);
+          allRows.push(...rows);
+          log("   filas: " + rows.length);
+        } catch (e) { log("   ERROR en esta vista: " + e.message); }
+      }
+      if (allRows.length === 0) { log("No se ha generado ninguna fila."); return; }
+
+      const csv = rowsToCsv(allRows, cols);
+      let name = "DEO_extended_export";
+      if (scope && scope !== "__ALL__") name += "_" + sanitizeFilename(scope);
+      name += "_trimble_colores_guid_ifc.csv";
+      downloadText(name, csv);
+      log("CSV extendido generado. Filas totales: " + allRows.length);
+      if (lastConvertError) log("Primer error convertToObjectIds: " + lastConvertError);
+    }
+
+    // ===================== IMPORTAR CSV =====================
+    function parseCsvLine(line) {
+      const out = []; let cur = ""; let inQ = false;
+      for (let i=0;i<line.length;i++) {
+        const ch = line[i];
+        if (inQ) {
+          if (ch === '"') { if (line[i+1] === '"') { cur += '"'; i++; } else inQ = false; }
+          else cur += ch;
+        } else {
+          if (ch === '"') inQ = true;
+          else if (ch === ';') { out.push(cur); cur = ""; }
+          else cur += ch;
+        }
+      }
+      out.push(cur);
+      return out;
+    }
+    async function importCsv(file) {
+      clearLog(); log("DEO " + SCRIPT_VERSION + " - Importar CSV");
+      let text = "";
+      try { text = await file.text(); } catch (e) { log("No se ha podido leer el archivo: " + e.message); return; }
+      text = text.replace(/^\uFEFF/, "");
+      const lines = text.split(/\r?\n/).filter((l)=>l.trim() !== "");
+      if (lines.length < 2) { log("El CSV está vacío."); return; }
+
+      const header = parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
+      const gi = header.findIndex((h)=>h.includes("guid"));
+      const ci = header.findIndex((h)=>h === "color");
+      if (gi < 0 || ci < 0) { log("El CSV debe tener una columna de GUID y otra 'color'."); return; }
+
+      const wanted = [];
+      for (let i=1;i<lines.length;i++) {
+        const cells = parseCsvLine(lines[i]);
+        const guid = (cells[gi] || "").trim();
+        const color = (cells[ci] || "").trim();
+        if (!guid || !color) continue;
+        const uuid = toExternalUuid(guid);
+        if (uuid) wanted.push({ uuid, color });
+      }
+      log("Filas con GUID + color: " + wanted.length);
+      if (wanted.length === 0) { log("No hay datos válidos."); return; }
+
+      // Modelos candidatos (cargados)
+      let modelIds = [];
+      try { const models = await API.viewer.getModels(); modelIds = (models||[]).map((m)=>m.id).filter(Boolean); } catch (e) {}
+      try { const colored = await API.viewer.getColoredObjects(); for (const g of colored||[]) if (g.modelId) modelIds.push(g.modelId); } catch (e) {}
+      modelIds = [...new Set(modelIds)];
+      if (modelIds.length === 0) { log("No se han detectado modelos cargados."); return; }
+      log("Modelos cargados: " + modelIds.length);
+
+      const uuids = wanted.map((w)=>w.uuid);
+      const found = [];
+      for (const modelId of modelIds) {
+        let rids = [];
+        try { rids = await API.viewer.convertToObjectRuntimeIds(modelId, uuids); } catch (e) { continue; }
+        for (let i=0;i<wanted.length;i++) {
+          const rid = rids[i];
+          if (rid !== null && rid !== undefined) found.push({ modelId, runtimeId: Number(rid), color: wanted[i].color });
+        }
+      }
+      log("GUID encontrados en el modelo: " + found.length + " / " + wanted.length + " (los no encontrados se omiten)");
+      if (found.length === 0) { log("Ningún GUID del CSV está en el modelo activo."); return; }
+
+      // Agrupar por modelo + color y aplicar
+      const groups = new Map();
+      for (const f of found) {
+        const k = f.modelId + "|" + f.color;
+        if (!groups.has(k)) groups.set(k, { modelId: f.modelId, color: f.color, ids: [] });
+        groups.get(k).ids.push(f.runtimeId);
+      }
+      let applied = 0;
+      for (const g of groups.values()) {
+        const selector = { modelObjectIds: [{ modelId: g.modelId, objectRuntimeIds: g.ids }] };
+        try { await API.viewer.setObjectState(selector, { color: g.color }); applied += g.ids.length; }
+        catch (e) { log("Error aplicando color " + g.color + ": " + e.message); }
+      }
+      log("Colores aplicados a " + applied + " objetos.");
+    }
+
+    // ===================== SELECCIÓN CERCANOS =====================
+    function flattenProps(propsList) {
+      const flat = [];
+      const walk = (obj) => {
+        if (!obj || typeof obj !== "object") return;
+        if (Array.isArray(obj)) { obj.forEach(walk); return; }
+        const name = obj.name ?? obj.Name ?? obj.key;
+        const value = obj.value ?? obj.Value ?? obj.nominalValue;
+        const unit = obj.unit ?? obj.units ?? obj.Unit ?? "";
+        if (name !== undefined && value !== undefined && typeof value !== "object") flat.push({ name: String(name), value, unit: String(unit||"") });
+        for (const k of Object.keys(obj)) if (typeof obj[k] === "object") walk(obj[k]);
+      };
+      walk(propsList);
+      return flat;
+    }
+    function isNumericValue(v) { if (typeof v === "number") return true; return Number.isFinite(parseFloat(String(v).replace(",", "."))); }
+    function toNumber(v) { return typeof v === "number" ? v : parseFloat(String(v).replace(",", ".")); }
+
+    async function safeGetSelection() {
+      let sel = [];
+      try { sel = await API.viewer.getSelection(); } catch (e) { return []; }
+      const out = [];
+      const arr = Array.isArray(sel) ? sel : (sel && sel.modelObjectIds) ? sel.modelObjectIds : [];
+      for (const item of arr || []) {
+        const modelId = item.modelId;
+        const ids = item.objectRuntimeIds || item.runtimeIds || item.objectIds || [];
+        for (const id of ids) out.push({ modelId, runtimeId: Number(id) });
+      }
+      return out;
+    }
+    function bboxOf(box) {
+      const b = box.boundingBox || box;
+      const min = b.min || b.minPoint || b.start, max = b.max || b.maxPoint || b.end;
+      if (!min || !max) return null;
+      return { min: { x: min.x, y: min.y, z: min.z }, max: { x: max.x, y: max.y, z: max.z } };
+    }
+    function boxesOverlap(a, b, tol) {
+      return a.min.x-tol<=b.max.x && a.max.x+tol>=b.min.x && a.min.y-tol<=b.max.y && a.max.y+tol>=b.min.y && a.min.z-tol<=b.max.z && a.max.z+tol>=b.min.z;
+    }
+    function unionBox(boxes) {
+      const u = { min:{x:Infinity,y:Infinity,z:Infinity}, max:{x:-Infinity,y:-Infinity,z:-Infinity} };
+      for (const b of boxes) {
+        u.min.x=Math.min(u.min.x,b.min.x); u.min.y=Math.min(u.min.y,b.min.y); u.min.z=Math.min(u.min.z,b.min.z);
+        u.max.x=Math.max(u.max.x,b.max.x); u.max.y=Math.max(u.max.y,b.max.y); u.max.z=Math.max(u.max.z,b.max.z);
+      }
+      return u;
+    }
+    async function populateParameters() {
+      const sel = document.getElementById("nearParam");
+      sel.innerHTML = "";
+      const ph = document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro";
+      sel.appendChild(ph);
+
+      const found = new Map();
+      try {
+        let sample = [];
+        const colored = await getColoredObjectEntries().catch(()=>[]);
+        if (colored.length>0) sample = colored.slice(0,5);
+        if (sample.length===0) sample = (await safeGetSelection()).slice(0,5).map((s)=>({modelId:s.modelId,objectRuntimeId:s.runtimeId}));
+        for (const s of sample) {
+          try { const props = await API.viewer.getObjectProperties(s.modelId, [s.objectRuntimeId]);
+            for (const p of flattenProps(props)) if (isNumericValue(p.value) && !found.has(p.name)) found.set(p.name, p.unit);
+          } catch (e) {}
+        }
+      } catch (e) {}
+      for (const vn of ["Net volume","Gross volume","Volume"]) if (!found.has(vn)) found.set(vn, "m3");
+      for (const [name, unit] of found.entries()) {
+        const o = document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o);
+      }
+      if (found.size===0) log("No se han podido obtener parámetros del modelo; usando lista por defecto.");
+      updateUnitLabel();
+    }
+    function updateUnitLabel() {
+      const sel = document.getElementById("nearParam");
+      const opt = sel.options[sel.selectedIndex];
+      sel.classList.toggle("placeholder", !sel.value);
+      document.getElementById("nearUnit").textContent = (opt && opt.dataset && opt.dataset.unit) ? opt.dataset.unit : "";
+    }
+
+    async function runNeighborSelection() {
+      clearLog(); log("DEO " + SCRIPT_VERSION + " - Selección cercanos");
+      log("AVISO: contacto APROXIMADO por bounding boxes (no contacto geométrico exacto).");
+      try {
+        const seed = await safeGetSelection();
+        if (seed.length === 0) { log("Selecciona primero un objeto en el visor."); return; }
+        const modelId = seed[0].modelId;
+        const seedIds = seed.filter((s)=>s.modelId===modelId).map((s)=>s.runtimeId);
+        log("Semilla: " + seedIds.length + " objeto(s) en " + modelId);
+
+        const seedBoxesRaw = await API.viewer.getObjectBoundingBoxes(modelId, seedIds);
+        const seedBoxes = (seedBoxesRaw||[]).map(bboxOf).filter(Boolean);
+        if (seedBoxes.length===0) { log("No se han podido leer bounding boxes de la selección."); return; }
+        const seedBox = unionBox(seedBoxes);
+
+        let candidateIds = [];
+        try {
+          const parents = await API.viewer.getHierarchyParents(modelId, seedIds, undefined, true, false);
+          const rootIds = (parents && parents.length>0) ? parents.map((p)=>p.id??p.runtimeId).filter((x)=>x!=null) : seedIds;
+          const children = await API.viewer.getHierarchyChildren(modelId, rootIds, undefined, true);
+          candidateIds = (children||[]).map((c)=>c.id??c.runtimeId).filter((x)=>x!=null);
+        } catch (e) {
+          log("Jerarquía no disponible (" + e.message + "). Uso objetos coloreados como candidatos.");
+          const colored = await getColoredObjectEntries().catch(()=>[]);
+          candidateIds = colored.filter((c)=>c.modelId===modelId).map((c)=>c.objectRuntimeId);
+        }
+        const seedSet = new Set(seedIds);
+        candidateIds = [...new Set(candidateIds)].filter((id)=>!seedSet.has(id));
+        log("Candidatos: " + candidateIds.length);
+        if (candidateIds.length===0) { log("No hay candidatos."); return; }
+
+        let paramName = document.getElementById("nearParam").value;
+        const op = document.getElementById("nearOp").value;
+        const target = toNumber(document.getElementById("nearValue").value);
+        if (!paramName) { log("Selecciona un parámetro."); return; }
+        if (!op) { log("Selecciona una condición."); return; }
+        if (!Number.isFinite(target)) { log("Escribe un valor numérico."); return; }
+        log("Condición: " + paramName + " " + op + " " + target);
+
+        const inContact = [];
+        for (let i=0;i<candidateIds.length;i+=300) {
+          const chunk = candidateIds.slice(i, i+300);
+          let boxes = [];
+          try { boxes = await API.viewer.getObjectBoundingBoxes(modelId, chunk); } catch (e) { continue; }
+          for (let j=0;j<chunk.length;j++) { const bb = boxes[j] ? bboxOf(boxes[j]) : null; if (bb && boxesOverlap(seedBox, bb, CONTACT_TOLERANCE)) inContact.push(chunk[j]); }
+        }
+        log("En contacto (bbox): " + inContact.length);
+
+        const matches = [];
+        for (let i=0;i<inContact.length;i+=50) {
+          const chunk = inContact.slice(i, i+50);
+          let propsList = [];
+          try { propsList = await API.viewer.getObjectProperties(modelId, chunk); } catch (e) { continue; }
+          for (let j=0;j<chunk.length;j++) {
+            const hit = flattenProps(propsList[j]).find((p)=>p.name.toLowerCase()===paramName.toLowerCase());
+            if (!hit || !isNumericValue(hit.value)) continue;
+            const val = toNumber(hit.value);
+            let ok = false;
+            if (op==="menos") ok = val < target;
+            else if (op==="mas") ok = val > target;
+            else if (op==="igual") ok = Math.abs(val-target) <= Math.max(1e-9, Math.abs(target)*0.001);
+            if (ok) matches.push(chunk[j]);
+          }
+        }
+        log("Cumplen la condición: " + matches.length);
+
+        const finalIds = [...new Set([...seedIds, ...matches])];
+        const selector = { modelObjectIds: [{ modelId, objectRuntimeIds: finalIds }] };
+        try { await API.viewer.setSelection(selector, "set"); }
+        catch (e) { try { await API.viewer.setSelection(selector); } catch (e2) { log("No se pudo aplicar la selección: " + e2.message); return; } }
+        log("Selección actualizada: " + finalIds.length + " objetos.");
+      } catch (err) { log("ERROR en Selección cercanos: " + (err && err.message ? err.message : err)); }
+    }
+
+    // ===================== TOOLTIPS FLOTANTES =====================
+    function initTooltips() {
+      const tip = document.createElement("div");
+      tip.className = "floating-tip"; tip.style.display = "none";
+      document.body.appendChild(tip);
+      let timer = null;
+      document.querySelectorAll("[data-tip]").forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          timer = setTimeout(() => {
+            tip.textContent = el.getAttribute("data-tip");
+            const r = el.getBoundingClientRect();
+            tip.style.display = "block";
+            let top = r.bottom + 6, left = r.left;
+            if (left + 270 > window.innerWidth) left = Math.max(6, window.innerWidth - 270);
+            tip.style.top = top + "px"; tip.style.left = left + "px";
+          }, 400);
+        });
+        el.addEventListener("mouseleave", () => { clearTimeout(timer); tip.style.display = "none"; });
+      });
+    }
+
+    // ===================== UI / WIRING =====================
+    async function populateScope() {
+      const sel = document.getElementById("extendedScope");
+      sel.innerHTML = "";
+      const all = document.createElement("option"); all.value = "__ALL__"; all.textContent = "Todo el modelo";
+      sel.appendChild(all);
+      try {
+        const views = await API.view.getViews();
+        const folders = detectViewFolders(views);
+        if (folders.length === 0) log("No se han detectado carpetas de vistas desde la API.");
+        else for (const f of folders) { const o = document.createElement("option"); o.value=f; o.textContent=f; sel.appendChild(o); }
+      } catch (e) { log("No se han podido leer las vistas para el alcance: " + e.message); }
+    }
+    function wireUI() {
+      const custom = document.getElementById("customCodes");
+      const customText = document.getElementById("customCodesText");
+      custom.addEventListener("change", () => { customText.disabled = !custom.checked; });
+
+      const ext = document.getElementById("extendedExport");
+      const scope = document.getElementById("extendedScope");
+      ext.addEventListener("change", () => {
+        scope.disabled = !ext.checked;
+        if (ext.checked && scope.options.length === 0) populateScope();
+      });
+
+      document.getElementById("nearParam").addEventListener("change", updateUnitLabel);
+
+      const nearOp = document.getElementById("nearOp");
+      const opGray = () => nearOp.classList.toggle("placeholder", !nearOp.value);
+      nearOp.addEventListener("change", opGray);
+      opGray();
+
+      // Selección cercanos: el toggle actúa como disparador (se ejecuta al activarlo y vuelve a OFF)
+      const nearToggle = document.getElementById("nearToggle");
+      nearToggle.addEventListener("change", async () => {
+        if (!nearToggle.checked) return;
+        try { await runNeighborSelection(); } catch (e) { log("ERROR: " + e.message); }
+        finally { nearToggle.checked = false; }
+      });
     }
 
     async function main() {
-      // Conexión defensiva: el global puede llamarse TrimbleConnectWorkspace o WorkspaceAPI
-      const ws = window.TrimbleConnectWorkspace || window.WorkspaceAPI;
-      if (!ws || !ws.connect) {
-        log("ERROR: no se ha cargado la librería Workspace API de Trimble.");
-        return;
-      }
+      buildColumnsUI();
+      wireUI();
+      initTooltips();
+      document.getElementById("devVersion").textContent = "Versión: " + SCRIPT_VERSION;
+      document.getElementById("devUpdated").textContent = "Última actualización: " + LAST_UPDATED;
 
+      const ws = window.TrimbleConnectWorkspace || window.WorkspaceAPI;
+      if (!ws || !ws.connect) { log("ERROR: no se ha cargado la Workspace API de Trimble."); return; }
       API = await ws.connect(window.parent);
-      log("Conectado a Trimble Connect. Script versión: " + SCRIPT_VERSION);
+      log("Conectado a Trimble Connect. DEO " + SCRIPT_VERSION);
 
       document.getElementById("export").onclick = async () => {
         try {
-          await exportCsv();
-        } catch (err) {
-          console.error(err);
-          log("ERROR: " + err.message);
-        }
+          if (document.getElementById("extendedExport").checked) await exportExtended();
+          else await exportActiveView();
+        } catch (err) { console.error(err); log("ERROR: " + err.message); }
       };
+      document.getElementById("debug").onclick = async () => {
+        try { await exportDebug(); } catch (err) { console.error(err); log("ERROR DEBUG: " + err.message); }
+      };
+      document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
+      document.getElementById("importFile").onchange = async (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        ev.target.value = "";
+        if (file) { try { await importCsv(file); } catch (err) { console.error(err); log("ERROR IMPORT: " + err.message); } }
+      };
+
+      // Rellenar siempre el alcance (incluye "Todo el modelo") y los parámetros
+      try { await populateScope(); } catch (e) {}
+      try { await populateParameters(); } catch (e) {}
     }
 
-    main().catch((err) => {
-      console.error(err);
-      log("ERROR DE CONEXIÓN: " + err.message);
-    });
+    // ===================== DEBUG =====================
+    async function exportDebug() {
+      clearLog(); log("Generando debug...");
+      const out = [];
+      out.push("SCRIPT_VERSION\n" + SCRIPT_VERSION + "\n");
+      out.push("LAST_UPDATED\n" + LAST_UPDATED + "\n");
+      try { out.push("Object.keys(API)\n" + JSON.stringify(Object.keys(API)) + "\n"); } catch (e) {}
+      try { out.push("Object.keys(API.viewer)\n" + JSON.stringify(Object.keys(API.viewer)) + "\n"); } catch (e) {}
+      try { out.push("Object.keys(API.view)\n" + JSON.stringify(Object.keys(API.view)) + "\n"); } catch (e) {}
+      try { out.push("VISTA ACTIVA\n" + JSON.stringify(await API.view.getCurrentView(), null, 2) + "\n"); } catch (e) { out.push("getCurrentView ERROR: " + e.message + "\n"); }
+      let views = [];
+      try { views = await API.view.getViews(); } catch (e) {}
+      out.push("GETVIEWS (primeras 10)\n" + JSON.stringify((views||[]).slice(0,10), null, 2) + "\n");
+      out.push("CARPETAS DETECTADAS\n" + JSON.stringify(detectViewFolders(views)) + "\n");
+      let colored = [];
+      try { colored = await API.viewer.getColoredObjects(); } catch (e) { out.push("getColoredObjects ERROR: " + e.message + "\n"); }
+      const entries = [];
+      for (const g of colored||[]) for (const o of (g.objects||[])) entries.push({ modelId: g.modelId, id: o.id, color: o.color });
+      out.push("PRIMEROS MODELID\n" + JSON.stringify([...new Set(entries.map((e)=>e.modelId))].slice(0,5)) + "\n");
+      out.push("PRIMEROS OBJETOS\n" + JSON.stringify(entries.slice(0,20), null, 2) + "\n");
+      if (entries.length>0) {
+        const mid = entries[0].modelId;
+        const ids = entries.filter((e)=>e.modelId===mid).slice(0,10).map((e)=>Number(e.id));
+        try {
+          const direct = await API.viewer.convertToObjectIds(mid, ids);
+          out.push("CONVERTTOOBJECTIDS directo\n" + JSON.stringify(direct, null, 2) + "\n");
+          out.push("GUID IFC comprimido\n" + JSON.stringify(direct.map(toIfcGuid), null, 2) + "\n");
+        } catch (e) {
+          out.push("CONVERTTOOBJECTIDS ERROR: " + e.message + "\n");
+          const res = await convertResilient(mid, ids);
+          out.push("CONVERT RESILIENTE comprimido\n" + JSON.stringify(res.map(toIfcGuid), null, 2) + "\n");
+        }
+      }
+      downloadText("DEO_debug.txt", out.join("\n"));
+      log("Debug descargado: DEO_debug.txt");
+    }
+
+    main().catch((err) => { console.error(err); log("ERROR DE CONEXIÓN: " + err.message); });
   </script>
 </body>
 </html>
