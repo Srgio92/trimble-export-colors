@@ -28,7 +28,9 @@
     select.placeholder { color: #aaa; }
     #nearParam option, #nearOp option { color: #000; }
 
-    .columns-box { padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff; margin: 6px 0; }
+    .cols-details { border: 1px solid #e5e7eb; background: #fff; margin: 6px 0; }
+    .cols-details > summary { font-weight: normal; padding: 6px 8px; }
+    .cols-inner { padding: 6px 10px 10px; }
     .col-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
     .col-item .name { flex: 1; }
     .col-item button { padding: 1px 7px; margin: 0; font-size: 12px; line-height: 1.4; }
@@ -40,11 +42,11 @@
     #excludeColors label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; font-weight: normal; }
     .swatch { width: 16px; height: 16px; border: 1px solid #999; border-radius: 3px; display: inline-block; }
 
-    #progress { font-weight: bold; margin: 6px 0; min-height: 16px; }
-    #cancelExport { background: #b91c1c; color: #fff; border: none; border-radius: 4px; }
+    #cancelOp { background: #b91c1c; color: #fff; border: none; border-radius: 4px; }
+    .status-box { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; min-height: 18px; margin: 4px 0; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
 
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
-    #debug { position: absolute; top: 6px; right: 10px; background: transparent; color: #000; border: none; font-size: 18px; padding: 2px 6px; cursor: pointer; }
+    #debug { position: absolute; top: 6px; right: 10px; background: transparent; border: none; padding: 2px 4px; cursor: pointer; line-height: 0; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 300px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
@@ -63,12 +65,12 @@
           <label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label>
           <label class="txt" for="nearToggle">Activar</label>
         </div>
-        <div class="toggle-line" data-tip="Por defecto se seleccionan los objetos en contacto con volumen menor de 0,01 m³. Actívalo para definir tu propio parámetro, condición y valor.">
+        <div class="toggle-line" data-tip="Por defecto se seleccionan los objetos en contacto con volumen menor de 0,001 m³. Actívalo para definir tu propio parámetro, condición y valor.">
           <label class="switch"><input type="checkbox" id="nearCustom"><span class="slider"></span></label>
           <label class="txt" for="nearCustom">Configuración personalizada</label>
         </div>
         <div id="nearConfig">
-          <div class="hint" id="nearDefaultHint">Por defecto: objetos en contacto con volumen &lt; 0,01 m³ (volumen aproximado por bounding box). Ideal para tornillería y soldaduras sin parámetro de volumen.</div>
+          <div class="hint" id="nearDefaultHint">Por defecto: objetos en contacto con volumen &lt; 0,001 m³ (volumen aproximado por bounding box).</div>
           <div class="config-row">
             <select id="nearParam" class="placeholder" disabled></select>
             <select id="nearOp" class="placeholder" disabled>
@@ -84,13 +86,13 @@
       </div>
 
       <div class="tool">
-        <div class="subtitle">Excluir de selección</div>
-        <div class="toggle-line" data-tip="Cuando está activo, Selección cercanos NO añadirá los objetos cuyo color esté marcado abajo.">
+        <div class="subtitle">Excluir de la selección</div>
+        <div class="toggle-line" data-tip="Cuando está activo, al hacer una selección (por ejemplo con la herramienta de área de Trimble) se quitan automáticamente de la selección los objetos cuyo color esté marcado abajo.">
           <label class="switch"><input type="checkbox" id="excludeToggle"><span class="slider"></span></label>
           <label class="txt" for="excludeToggle">Activar</label>
         </div>
         <div id="excludeConfig">
-          <div class="hint">Marca los colores que NO quieres que se añadan con Selección cercanos.</div>
+          <div class="hint">Marca los colores que NO quieres que entren en la selección.</div>
           <div class="row"><button id="excludeRefresh">Actualizar colores del modelo</button></div>
           <div id="excludeColors"></div>
         </div>
@@ -104,50 +106,51 @@
     <div class="section">
       <div class="subtitle">Exportar colores a CSV</div>
 
-      <div class="columns-box">
-        <div style="font-weight:bold; margin-bottom:4px;">Columnas a exportar (ordena con las flechas):</div>
-        <div id="columnsList"></div>
-      </div>
+      <details class="cols-details">
+        <summary>Columnas a exportar</summary>
+        <div class="cols-inner"><div id="columnsList"></div></div>
+      </details>
 
       <div class="toggle-line" data-tip="Si no se encuentra el código RFI en el título de la vista, escribe ERROR (nombre de la vista) en codigo_revision.">
         <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
         <label class="txt" for="errorCodes">Error codes</label>
       </div>
-
       <div class="toggle-line" data-tip="Usa el texto del cuadro como código de revisión en lugar de extraerlo del título de la vista.">
         <label class="switch"><input type="checkbox" id="customCodes"><span class="slider"></span></label>
         <label class="txt" for="customCodes">Custom codes</label>
       </div>
-      <div class="row">
-        <input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;">
-      </div>
-
+      <div class="row"><input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;"></div>
       <div class="toggle-line" data-tip="Recorre automáticamente varias vistas, carga cada una y genera un único CSV combinado más un informe TXT.">
         <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
         <label class="txt" for="extendedExport">Exportación masiva</label>
       </div>
-      <div class="row" data-tip="La API de Trimble no expone las carpetas de vistas. Usa este filtro de texto para acotar (por ejemplo, el prefijo de módulo del nombre de la vista). Vacío = todas las vistas.">
-        Filtrar vistas: <input type="text" id="extendedFilter" placeholder="texto en el nombre (vacío = todas)" disabled style="width:60%;">
+      <div class="row" data-tip="Elige una carpeta/grupo de vistas para exportar solo esas. Si la API no devuelve carpetas, solo aparecerá 'Todas las vistas'.">
+        Carpeta: <select id="folderSelect" disabled style="width:60%;"><option value="">Todas las vistas</option></select>
+        <button id="folderRefresh" disabled title="Volver a leer las carpetas" style="padding:3px 8px;">&#8635;</button>
       </div>
 
       <div class="row">
         <button id="export" data-tip="Exporta los objetos coloreados de la vista activa (o de todas las vistas si Exportación masiva está activa).">Exportar CSV</button>
-        <button id="cancelExport" style="display:none;">Cancelar exportación</button>
       </div>
-      <div id="progress"></div>
 
       <div class="subtitle">Importar colores desde CSV</div>
       <div class="row">
         <button id="importBtn" data-tip="Abre un CSV con columnas de GUID y revisado_deo. Pinta de rojo (#FC0D1BFF) los objetos cuyo revisado_deo sea TRUE y estén presentes en el modelo. El resto se omite.">Importar CSV</button>
         <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;">
       </div>
+
+      <div class="subtitle">Estado</div>
+      <div class="row">
+        <button id="cancelOp" style="display:none;">Cancelar</button>
+      </div>
+      <div id="progress" class="status-box">Vista cargada con éxito.</div>
     </div>
   </details>
 
-  <details>
+  <details open>
     <summary>Desarrollador</summary>
     <div class="section">
-      <button id="debug" data-tip="Descarga un TXT con información técnica para diagnóstico.">&#128030;</button>
+      <button id="debug" data-tip="Descarga un TXT con información técnica para diagnóstico." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
       <div class="subtitle">Registro de trabajo</div>
@@ -159,19 +162,19 @@
 
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8";
+    const SCRIPT_VERSION = "v8.2";
     const LAST_UPDATED = "09/06/2026 (13:14h)";
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const IMPORT_COLOR = "#FC0D1BFF";
     const CONTACT_TOLERANCE = 0.01;
-    const CONTACT_VOLUME_MAX = 0.01;
+    const CONTACT_VOLUME_MAX = 0.001;   // minor fix: valor por defecto 0,001 m³
 
     let API = null;
     let lastConvertError = "";
     let cancelRequested = false;
-    let exportRunning = false;
+    let opRunning = false;
     const excludedColors = new Set();
 
     // ===================== UTILIDADES =====================
@@ -179,58 +182,21 @@
     const clearLog = () => { document.getElementById("log").textContent = ""; };
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const setProgress = (t) => { document.getElementById("progress").textContent = t; };
-    function formatETA(sec) {
-      if (!isFinite(sec) || sec < 0) return "calculando...";
-      sec = Math.round(sec);
-      const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
-      return h + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
-    }
-    function downloadText(filename, text, mime) {
-      const blob = new Blob(["\uFEFF" + text], { type: (mime || "text/csv") + ";charset=utf-8" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-      URL.revokeObjectURL(a.href);
-    }
-    function sanitizeFilename(name) { return String(name || "").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "").slice(0, 120); }
-    function normalizeColor(c) { return String(c || "").trim().toUpperCase(); }
-    function extractRevisionCode(text) { const m = String(text || "").match(/RFI[_\-\s]*\d+/i); return m ? m[0].replace(/[\-\s]/g, "_").toUpperCase() : ""; }
+    function showCancel(on) { document.getElementById("cancelOp").style.display = on ? "inline-block" : "none"; }
+    function formatETA(sec) { if (!isFinite(sec) || sec < 0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
+    function downloadText(filename, text, mime) { const blob = new Blob(["\uFEFF"+text], { type:(mime||"text/csv")+";charset=utf-8" }); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+    function sanitizeFilename(name) { return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
+    function normalizeColor(c) { return String(c||"").trim().toUpperCase(); }
+    function extractRevisionCode(text) { const m=String(text||"").match(/RFI[_\-\s]*\d+/i); return m ? m[0].replace(/[\-\s]/g,"_").toUpperCase() : ""; }
 
     // ---- GUID IFC ----
     const IFC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
     function ifcB64(v, len) { let s=""; for (let i=0;i<len;i++) s += IFC_CHARS[Math.floor(v/Math.pow(64,len-i-1))%64]; return s; }
-    function compressIfcGuid(uuid) {
-      const hex = String(uuid).replace(/-/g, "").toLowerCase();
-      if (hex.length !== 32 || /[^0-9a-f]/.test(hex)) return null;
-      const bs = []; for (let i=0;i<32;i+=2) bs.push(parseInt(hex.substr(i,2),16));
-      let res = ifcB64(bs[0],2); for (let i=1;i<16;i+=3) res += ifcB64((bs[i]<<16)+(bs[i+1]<<8)+bs[i+2],4); return res;
-    }
-    function decompressIfcGuid(g) {
-      if (!g || g.length !== 22) return null;
-      const di = (ch) => IFC_CHARS.indexOf(ch);
-      const bytes = [(di(g[0])*64 + di(g[1])) & 0xff]; let p = 2;
-      for (let k=0;k<5;k++) { let v=0; for (let i=0;i<4;i++) v = v*64 + di(g[p++]); bytes.push((v>>16)&0xff,(v>>8)&0xff,v&0xff); }
-      const hex = bytes.map((b)=>b.toString(16).padStart(2,"0")).join("");
-      return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20,32)].join("-");
-    }
-    function toIfcGuid(externalId) { if (!externalId) return ""; const s = String(externalId).trim(); if (s.length === 22 && /^[0-9A-Za-z_$]+$/.test(s)) return s; return compressIfcGuid(s) || s; }
-    function toExternalUuid(guid) {
-      const s = String(guid || "").trim();
-      if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)) return s.toLowerCase();
-      if (/^[0-9a-fA-F]{32}$/.test(s)) return [s.slice(0,8),s.slice(8,12),s.slice(12,16),s.slice(16,20),s.slice(20)].join("-").toLowerCase();
-      if (s.length === 22 && /^[0-9A-Za-z_$]+$/.test(s)) return decompressIfcGuid(s);
-      return null;
-    }
-    async function convertResilient(modelId, runtimeIds) {
-      if (runtimeIds.length === 0) return [];
-      try { const ids = await API.viewer.convertToObjectIds(modelId, runtimeIds); return runtimeIds.map((_, i) => ids[i] || ""); }
-      catch (e) {
-        if (!lastConvertError) lastConvertError = String(e && e.message ? e.message : e);
-        if (runtimeIds.length === 1) return [""];
-        const mid = Math.floor(runtimeIds.length/2);
-        const left = await convertResilient(modelId, runtimeIds.slice(0,mid));
-        const right = await convertResilient(modelId, runtimeIds.slice(mid));
-        return left.concat(right);
-      }
-    }
+    function compressIfcGuid(uuid) { const hex=String(uuid).replace(/-/g,"").toLowerCase(); if (hex.length!==32||/[^0-9a-f]/.test(hex)) return null; const bs=[]; for (let i=0;i<32;i+=2) bs.push(parseInt(hex.substr(i,2),16)); let res=ifcB64(bs[0],2); for (let i=1;i<16;i+=3) res+=ifcB64((bs[i]<<16)+(bs[i+1]<<8)+bs[i+2],4); return res; }
+    function decompressIfcGuid(g) { if (!g||g.length!==22) return null; const di=(ch)=>IFC_CHARS.indexOf(ch); const bytes=[(di(g[0])*64+di(g[1]))&0xff]; let p=2; for (let k=0;k<5;k++){ let v=0; for (let i=0;i<4;i++) v=v*64+di(g[p++]); bytes.push((v>>16)&0xff,(v>>8)&0xff,v&0xff);} const hex=bytes.map((b)=>b.toString(16).padStart(2,"0")).join(""); return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20,32)].join("-"); }
+    function toIfcGuid(externalId) { if (!externalId) return ""; const s=String(externalId).trim(); if (s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return s; return compressIfcGuid(s)||s; }
+    function toExternalUuid(guid) { const s=String(guid||"").trim(); if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)) return s.toLowerCase(); if (/^[0-9a-fA-F]{32}$/.test(s)) return [s.slice(0,8),s.slice(8,12),s.slice(12,16),s.slice(16,20),s.slice(20)].join("-").toLowerCase(); if (s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return decompressIfcGuid(s); return null; }
+    async function convertResilient(modelId, runtimeIds) { if (runtimeIds.length===0) return []; try { const ids=await API.viewer.convertToObjectIds(modelId, runtimeIds); return runtimeIds.map((_,i)=>ids[i]||""); } catch (e) { if (!lastConvertError) lastConvertError=String(e&&e.message?e.message:e); if (runtimeIds.length===1) return [""]; const mid=Math.floor(runtimeIds.length/2); const left=await convertResilient(modelId, runtimeIds.slice(0,mid)); const right=await convertResilient(modelId, runtimeIds.slice(mid)); return left.concat(right); } }
 
     // ===================== COLUMNAS =====================
     let COLUMNS = [
@@ -238,18 +204,18 @@
       { key: "color", header: "color", checked: true },
       { key: "revisionCode", header: "codigo_revision", checked: true },
       { key: "reviewedDeo", header: "revisado_deo", checked: true },
-      { key: "viewName", header: "View_name", checked: true },
+      { key: "viewName", header: "View_name", checked: false },
       { key: "modelId", header: "modelId", checked: false },
       { key: "objectRuntimeId", header: "objectRuntimeId", checked: false }
     ];
     function buildColumnsUI() {
       const list = document.getElementById("columnsList"); list.innerHTML = "";
       COLUMNS.forEach((col, index) => {
-        const item = document.createElement("div"); item.className = "col-item";
-        const cb = document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked;});
-        const name = document.createElement("span"); name.className="name"; name.textContent=col.header;
-        const up = document.createElement("button"); up.textContent="\u2191"; up.title="Subir"; up.disabled=index===0; up.onclick=()=>moveColumn(index,-1);
-        const down = document.createElement("button"); down.textContent="\u2193"; down.title="Bajar"; down.disabled=index===COLUMNS.length-1; down.onclick=()=>moveColumn(index,1);
+        const item=document.createElement("div"); item.className="col-item";
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked;});
+        const name=document.createElement("span"); name.className="name"; name.textContent=col.header;
+        const up=document.createElement("button"); up.textContent="\u2191"; up.title="Subir"; up.disabled=index===0; up.onclick=()=>moveColumn(index,-1);
+        const down=document.createElement("button"); down.textContent="\u2193"; down.title="Bajar"; down.disabled=index===COLUMNS.length-1; down.onclick=()=>moveColumn(index,1);
         item.appendChild(cb); item.appendChild(name); item.appendChild(up); item.appendChild(down); list.appendChild(item);
       });
     }
@@ -258,443 +224,358 @@
 
     // ===================== VISTA / REVISIÓN =====================
     async function getCurrentViewSpecWithRetry() {
-      let cv = null;
-      for (let a=1;a<=6;a++) {
-        try { cv = await API.view.getCurrentView();
-          if (cv && (cv.name || cv.description || cv.id)) {
-            if (cv.id && !cv.name) { try { const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if (m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} } catch(e){} }
-            if (cv.name || cv.description) return cv;
-          }
-        } catch (e) {}
-        if (a<6) { log("La vista activa aún no está lista... intento " + a + "/6"); await sleep(700); }
-      }
+      let cv=null;
+      for (let a=1;a<=6;a++) { try { cv=await API.view.getCurrentView(); if (cv&&(cv.name||cv.description||cv.id)) { if (cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } if (cv.name||cv.description) return cv; } } catch (e) {} if (a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} }
       return cv;
     }
-    function viewFullName(v) { return v ? (v.name || v.description || "") : ""; }
-    function computeRevisionBase(viewName) {
-      const customOn = document.getElementById("customCodes").checked;
-      const customText = document.getElementById("customCodesText").value.trim();
-      const errorOn = document.getElementById("errorCodes").checked;
-      if (customOn && customText) return customText.toUpperCase();
-      const auto = extractRevisionCode(viewName); if (auto) return auto;
-      if (customOn && !customText) log("Aviso: no es posible extraer el código del título y tampoco hay contenido en Custom codes.");
-      if (errorOn) return "ERROR (" + (viewName ? viewName : "VIEW_NAME_NOT_FOUND") + ")";
-      log("Aviso: no se ha podido determinar el código de revisión. codigo_revision quedará vacío.");
+    function viewFullName(v) { return v ? (v.name||v.description||"") : ""; }
+
+    // ---- Carpetas / grupos de vistas (detección en tiempo real) ----
+    const FOLDER_KEYS = ["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection","tag","tags"];
+    function detectFolder(view) {
+      if (!view || typeof view!=="object") return "";
+      for (const k of Object.keys(view)) {
+        if (FOLDER_KEYS.includes(k.toLowerCase())) {
+          const val = view[k];
+          if (val==null || val==="") continue;
+          if (typeof val!=="object") return String(val);
+          if (Array.isArray(val)) { const first=val.find((x)=>x); if (first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); }
+          else return String(val.name||val.title||val.groupName||val.id||"");
+        }
+      }
       return "";
+    }
+    async function populateFolders() {
+      const sel=document.getElementById("folderSelect"); if (!sel) return;
+      const keep=sel.value; sel.innerHTML="";
+      const optAll=document.createElement("option"); optAll.value=""; optAll.textContent="Todas las vistas"; sel.appendChild(optAll);
+      let views=[]; try { views=await API.view.getViews(); } catch (e) {}
+      const folders=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
+      if (folders.length===0) { log("Aviso: la Workspace API no ha devuelto carpetas/grupos de vistas (no es un dato expuesto). Se exportarán todas. Ejecuta el debug 🐞 y envíame DEO_debug.txt para revisar si hay algún campo de grupo en tus vistas."); }
+      else { for (const f of folders){ const o=document.createElement("option"); o.value=f; o.textContent=f; sel.appendChild(o);} log("Carpetas de vistas detectadas: "+folders.length); }
+      if (keep && folders.includes(keep)) sel.value=keep;
+    }
+    function computeRevisionBase(viewName) {
+      const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked;
+      if (customOn&&customText) return customText.toUpperCase();
+      const auto=extractRevisionCode(viewName); if (auto) return auto;
+      if (customOn&&!customText) log("Aviso: no es posible extraer el código del título y tampoco hay contenido en Custom codes.");
+      if (errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")";
+      log("Aviso: no se ha podido determinar el código de revisión. codigo_revision quedará vacío."); return "";
     }
 
     // ===================== OBJETOS COLOREADOS =====================
-    function colorToText(color) {
-      if (!color) return "";
-      if (typeof color === "string") return color;
-      if (typeof color === "object") {
-        const r=color.r??color.red??"", g=color.g??color.green??"", b=color.b??color.blue??"", a=color.a??color.alpha??"";
-        if (r!==""&&g!==""&&b!=="") return a!=="" ? "rgba("+r+","+g+","+b+","+a+")" : "rgb("+r+","+g+","+b+")";
-        return JSON.stringify(color);
-      }
-      return String(color);
-    }
-    async function getColoredObjectEntries() {
-      const groups = await API.viewer.getColoredObjects(); const entries = [];
-      for (const g of groups || []) { const modelId=g.modelId||""; for (const obj of (g.objects||[])) { const rid=Number(obj.id); const color=colorToText(obj.color); if (modelId && Number.isFinite(rid)) entries.push({ modelId, objectRuntimeId: rid, color }); } }
-      return entries;
-    }
-    async function getColoredObjectEntriesWithRetry() { for (let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if (e.length>0) return e; await sleep(600); } return []; }
+    function colorToText(color) { if (!color) return ""; if (typeof color==="string") return color; if (typeof color==="object"){ const r=color.r??color.red??"",g=color.g??color.green??"",b=color.b??color.blue??"",a=color.a??color.alpha??""; if(r!==""&&g!==""&&b!=="") return a!==""?"rgba("+r+","+g+","+b+","+a+")":"rgb("+r+","+g+","+b+")"; return JSON.stringify(color);} return String(color); }
+    async function getColoredObjectEntries() { const groups=await API.viewer.getColoredObjects(); const entries=[]; for (const g of groups||[]){ const modelId=g.modelId||""; for (const obj of (g.objects||[])){ const rid=Number(obj.id); const color=colorToText(obj.color); if (modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color}); } } return entries; }
+    async function getColoredObjectEntriesWithRetry() { for (let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if (e.length>0) return e; await sleep(600);} return []; }
+    async function probeColor(modelId, runtimeId) { try { const colored=await getColoredObjectEntries(); const hit=colored.find((c)=>c.modelId===modelId&&c.objectRuntimeId===runtimeId); return hit?normalizeColor(hit.color):""; } catch (e){ return ""; } }
+    function looksRed(colorStr) { const m=String(colorStr||"").match(/#?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/); if (!m) return false; const r=parseInt(m[1],16),g=parseInt(m[2],16),b=parseInt(m[3],16); return r>140&&g<95&&b<95; }
 
     // ===================== FILAS / CSV =====================
     async function buildRows(entries, revisionBase, viewName, wantGuid) {
-      const byModel = new Map();
-      for (const e of entries) { if (!byModel.has(e.modelId)) byModel.set(e.modelId, []); byModel.get(e.modelId).push(e); }
-      const rows = [];
-      for (const [modelId, list] of byModel.entries()) {
-        const bs = 200;
-        for (let i=0;i<list.length;i+=bs) {
-          const batch = list.slice(i, i+bs);
-          let guids = []; if (wantGuid) guids = await convertResilient(modelId, batch.map((e)=>e.objectRuntimeId));
-          for (let j=0;j<batch.length;j++) {
-            const e = batch[j]; const cn = normalizeColor(e.color);
-            rows.push({ guidIfc: wantGuid ? toIfcGuid(guids[j]) : "", color: e.color, revisionCode: REVISION_CODE_COLORS.has(cn) ? revisionBase : "", reviewedDeo: REVIEWED_DEO_COLORS.has(cn) ? "TRUE" : "FALSE", viewName: viewName, modelId: e.modelId, objectRuntimeId: e.objectRuntimeId });
-          }
-        }
-      }
+      const byModel=new Map(); for (const e of entries){ if (!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e); }
+      const rows=[];
+      for (const [modelId,list] of byModel.entries()) { const bs=200; for (let i=0;i<list.length;i+=bs){ const batch=list.slice(i,i+bs); let guids=[]; if (wantGuid) guids=await convertResilient(modelId, batch.map((e)=>e.objectRuntimeId)); for (let j=0;j<batch.length;j++){ const e=batch[j]; const cn=normalizeColor(e.color); rows.push({ guidIfc: wantGuid?toIfcGuid(guids[j]):"", color:e.color, revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"", reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE", viewName:viewName, modelId:e.modelId, objectRuntimeId:e.objectRuntimeId }); } } }
       return rows;
     }
-    function rowsToCsv(rows, cols) {
-      const header = cols.map((c)=>c.header).join(";");
-      const lines = rows.map((r)=> cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";"));
-      return [header].concat(lines).join("\n");
-    }
-    function logColorSummary(rows) {
-      const counts = {}; for (const r of rows) { const c = normalizeColor(r.color); counts[c]=(counts[c]||0)+1; }
-      log("Colores detectados (" + Object.keys(counts).length + "):");
-      Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n]) => log("   "+c+" -> "+n+(REVISION_CODE_COLORS.has(c)?"  [revision]":"")+(REVIEWED_DEO_COLORS.has(c)?"  [revisado]":"")));
-    }
+    function rowsToCsv(rows, cols) { const header=cols.map((c)=>c.header).join(";"); const lines=rows.map((r)=>cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";")); return [header].concat(lines).join("\n"); }
+    function logColorSummary(rows) { const counts={}; for (const r of rows){ const c=normalizeColor(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n+(REVISION_CODE_COLORS.has(c)?"  [revision]":"")+(REVIEWED_DEO_COLORS.has(c)?"  [revisado]":""))); }
 
     // ===================== EXPORTAR VISTA ACTIVA =====================
     async function exportActiveView() {
-      clearLog(); setProgress(""); lastConvertError = ""; log("DEO " + SCRIPT_VERSION);
-      const cols = selectedColumns(); if (cols.length === 0) { log("Selecciona al menos una columna."); return; }
-      const wantGuid = cols.some((c)=>c.key==="guidIfc");
+      clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log("DEO "+SCRIPT_VERSION);
+      const cols=selectedColumns(); if (cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas seleccionadas."); return; }
+      const wantGuid=cols.some((c)=>c.key==="guidIfc");
       log("Leyendo objetos coloreados...");
-      const entries = await getColoredObjectEntriesWithRetry();
-      if (entries.length === 0) { log("No se han encontrado objetos coloreados."); return; }
-      log("Objetos coloreados: " + entries.length);
-      const viewSpec = await getCurrentViewSpecWithRetry(); const viewName = viewFullName(viewSpec);
-      log("Vista activa: " + (viewName || "(sin nombre)"));
-      const revisionBase = computeRevisionBase(viewName);
-      log("Código de revisión base: " + (revisionBase || "(vacío)"));
-      const rows = await buildRows(entries, revisionBase, viewName, wantGuid);
-      logColorSummary(rows);
-      const csv = rowsToCsv(rows, cols);
-      const customOn = document.getElementById("customCodes").checked; const customText = document.getElementById("customCodesText").value.trim();
-      let prefix = extractRevisionCode(viewName) || "EXPORT";
-      if (customOn && customText) prefix = sanitizeFilename(customText);
-      else if (revisionBase && !revisionBase.startsWith("ERROR")) prefix = sanitizeFilename(revisionBase);
-      downloadText(prefix + "_trimble_colores_guid_ifc.csv", csv);
-      log("CSV generado. Filas: " + rows.length);
-      if (wantGuid) { log("GUID encontrados: " + rows.filter((r)=>r.guidIfc).length + " | vacíos: " + rows.filter((r)=>!r.guidIfc).length); if (lastConvertError) log("Primer error convertToObjectIds: " + lastConvertError); }
+      const entries=await getColoredObjectEntriesWithRetry();
+      if (entries.length===0){ log("No se han encontrado objetos coloreados."); setProgress("No hay objetos coloreados en la vista."); return; }
+      log("Objetos coloreados: "+entries.length);
+      const viewSpec=await getCurrentViewSpecWithRetry(); const viewName=viewFullName(viewSpec);
+      log("Vista activa: "+(viewName||"(sin nombre)"));
+      const revisionBase=computeRevisionBase(viewName); log("Código de revisión base: "+(revisionBase||"(vacío)"));
+      const rows=await buildRows(entries, revisionBase, viewName, wantGuid); logColorSummary(rows);
+      const csv=rowsToCsv(rows, cols);
+      const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim();
+      let prefix=extractRevisionCode(viewName)||"EXPORT"; if (customOn&&customText) prefix=sanitizeFilename(customText); else if (revisionBase&&!revisionBase.startsWith("ERROR")) prefix=sanitizeFilename(revisionBase);
+      downloadText(prefix+"_trimble_colores_guid_ifc.csv", csv);
+      log("CSV generado. Filas: "+rows.length);
+      if (wantGuid){ log("GUID encontrados: "+rows.filter((r)=>r.guidIfc).length+" | vacíos: "+rows.filter((r)=>!r.guidIfc).length); if (lastConvertError) log("Primer error convertToObjectIds: "+lastConvertError); }
+      setProgress("Exportación completada: "+rows.length+" filas.");
     }
 
     // ===================== EXPORTACIÓN MASIVA =====================
     async function exportMassive() {
-      clearLog(); setProgress(""); lastConvertError = ""; cancelRequested = false; log("DEO " + SCRIPT_VERSION + " - Exportación masiva");
-      if (!API.view || typeof API.view.selectView !== "function") { log("La API disponible no permite cargar vistas automáticamente. Exportación masiva no disponible en este entorno."); return; }
-      const cols = selectedColumns(); if (cols.length === 0) { log("Selecciona al menos una columna."); return; }
-      const wantGuid = cols.some((c)=>c.key==="guidIfc");
+      clearLog(); setProgress("Preparando exportación masiva..."); lastConvertError=""; cancelRequested=false; log("DEO "+SCRIPT_VERSION+" - Exportación masiva");
+      if (!API.view||typeof API.view.selectView!=="function"){ log("La API disponible no permite cargar vistas automáticamente."); setProgress("No disponible en este entorno."); return; }
+      const cols=selectedColumns(); if (cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
+      const wantGuid=cols.some((c)=>c.key==="guidIfc");
+      let views=[]; try { views=await API.view.getViews(); } catch (e){ log("ERROR getViews(): "+e.message); setProgress("Error al leer vistas."); return; }
+      if (!views||views.length===0){ log("No hay vistas en el proyecto."); setProgress("Sin vistas."); return; }
+      const folder=document.getElementById("folderSelect").value;
+      let target=views;
+      if (folder) target=target.filter((v)=>detectFolder(v)===folder);
+      else { const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if (withRfi.length>0) target=withRfi; }
+      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (carpeta: \""+folder+"\")":"")); if (total===0){ log("Ninguna vista en esa carpeta."); setProgress("Sin coincidencias."); return; }
 
-      let views = [];
-      try { views = await API.view.getViews(); } catch (e) { log("ERROR getViews(): " + e.message); return; }
-      if (!views || views.length === 0) { log("No hay vistas en el proyecto."); return; }
-
-      const filter = document.getElementById("extendedFilter").value.trim().toLowerCase();
-      let target = views;
-      const withRfi = target.filter((v)=>extractRevisionCode(viewFullName(v)));
-      if (withRfi.length > 0) target = withRfi;
-      if (filter) target = target.filter((v)=>viewFullName(v).toLowerCase().includes(filter));
-      const total = target.length;
-      log("Vistas a recorrer: " + total + (filter ? " (filtro: \"" + filter + "\")" : ""));
-      if (total === 0) { log("Ninguna vista coincide con el filtro."); return; }
-
-      document.getElementById("cancelExport").style.display = "inline-block";
-      setProgress("Vistas exportadas 0/" + total + " (ETA: calculando...)");
-
-      const allRows = [];
-      const exported = [];      // {name, rows}
-      const empty = [];         // name
-      const errored = [];       // {name, error}
-      const startTime = Date.now();
-
+      showCancel(true); setProgress("Vistas exportadas 0/"+total+" (ETA: calculando...)");
+      const allRows=[]; const exported=[]; const empty=[]; const errored=[]; const startTime=Date.now();
       for (let i=0;i<total;i++) {
-        if (cancelRequested) { log("Exportación cancelada por el usuario."); break; }
-        const v = target[i]; const viewName = viewFullName(v);
-        try {
-          await API.view.selectView(v.id);
-          await sleep(900);
-          const entries = await getColoredObjectEntriesWithRetry();
-          if (entries.length === 0) { empty.push(viewName || v.id); }
-          else {
-            const revisionBase = computeRevisionBase(viewName);
-            const rows = await buildRows(entries, revisionBase, viewName, wantGuid);
-            allRows.push(...rows);
-            exported.push({ name: viewName || v.id, rows: rows.length });
-          }
-        } catch (e) { errored.push({ name: viewName || v.id, error: (e && e.message ? e.message : String(e)) }); }
-
-        const done = i + 1;
-        const elapsed = (Date.now() - startTime) / 1000;
-        const eta = done > 0 ? (elapsed / done) * (total - done) : Infinity;
-        setProgress("Vistas exportadas " + done + "/" + total + " (ETA: " + formatETA(eta) + ")");
+        if (cancelRequested){ log("Exportación cancelada por el usuario."); break; }
+        const v=target[i]; const viewName=viewFullName(v);
+        try { await API.view.selectView(v.id); await sleep(900); const entries=await getColoredObjectEntriesWithRetry();
+          if (entries.length===0){ empty.push(viewName||v.id); }
+          else { const revisionBase=computeRevisionBase(viewName); const rows=await buildRows(entries, revisionBase, viewName, wantGuid); allRows.push(...rows); exported.push({name:viewName||v.id, rows:rows.length}); }
+        } catch (e){ errored.push({name:viewName||v.id, error:(e&&e.message?e.message:String(e))}); }
+        const done=i+1; const elapsed=(Date.now()-startTime)/1000; const eta=done>0?(elapsed/done)*(total-done):Infinity;
+        setProgress("Vistas exportadas "+done+"/"+total+" (ETA: "+formatETA(eta)+")");
       }
+      showCancel(false);
 
-      document.getElementById("cancelExport").style.display = "none";
+      if (allRows.length>0){ const csv=rowsToCsv(allRows, cols); let name="DEO_extended_export"; if (folder) name+="_"+sanitizeFilename(folder); downloadText(name+"_trimble_colores_guid_ifc.csv", csv); }
+      else log("No se ha generado ninguna fila.");
 
-      // CSV
-      if (allRows.length > 0) {
-        const csv = rowsToCsv(allRows, cols);
-        let name = "DEO_extended_export"; if (filter) name += "_" + sanitizeFilename(filter);
-        downloadText(name + "_trimble_colores_guid_ifc.csv", csv);
-      } else { log("No se ha generado ninguna fila."); }
+      const report=[];
+      report.push("DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva");
+      report.push("Fecha: "+new Date().toLocaleString()); report.push("Carpeta: "+(folder||"(todas)"));
+      report.push(cancelRequested?"ESTADO: CANCELADA POR EL USUARIO":"ESTADO: COMPLETADA");
+      report.push("Total de vistas consideradas: "+total); report.push("Vistas exportadas con datos: "+exported.length); report.push("Vistas sin objetos coloreados: "+empty.length); report.push("Vistas con error: "+errored.length); report.push("Filas totales exportadas: "+allRows.length); report.push("");
+      report.push("== VISTAS EXPORTADAS =="); exported.forEach((e)=>report.push("- "+e.name+"  (filas: "+e.rows+")")); report.push("");
+      report.push("== VISTAS SIN OBJETOS COLOREADOS =="); empty.forEach((n)=>report.push("- "+n)); report.push("");
+      report.push("== VISTAS CON ERROR (no exportadas) =="); errored.forEach((e)=>report.push("- "+e.name+"  ->  "+e.error));
+      let rname="DEO_extended_export"; if (folder) rname+="_"+sanitizeFilename(folder); downloadText(rname+"_informe.txt", report.join("\n"), "text/plain");
 
-      // Informe TXT
-      const report = [];
-      report.push("DEO Tools " + SCRIPT_VERSION + " - Informe de exportación masiva");
-      report.push("Fecha: " + new Date().toLocaleString());
-      report.push("Filtro: " + (filter || "(ninguno)"));
-      report.push(cancelRequested ? "ESTADO: CANCELADA POR EL USUARIO" : "ESTADO: COMPLETADA");
-      report.push("Total de vistas consideradas: " + total);
-      report.push("Vistas exportadas con datos: " + exported.length);
-      report.push("Vistas sin objetos coloreados: " + empty.length);
-      report.push("Vistas con error: " + errored.length);
-      report.push("Filas totales exportadas: " + allRows.length);
-      report.push("");
-      report.push("== VISTAS EXPORTADAS ==");
-      exported.forEach((e)=>report.push("- " + e.name + "  (filas: " + e.rows + ")"));
-      report.push("");
-      report.push("== VISTAS SIN OBJETOS COLOREADOS ==");
-      empty.forEach((n)=>report.push("- " + n));
-      report.push("");
-      report.push("== VISTAS CON ERROR (no exportadas) ==");
-      errored.forEach((e)=>report.push("- " + e.name + "  ->  " + e.error));
-      let rname = "DEO_extended_export"; if (filter) rname += "_" + sanitizeFilename(filter);
-      downloadText(rname + "_informe.txt", report.join("\n"), "text/plain");
-
-      setProgress("Hecho: " + exported.length + " exportadas, " + empty.length + " sin objetos, " + errored.length + " con error" + (cancelRequested ? " (cancelada)" : ""));
-      log("Exportación masiva finalizada. Filas: " + allRows.length + ". Informe TXT descargado.");
-      if (lastConvertError) log("Primer error convertToObjectIds: " + lastConvertError);
+      setProgress("Hecho: "+exported.length+" exportadas, "+empty.length+" sin objetos, "+errored.length+" con error"+(cancelRequested?" (cancelada)":""));
+      log("Exportación masiva finalizada. Filas: "+allRows.length+". Informe TXT descargado.");
+      if (lastConvertError) log("Primer error convertToObjectIds: "+lastConvertError);
     }
 
     // ===================== IMPORTAR CSV =====================
-    function parseCsvLine(line) {
-      const out = []; let cur = ""; let inQ = false;
-      for (let i=0;i<line.length;i++) { const ch = line[i];
-        if (inQ) { if (ch === '"') { if (line[i+1] === '"') { cur += '"'; i++; } else inQ = false; } else cur += ch; }
-        else { if (ch === '"') inQ = true; else if (ch === ';') { out.push(cur); cur = ""; } else cur += ch; }
-      }
-      out.push(cur); return out;
-    }
+    function parseCsvLine(line) { const out=[]; let cur=""; let inQ=false; for (let i=0;i<line.length;i++){ const ch=line[i]; if (inQ){ if (ch==='"'){ if (line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; } else { if (ch==='"') inQ=true; else if (ch===';'){ out.push(cur); cur=""; } else cur+=ch; } } out.push(cur); return out; }
     async function importCsv(file) {
-      clearLog(); log("DEO " + SCRIPT_VERSION + " - Importar CSV");
-      let text = ""; try { text = await file.text(); } catch (e) { log("No se ha podido leer el archivo: " + e.message); return; }
-      text = text.replace(/^\uFEFF/, "");
-      const lines = text.split(/\r?\n/).filter((l)=>l.trim() !== "");
-      if (lines.length < 2) { log("El CSV está vacío."); return; }
-      const header = parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
-      const gi = header.findIndex((h)=>h.includes("guid"));
-      const ri = header.findIndex((h)=>h === "revisado_deo");
-      if (gi < 0) { log("El CSV debe tener una columna de GUID."); return; }
-      if (ri < 0) { log("El CSV debe tener una columna 'revisado_deo'."); return; }
-      const uuids = []; let trueCount = 0;
-      for (let i=1;i<lines.length;i++) {
-        const cells = parseCsvLine(lines[i]); const guid = (cells[gi]||"").trim(); const reviewed = (cells[ri]||"").trim().toUpperCase();
-        if (reviewed !== "TRUE") continue; trueCount++;
-        const uuid = toExternalUuid(guid); if (uuid) uuids.push(uuid);
-      }
-      log("Filas con revisado_deo = TRUE: " + trueCount);
-      if (uuids.length === 0) { log("No hay GUID válidos marcados como TRUE."); return; }
-      let modelIds = [];
-      try { const models = await API.viewer.getModels(); modelIds = (models||[]).map((m)=>m.id).filter(Boolean); } catch (e) {}
-      try { const colored = await API.viewer.getColoredObjects(); for (const g of colored||[]) if (g.modelId) modelIds.push(g.modelId); } catch (e) {}
-      modelIds = [...new Set(modelIds)];
-      if (modelIds.length === 0) { log("No se han detectado modelos cargados."); return; }
-      log("Modelos cargados: " + modelIds.length);
-      const byModel = new Map(); let totalFound = 0;
+      clearLog(); setProgress("Importando: leyendo archivo..."); cancelRequested=false; log("DEO "+SCRIPT_VERSION+" - Importar CSV");
+      let text=""; try { text=await file.text(); } catch (e){ log("No se ha podido leer el archivo: "+e.message); setProgress("Error al leer el archivo."); return; }
+      text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
+      if (lines.length<2){ log("El CSV está vacío."); setProgress("CSV vacío."); return; }
+      const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
+      const gi=header.findIndex((h)=>h.includes("guid")); const ri=header.findIndex((h)=>h==="revisado_deo");
+      if (gi<0){ log("El CSV debe tener una columna de GUID."); setProgress("Falta columna GUID."); return; }
+      if (ri<0){ log("El CSV debe tener una columna 'revisado_deo'."); setProgress("Falta columna revisado_deo."); return; }
+      const uuids=[]; const raws=[]; let trueCount=0;
+      for (let i=1;i<lines.length;i++){ const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); const reviewed=(cells[ri]||"").trim().toUpperCase(); if (reviewed!=="TRUE") continue; trueCount++; const uuid=toExternalUuid(guid); if (uuid){ uuids.push(uuid); raws.push(guid); } }
+      log("Filas con revisado_deo = TRUE: "+trueCount);
+      if (uuids.length===0){ log("No hay GUID válidos marcados como TRUE."); setProgress("Sin GUID TRUE válidos."); return; }
+      log("Ejemplo GUID CSV: "+raws[0]+"  ->  UUID: "+uuids[0]);
+
+      showCancel(true); setProgress("Importando: detectando modelos...");
+      let modelIds=[]; try { const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); } catch (e) {}
+      try { const colored=await API.viewer.getColoredObjects(); for (const g of colored||[]) if (g.modelId) modelIds.push(g.modelId); } catch (e) {}
+      modelIds=[...new Set(modelIds)];
+      if (modelIds.length===0){ log("No se han detectado modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
+      log("Modelos cargados: "+modelIds.length+" -> "+JSON.stringify(modelIds));
+
+      const byModel=new Map(); let totalFound=0; let mi=0;
       for (const modelId of modelIds) {
-        let rids = []; try { rids = await API.viewer.convertToObjectRuntimeIds(modelId, uuids); } catch (e) { continue; }
-        const ids = []; for (let i=0;i<rids.length;i++) { const rid = rids[i]; if (rid !== null && rid !== undefined) ids.push(Number(rid)); }
-        if (ids.length > 0) { byModel.set(modelId, ids); totalFound += ids.length; }
+        if (cancelRequested){ log("Importación cancelada por el usuario."); break; }
+        setProgress("Importando: modelo "+(++mi)+"/"+modelIds.length+" (encontrados: "+totalFound+")");
+        // Resolución probando UUID descomprimido y GUID original (lo que más coincida)
+        let ridsU=[]; try { ridsU=await API.viewer.convertToObjectRuntimeIds(modelId, uuids); } catch (e){ ridsU=[]; }
+        let ridsR=[]; try { ridsR=await API.viewer.convertToObjectRuntimeIds(modelId, raws); } catch (e){ ridsR=[]; }
+        const foundU=(ridsU||[]).filter((r)=>r!==null&&r!==undefined).length;
+        const foundR=(ridsR||[]).filter((r)=>r!==null&&r!==undefined).length;
+        const rids=foundR>foundU?ridsR:ridsU;
+        log("   "+modelId+": UUID="+foundU+", GUID="+foundR+" coincidencias");
+        const ids=[]; for (let i=0;i<(rids||[]).length;i++){ const rid=rids[i]; if (rid!==null&&rid!==undefined) ids.push(Number(rid)); }
+        if (ids.length>0){ byModel.set(modelId, ids); totalFound+=ids.length; }
       }
-      log("Objetos encontrados: " + totalFound + " / " + uuids.length + " (los no encontrados se omiten)");
-      if (totalFound === 0) { log("Ningún GUID del CSV está en el modelo activo."); return; }
-      let applied = 0;
+      log("Objetos encontrados: "+totalFound+" / "+uuids.length+" (los no encontrados se omiten)");
+      if (totalFound===0){ log("Ningún GUID del CSV está en el modelo activo. ¿Es el mismo modelo/versión del que se exportó?"); setProgress("Ningún GUID coincide con el modelo."); showCancel(false); return; }
+
+      // ---- Autocalibración del formato de color (evita el problema del 'blanco') ----
+      setProgress("Importando: calibrando color...");
+      const firstEntry=[...byModel.entries()][0];
+      const probeModel=firstEntry[0]; const probeId=firstEntry[1][0];
+      const colorFormats=[ "#FC0D1BFF", "#FC0D1B", {r:252,g:13,b:27,a:255}, {r:252,g:13,b:27}, {r:252,g:13,b:27,a:1} ];
+      let chosen=null;
+      for (const fmt of colorFormats) {
+        if (cancelRequested) break;
+        try { await API.viewer.setObjectState({modelObjectIds:[{modelId:probeModel,objectRuntimeIds:[probeId]}]},{color:fmt}); } catch (e){ log("   formato "+JSON.stringify(fmt)+" -> error: "+e.message); continue; }
+        await sleep(220);
+        const applied=await probeColor(probeModel, probeId);
+        log("   formato "+JSON.stringify(fmt)+" -> visor: "+(applied||"(no detectado)"));
+        if (looksRed(applied)) { chosen=fmt; break; }
+      }
+      if (!chosen) { chosen=colorFormats[0]; log("No se pudo verificar el formato vía getColoredObjects; aplico "+JSON.stringify(chosen)+" igualmente."); }
+      else log("Formato de color válido: "+JSON.stringify(chosen));
+
+      let applied=0;
       for (const [modelId, ids] of byModel.entries()) {
-        const selector = { modelObjectIds: [{ modelId, objectRuntimeIds: ids }] };
-        try { await API.viewer.setObjectState(selector, { color: IMPORT_COLOR }); applied += ids.length; }
-        catch (e) { log("Error aplicando color en " + modelId + ": " + e.message); }
+        if (cancelRequested){ break; }
+        const selector={ modelObjectIds:[{ modelId, objectRuntimeIds: ids }] };
+        try { await API.viewer.setObjectState(selector, { color: chosen }); applied+=ids.length; } catch (e){ log("Error aplicando color en "+modelId+": "+e.message); }
       }
-      log("Pintados de rojo (" + IMPORT_COLOR + "): " + applied + " objetos.");
+      showCancel(false);
+      log("Pintados de rojo: "+applied+" objetos.");
+      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados de rojo.");
     }
 
     // ===================== SELECCIÓN CERCANOS / EXCLUIR =====================
-    function flattenProps(propsList) {
-      const flat = [];
-      const walk = (obj) => {
-        if (!obj || typeof obj !== "object") return;
-        if (Array.isArray(obj)) { obj.forEach(walk); return; }
-        const name = obj.name ?? obj.Name ?? obj.key; const value = obj.value ?? obj.Value ?? obj.nominalValue; const unit = obj.unit ?? obj.units ?? obj.Unit ?? "";
-        if (name !== undefined && value !== undefined && typeof value !== "object") flat.push({ name: String(name), value, unit: String(unit||"") });
-        for (const k of Object.keys(obj)) if (typeof obj[k] === "object") walk(obj[k]);
-      };
-      walk(propsList); return flat;
-    }
-    function isNumericValue(v) { if (typeof v === "number") return true; return Number.isFinite(parseFloat(String(v).replace(",", "."))); }
-    function toNumber(v) { return typeof v === "number" ? v : parseFloat(String(v).replace(",", ".")); }
-    async function safeGetSelection() {
-      let sel = []; try { sel = await API.viewer.getSelection(); } catch (e) { return []; }
-      const out = []; const arr = Array.isArray(sel) ? sel : (sel && sel.modelObjectIds) ? sel.modelObjectIds : [];
-      for (const item of arr || []) { const modelId = item.modelId; const ids = item.objectRuntimeIds || item.runtimeIds || item.objectIds || []; for (const id of ids) out.push({ modelId, runtimeId: Number(id) }); }
-      return out;
-    }
-    function bboxOf(box) { const b = box.boundingBox || box; const min = b.min || b.minPoint || b.start, max = b.max || b.maxPoint || b.end; if (!min || !max) return null; return { min: { x:min.x,y:min.y,z:min.z }, max: { x:max.x,y:max.y,z:max.z } }; }
-    function boxesOverlap(a, b, tol) { return a.min.x-tol<=b.max.x && a.max.x+tol>=b.min.x && a.min.y-tol<=b.max.y && a.max.y+tol>=b.min.y && a.min.z-tol<=b.max.z && a.max.z+tol>=b.min.z; }
+    function flattenProps(propsList) { const flat=[]; const walk=(obj)=>{ if (!obj||typeof obj!=="object") return; if (Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key; const value=obj.value??obj.Value??obj.nominalValue; const unit=obj.unit??obj.units??obj.Unit??""; if (name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value,unit:String(unit||"")}); for (const k of Object.keys(obj)) if (typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
+    function isNumericValue(v) { if (typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
+    function toNumber(v) { return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
+    async function safeGetSelection() { let sel=[]; try { sel=await API.viewer.getSelection(); } catch (e){ return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for (const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for (const id of ids) out.push({modelId, runtimeId:Number(id)}); } return out; }
+    function bboxOf(box) { const b=box.boundingBox||box; const min=b.min||b.minPoint||b.start, max=b.max||b.maxPoint||b.end; if (!min||!max) return null; return { min:{x:min.x,y:min.y,z:min.z}, max:{x:max.x,y:max.y,z:max.z} }; }
+    function boxesOverlap(a, b, tol) { return a.min.x-tol<=b.max.x&&a.max.x+tol>=b.min.x&&a.min.y-tol<=b.max.y&&a.max.y+tol>=b.min.y&&a.min.z-tol<=b.max.z&&a.max.z+tol>=b.min.z; }
     function unionBox(boxes) { const u={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}}; for (const b of boxes){u.min.x=Math.min(u.min.x,b.min.x);u.min.y=Math.min(u.min.y,b.min.y);u.min.z=Math.min(u.min.z,b.min.z);u.max.x=Math.max(u.max.x,b.max.x);u.max.y=Math.max(u.max.y,b.max.y);u.max.z=Math.max(u.max.z,b.max.z);} return u; }
     function boxVolume(b) { return Math.max(0,(b.max.x-b.min.x))*Math.max(0,(b.max.y-b.min.y))*Math.max(0,(b.max.z-b.min.z)); }
 
     async function populateParameters() {
-      const sel = document.getElementById("nearParam"); sel.innerHTML = "";
-      const ph = document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph);
-      const found = new Map();
-      try {
-        let sample = (await safeGetSelection()).slice(0,5).map((s)=>({modelId:s.modelId,objectRuntimeId:s.runtimeId}));
-        if (sample.length===0) { const colored = await getColoredObjectEntries().catch(()=>[]); sample = colored.slice(0,5); }
-        for (const s of sample) { try { const props = await API.viewer.getObjectProperties(s.modelId, [s.objectRuntimeId]); for (const p of flattenProps(props)) if (isNumericValue(p.value) && !found.has(p.name)) found.set(p.name, p.unit); } catch (e) {} }
-      } catch (e) {}
-      for (const [name, unit] of found.entries()) { const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); }
+      const sel=document.getElementById("nearParam"); sel.innerHTML="";
+      const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph);
+      const found=new Map();
+      try { let sample=(await safeGetSelection()).slice(0,5).map((s)=>({modelId:s.modelId,objectRuntimeId:s.runtimeId})); if (sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,5);} for (const s of sample){ try{ const props=await API.viewer.getObjectProperties(s.modelId,[s.objectRuntimeId]); for (const p of flattenProps(props)) if (isNumericValue(p.value)&&!found.has(p.name)) found.set(p.name,p.unit);}catch(e){} } } catch (e) {}
+      for (const [name,unit] of found.entries()){ const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); }
       if (found.size===0) log("No se han detectado parámetros numéricos en la muestra. Selecciona un objeto y reactiva 'Configuración personalizada'.");
       updateUnitLabel();
     }
-    function updateUnitLabel() { const sel = document.getElementById("nearParam"); const opt = sel.options[sel.selectedIndex]; sel.classList.toggle("placeholder", !sel.value); document.getElementById("nearUnit").textContent = (opt && opt.dataset && opt.dataset.unit) ? opt.dataset.unit : ""; }
-    function setNearConfigEnabled(on) { document.getElementById("nearParam").disabled=!on; document.getElementById("nearOp").disabled=!on; document.getElementById("nearValue").disabled=!on; document.getElementById("nearDefaultHint").style.display = on ? "none" : "block"; }
+    function updateUnitLabel() { const sel=document.getElementById("nearParam"); const opt=sel.options[sel.selectedIndex]; sel.classList.toggle("placeholder",!sel.value); document.getElementById("nearUnit").textContent=(opt&&opt.dataset&&opt.dataset.unit)?opt.dataset.unit:""; }
+    function setNearConfigEnabled(on) { document.getElementById("nearParam").disabled=!on; document.getElementById("nearOp").disabled=!on; document.getElementById("nearValue").disabled=!on; document.getElementById("nearDefaultHint").style.display=on?"none":"block"; }
 
     async function populateExcludeColors() {
-      const cont = document.getElementById("excludeColors"); cont.innerHTML = "";
-      let colored = []; try { colored = await getColoredObjectEntries(); } catch (e) {}
-      const colors = [...new Set(colored.map((c)=>normalizeColor(c.color)))].filter(Boolean).sort();
-      if (colors.length === 0) { cont.textContent = "No hay colores aplicados en el modelo."; return; }
-      for (const col of colors) {
-        const row = document.createElement("label");
-        const cb = document.createElement("input"); cb.type="checkbox"; cb.checked = excludedColors.has(col);
-        cb.addEventListener("change", () => { if (cb.checked) excludedColors.add(col); else excludedColors.delete(col); });
-        const sw = document.createElement("span"); sw.className="swatch"; sw.style.background = col;
-        const txt = document.createElement("span"); txt.textContent = col + (REVIEWED_DEO_COLORS.has(col) ? "  [revisado]" : "");
-        row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row);
-      }
+      const cont=document.getElementById("excludeColors"); cont.innerHTML="";
+      let colored=[]; try { colored=await getColoredObjectEntries(); } catch (e) {}
+      const colors=[...new Set(colored.map((c)=>normalizeColor(c.color)))].filter(Boolean).sort();
+      if (colors.length===0){ cont.textContent="No hay colores aplicados en el modelo."; return; }
+      for (const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedColors.has(col); cb.addEventListener("change",()=>{ if (cb.checked) excludedColors.add(col); else excludedColors.delete(col); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=col; const txt=document.createElement("span"); txt.textContent=col+(REVIEWED_DEO_COLORS.has(col)?"  [revisado]":""); row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); }
     }
 
-    let nearBusy = false; let nearLastApplied = "";
-    function selKey(ids) { return JSON.stringify(ids.slice().sort((a,b)=>a-b)); }
-    async function onSelectionChanged() {
-      const t = document.getElementById("nearToggle"); if (!t.checked || nearBusy) return;
-      const seed = await safeGetSelection(); if (seed.length === 0) { nearLastApplied = ""; return; }
-      const key = selKey(seed.map((s)=>s.runtimeId)); if (key === nearLastApplied) return;
-      nearBusy = true; try { await augmentSelection(seed); } catch (e) { log("Selección cercanos: " + (e && e.message ? e.message : e)); } finally { nearBusy = false; }
-    }
-    async function augmentSelection(seed) {
-      const modelId = seed[0].modelId; const seedIds = seed.filter((s)=>s.modelId===modelId).map((s)=>s.runtimeId);
-      const seedBoxesRaw = await API.viewer.getObjectBoundingBoxes(modelId, seedIds);
-      const seedBoxes = (seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if (seedBoxes.length === 0) return;
-      const seedBox = unionBox(seedBoxes);
-
-      let candidateIds = [];
-      try {
-        const parents = await API.viewer.getHierarchyParents(modelId, seedIds, undefined, true, false);
-        const rootIds = (parents && parents.length>0) ? parents.map((p)=>p.id??p.runtimeId).filter((x)=>x!=null) : seedIds;
-        const children = await API.viewer.getHierarchyChildren(modelId, rootIds, undefined, true);
-        candidateIds = (children||[]).map((c)=>c.id??c.runtimeId).filter((x)=>x!=null);
-      } catch (e) { const colored = await getColoredObjectEntries().catch(()=>[]); candidateIds = colored.filter((c)=>c.modelId===modelId).map((c)=>c.objectRuntimeId); }
-      const seedSet = new Set(seedIds); candidateIds = [...new Set(candidateIds)].filter((id)=>!seedSet.has(id));
-      if (candidateIds.length === 0) return;
-
-      const contact = []; const bboxById = new Map();
-      for (let i=0;i<candidateIds.length;i+=300) {
-        const chunk = candidateIds.slice(i, i+300); let boxes = []; try { boxes = await API.viewer.getObjectBoundingBoxes(modelId, chunk); } catch (e) { continue; }
-        for (let j=0;j<chunk.length;j++) { const bb = boxes[j] ? bboxOf(boxes[j]) : null; if (bb && boxesOverlap(seedBox, bb, CONTACT_TOLERANCE)) { contact.push(chunk[j]); bboxById.set(chunk[j], bb); } }
-      }
-
-      const custom = document.getElementById("nearCustom").checked;
-      let matches = [];
-      if (!custom) { for (const id of contact) if (boxVolume(bboxById.get(id)) < CONTACT_VOLUME_MAX) matches.push(id); }
+    // ---- Contacto / vecinos ----
+    async function computeNeighbors(modelId, seedIds) {
+      if (seedIds.length===0) return [];
+      const seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId, seedIds);
+      const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if (seedBoxes.length===0) return [];
+      const seedBox=unionBox(seedBoxes);
+      let candidateIds=[];
+      try { const parents=await API.viewer.getHierarchyParents(modelId, seedIds, undefined, true, false); const rootIds=(parents&&parents.length>0)?parents.map((p)=>p.id??p.runtimeId).filter((x)=>x!=null):seedIds; const children=await API.viewer.getHierarchyChildren(modelId, rootIds, undefined, true); candidateIds=(children||[]).map((c)=>c.id??c.runtimeId).filter((x)=>x!=null); }
+      catch (e){ const colored=await getColoredObjectEntries().catch(()=>[]); candidateIds=colored.filter((c)=>c.modelId===modelId).map((c)=>c.objectRuntimeId); }
+      const seedSet=new Set(seedIds); candidateIds=[...new Set(candidateIds)].filter((id)=>!seedSet.has(id));
+      if (candidateIds.length===0) return [];
+      const contact=[]; const bboxById=new Map();
+      for (let i=0;i<candidateIds.length;i+=300){ const chunk=candidateIds.slice(i,i+300); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId, chunk);}catch(e){continue;} for (let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if (bb&&boxesOverlap(seedBox,bb,CONTACT_TOLERANCE)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
+      const custom=document.getElementById("nearCustom").checked;
+      let matches=[];
+      if (!custom){ for (const id of contact) if (boxVolume(bboxById.get(id))<CONTACT_VOLUME_MAX) matches.push(id); }
       else {
-        const paramName = document.getElementById("nearParam").value; const op = document.getElementById("nearOp").value; const target = toNumber(document.getElementById("nearValue").value);
-        if (!paramName || !op || !Number.isFinite(target)) { log("Configuración personalizada incompleta: selecciona parámetro, condición y valor."); return; }
-        for (let i=0;i<contact.length;i+=50) {
-          const chunk = contact.slice(i, i+50); let pl = []; try { pl = await API.viewer.getObjectProperties(modelId, chunk); } catch (e) { continue; }
-          for (let j=0;j<chunk.length;j++) {
-            const hit = flattenProps(pl[j]).find((p)=>p.name.toLowerCase()===paramName.toLowerCase()); if (!hit || !isNumericValue(hit.value)) continue;
-            const val = toNumber(hit.value); let ok=false;
-            if (op==="menos") ok=val<target; else if (op==="mas") ok=val>target; else if (op==="igual") ok=Math.abs(val-target)<=Math.max(1e-9, Math.abs(target)*0.001);
-            if (ok) matches.push(chunk[j]);
+        const paramName=document.getElementById("nearParam").value; const op=document.getElementById("nearOp").value; const target=toNumber(document.getElementById("nearValue").value);
+        if (!paramName||!op||!Number.isFinite(target)){ log("Configuración personalizada incompleta: parámetro, condición y valor."); return []; }
+        for (let i=0;i<contact.length;i+=50){ const chunk=contact.slice(i,i+50); let pl=[]; try{ pl=await API.viewer.getObjectProperties(modelId, chunk);}catch(e){continue;} for (let j=0;j<chunk.length;j++){ const hit=flattenProps(pl[j]).find((p)=>p.name.toLowerCase()===paramName.toLowerCase()); if (!hit||!isNumericValue(hit.value)) continue; const v=toNumber(hit.value); let ok=false; if (op==="menos") ok=v<target; else if (op==="mas") ok=v>target; else if (op==="igual") ok=Math.abs(v-target)<=Math.max(1e-9,Math.abs(target)*0.001); if (ok) matches.push(chunk[j]); } }
+      }
+      return matches;
+    }
+
+    // ---- Manejador unificado de cambio de selección ----
+    let selBusy=false; let appliedKey=""; let prevSel=[];
+    const keyOf=(o)=>o.modelId+":"+o.runtimeId;
+    const keyList=(list)=>JSON.stringify(list.map(keyOf).sort());
+    async function processSelection() {
+      const nearOn=document.getElementById("nearToggle").checked;
+      const exclOn=document.getElementById("excludeToggle").checked&&excludedColors.size>0;
+      if (!nearOn&&!exclOn) return;
+      if (selBusy) return;
+      const current=await safeGetSelection();
+      const curKey=keyList(current);
+      if (curKey===appliedKey) return;            // es nuestro propio eco
+      if (current.length===0){ appliedKey=""; prevSel=[]; return; }
+      selBusy=true;
+      try {
+        const prevSet=new Set(prevSel.map(keyOf));
+        const added=current.filter((o)=>!prevSet.has(keyOf(o)));
+        const models=[...new Set(current.map((o)=>o.modelId))];
+        const finalAll=[];
+        for (const modelId of models) {
+          const curIds=current.filter((o)=>o.modelId===modelId).map((o)=>o.runtimeId);
+          const addIds=added.filter((o)=>o.modelId===modelId).map((o)=>o.runtimeId);
+          let neighbors=[];
+          if (nearOn&&addIds.length>0) neighbors=await computeNeighbors(modelId, addIds);
+          const addedTotal=new Set([...addIds,...neighbors]);
+          let finalIds=[...new Set([...curIds,...neighbors])];
+          if (exclOn) {
+            const colored=await getColoredObjectEntries().catch(()=>[]);
+            const colorMap=new Map(); for (const c of colored) if (c.modelId===modelId) colorMap.set(c.objectRuntimeId, normalizeColor(c.color));
+            const before=finalIds.length;
+            finalIds=finalIds.filter((id)=>{ if (!addedTotal.has(id)) return true; const c=colorMap.get(id); return !(c&&excludedColors.has(c)); });
+            const removed=before-finalIds.length; if (removed>0) log("Excluir de la selección: quitados "+removed+" objeto(s) por color.");
           }
+          if (nearOn&&neighbors.length>0) log("Selección cercanos: +"+neighbors.length+" en contacto ("+modelId+").");
+          for (const id of finalIds) finalAll.push({modelId, runtimeId:id});
         }
-      }
-
-      // Excluir de selección: quitar los matches cuyo color esté excluido
-      const excludeActive = document.getElementById("excludeToggle").checked && excludedColors.size > 0;
-      if (excludeActive && matches.length > 0) {
-        const colored = await getColoredObjectEntries().catch(()=>[]);
-        const colorMap = new Map(); for (const c of colored) if (c.modelId===modelId) colorMap.set(c.objectRuntimeId, normalizeColor(c.color));
-        const before = matches.length;
-        matches = matches.filter((id)=>{ const c = colorMap.get(id); return !(c && excludedColors.has(c)); });
-        if (before !== matches.length) log("Excluir de selección: omitidos " + (before - matches.length) + " objeto(s) por color.");
-      }
-
-      const finalIds = [...new Set([...seedIds, ...matches])];
-      const selector = { modelObjectIds: [{ modelId, objectRuntimeIds: finalIds }] };
-      try { await API.viewer.setSelection(selector, "set"); } catch (e) { try { await API.viewer.setSelection(selector); } catch (e2) { return; } }
-      nearLastApplied = selKey(finalIds);
-      log("Selección cercanos: +" + matches.length + " objeto(s) en contacto.");
+        const selector={ modelObjectIds: models.map((m)=>({ modelId:m, objectRuntimeIds: finalAll.filter((o)=>o.modelId===m).map((o)=>o.runtimeId) })) };
+        try { await API.viewer.setSelection(selector, "set"); } catch (e){ try{ await API.viewer.setSelection(selector);}catch(e2){ selBusy=false; return; } }
+        appliedKey=keyList(finalAll); prevSel=finalAll;
+      } catch (err){ log("Selección: "+(err&&err.message?err.message:err)); }
+      finally { selBusy=false; }
     }
 
     // ===================== TOOLTIPS =====================
-    function initTooltips() {
-      const tip = document.createElement("div"); tip.className = "floating-tip"; tip.style.display = "none"; document.body.appendChild(tip); let timer = null;
-      document.querySelectorAll("[data-tip]").forEach((el) => {
-        el.addEventListener("mouseenter", () => { timer = setTimeout(() => { tip.textContent = el.getAttribute("data-tip"); const r = el.getBoundingClientRect(); tip.style.display = "block"; let left = r.left; if (left + 270 > window.innerWidth) left = Math.max(6, window.innerWidth - 270); tip.style.top = (r.bottom + 6) + "px"; tip.style.left = left + "px"; }, 400); });
-        el.addEventListener("mouseleave", () => { clearTimeout(timer); tip.style.display = "none"; });
-      });
-    }
+    function initTooltips() { const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null; document.querySelectorAll("[data-tip]").forEach((el)=>{ el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if (left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); }); el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; }); }); }
 
     // ===================== WIRING =====================
     function wireUI() {
-      const custom = document.getElementById("customCodes"); const customText = document.getElementById("customCodesText");
-      custom.addEventListener("change", () => { customText.disabled = !custom.checked; if (!custom.checked) customText.value = ""; });
-
-      const ext = document.getElementById("extendedExport"); const filter = document.getElementById("extendedFilter");
-      ext.addEventListener("change", () => { filter.disabled = !ext.checked; });
-
+      const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
+      custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if (!custom.checked) customText.value=""; });
+      const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect"); const folderRefresh=document.getElementById("folderRefresh");
+      ext.addEventListener("change",()=>{ const on=ext.checked; folderSel.disabled=!on; folderRefresh.disabled=!on; if (on) populateFolders(); });
+      folderRefresh.onclick=()=>populateFolders();
       document.getElementById("nearParam").addEventListener("change", updateUnitLabel);
-      const nearOp = document.getElementById("nearOp"); const opGray = () => nearOp.classList.toggle("placeholder", !nearOp.value); nearOp.addEventListener("change", opGray); opGray();
-
-      const nearCustom = document.getElementById("nearCustom");
-      nearCustom.addEventListener("change", () => { setNearConfigEnabled(nearCustom.checked); if (nearCustom.checked) populateParameters(); });
-
-      const nearToggle = document.getElementById("nearToggle");
-      nearToggle.addEventListener("change", () => { if (nearToggle.checked) { log("Selección cercanos ACTIVADO."); onSelectionChanged(); } else { log("Selección cercanos desactivado."); nearLastApplied = ""; } });
-
-      const excludeToggle = document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change", () => { document.getElementById("excludeConfig").style.display = excludeToggle.checked ? "block" : "none"; if (excludeToggle.checked) populateExcludeColors(); });
-      document.getElementById("excludeRefresh").onclick = () => populateExcludeColors();
-      document.getElementById("excludeConfig").style.display = "none";
-
-      document.getElementById("cancelExport").onclick = () => { cancelRequested = true; setProgress("Cancelando..."); };
-
+      const nearOp=document.getElementById("nearOp"); const opGray=()=>nearOp.classList.toggle("placeholder",!nearOp.value); nearOp.addEventListener("change",opGray); opGray();
+      const nearCustom=document.getElementById("nearCustom");
+      nearCustom.addEventListener("change",()=>{ setNearConfigEnabled(nearCustom.checked); if (nearCustom.checked) populateParameters(); });
+      const nearToggle=document.getElementById("nearToggle");
+      nearToggle.addEventListener("change",()=>{ if (nearToggle.checked){ log("Selección cercanos ACTIVADO."); appliedKey=""; prevSel=[]; processSelection(); } else { log("Selección cercanos desactivado."); } });
+      const excludeToggle=document.getElementById("excludeToggle");
+      excludeToggle.addEventListener("change",()=>{ document.getElementById("excludeConfig").style.display=excludeToggle.checked?"block":"none"; if (excludeToggle.checked){ populateExcludeColors(); appliedKey=""; prevSel=[]; processSelection(); } });
+      document.getElementById("excludeRefresh").onclick=()=>populateExcludeColors();
+      document.getElementById("excludeConfig").style.display="none";
+      document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       setNearConfigEnabled(false);
     }
-    function handleWorkspaceEvent(event) { if (event === "viewer.onSelectionChanged") onSelectionChanged(); }
+    function handleWorkspaceEvent(event) { if (event==="viewer.onSelectionChanged") processSelection(); }
 
     async function main() {
       buildColumnsUI(); wireUI(); initTooltips();
-      document.getElementById("devVersion").textContent = "Versión: " + SCRIPT_VERSION;
-      document.getElementById("devUpdated").textContent = "Última actualización: " + LAST_UPDATED;
-      const ws = window.TrimbleConnectWorkspace || window.WorkspaceAPI;
-      if (!ws || !ws.connect) { log("ERROR: no se ha cargado la Workspace API de Trimble."); return; }
-      API = await ws.connect(window.parent, (event) => { try { handleWorkspaceEvent(event); } catch (e) {} });
-      log("Conectado a Trimble Connect. DEO " + SCRIPT_VERSION);
-
-      document.getElementById("export").onclick = async () => {
-        if (exportRunning) return; exportRunning = true;
-        const btn = document.getElementById("export"); btn.disabled = true;
-        try { if (document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }
-        catch (err) { console.error(err); log("ERROR: " + err.message); }
-        finally { exportRunning = false; btn.disabled = false; document.getElementById("cancelExport").style.display = "none"; }
-      };
-      document.getElementById("debug").onclick = async () => { try { await exportDebug(); } catch (err) { console.error(err); log("ERROR DEBUG: " + err.message); } };
-      document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
-      document.getElementById("importFile").onchange = async (ev) => { const file = ev.target.files && ev.target.files[0]; ev.target.value = ""; if (file) { try { await importCsv(file); } catch (err) { console.error(err); log("ERROR IMPORT: " + err.message); } } };
+      document.getElementById("devVersion").textContent="Versión: "+SCRIPT_VERSION;
+      document.getElementById("devUpdated").textContent="Última actualización: "+LAST_UPDATED;
+      const ws=window.TrimbleConnectWorkspace||window.WorkspaceAPI;
+      if (!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API de Trimble."); return; }
+      API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event);}catch(e){} });
+      log("Conectado a Trimble Connect. DEO "+SCRIPT_VERSION);
+      document.getElementById("export").onclick=async ()=>{ if (opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try { if (document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); } catch (err){ console.error(err); log("ERROR: "+err.message); } finally { opRunning=false; btn.disabled=false; showCancel(false); } };
+      document.getElementById("debug").onclick=async ()=>{ try{ await exportDebug();}catch(err){ console.error(err); log("ERROR DEBUG: "+err.message);} };
+      document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+      document.getElementById("importFile").onchange=async (ev)=>{ const file=ev.target.files&&ev.target.files[0]; ev.target.value=""; if (!file) return; if (opRunning) return; opRunning=true; try { await importCsv(file); } catch (err){ console.error(err); log("ERROR IMPORT: "+err.message); } finally { opRunning=false; showCancel(false); } };
     }
 
     // ===================== DEBUG =====================
     async function exportDebug() {
-      clearLog(); log("Generando debug...");
-      const out = [];
-      out.push("SCRIPT_VERSION\n" + SCRIPT_VERSION + "\n"); out.push("LAST_UPDATED\n" + LAST_UPDATED + "\n");
-      try { out.push("Object.keys(API)\n" + JSON.stringify(Object.keys(API)) + "\n"); } catch (e) {}
-      try { out.push("Object.keys(API.viewer)\n" + JSON.stringify(Object.keys(API.viewer)) + "\n"); } catch (e) {}
-      try { out.push("Object.keys(API.view)\n" + JSON.stringify(Object.keys(API.view)) + "\n"); } catch (e) {}
-      try { out.push("VISTA ACTIVA\n" + JSON.stringify(await API.view.getCurrentView(), null, 2) + "\n"); } catch (e) { out.push("getCurrentView ERROR: " + e.message + "\n"); }
-      let views = []; try { views = await API.view.getViews(); } catch (e) {}
-      out.push("GETVIEWS (primeras 10)\n" + JSON.stringify((views||[]).slice(0,10), null, 2) + "\n");
-      try { out.push("SELECCIÓN ACTUAL\n" + JSON.stringify(await API.viewer.getSelection(), null, 2) + "\n"); } catch (e) {}
-      let colored = []; try { colored = await API.viewer.getColoredObjects(); } catch (e) { out.push("getColoredObjects ERROR: " + e.message + "\n"); }
-      const entries = []; for (const g of colored||[]) for (const o of (g.objects||[])) entries.push({ modelId: g.modelId, id: o.id, color: o.color });
-      out.push("PRIMEROS OBJETOS\n" + JSON.stringify(entries.slice(0,20), null, 2) + "\n");
-      if (entries.length>0) { const mid = entries[0].modelId; const ids = entries.filter((e)=>e.modelId===mid).slice(0,10).map((e)=>Number(e.id));
-        try { const direct = await API.viewer.convertToObjectIds(mid, ids); out.push("CONVERTTOOBJECTIDS\n" + JSON.stringify(direct, null, 2) + "\nGUID IFC\n" + JSON.stringify(direct.map(toIfcGuid), null, 2) + "\n"); }
-        catch (e) { out.push("CONVERTTOOBJECTIDS ERROR: " + e.message + "\n"); } }
-      downloadText("DEO_debug.txt", out.join("\n"), "text/plain");
-      log("Debug descargado: DEO_debug.txt");
+      clearLog(); log("Generando debug..."); const out=[];
+      out.push("SCRIPT_VERSION\n"+SCRIPT_VERSION+"\n"); out.push("LAST_UPDATED\n"+LAST_UPDATED+"\n");
+      try { out.push("Object.keys(API)\n"+JSON.stringify(Object.keys(API))+"\n"); } catch (e) {}
+      try { out.push("Object.keys(API.viewer)\n"+JSON.stringify(Object.keys(API.viewer))+"\n"); } catch (e) {}
+      try { out.push("Object.keys(API.view)\n"+JSON.stringify(Object.keys(API.view))+"\n"); } catch (e) {}
+      try { out.push("VISTA ACTIVA\n"+JSON.stringify(await API.view.getCurrentView(),null,2)+"\n"); } catch (e){ out.push("getCurrentView ERROR: "+e.message+"\n"); }
+      let views=[]; try { views=await API.view.getViews(); } catch (e) {}
+      out.push("GETVIEWS total: "+(views?views.length:0)+"\n");
+      out.push("CLAVES DE UNA VISTA\n"+JSON.stringify(views&&views[0]?Object.keys(views[0]):[],null,2)+"\n");
+      out.push("CARPETAS DETECTADAS\n"+JSON.stringify([...new Set((views||[]).map(detectFolder).filter(Boolean))],null,2)+"\n");
+      out.push("GETVIEWS (primeras 3, JSON completo)\n"+JSON.stringify((views||[]).slice(0,3),null,2)+"\n");
+      try { out.push("SELECCIÓN ACTUAL\n"+JSON.stringify(await API.viewer.getSelection(),null,2)+"\n"); } catch (e) {}
+      let colored=[]; try { colored=await API.viewer.getColoredObjects(); } catch (e){ out.push("getColoredObjects ERROR: "+e.message+"\n"); }
+      const entries=[]; for (const g of colored||[]) for (const o of (g.objects||[])) entries.push({modelId:g.modelId,id:o.id,color:o.color});
+      out.push("PRIMEROS OBJETOS\n"+JSON.stringify(entries.slice(0,20),null,2)+"\n");
+      if (entries.length>0){ const mid=entries[0].modelId; const ids=entries.filter((e)=>e.modelId===mid).slice(0,10).map((e)=>Number(e.id)); try{ const direct=await API.viewer.convertToObjectIds(mid,ids); out.push("CONVERTTOOBJECTIDS\n"+JSON.stringify(direct,null,2)+"\nGUID IFC\n"+JSON.stringify(direct.map(toIfcGuid),null,2)+"\n");}catch(e){ out.push("CONVERTTOOBJECTIDS ERROR: "+e.message+"\n"); } }
+      downloadText("DEO_debug.txt", out.join("\n"), "text/plain"); log("Debug descargado: DEO_debug.txt");
     }
 
-    main().catch((err) => { console.error(err); log("ERROR DE CONEXIÓN: " + err.message); });
+    main().catch((err)=>{ console.error(err); log("ERROR DE CONEXIÓN: "+err.message); });
   </script>
 </body>
 </html>
