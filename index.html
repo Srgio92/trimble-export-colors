@@ -9,8 +9,11 @@
     summary { cursor: pointer; font-weight: bold; padding: 8px 10px; user-select: none; }
     .section { padding: 4px 12px 12px; position: relative; }
     .subtitle { font-weight: bold; margin: 10px 0 4px; }
-    .tool { border-top: 1px solid #ececec; padding-top: 4px; margin-top: 8px; }
-    .tool:first-of-type { border-top: none; margin-top: 0; }
+    details.tool { border: 1px solid #ececec; border-radius: 6px; background: #fff; margin: 8px 0; }
+    details.tool:first-of-type { margin-top: 0; }
+    details.tool > summary.subtitle { margin: 0; padding: 7px 8px; }
+    .tool-body { padding: 4px 10px 10px; }
+    .tool-status { border-top: 1px solid #ececec; padding-top: 4px; margin-top: 8px; }
     .row { margin: 6px 0; }
     button { padding: 6px 12px; margin: 2px 0; cursor: pointer; }
 
@@ -20,8 +23,13 @@
     .slider:before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
     .switch input:checked + .slider { background: #1c7fd6; }
     .switch input:checked + .slider:before { transform: translateX(18px); }
+    .switch input:disabled + .slider { background: #d1d5db; cursor: not-allowed; }
+    .switch input:disabled + .slider:before { background: #f3f4f6; }
+    .switch input:checked:disabled + .slider { background: #d1d5db; }
     .toggle-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
     .toggle-line label.txt { cursor: pointer; }
+    .toggle-line.is-disabled { color: #9ca3af; }
+    .toggle-line.is-disabled label.txt { cursor: not-allowed; }
 
     input[type="text"], select { padding: 4px; box-sizing: border-box; }
     input:disabled, select:disabled { background: #eee; color: #999; }
@@ -48,9 +56,11 @@
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
     #debug { position: absolute; top: 6px; right: 10px; background: transparent; border: none; padding: 2px 4px; cursor: pointer; line-height: 0; }
 
-    #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 300px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+    #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 180px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
     .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
+    .disabled-area { opacity: .45; }
+    .disabled-area input, .disabled-area select, .disabled-area button { pointer-events: none; }
   </style>
 </head>
 <body>
@@ -59,102 +69,157 @@
     <summary>Herramientas del modelo</summary>
     <div class="section">
 
-      <div class="tool">
-        <div class="subtitle">Selección cercanos</div>
-        <div class="toggle-line" data-tip="Modo activo: al seleccionar un objeto en el modelo, se añaden automáticamente a la selección los objetos en contacto (aproximado por bounding box) que cumplan el criterio.">
-          <label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label>
-          <label class="txt" for="nearToggle">Activar</label>
-        </div>
-        <div class="toggle-line" data-tip="Por defecto se seleccionan los objetos en contacto con volumen menor de 0,001 m³. Actívalo para definir tu propio parámetro, condición y valor.">
-          <label class="switch"><input type="checkbox" id="nearCustom"><span class="slider"></span></label>
-          <label class="txt" for="nearCustom">Configuración personalizada</label>
-        </div>
-        <div id="nearConfig">
-          <div class="hint" id="nearDefaultHint">Por defecto: objetos en contacto con volumen &lt; 0,001 m³ (volumen aproximado por bounding box).</div>
-          <div class="config-row">
-            <select id="nearParam" class="placeholder" disabled></select>
-            <select id="nearOp" class="placeholder" disabled>
-              <option value="" disabled selected hidden>condición</option>
-              <option value="menos">menos</option>
-              <option value="igual">igual</option>
-              <option value="mas">más</option>
-            </select>
-            <input type="text" id="nearValue" placeholder="Valor" disabled>
-            <span id="nearUnit"></span>
+      <details class="tool">
+        <summary class="subtitle">Selección cercanos</summary>
+        <div class="tool-body">
+          <div class="toggle-line" data-tip="Añade a la selección los objetos próximos que correspondan con soldaduras, tornillos, arandelas, tuercas, anclajes u objetos pequeños.">
+            <label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label>
+            <label class="txt" for="nearToggle">Activar</label>
+          </div>
+          <div class="toggle-line" id="nearCustomLine" data-tip="Permite limitar la búsqueda por un parámetro del modelo, una condición y un valor. Solo actúa cuando Selección cercanos está activada.">
+            <label class="switch"><input type="checkbox" id="nearCustom"><span class="slider"></span></label>
+            <label class="txt" for="nearCustom">Configuración personalizada</label>
+          </div>
+          <div id="nearConfig">
+            <div class="hint" id="nearDefaultHint">Criterio por defecto: objetos próximos con volumen inferior a 0,001 m³.</div>
+            <div class="config-row">
+              <select id="nearParam" class="placeholder" disabled></select>
+              <select id="nearOp" class="placeholder" disabled>
+                <option value="" disabled selected hidden>condición</option>
+                <option value="menos">menos</option>
+                <option value="igual">igual</option>
+                <option value="mas">más</option>
+              </select>
+              <input type="text" id="nearValue" placeholder="Valor" disabled>
+              <span id="nearUnit"></span>
+            </div>
           </div>
         </div>
-      </div>
+      </details>
 
-      <div class="tool">
-        <div class="subtitle">Excluir de la selección</div>
-        <div class="toggle-line" data-tip="Cuando está activo, al hacer una selección (por ejemplo con la herramienta de área de Trimble) se quitan automáticamente de la selección los objetos cuyo color esté marcado abajo.">
-          <label class="switch"><input type="checkbox" id="excludeToggle"><span class="slider"></span></label>
-          <label class="txt" for="excludeToggle">Activar</label>
+      <details class="tool">
+        <summary class="subtitle">Excluir de la selección</summary>
+        <div class="tool-body">
+          <div class="toggle-line" data-tip="Quita automáticamente de la selección los objetos con los colores marcados.">
+            <label class="switch"><input type="checkbox" id="excludeToggle"><span class="slider"></span></label>
+            <label class="txt" for="excludeToggle">Activar</label>
+          </div>
+          <div id="excludeConfig">
+            <div class="hint">Marca los colores que no deben entrar en la selección.</div>
+            <div class="row"><button id="excludeRefresh" data-tip="Vuelve a leer los colores aplicados en la vista actual.">Actualizar colores del modelo</button></div>
+            <div id="excludeColors"></div>
+          </div>
         </div>
-        <div id="excludeConfig">
-          <div class="hint">Marca los colores que NO quieres que entren en la selección.</div>
-          <div class="row"><button id="excludeRefresh">Actualizar colores del modelo</button></div>
-          <div id="excludeColors"></div>
+      </details>
+
+      <details class="tool">
+        <summary class="subtitle">Selección ocultos</summary>
+        <div class="tool-body">
+          <div class="toggle-line" data-tip="Incluye objetos ocultos en las búsquedas programáticas de las herramientas de selección.">
+            <label class="switch"><input type="checkbox" id="hiddenSelectionToggle"><span class="slider"></span></label>
+            <label class="txt" for="hiddenSelectionToggle">Activar</label>
+          </div>
+          <div class="hint">El clic nativo sobre objetos en modo ficticio sigue dependiendo de Trimble.</div>
         </div>
-      </div>
+      </details>
+
+      <details class="tool">
+        <summary class="subtitle">Incluir en la selección</summary>
+        <div class="tool-body">
+          <div class="toggle-line" data-tip="Añade objetos del modelo que coincidan con el parámetro y el valor seleccionados.">
+            <label class="switch"><input type="checkbox" id="includeToggle"><span class="slider"></span></label>
+            <label class="txt" for="includeToggle">Activar</label>
+          </div>
+          <div id="includeConfig">
+            <div class="config-row">
+              <select id="includeParam" class="placeholder" disabled>
+                <option value="" disabled selected hidden>parámetro</option>
+              </select>
+              <select id="includeValue" class="placeholder" disabled>
+                <option value="" disabled selected hidden>valor</option>
+              </select>
+            </div>
+            <div class="row">
+              <button id="includeRefreshParams" disabled data-tip="Lee los parámetros disponibles en los objetos del modelo.">Actualizar parámetros</button>
+              <button id="includeRefreshValues" disabled data-tip="Lee los valores disponibles para el parámetro elegido.">Actualizar valores</button>
+              <button id="includeClearCache" disabled data-tip="Borra la caché de lectura y vuelve a calcular los datos.">Actualizar caché</button>
+            </div>
+            <div class="hint">La primera lectura puede ser lenta en modelos grandes. Después se usa caché por modelo.</div>
+          </div>
+        </div>
+      </details>
 
     </div>
   </details>
 
-  <details open>
+  <details>
     <summary>Herramientas del archivo</summary>
     <div class="section">
-      <div class="subtitle">Exportar colores a CSV</div>
 
-      <details class="cols-details">
-        <summary>Columnas a exportar</summary>
-        <div class="cols-inner"><div id="columnsList"></div></div>
+      <details class="tool">
+        <summary class="subtitle">Exportar colores a CSV</summary>
+        <div class="tool-body">
+          <details class="cols-details">
+            <summary>Columnas a exportar</summary>
+            <div class="cols-inner"><div id="columnsList"></div></div>
+          </details>
+
+          <div class="toggle-line" data-tip="Escribe un aviso en codigo_revision cuando no se encuentre el código RFI en el nombre de la vista.">
+            <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
+            <label class="txt" for="errorCodes">Error codes</label>
+          </div>
+          <div class="toggle-line" data-tip="Usa el texto introducido como código de revisión manual.">
+            <label class="switch"><input type="checkbox" id="customCodes"><span class="slider"></span></label>
+            <label class="txt" for="customCodes">Custom codes</label>
+          </div>
+          <div class="row"><input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;"></div>
+          <div class="toggle-line" data-tip="Recorre varias vistas y genera un CSV combinado con un informe TXT.">
+            <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
+            <label class="txt" for="extendedExport">Exportación masiva</label>
+          </div>
+          <div class="row" data-tip="Permite exportar todas las vistas o un grupo detectado por la API o por el nombre de la vista.">
+            Carpeta: <select id="folderSelect" disabled style="width:60%;"><option value="">Todas las vistas</option></select>
+            <button id="folderRefresh" disabled title="Volver a leer carpetas" style="padding:3px 8px;">&#8635;</button>
+          </div>
+
+          <div class="row">
+            <button id="export" data-tip="Exporta los objetos coloreados según la vista activa o la exportación masiva configurada.">Exportar CSV</button>
+          </div>
+        </div>
       </details>
 
-      <div class="toggle-line" data-tip="Si no se encuentra el código RFI en el título de la vista, escribe ERROR (nombre de la vista) en codigo_revision.">
-        <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
-        <label class="txt" for="errorCodes">Error codes</label>
-      </div>
-      <div class="toggle-line" data-tip="Usa el texto del cuadro como código de revisión en lugar de extraerlo del título de la vista.">
-        <label class="switch"><input type="checkbox" id="customCodes"><span class="slider"></span></label>
-        <label class="txt" for="customCodes">Custom codes</label>
-      </div>
-      <div class="row"><input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;"></div>
-      <div class="toggle-line" data-tip="Recorre automáticamente varias vistas, carga cada una y genera un único CSV combinado más un informe TXT.">
-        <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
-        <label class="txt" for="extendedExport">Exportación masiva</label>
-      </div>
-      <div class="row" data-tip="Elige una carpeta/grupo de vistas para exportar solo esas. Si la API no devuelve carpetas, solo aparecerá 'Todas las vistas'.">
-        Carpeta: <select id="folderSelect" disabled style="width:60%;"><option value="">Todas las vistas</option></select>
-        <button id="folderRefresh" disabled title="Volver a leer las carpetas" style="padding:3px 8px;">&#8635;</button>
-      </div>
+      <details class="tool">
+        <summary class="subtitle">Importar colores desde CSV</summary>
+        <div class="tool-body">
+          <div class="row">
+            <button id="importBtn" data-tip="Lee un CSV y pinta de rojo los objetos marcados como revisado_deo TRUE.">Importar CSV</button>
+            <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;">
+          </div>
+        </div>
+      </details>
 
-      <div class="row">
-        <button id="export" data-tip="Exporta los objetos coloreados de la vista activa (o de todas las vistas si Exportación masiva está activa).">Exportar CSV</button>
+      <div class="tool-status">
+        <div class="subtitle">Estado</div>
+        <div class="row">
+          <button id="cancelOp" style="display:none;">Cancelar</button>
+        </div>
+        <div id="progress" class="status-box">Vista cargada con éxito.</div>
       </div>
-
-      <div class="subtitle">Importar colores desde CSV</div>
-      <div class="row">
-        <button id="importBtn" data-tip="Abre un CSV con columnas de GUID y revisado_deo. Pinta de rojo (#FC0D1BFF) los objetos cuyo revisado_deo sea TRUE y estén presentes en el modelo. El resto se omite.">Importar CSV</button>
-        <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;">
-      </div>
-
-      <div class="subtitle">Estado</div>
-      <div class="row">
-        <button id="cancelOp" style="display:none;">Cancelar</button>
-      </div>
-      <div id="progress" class="status-box">Vista cargada con éxito.</div>
     </div>
   </details>
 
   <details open>
     <summary>Desarrollador</summary>
     <div class="section">
-      <button id="debug" data-tip="Descarga un TXT con información técnica para diagnóstico." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
+      <button id="debug" data-tip="Descarga un TXT completo con estado, selección, vista, colores, propiedades, errores e historial." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
-      <div class="subtitle">Registro de trabajo</div>
-      <pre id="log"></pre>
+      <details class="tool" open>
+        <summary class="subtitle">Registro de trabajo</summary>
+        <div class="tool-body">
+          <pre id="log"></pre>
+        </div>
+      </details>
     </div>
   </details>
 
@@ -162,34 +227,196 @@
 
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.2";
-    const LAST_UPDATED = "09/06/2026 (13:14h)";
+    const VERSION_LABEL = "v8.3.1";
+    const SCRIPT_VERSION = VERSION_LABEL;
+
+    function getLastUpdatedLabel() {
+      const d = new Date(document.lastModified);
+      if (!Number.isNaN(d.getTime())) {
+        try { return d.toLocaleString("es-ES", { timeZone: "Europe/Madrid" }); }
+        catch (e) { return d.toLocaleString("es-ES"); }
+      }
+      return "No disponible";
+    }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const IMPORT_COLOR = "#FC0D1BFF";
-    const CONTACT_TOLERANCE = 0.01;
-    const CONTACT_VOLUME_MAX = 0.001;   // minor fix: valor por defecto 0,001 m³
+    const CONTACT_TOLERANCE = 0.015;
+    const CONTACT_VOLUME_MAX = 0.001;
+    const CANDIDATE_BBOX_BATCH = 400;
+    const PROPS_BATCH = 60;
+    const LOG_MAX_LINES = 150;
+    const DEBUG_HISTORY_MAX = 300;
+    const INCLUDE_SCAN_LIMIT = 8000;
 
     let API = null;
     let lastConvertError = "";
     let cancelRequested = false;
     let opRunning = false;
-    const excludedColors = new Set();
+    let selectionTimer = null;
+    let selBusy = false;
+    let suppressSelectionUntil = 0;
+    let prevSel = [];
 
-    // ===================== UTILIDADES =====================
-    const log = (t) => { const el = document.getElementById("log"); el.textContent += t + "\n"; el.scrollTop = el.scrollHeight; };
-    const clearLog = () => { document.getElementById("log").textContent = ""; };
+    const excludedColors = new Set();
+    const logLines = [];
+    const debugHistory = [];
+    const errorHistory = [];
+    const objectPropertiesCache = new Map();        // modelId -> Map(runtimeId -> props)
+    const candidateCache = new Map();               // cacheKey -> [{modelId, objectRuntimeId, hidden}]
+    const includeParameterCache = new Map();        // cacheKey -> Set(param)
+    const includeValueCache = new Map();            // cacheKey|param -> Set(value)
+    const hiddenIdsCache = new Map();               // modelId -> Set(runtimeId)
+
+    // ===================== LOG / DEBUG =====================
+    function uiStateSnapshot() {
+      const get = (id) => document.getElementById(id);
+      return {
+        nearToggle: !!(get("nearToggle") && get("nearToggle").checked),
+        nearCustom: !!(get("nearCustom") && get("nearCustom").checked),
+        nearParam: get("nearParam") ? get("nearParam").value : "",
+        nearOp: get("nearOp") ? get("nearOp").value : "",
+        nearValue: get("nearValue") ? get("nearValue").value : "",
+        excludeToggle: !!(get("excludeToggle") && get("excludeToggle").checked),
+        excludedColors: [...excludedColors],
+        hiddenSelectionToggle: !!(get("hiddenSelectionToggle") && get("hiddenSelectionToggle").checked),
+        includeToggle: !!(get("includeToggle") && get("includeToggle").checked),
+        includeParam: get("includeParam") ? get("includeParam").value : "",
+        includeValue: get("includeValue") ? get("includeValue").value : "",
+        extendedExport: !!(get("extendedExport") && get("extendedExport").checked),
+        folderSelect: get("folderSelect") ? get("folderSelect").value : "",
+        errorCodes: !!(get("errorCodes") && get("errorCodes").checked),
+        customCodes: !!(get("customCodes") && get("customCodes").checked),
+        customCodesText: get("customCodesText") ? get("customCodesText").value : ""
+      };
+    }
+
+    function safeJson(value, space) {
+      try {
+        return JSON.stringify(value, (k, v) => {
+          if (typeof v === "string" && v.length > 5000) return v.slice(0, 5000) + "...[TRUNCADO]";
+          return v;
+        }, space || 0);
+      } catch (e) {
+        return String(value);
+      }
+    }
+
+    function recordDebug(eventName, payload = {}) {
+      const item = {
+        ts: new Date().toISOString(),
+        version: SCRIPT_VERSION,
+        event: eventName,
+        ui: uiStateSnapshot(),
+        payload
+      };
+      debugHistory.push(item);
+      if (debugHistory.length > DEBUG_HISTORY_MAX) debugHistory.shift();
+    }
+
+    function recordError(context, err) {
+      const item = {
+        ts: new Date().toISOString(),
+        context,
+        message: err && err.message ? err.message : String(err),
+        stack: err && err.stack ? String(err.stack).slice(0, 4000) : ""
+      };
+      errorHistory.push(item);
+      if (errorHistory.length > 80) errorHistory.shift();
+      recordDebug("error", item);
+    }
+
+    const log = (t) => {
+      const msg = String(t);
+      logLines.push(msg);
+      if (logLines.length > LOG_MAX_LINES) logLines.splice(0, logLines.length - LOG_MAX_LINES);
+      const el = document.getElementById("log");
+      if (el) {
+        el.textContent = logLines.join("\n") + (logLines.length ? "\n" : "");
+        el.scrollTop = el.scrollHeight;
+      }
+      recordDebug("log", { message: msg });
+    };
+    const clearLog = () => {
+      logLines.length = 0;
+      const el = document.getElementById("log");
+      if (el) el.textContent = "";
+    };
+
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const setProgress = (t) => { document.getElementById("progress").textContent = t; };
-    function showCancel(on) { document.getElementById("cancelOp").style.display = on ? "inline-block" : "none"; }
+    const setProgress = (t) => { const el = document.getElementById("progress"); if (el) el.textContent = t; recordDebug("progress", { text: t }); };
+    function showCancel(on) { const el = document.getElementById("cancelOp"); if (el) el.style.display = on ? "inline-block" : "none"; }
     function formatETA(sec) { if (!isFinite(sec) || sec < 0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
     function downloadText(filename, text, mime) { const blob = new Blob(["\uFEFF"+text], { type:(mime||"text/csv")+";charset=utf-8" }); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
     function sanitizeFilename(name) { return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
-    function normalizeColor(c) { return String(c||"").trim().toUpperCase(); }
     function extractRevisionCode(text) { const m=String(text||"").match(/RFI[_\-\s]*\d+/i); return m ? m[0].replace(/[\-\s]/g,"_").toUpperCase() : ""; }
 
-    // ---- GUID IFC ----
+    // ===================== COLOR =====================
+    function clampByte(n) {
+      n = Number(n);
+      if (!Number.isFinite(n)) return null;
+      return Math.max(0, Math.min(255, Math.round(n)));
+    }
+    function hex2(n) { return clampByte(n).toString(16).padStart(2, "0").toUpperCase(); }
+    function analyzeColor(color) {
+      const raw = color;
+      if (color == null || color === "") return { valid:false, raw, text:"", normalizedColor:"", cssColor:"#FFFFFF", reason:"empty" };
+
+      let r, g, b, a = 255;
+      if (typeof color === "object") {
+        r = color.r ?? color.red ?? color.R ?? color.Red;
+        g = color.g ?? color.green ?? color.G ?? color.Green;
+        b = color.b ?? color.blue ?? color.B ?? color.Blue;
+        a = color.a ?? color.alpha ?? color.A ?? color.Alpha ?? 255;
+        const rgb = [Number(r), Number(g), Number(b)];
+        if (rgb.some((x)=>!Number.isFinite(x))) return { valid:false, raw, text:safeJson(raw), normalizedColor:"", cssColor:"#FFFFFF", reason:"invalid-object-rgb" };
+        const scale = Math.max(...rgb) <= 1 ? 255 : 1;
+        r = rgb[0] * scale; g = rgb[1] * scale; b = rgb[2] * scale;
+        a = Number(a);
+        if (!Number.isFinite(a)) a = 255;
+        if (a <= 1) a = a * 255;
+      } else {
+        let s = String(color).trim();
+        const text = s;
+        const hex = s.match(/^#?([0-9a-fA-F]{3,8})$/);
+        if (hex) {
+          let h = hex[1];
+          if (h.length === 3 || h.length === 4) h = h.split("").map((c)=>c+c).join("");
+          if (h.length === 6) h += "FF";
+          if (h.length === 8) {
+            r = parseInt(h.slice(0,2),16); g = parseInt(h.slice(2,4),16); b = parseInt(h.slice(4,6),16); a = parseInt(h.slice(6,8),16);
+          } else {
+            return { valid:false, raw, text, normalizedColor:"", cssColor:"#FFFFFF", reason:"invalid-hex-length" };
+          }
+        } else {
+          const rgba = s.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i);
+          if (!rgba) return { valid:false, raw, text, normalizedColor:"", cssColor:"#FFFFFF", reason:"unparsed-string" };
+          r = Number(rgba[1]); g = Number(rgba[2]); b = Number(rgba[3]); a = rgba[4] == null ? 255 : Number(rgba[4]);
+          if (a <= 1) a *= 255;
+        }
+      }
+      r = clampByte(r); g = clampByte(g); b = clampByte(b); a = clampByte(a);
+      if ([r,g,b,a].some((x)=>x==null)) return { valid:false, raw, text:safeJson(raw), normalizedColor:"", cssColor:"#FFFFFF", reason:"invalid-number" };
+      const normalizedColor = "#" + hex2(r) + hex2(g) + hex2(b) + hex2(a);
+      return {
+        valid:true,
+        raw,
+        text: typeof raw === "string" ? raw : safeJson(raw),
+        normalizedColor,
+        cssColor: "rgba(" + r + "," + g + "," + b + "," + (a/255).toFixed(3).replace(/0+$/,"").replace(/\.$/,"") + ")",
+        rgba:{r,g,b,a}
+      };
+    }
+    function normalizeColor(c) { return analyzeColor(c).normalizedColor; }
+    function colorToText(color) { const a = analyzeColor(color); return a.valid ? a.normalizedColor : a.text; }
+    function looksRed(color) {
+      const a = analyzeColor(color);
+      if (!a.valid) return false;
+      return a.rgba.r > 140 && a.rgba.g < 95 && a.rgba.b < 95;
+    }
+
+    // ===================== GUID IFC =====================
     const IFC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
     function ifcB64(v, len) { let s=""; for (let i=0;i<len;i++) s += IFC_CHARS[Math.floor(v/Math.pow(64,len-i-1))%64]; return s; }
     function compressIfcGuid(uuid) { const hex=String(uuid).replace(/-/g,"").toLowerCase(); if (hex.length!==32||/[^0-9a-f]/.test(hex)) return null; const bs=[]; for (let i=0;i<32;i+=2) bs.push(parseInt(hex.substr(i,2),16)); let res=ifcB64(bs[0],2); for (let i=1;i<16;i+=3) res+=ifcB64((bs[i]<<16)+(bs[i+1]<<8)+bs[i+2],4); return res; }
@@ -212,26 +439,38 @@
       const list = document.getElementById("columnsList"); list.innerHTML = "";
       COLUMNS.forEach((col, index) => {
         const item=document.createElement("div"); item.className="col-item";
-        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked;});
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked; recordDebug("columnToggle",{header:col.header,checked:cb.checked});});
         const name=document.createElement("span"); name.className="name"; name.textContent=col.header;
         const up=document.createElement("button"); up.textContent="\u2191"; up.title="Subir"; up.disabled=index===0; up.onclick=()=>moveColumn(index,-1);
         const down=document.createElement("button"); down.textContent="\u2193"; down.title="Bajar"; down.disabled=index===COLUMNS.length-1; down.onclick=()=>moveColumn(index,1);
         item.appendChild(cb); item.appendChild(name); item.appendChild(up); item.appendChild(down); list.appendChild(item);
       });
     }
-    function moveColumn(i, dir) { const j=i+dir; if (j<0||j>=COLUMNS.length) return; const t=COLUMNS[i]; COLUMNS[i]=COLUMNS[j]; COLUMNS[j]=t; buildColumnsUI(); }
+    function moveColumn(i, dir) { const j=i+dir; if (j<0||j>=COLUMNS.length) return; const t=COLUMNS[i]; COLUMNS[i]=COLUMNS[j]; COLUMNS[j]=t; buildColumnsUI(); recordDebug("moveColumn",{from:i,to:j}); }
     function selectedColumns() { return COLUMNS.filter((c)=>c.checked); }
 
-    // ===================== VISTA / REVISIÓN =====================
+    // ===================== VISTA / REVISIÓN / CARPETAS =====================
     async function getCurrentViewSpecWithRetry() {
       let cv=null;
-      for (let a=1;a<=6;a++) { try { cv=await API.view.getCurrentView(); if (cv&&(cv.name||cv.description||cv.id)) { if (cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } if (cv.name||cv.description) return cv; } } catch (e) {} if (a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} }
+      for (let a=1;a<=6;a++) {
+        try {
+          cv=await API.view.getCurrentView();
+          if (cv&&(cv.name||cv.description||cv.id)) {
+            if (cv.id&&!cv.name){
+              try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){}
+            }
+            return cv;
+          }
+        } catch (e) { recordError("getCurrentViewSpecWithRetry", e); }
+        if (a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);}
+      }
       return cv;
     }
     function viewFullName(v) { return v ? (v.name||v.description||"") : ""; }
 
-    // ---- Carpetas / grupos de vistas (detección en tiempo real) ----
     const FOLDER_KEYS = ["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection","tag","tags"];
+    let folderDetectionMode = "none";
+
     function detectFolder(view) {
       if (!view || typeof view!=="object") return "";
       for (const k of Object.keys(view)) {
@@ -245,16 +484,54 @@
       }
       return "";
     }
+
+    function inferVirtualFolder(viewName) {
+      const s = String(viewName||"").trim();
+      if (!s) return "";
+      const separators = ["/", "\\", ">", "::"];
+      for (const sep of separators) {
+        const i = s.lastIndexOf(sep);
+        if (i > 0) return s.slice(0, i).trim();
+      }
+      if (s.includes(" - ")) {
+        const first = s.split(" - ")[0].trim();
+        if (first && first.length <= 35) return first;
+      }
+      return "";
+    }
+
     async function populateFolders() {
       const sel=document.getElementById("folderSelect"); if (!sel) return;
       const keep=sel.value; sel.innerHTML="";
       const optAll=document.createElement("option"); optAll.value=""; optAll.textContent="Todas las vistas"; sel.appendChild(optAll);
-      let views=[]; try { views=await API.view.getViews(); } catch (e) {}
-      const folders=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
-      if (folders.length===0) { log("Aviso: la Workspace API no ha devuelto carpetas/grupos de vistas (no es un dato expuesto). Se exportarán todas. Ejecuta el debug 🐞 y envíame DEO_debug.txt para revisar si hay algún campo de grupo en tus vistas."); }
-      else { for (const f of folders){ const o=document.createElement("option"); o.value=f; o.textContent=f; sel.appendChild(o);} log("Carpetas de vistas detectadas: "+folders.length); }
-      if (keep && folders.includes(keep)) sel.value=keep;
+      let views=[]; try { views=await API.view.getViews(); } catch (e) { recordError("populateFolders.getViews", e); }
+
+      const realFolders=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
+      if (realFolders.length>0) {
+        folderDetectionMode = "real";
+        for (const f of realFolders){ const o=document.createElement("option"); o.value="real|"+f; o.textContent=f; sel.appendChild(o);}
+        log("Carpetas reales detectadas: "+realFolders.length);
+      } else {
+        const virtualFolders=[...new Set((views||[]).map((v)=>inferVirtualFolder(viewFullName(v))).filter(Boolean))].sort();
+        folderDetectionMode = virtualFolders.length ? "virtual" : "none";
+        for (const f of virtualFolders){ const o=document.createElement("option"); o.value="virtual|"+f; o.textContent=f+"  [virtual]"; sel.appendChild(o);}
+        const no=document.createElement("option"); no.value="none|__NO_FOLDER__"; no.textContent="Sin carpeta / no detectable"; sel.appendChild(no);
+        if (virtualFolders.length) log("La API no devuelve carpetas reales. Se usan carpetas virtuales por nombre: "+virtualFolders.length);
+        else log("La API no devuelve carpetas reales ni se han podido inferir carpetas virtuales.");
+      }
+      if (keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
+      recordDebug("populateFolders",{mode:folderDetectionMode,totalViews:(views||[]).length,options:[...sel.options].map((o)=>o.value)});
     }
+
+    function viewMatchesFolder(view, folderValue) {
+      if (!folderValue) return true;
+      const [kind, value] = folderValue.split("|");
+      if (kind === "real") return detectFolder(view) === value;
+      if (kind === "virtual") return inferVirtualFolder(viewFullName(view)) === value;
+      if (kind === "none") return !detectFolder(view) && !inferVirtualFolder(viewFullName(view));
+      return true;
+    }
+
     function computeRevisionBase(viewName) {
       const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked;
       if (customOn&&customText) return customText.toUpperCase();
@@ -265,31 +542,70 @@
     }
 
     // ===================== OBJETOS COLOREADOS =====================
-    function colorToText(color) { if (!color) return ""; if (typeof color==="string") return color; if (typeof color==="object"){ const r=color.r??color.red??"",g=color.g??color.green??"",b=color.b??color.blue??"",a=color.a??color.alpha??""; if(r!==""&&g!==""&&b!=="") return a!==""?"rgba("+r+","+g+","+b+","+a+")":"rgb("+r+","+g+","+b+")"; return JSON.stringify(color);} return String(color); }
-    async function getColoredObjectEntries() { const groups=await API.viewer.getColoredObjects(); const entries=[]; for (const g of groups||[]){ const modelId=g.modelId||""; for (const obj of (g.objects||[])){ const rid=Number(obj.id); const color=colorToText(obj.color); if (modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color}); } } return entries; }
+    async function getColoredObjectEntries() {
+      const groups=await API.viewer.getColoredObjects();
+      const entries=[];
+      for (const g of groups||[]){
+        const modelId=g.modelId||"";
+        for (const obj of (g.objects||[])){
+          const rid=Number(obj.id);
+          const analysis=analyzeColor(obj.color);
+          if (modelId&&Number.isFinite(rid)) entries.push({
+            modelId,
+            objectRuntimeId:rid,
+            originalColor:obj.color,
+            color: analysis.valid ? analysis.normalizedColor : analysis.text,
+            normalizedColor: analysis.normalizedColor,
+            cssColor: analysis.cssColor,
+            colorValid: analysis.valid,
+            colorReason: analysis.reason || ""
+          });
+        }
+      }
+      return entries;
+    }
     async function getColoredObjectEntriesWithRetry() { for (let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if (e.length>0) return e; await sleep(600);} return []; }
-    async function probeColor(modelId, runtimeId) { try { const colored=await getColoredObjectEntries(); const hit=colored.find((c)=>c.modelId===modelId&&c.objectRuntimeId===runtimeId); return hit?normalizeColor(hit.color):""; } catch (e){ return ""; } }
-    function looksRed(colorStr) { const m=String(colorStr||"").match(/#?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/); if (!m) return false; const r=parseInt(m[1],16),g=parseInt(m[2],16),b=parseInt(m[3],16); return r>140&&g<95&&b<95; }
+    async function probeColor(modelId, runtimeId) { try { const colored=await getColoredObjectEntries(); const hit=colored.find((c)=>c.modelId===modelId&&c.objectRuntimeId===runtimeId); return hit?hit.normalizedColor:""; } catch (e){ recordError("probeColor", e); return ""; } }
 
     // ===================== FILAS / CSV =====================
     async function buildRows(entries, revisionBase, viewName, wantGuid) {
       const byModel=new Map(); for (const e of entries){ if (!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e); }
       const rows=[];
-      for (const [modelId,list] of byModel.entries()) { const bs=200; for (let i=0;i<list.length;i+=bs){ const batch=list.slice(i,i+bs); let guids=[]; if (wantGuid) guids=await convertResilient(modelId, batch.map((e)=>e.objectRuntimeId)); for (let j=0;j<batch.length;j++){ const e=batch[j]; const cn=normalizeColor(e.color); rows.push({ guidIfc: wantGuid?toIfcGuid(guids[j]):"", color:e.color, revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"", reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE", viewName:viewName, modelId:e.modelId, objectRuntimeId:e.objectRuntimeId }); } } }
+      for (const [modelId,list] of byModel.entries()) {
+        const bs=200;
+        for (let i=0;i<list.length;i+=bs){
+          const batch=list.slice(i,i+bs);
+          let guids=[]; if (wantGuid) guids=await convertResilient(modelId, batch.map((e)=>e.objectRuntimeId));
+          for (let j=0;j<batch.length;j++){
+            const e=batch[j]; const cn=e.normalizedColor;
+            rows.push({
+              guidIfc: wantGuid?toIfcGuid(guids[j]):"",
+              color:e.color,
+              revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"",
+              reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE",
+              viewName:viewName,
+              modelId:e.modelId,
+              objectRuntimeId:e.objectRuntimeId
+            });
+          }
+        }
+      }
       return rows;
     }
     function rowsToCsv(rows, cols) { const header=cols.map((c)=>c.header).join(";"); const lines=rows.map((r)=>cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";")); return [header].concat(lines).join("\n"); }
-    function logColorSummary(rows) { const counts={}; for (const r of rows){ const c=normalizeColor(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n+(REVISION_CODE_COLORS.has(c)?"  [revision]":"")+(REVIEWED_DEO_COLORS.has(c)?"  [revisado]":""))); }
+    function logColorSummary(rows) { const counts={}; for (const r of rows){ const c=normalizeColor(r.color)||String(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n+(REVISION_CODE_COLORS.has(c)?"  [revision]":"")+(REVIEWED_DEO_COLORS.has(c)?"  [revisado]":""))); }
 
     // ===================== EXPORTAR VISTA ACTIVA =====================
     async function exportActiveView() {
-      clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log("DEO "+SCRIPT_VERSION);
+      clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log("DEO "+SCRIPT_VERSION); recordDebug("exportActiveView.start");
       const cols=selectedColumns(); if (cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas seleccionadas."); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
       log("Leyendo objetos coloreados...");
       const entries=await getColoredObjectEntriesWithRetry();
       if (entries.length===0){ log("No se han encontrado objetos coloreados."); setProgress("No hay objetos coloreados en la vista."); return; }
       log("Objetos coloreados: "+entries.length);
+      const invalid=entries.filter((e)=>!e.colorValid);
+      if (invalid.length) log("Colores no normalizables: "+invalid.length+" (ver debug).");
       const viewSpec=await getCurrentViewSpecWithRetry(); const viewName=viewFullName(viewSpec);
       log("Vista activa: "+(viewName||"(sin nombre)"));
       const revisionBase=computeRevisionBase(viewName); log("Código de revisión base: "+(revisionBase||"(vacío)"));
@@ -301,31 +617,33 @@
       log("CSV generado. Filas: "+rows.length);
       if (wantGuid){ log("GUID encontrados: "+rows.filter((r)=>r.guidIfc).length+" | vacíos: "+rows.filter((r)=>!r.guidIfc).length); if (lastConvertError) log("Primer error convertToObjectIds: "+lastConvertError); }
       setProgress("Exportación completada: "+rows.length+" filas.");
+      recordDebug("exportActiveView.done",{rows:rows.length,invalidColors:invalid.length});
     }
 
     // ===================== EXPORTACIÓN MASIVA =====================
     async function exportMassive() {
-      clearLog(); setProgress("Preparando exportación masiva..."); lastConvertError=""; cancelRequested=false; log("DEO "+SCRIPT_VERSION+" - Exportación masiva");
+      clearLog(); setProgress("Preparando exportación masiva..."); lastConvertError=""; cancelRequested=false; log("DEO "+SCRIPT_VERSION+" - Exportación masiva"); recordDebug("exportMassive.start");
       if (!API.view||typeof API.view.selectView!=="function"){ log("La API disponible no permite cargar vistas automáticamente."); setProgress("No disponible en este entorno."); return; }
       const cols=selectedColumns(); if (cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
-      let views=[]; try { views=await API.view.getViews(); } catch (e){ log("ERROR getViews(): "+e.message); setProgress("Error al leer vistas."); return; }
+      let views=[]; try { views=await API.view.getViews(); } catch (e){ recordError("exportMassive.getViews", e); log("ERROR getViews(): "+e.message); setProgress("Error al leer vistas."); return; }
       if (!views||views.length===0){ log("No hay vistas en el proyecto."); setProgress("Sin vistas."); return; }
       const folder=document.getElementById("folderSelect").value;
-      let target=views;
-      if (folder) target=target.filter((v)=>detectFolder(v)===folder);
-      else { const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if (withRfi.length>0) target=withRfi; }
-      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (carpeta: \""+folder+"\")":"")); if (total===0){ log("Ninguna vista en esa carpeta."); setProgress("Sin coincidencias."); return; }
+      let target=views.filter((v)=>viewMatchesFolder(v, folder));
+      if (!folder) { const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if (withRfi.length>0) target=withRfi; }
+      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (filtro: \""+folder+"\")":"")); if (total===0){ log("Ninguna vista en esa carpeta/filtro."); setProgress("Sin coincidencias."); return; }
 
       showCancel(true); setProgress("Vistas exportadas 0/"+total+" (ETA: calculando...)");
       const allRows=[]; const exported=[]; const empty=[]; const errored=[]; const startTime=Date.now();
       for (let i=0;i<total;i++) {
         if (cancelRequested){ log("Exportación cancelada por el usuario."); break; }
         const v=target[i]; const viewName=viewFullName(v);
-        try { await API.view.selectView(v.id); await sleep(900); const entries=await getColoredObjectEntriesWithRetry();
+        try {
+          await API.view.selectView(v.id); await sleep(900);
+          const entries=await getColoredObjectEntriesWithRetry();
           if (entries.length===0){ empty.push(viewName||v.id); }
           else { const revisionBase=computeRevisionBase(viewName); const rows=await buildRows(entries, revisionBase, viewName, wantGuid); allRows.push(...rows); exported.push({name:viewName||v.id, rows:rows.length}); }
-        } catch (e){ errored.push({name:viewName||v.id, error:(e&&e.message?e.message:String(e))}); }
+        } catch (e){ recordError("exportMassive.view", e); errored.push({name:viewName||v.id, error:(e&&e.message?e.message:String(e))}); }
         const done=i+1; const elapsed=(Date.now()-startTime)/1000; const eta=done>0?(elapsed/done)*(total-done):Infinity;
         setProgress("Vistas exportadas "+done+"/"+total+" (ETA: "+formatETA(eta)+")");
       }
@@ -336,7 +654,7 @@
 
       const report=[];
       report.push("DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva");
-      report.push("Fecha: "+new Date().toLocaleString()); report.push("Carpeta: "+(folder||"(todas)"));
+      report.push("Fecha: "+new Date().toLocaleString()); report.push("Filtro carpeta: "+(folder||"(todas)")); report.push("Modo carpetas: "+folderDetectionMode);
       report.push(cancelRequested?"ESTADO: CANCELADA POR EL USUARIO":"ESTADO: COMPLETADA");
       report.push("Total de vistas consideradas: "+total); report.push("Vistas exportadas con datos: "+exported.length); report.push("Vistas sin objetos coloreados: "+empty.length); report.push("Vistas con error: "+errored.length); report.push("Filas totales exportadas: "+allRows.length); report.push("");
       report.push("== VISTAS EXPORTADAS =="); exported.forEach((e)=>report.push("- "+e.name+"  (filas: "+e.rows+")")); report.push("");
@@ -347,13 +665,14 @@
       setProgress("Hecho: "+exported.length+" exportadas, "+empty.length+" sin objetos, "+errored.length+" con error"+(cancelRequested?" (cancelada)":""));
       log("Exportación masiva finalizada. Filas: "+allRows.length+". Informe TXT descargado.");
       if (lastConvertError) log("Primer error convertToObjectIds: "+lastConvertError);
+      recordDebug("exportMassive.done",{rows:allRows.length, exported:exported.length, empty:empty.length, errored:errored.length});
     }
 
     // ===================== IMPORTAR CSV =====================
     function parseCsvLine(line) { const out=[]; let cur=""; let inQ=false; for (let i=0;i<line.length;i++){ const ch=line[i]; if (inQ){ if (ch==='"'){ if (line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; } else { if (ch==='"') inQ=true; else if (ch===';'){ out.push(cur); cur=""; } else cur+=ch; } } out.push(cur); return out; }
     async function importCsv(file) {
-      clearLog(); setProgress("Importando: leyendo archivo..."); cancelRequested=false; log("DEO "+SCRIPT_VERSION+" - Importar CSV");
-      let text=""; try { text=await file.text(); } catch (e){ log("No se ha podido leer el archivo: "+e.message); setProgress("Error al leer el archivo."); return; }
+      clearLog(); setProgress("Importando: leyendo archivo..."); cancelRequested=false; log("DEO "+SCRIPT_VERSION+" - Importar CSV"); recordDebug("importCsv.start",{fileName:file.name,size:file.size});
+      let text=""; try { text=await file.text(); } catch (e){ recordError("importCsv.fileText", e); log("No se ha podido leer el archivo: "+e.message); setProgress("Error al leer el archivo."); return; }
       text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
       if (lines.length<2){ log("El CSV está vacío."); setProgress("CSV vacío."); return; }
       const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
@@ -367,8 +686,8 @@
       log("Ejemplo GUID CSV: "+raws[0]+"  ->  UUID: "+uuids[0]);
 
       showCancel(true); setProgress("Importando: detectando modelos...");
-      let modelIds=[]; try { const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); } catch (e) {}
-      try { const colored=await API.viewer.getColoredObjects(); for (const g of colored||[]) if (g.modelId) modelIds.push(g.modelId); } catch (e) {}
+      let modelIds=[]; try { const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); } catch (e) { recordError("importCsv.getModels", e); }
+      try { const colored=await API.viewer.getColoredObjects(); for (const g of colored||[]) if (g.modelId) modelIds.push(g.modelId); } catch (e) { recordError("importCsv.getColoredObjects", e); }
       modelIds=[...new Set(modelIds)];
       if (modelIds.length===0){ log("No se han detectado modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
       log("Modelos cargados: "+modelIds.length+" -> "+JSON.stringify(modelIds));
@@ -377,9 +696,8 @@
       for (const modelId of modelIds) {
         if (cancelRequested){ log("Importación cancelada por el usuario."); break; }
         setProgress("Importando: modelo "+(++mi)+"/"+modelIds.length+" (encontrados: "+totalFound+")");
-        // Resolución probando UUID descomprimido y GUID original (lo que más coincida)
-        let ridsU=[]; try { ridsU=await API.viewer.convertToObjectRuntimeIds(modelId, uuids); } catch (e){ ridsU=[]; }
-        let ridsR=[]; try { ridsR=await API.viewer.convertToObjectRuntimeIds(modelId, raws); } catch (e){ ridsR=[]; }
+        let ridsU=[]; try { ridsU=await API.viewer.convertToObjectRuntimeIds(modelId, uuids); } catch (e){ recordError("importCsv.convertUUID", e); ridsU=[]; }
+        let ridsR=[]; try { ridsR=await API.viewer.convertToObjectRuntimeIds(modelId, raws); } catch (e){ recordError("importCsv.convertRaw", e); ridsR=[]; }
         const foundU=(ridsU||[]).filter((r)=>r!==null&&r!==undefined).length;
         const foundR=(ridsR||[]).filter((r)=>r!==null&&r!==undefined).length;
         const rids=foundR>foundU?ridsR:ridsU;
@@ -390,7 +708,6 @@
       log("Objetos encontrados: "+totalFound+" / "+uuids.length+" (los no encontrados se omiten)");
       if (totalFound===0){ log("Ningún GUID del CSV está en el modelo activo. ¿Es el mismo modelo/versión del que se exportó?"); setProgress("Ningún GUID coincide con el modelo."); showCancel(false); return; }
 
-      // ---- Autocalibración del formato de color (evita el problema del 'blanco') ----
       setProgress("Importando: calibrando color...");
       const firstEntry=[...byModel.entries()][0];
       const probeModel=firstEntry[0]; const probeId=firstEntry[1][0];
@@ -398,7 +715,7 @@
       let chosen=null;
       for (const fmt of colorFormats) {
         if (cancelRequested) break;
-        try { await API.viewer.setObjectState({modelObjectIds:[{modelId:probeModel,objectRuntimeIds:[probeId]}]},{color:fmt}); } catch (e){ log("   formato "+JSON.stringify(fmt)+" -> error: "+e.message); continue; }
+        try { await API.viewer.setObjectState({modelObjectIds:[{modelId:probeModel,objectRuntimeIds:[probeId]}]},{color:fmt}); } catch (e){ log("   formato "+JSON.stringify(fmt)+" -> error: "+e.message); recordError("importCsv.colorFormat", e); continue; }
         await sleep(220);
         const applied=await probeColor(probeModel, probeId);
         log("   formato "+JSON.stringify(fmt)+" -> visor: "+(applied||"(no detectado)"));
@@ -411,171 +728,731 @@
       for (const [modelId, ids] of byModel.entries()) {
         if (cancelRequested){ break; }
         const selector={ modelObjectIds:[{ modelId, objectRuntimeIds: ids }] };
-        try { await API.viewer.setObjectState(selector, { color: chosen }); applied+=ids.length; } catch (e){ log("Error aplicando color en "+modelId+": "+e.message); }
+        try { await API.viewer.setObjectState(selector, { color: chosen }); applied+=ids.length; } catch (e){ recordError("importCsv.applyColor", e); log("Error aplicando color en "+modelId+": "+e.message); }
       }
       showCancel(false);
       log("Pintados de rojo: "+applied+" objetos.");
       setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados de rojo.");
+      recordDebug("importCsv.done",{applied});
     }
 
-    // ===================== SELECCIÓN CERCANOS / EXCLUIR =====================
-    function flattenProps(propsList) { const flat=[]; const walk=(obj)=>{ if (!obj||typeof obj!=="object") return; if (Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key; const value=obj.value??obj.Value??obj.nominalValue; const unit=obj.unit??obj.units??obj.Unit??""; if (name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value,unit:String(unit||"")}); for (const k of Object.keys(obj)) if (typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
+    // ===================== PROPIEDADES / CANDIDATOS =====================
+    function flattenProps(propsList) {
+      const flat=[];
+      const walk=(obj, path=[])=>{
+        if (!obj||typeof obj!=="object") return;
+        if (Array.isArray(obj)){ obj.forEach((x)=>walk(x,path)); return; }
+        const name=obj.name??obj.Name??obj.key??obj.propertyName??obj.label;
+        const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue;
+        const unit=obj.unit??obj.units??obj.Unit??"";
+        if (name!==undefined&&value!==undefined&&typeof value!=="object") {
+          flat.push({name:String(name),value:String(value),unit:String(unit||""),path:path.concat(String(name)).join(".")});
+        }
+        for (const k of Object.keys(obj)) if (typeof obj[k]==="object") walk(obj[k], path.concat(k));
+      };
+      walk(propsList);
+      return flat;
+    }
+    function propsSearchText(propObj) {
+      const chunks = [];
+      try { if (propObj.class) chunks.push(propObj.class); } catch(e){}
+      try { if (propObj.product) chunks.push(safeJson(propObj.product)); } catch(e){}
+      for (const p of flattenProps(propObj)) chunks.push(p.name, p.value);
+      return chunks.join(" ").toLowerCase();
+    }
     function isNumericValue(v) { if (typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
     function toNumber(v) { return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
-    async function safeGetSelection() { let sel=[]; try { sel=await API.viewer.getSelection(); } catch (e){ return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for (const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for (const id of ids) out.push({modelId, runtimeId:Number(id)}); } return out; }
-    function bboxOf(box) { const b=box.boundingBox||box; const min=b.min||b.minPoint||b.start, max=b.max||b.maxPoint||b.end; if (!min||!max) return null; return { min:{x:min.x,y:min.y,z:min.z}, max:{x:max.x,y:max.y,z:max.z} }; }
+
+    async function safeGetSelection() {
+      let sel=[]; try { sel=await API.viewer.getSelection(); } catch (e){ recordError("safeGetSelection", e); return []; }
+      const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[];
+      for (const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for (const id of ids) out.push({modelId, runtimeId:Number(id)}); }
+      return out.filter((o)=>o.modelId && Number.isFinite(o.runtimeId));
+    }
+
+    function bboxOf(box) {
+      const b=box&&box.boundingBox?box.boundingBox:box;
+      if (!b) return null;
+      const min=b.min||b.minPoint||b.start||b.minimum;
+      const max=b.max||b.maxPoint||b.end||b.maximum;
+      if (!min||!max) return null;
+      return { min:{x:Number(min.x),y:Number(min.y),z:Number(min.z)}, max:{x:Number(max.x),y:Number(max.y),z:Number(max.z)} };
+    }
     function boxesOverlap(a, b, tol) { return a.min.x-tol<=b.max.x&&a.max.x+tol>=b.min.x&&a.min.y-tol<=b.max.y&&a.max.y+tol>=b.min.y&&a.min.z-tol<=b.max.z&&a.max.z+tol>=b.min.z; }
+    function expandBox(b, tol) { return {min:{x:b.min.x-tol,y:b.min.y-tol,z:b.min.z-tol},max:{x:b.max.x+tol,y:b.max.y+tol,z:b.max.z+tol}}; }
     function unionBox(boxes) { const u={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}}; for (const b of boxes){u.min.x=Math.min(u.min.x,b.min.x);u.min.y=Math.min(u.min.y,b.min.y);u.min.z=Math.min(u.min.z,b.min.z);u.max.x=Math.max(u.max.x,b.max.x);u.max.y=Math.max(u.max.y,b.max.y);u.max.z=Math.max(u.max.z,b.max.z);} return u; }
     function boxVolume(b) { return Math.max(0,(b.max.x-b.min.x))*Math.max(0,(b.max.y-b.min.y))*Math.max(0,(b.max.z-b.min.z)); }
+    const keyOf=(o)=>o.modelId+":"+o.runtimeId;
+    const keyOfId=(modelId,id)=>modelId+":"+id;
+    const keyList=(list)=>JSON.stringify(list.map(keyOf).sort());
+
+    function modelObjectsToEntries(groups, hidden=false) {
+      const out=[];
+      for (const g of groups||[]) {
+        const modelId = g.modelId || g.id || g.modelID || "";
+        for (const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])) {
+          const rid = typeof o === "object" ? Number(o.id ?? o.objectRuntimeId ?? o.runtimeId) : Number(o);
+          if (modelId && Number.isFinite(rid)) out.push({modelId, objectRuntimeId:rid, hidden});
+        }
+      }
+      return out;
+    }
+
+    function includeHiddenInSearch() {
+      const el = document.getElementById("hiddenSelectionToggle");
+      return !!(el && el.checked);
+    }
+
+    async function getCandidateEntries(includeHidden) {
+      const cacheKey = includeHidden ? "all+hidden" : "visible";
+      if (candidateCache.has(cacheKey)) return candidateCache.get(cacheKey);
+
+      let entries=[];
+      try {
+        entries = modelObjectsToEntries(await API.viewer.getObjects(undefined, { visible:true }), false);
+      } catch (e) {
+        recordError("getCandidateEntries.visible", e);
+        try { entries = modelObjectsToEntries(await API.viewer.getObjects(), false); }
+        catch (e2) { recordError("getCandidateEntries.all", e2); }
+      }
+
+      if (includeHidden) {
+        try {
+          const hidden = modelObjectsToEntries(await API.viewer.getObjects(undefined, { visible:false }), true);
+          for (const h of hidden) {
+            entries.push(h);
+            if (!hiddenIdsCache.has(h.modelId)) hiddenIdsCache.set(h.modelId, new Set());
+            hiddenIdsCache.get(h.modelId).add(h.objectRuntimeId);
+          }
+        } catch (e) { recordError("getCandidateEntries.hidden", e); }
+      }
+
+      if (entries.length===0) {
+        try {
+          const colored=await getColoredObjectEntries();
+          entries=colored.map((c)=>({modelId:c.modelId, objectRuntimeId:c.objectRuntimeId, hidden:false}));
+          log("Aviso: no se pudieron obtener todos los objetos. Fallback con objetos coloreados: "+entries.length);
+        } catch (e) { recordError("getCandidateEntries.coloredFallback", e); }
+      }
+
+      const seen=new Set();
+      entries=entries.filter((e)=>{
+        const k=e.modelId+":"+e.objectRuntimeId;
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      });
+      candidateCache.set(cacheKey, entries);
+      recordDebug("candidateEntries",{includeHidden,count:entries.length,hiddenCount:entries.filter((e)=>e.hidden).length});
+      return entries;
+    }
+
+    async function getCandidateRuntimeIds(modelId, includeHidden) {
+      const entries=await getCandidateEntries(includeHidden);
+      return entries.filter((e)=>e.modelId===modelId).map((e)=>e.objectRuntimeId);
+    }
+
+    async function getPropertiesCached(modelId, ids) {
+      if (!objectPropertiesCache.has(modelId)) objectPropertiesCache.set(modelId, new Map());
+      const cache=objectPropertiesCache.get(modelId);
+      const result = new Map();
+      const missing = [];
+      for (const id of ids) {
+        if (cache.has(id)) result.set(id, cache.get(id));
+        else missing.push(id);
+      }
+      for (let i=0;i<missing.length;i+=PROPS_BATCH) {
+        const chunk=missing.slice(i,i+PROPS_BATCH);
+        try {
+          const props=await API.viewer.getObjectProperties(modelId, chunk);
+          for (let j=0;j<chunk.length;j++) {
+            const p=props && props[j] ? props[j] : {};
+            cache.set(chunk[j], p);
+            result.set(chunk[j], p);
+          }
+        } catch (e) { recordError("getPropertiesCached", e); }
+      }
+      return result;
+    }
+
+    function isFastenerOrWeld(propObj, bb) {
+      const t = propsSearchText(propObj);
+      const semanticTerms = [
+        "ifcfastener","ifcmechanicalfastener","fastener","mechanical fastener",
+        "weld","welding","weld seam","welds","soldadura","cordon","cordón",
+        "bolt","screw","nut","washer","anchor","anchorage","perno","tornillo","tuerca","arandela","anclaje","varilla","rod"
+      ];
+      if (semanticTerms.some((term)=>t.includes(term))) return true;
+      if (bb && boxVolume(bb) < CONTACT_VOLUME_MAX) return true;
+      return false;
+    }
+
+    function customFilterMatches(propObj) {
+      const customOn = document.getElementById("nearCustom").checked && document.getElementById("nearToggle").checked;
+      if (!customOn) return true;
+      const paramName=document.getElementById("nearParam").value;
+      const op=document.getElementById("nearOp").value;
+      const target=toNumber(document.getElementById("nearValue").value);
+      if (!paramName||!op||!Number.isFinite(target)){ log("Configuración personalizada incompleta: parámetro, condición y valor."); return false; }
+      const hit=flattenProps(propObj).find((p)=>p.name.toLowerCase()===paramName.toLowerCase());
+      if (!hit||!isNumericValue(hit.value)) return false;
+      const v=toNumber(hit.value);
+      if (op==="menos") return v<target;
+      if (op==="mas") return v>target;
+      if (op==="igual") return Math.abs(v-target)<=Math.max(1e-9,Math.abs(target)*0.001);
+      return false;
+    }
+
+    async function computeNeighbors(modelId, seedIds) {
+      if (seedIds.length===0) return [];
+      const stats = { seed:seedIds.length, candidates:0, bbox:0, semantic:0, custom:0, added:0 };
+      let seedBoxesRaw=[];
+      try { seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId, seedIds); }
+      catch(e){ recordError("computeNeighbors.seedBbox", e); return []; }
+      const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean);
+      if (seedBoxes.length===0) return [];
+      const searchBox=expandBox(unionBox(seedBoxes), CONTACT_TOLERANCE);
+      let candidateIds=await getCandidateRuntimeIds(modelId, includeHiddenInSearch());
+      const seedSet=new Set(seedIds);
+      candidateIds=[...new Set(candidateIds)].filter((id)=>!seedSet.has(id));
+      stats.candidates=candidateIds.length;
+
+      const contact=[]; const bboxById=new Map();
+      for (let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){
+        const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH);
+        let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId, chunk);}catch(e){ recordError("computeNeighbors.candidateBbox", e); continue; }
+        for (let j=0;j<chunk.length;j++){
+          const bb=boxes[j]?bboxOf(boxes[j]):null;
+          if (bb&&boxesOverlap(searchBox,bb,CONTACT_TOLERANCE)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);}
+        }
+      }
+      stats.bbox=contact.length;
+
+      const propsMap=await getPropertiesCached(modelId, contact);
+      const matches=[];
+      for (const id of contact) {
+        const prop=propsMap.get(id)||{};
+        if (!isFastenerOrWeld(prop,bboxById.get(id))) continue;
+        stats.semantic++;
+        if (!customFilterMatches(prop)) continue;
+        stats.custom++;
+        matches.push(id);
+      }
+      stats.added=matches.length;
+      recordDebug("computeNeighbors", {modelId, stats});
+      log("Selección cercanos: candidatos="+stats.candidates+", bbox="+stats.bbox+", tipo/tamaño="+stats.semantic+", añadidos="+stats.added+" ("+modelId+").");
+      return matches;
+    }
+
+    // ===================== PARÁMETROS UI / INCLUIR =====================
+    function collectParamValues(propObj) {
+      const map = new Map();
+      for (const p of flattenProps(propObj)) {
+        const name = String(p.name||"").trim();
+        const value = String(p.value||"").trim();
+        if (!name || value==="") continue;
+        if (!map.has(name)) map.set(name, new Set());
+        map.get(name).add(value);
+      }
+      if (propObj && propObj.class) {
+        if (!map.has("class")) map.set("class", new Set());
+        map.get("class").add(String(propObj.class));
+      }
+      try {
+        if (propObj.product) {
+          for (const [k,v] of Object.entries(propObj.product)) {
+            if (v == null || typeof v === "object") continue;
+            const name = "product."+k;
+            if (!map.has(name)) map.set(name, new Set());
+            map.get(name).add(String(v));
+          }
+        }
+      } catch(e){}
+      return map;
+    }
 
     async function populateParameters() {
       const sel=document.getElementById("nearParam"); sel.innerHTML="";
       const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph);
       const found=new Map();
-      try { let sample=(await safeGetSelection()).slice(0,5).map((s)=>({modelId:s.modelId,objectRuntimeId:s.runtimeId})); if (sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,5);} for (const s of sample){ try{ const props=await API.viewer.getObjectProperties(s.modelId,[s.objectRuntimeId]); for (const p of flattenProps(props)) if (isNumericValue(p.value)&&!found.has(p.name)) found.set(p.name,p.unit);}catch(e){} } } catch (e) {}
+      try {
+        let sample=(await safeGetSelection()).slice(0,10).map((s)=>({modelId:s.modelId,objectRuntimeId:s.runtimeId}));
+        if (sample.length===0){ const candidates=await getCandidateEntries(false); sample=candidates.slice(0,80); }
+        const byModel=new Map();
+        for (const s of sample){ if (!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.objectRuntimeId); }
+        for (const [modelId, ids] of byModel.entries()) {
+          const propsMap=await getPropertiesCached(modelId, ids);
+          for (const pObj of propsMap.values()) for (const p of flattenProps(pObj)) if (isNumericValue(p.value)&&!found.has(p.name)) found.set(p.name,p.unit);
+        }
+      } catch (e) { recordError("populateParameters", e); }
       for (const [name,unit] of found.entries()){ const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); }
       if (found.size===0) log("No se han detectado parámetros numéricos en la muestra. Selecciona un objeto y reactiva 'Configuración personalizada'.");
       updateUnitLabel();
     }
+
+    async function buildIncludeCaches() {
+      setProgress("Leyendo parámetros del modelo...");
+      const includeHidden = includeHiddenInSearch();
+      const entries=(await getCandidateEntries(includeHidden)).slice(0, INCLUDE_SCAN_LIMIT);
+      const byModel=new Map();
+      for (const e of entries) { if (!byModel.has(e.modelId)) byModel.set(e.modelId, []); byModel.get(e.modelId).push(e.objectRuntimeId); }
+      const globalParams=new Set();
+
+      let processed=0;
+      for (const [modelId, ids] of byModel.entries()) {
+        for (let i=0;i<ids.length;i+=PROPS_BATCH) {
+          if (cancelRequested) break;
+          const chunk=ids.slice(i,i+PROPS_BATCH);
+          const propsMap=await getPropertiesCached(modelId, chunk);
+          for (const propObj of propsMap.values()) {
+            const pv=collectParamValues(propObj);
+            for (const [param, values] of pv.entries()) {
+              globalParams.add(param);
+              const cacheKey=(includeHidden?"hidden":"visible")+"|"+modelId+"|"+param;
+              if (!includeValueCache.has(cacheKey)) includeValueCache.set(cacheKey, new Set());
+              for (const v of values) includeValueCache.get(cacheKey).add(v);
+            }
+          }
+          processed += chunk.length;
+          if (processed % 500 === 0) setProgress("Leyendo parámetros: "+processed+"/"+entries.length);
+        }
+      }
+      includeParameterCache.set(includeHidden?"hidden":"visible", globalParams);
+      setProgress("Parámetros cargados: "+globalParams.size);
+      recordDebug("buildIncludeCaches",{includeHidden, scanned:entries.length, params:globalParams.size});
+    }
+
+    async function populateIncludeParameters() {
+      const sel=document.getElementById("includeParam"); if (!sel) return;
+      sel.innerHTML='<option value="" disabled selected hidden>parámetro</option>';
+      const cacheKey=includeHiddenInSearch()?"hidden":"visible";
+      if (!includeParameterCache.has(cacheKey)) await buildIncludeCaches();
+      const params=[...(includeParameterCache.get(cacheKey)||[])].sort((a,b)=>a.localeCompare(b));
+      for (const p of params) { const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); }
+      sel.classList.toggle("placeholder",!sel.value);
+      recordDebug("populateIncludeParameters",{count:params.length});
+    }
+
+    async function populateIncludeValues() {
+      const psel=document.getElementById("includeParam");
+      const vsel=document.getElementById("includeValue");
+      if (!psel || !vsel) return;
+      vsel.innerHTML='<option value="" disabled selected hidden>valor</option>';
+      const param=psel.value;
+      if (!param) return;
+      const includeHidden=includeHiddenInSearch();
+      if (!includeParameterCache.has(includeHidden?"hidden":"visible")) await buildIncludeCaches();
+      const values=new Set();
+      let modelIds=[];
+      try { modelIds=(await API.viewer.getModels()||[]).map((m)=>m.id).filter(Boolean); } catch(e){}
+      const entries=await getCandidateEntries(includeHidden);
+      for (const e of entries) if (!modelIds.includes(e.modelId)) modelIds.push(e.modelId);
+      for (const modelId of [...new Set(modelIds)]) {
+        const cacheKey=(includeHidden?"hidden":"visible")+"|"+modelId+"|"+param;
+        for (const v of (includeValueCache.get(cacheKey)||[])) values.add(v);
+      }
+      [...values].sort((a,b)=>a.localeCompare(b)).slice(0,1500).forEach((v)=>{
+        const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o);
+      });
+      vsel.classList.toggle("placeholder",!vsel.value);
+      recordDebug("populateIncludeValues",{param,count:values.size});
+    }
+
+    async function computeIncludeMatches(existingSelection) {
+      const includeOn=document.getElementById("includeToggle").checked;
+      if (!includeOn) return new Map();
+      const param=document.getElementById("includeParam").value;
+      const value=document.getElementById("includeValue").value;
+      if (!param || !value) { log("Incluir en la selección: falta parámetro o valor."); return new Map(); }
+
+      const includeHidden=includeHiddenInSearch();
+      const entries=await getCandidateEntries(includeHidden);
+      const byModel=new Map();
+      for (const e of entries) { if (!byModel.has(e.modelId)) byModel.set(e.modelId, []); byModel.get(e.modelId).push(e.objectRuntimeId); }
+
+      const out=new Map();
+      let scanned=0, matches=0;
+      for (const [modelId, ids] of byModel.entries()) {
+        for (let i=0;i<ids.length;i+=PROPS_BATCH) {
+          const chunk=ids.slice(i,i+PROPS_BATCH);
+          const propsMap=await getPropertiesCached(modelId, chunk);
+          for (const id of chunk) {
+            const propObj=propsMap.get(id)||{};
+            const pv=collectParamValues(propObj);
+            const vals=pv.get(param);
+            if (vals && [...vals].some((v)=>String(v).trim()===String(value).trim())) {
+              if (!out.has(modelId)) out.set(modelId,new Set());
+              out.get(modelId).add(id);
+              matches++;
+            }
+          }
+          scanned += chunk.length;
+        }
+      }
+      log("Incluir en la selección: "+matches+" coincidencias para "+param+" = "+value+" (escaneados "+scanned+").");
+      recordDebug("computeIncludeMatches",{param,value,scanned,matches});
+      return out;
+    }
+
+    function clearSelectionCaches() {
+      objectPropertiesCache.clear();
+      candidateCache.clear();
+      includeParameterCache.clear();
+      includeValueCache.clear();
+      hiddenIdsCache.clear();
+      log("Cachés de selección limpiadas.");
+      recordDebug("clearSelectionCaches");
+    }
+
     function updateUnitLabel() { const sel=document.getElementById("nearParam"); const opt=sel.options[sel.selectedIndex]; sel.classList.toggle("placeholder",!sel.value); document.getElementById("nearUnit").textContent=(opt&&opt.dataset&&opt.dataset.unit)?opt.dataset.unit:""; }
-    function setNearConfigEnabled(on) { document.getElementById("nearParam").disabled=!on; document.getElementById("nearOp").disabled=!on; document.getElementById("nearValue").disabled=!on; document.getElementById("nearDefaultHint").style.display=on?"none":"block"; }
+
+    function syncNearUiState() {
+      const nearOn=document.getElementById("nearToggle").checked;
+      const nearCustom=document.getElementById("nearCustom");
+      const customOn=nearCustom.checked;
+      const active=nearOn && customOn;
+      const config=document.getElementById("nearConfig");
+      const customLine=document.getElementById("nearCustomLine");
+      const defaultHint=document.getElementById("nearDefaultHint");
+      nearCustom.disabled=!nearOn;
+      if (customLine) customLine.classList.toggle("is-disabled", !nearOn);
+      document.getElementById("nearParam").disabled=!active;
+      document.getElementById("nearOp").disabled=!active;
+      document.getElementById("nearValue").disabled=!active;
+      if (config) config.classList.toggle("disabled-area", !active);
+      if (defaultHint) defaultHint.style.display=customOn ? "none" : "block";
+      recordDebug("syncNearUiState",{nearOn,customOn,active,nearCustomDisabled:nearCustom.disabled});
+    }
+
+    function syncIncludeUiState() {
+      const on=document.getElementById("includeToggle").checked;
+      ["includeParam","includeValue","includeRefreshParams","includeRefreshValues","includeClearCache"].forEach((id)=>{
+        const el=document.getElementById(id); if (el) el.disabled=!on;
+      });
+      const c=document.getElementById("includeConfig"); if (c) c.classList.toggle("disabled-area", !on);
+      recordDebug("syncIncludeUiState",{on});
+    }
 
     async function populateExcludeColors() {
       const cont=document.getElementById("excludeColors"); cont.innerHTML="";
-      let colored=[]; try { colored=await getColoredObjectEntries(); } catch (e) {}
-      const colors=[...new Set(colored.map((c)=>normalizeColor(c.color)))].filter(Boolean).sort();
-      if (colors.length===0){ cont.textContent="No hay colores aplicados en el modelo."; return; }
-      for (const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedColors.has(col); cb.addEventListener("change",()=>{ if (cb.checked) excludedColors.add(col); else excludedColors.delete(col); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=col; const txt=document.createElement("span"); txt.textContent=col+(REVIEWED_DEO_COLORS.has(col)?"  [revisado]":""); row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); }
-    }
-
-    // ---- Contacto / vecinos ----
-    async function computeNeighbors(modelId, seedIds) {
-      if (seedIds.length===0) return [];
-      const seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId, seedIds);
-      const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if (seedBoxes.length===0) return [];
-      const seedBox=unionBox(seedBoxes);
-      let candidateIds=[];
-      try { const parents=await API.viewer.getHierarchyParents(modelId, seedIds, undefined, true, false); const rootIds=(parents&&parents.length>0)?parents.map((p)=>p.id??p.runtimeId).filter((x)=>x!=null):seedIds; const children=await API.viewer.getHierarchyChildren(modelId, rootIds, undefined, true); candidateIds=(children||[]).map((c)=>c.id??c.runtimeId).filter((x)=>x!=null); }
-      catch (e){ const colored=await getColoredObjectEntries().catch(()=>[]); candidateIds=colored.filter((c)=>c.modelId===modelId).map((c)=>c.objectRuntimeId); }
-      const seedSet=new Set(seedIds); candidateIds=[...new Set(candidateIds)].filter((id)=>!seedSet.has(id));
-      if (candidateIds.length===0) return [];
-      const contact=[]; const bboxById=new Map();
-      for (let i=0;i<candidateIds.length;i+=300){ const chunk=candidateIds.slice(i,i+300); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId, chunk);}catch(e){continue;} for (let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if (bb&&boxesOverlap(seedBox,bb,CONTACT_TOLERANCE)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
-      const custom=document.getElementById("nearCustom").checked;
-      let matches=[];
-      if (!custom){ for (const id of contact) if (boxVolume(bboxById.get(id))<CONTACT_VOLUME_MAX) matches.push(id); }
-      else {
-        const paramName=document.getElementById("nearParam").value; const op=document.getElementById("nearOp").value; const target=toNumber(document.getElementById("nearValue").value);
-        if (!paramName||!op||!Number.isFinite(target)){ log("Configuración personalizada incompleta: parámetro, condición y valor."); return []; }
-        for (let i=0;i<contact.length;i+=50){ const chunk=contact.slice(i,i+50); let pl=[]; try{ pl=await API.viewer.getObjectProperties(modelId, chunk);}catch(e){continue;} for (let j=0;j<chunk.length;j++){ const hit=flattenProps(pl[j]).find((p)=>p.name.toLowerCase()===paramName.toLowerCase()); if (!hit||!isNumericValue(hit.value)) continue; const v=toNumber(hit.value); let ok=false; if (op==="menos") ok=v<target; else if (op==="mas") ok=v>target; else if (op==="igual") ok=Math.abs(v-target)<=Math.max(1e-9,Math.abs(target)*0.001); if (ok) matches.push(chunk[j]); } }
+      let colored=[]; try { colored=await getColoredObjectEntries(); } catch (e) { recordError("populateExcludeColors", e); }
+      const byColor=new Map();
+      const invalid=[];
+      for (const c of colored) {
+        if (!c.colorValid) { invalid.push(c); continue; }
+        if (!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor, {css:c.cssColor, count:0});
+        byColor.get(c.normalizedColor).count++;
       }
-      return matches;
+      const colors=[...byColor.keys()].sort();
+      if (colors.length===0){ cont.textContent="No hay colores aplicados en el modelo."; return; }
+      for (const col of colors){
+        const row=document.createElement("label");
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedColors.has(col); cb.addEventListener("change",()=>{ if (cb.checked) excludedColors.add(col); else excludedColors.delete(col); recordDebug("excludedColorToggle",{color:col,checked:cb.checked}); });
+        const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css;
+        const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"+(REVIEWED_DEO_COLORS.has(col)?"  [revisado]":"");
+        row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row);
+      }
+      if (invalid.length) {
+        const div=document.createElement("div"); div.className="hint"; div.textContent="Colores inválidos detectados: "+invalid.length+" (ver debug)."; cont.appendChild(div);
+      }
+      recordDebug("populateExcludeColors",{colors:colors.length, invalid:invalid.slice(0,20)});
     }
 
-    // ---- Manejador unificado de cambio de selección ----
-    let selBusy=false; let appliedKey=""; let prevSel=[];
-    const keyOf=(o)=>o.modelId+":"+o.runtimeId;
-    const keyList=(list)=>JSON.stringify(list.map(keyOf).sort());
-    async function processSelection() {
-      const nearOn=document.getElementById("nearToggle").checked;
-      const exclOn=document.getElementById("excludeToggle").checked&&excludedColors.size>0;
-      if (!nearOn&&!exclOn) return;
+    // ===================== MOTOR DE SELECCIÓN =====================
+    function toolsActive() {
+      return !!(
+        document.getElementById("nearToggle").checked ||
+        document.getElementById("excludeToggle").checked ||
+        document.getElementById("includeToggle").checked ||
+        document.getElementById("hiddenSelectionToggle").checked
+      );
+    }
+
+    function addToMapSet(map, modelId, ids) {
+      if (!ids || ids.length===0) return;
+      if (!map.has(modelId)) map.set(modelId,new Set());
+      for (const id of ids) if (Number.isFinite(Number(id))) map.get(modelId).add(Number(id));
+    }
+    function mapSetCount(map) { let n=0; for (const s of map.values()) n+=s.size; return n; }
+    function mapSetToSelector(map) {
+      return { modelObjectIds:[...map.entries()].map(([modelId,set])=>({modelId, objectRuntimeIds:[...set]})).filter((x)=>x.objectRuntimeIds.length>0) };
+    }
+    function currentSelectionSet(current) {
+      const s=new Set();
+      for (const o of current) s.add(keyOf(o));
+      return s;
+    }
+
+    async function applySelectionMap(map, mode) {
+      if (mapSetCount(map)===0) return;
+      const selector=mapSetToSelector(map);
+      suppressSelectionUntil = Date.now()+500;
+      try { await API.viewer.setSelection(selector, mode); }
+      catch (e) { recordError("applySelectionMap."+mode, e); log("Error setSelection("+mode+"): "+e.message); }
+    }
+
+    async function makeHiddenAdditionsVisible(addMap) {
+      if (!includeHiddenInSearch()) return 0;
+      let changed=0;
+      for (const [modelId,set] of addMap.entries()) {
+        const hiddenSet=hiddenIdsCache.get(modelId);
+        if (!hiddenSet || hiddenSet.size===0) continue;
+        const ids=[...set].filter((id)=>hiddenSet.has(id));
+        if (ids.length===0) continue;
+        try {
+          await API.viewer.setObjectState({modelObjectIds:[{modelId, objectRuntimeIds:ids}]},{visible:true});
+          changed += ids.length;
+        } catch (e) { recordError("makeHiddenAdditionsVisible", e); }
+      }
+      if (changed) log("Selección ocultos: objetos ocultos hechos visibles para poder seleccionarlos: "+changed);
+      recordDebug("makeHiddenAdditionsVisible",{changed});
+      return changed;
+    }
+
+    async function computeExcludedRemovals(current, addMap) {
+      const removeMap=new Map();
+      const exclOn=document.getElementById("excludeToggle").checked && excludedColors.size>0;
+      if (!exclOn) return removeMap;
+
+      const colored=await getColoredObjectEntries().catch((e)=>{ recordError("computeExcludedRemovals.colors", e); return []; });
+      const colorMap=new Map();
+      for (const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId, c.normalizedColor);
+
+      for (const o of current) {
+        const col=colorMap.get(o.modelId+":"+o.runtimeId);
+        if (col && excludedColors.has(col)) addToMapSet(removeMap, o.modelId, [o.runtimeId]);
+      }
+      for (const [modelId,set] of addMap.entries()) {
+        for (const id of [...set]) {
+          const col=colorMap.get(modelId+":"+id);
+          if (col && excludedColors.has(col)) {
+            set.delete(id);
+            addToMapSet(removeMap, modelId, [id]);
+          }
+        }
+      }
+      const n=mapSetCount(removeMap);
+      if (n) log("Excluir de la selección: quitados "+n+" objeto(s) por color.");
+      recordDebug("computeExcludedRemovals",{removed:n});
+      return removeMap;
+    }
+
+    async function processSelectionNow() {
+      if (!toolsActive()) return;
       if (selBusy) return;
-      const current=await safeGetSelection();
-      const curKey=keyList(current);
-      if (curKey===appliedKey) return;            // es nuestro propio eco
-      if (current.length===0){ appliedKey=""; prevSel=[]; return; }
+      if (Date.now() < suppressSelectionUntil) return;
+
       selBusy=true;
       try {
+        const current=await safeGetSelection();
+        if (current.length===0){ prevSel=[]; return; }
+        const currentKey=keyList(current);
         const prevSet=new Set(prevSel.map(keyOf));
         const added=current.filter((o)=>!prevSet.has(keyOf(o)));
-        const models=[...new Set(current.map((o)=>o.modelId))];
-        const finalAll=[];
-        for (const modelId of models) {
-          const curIds=current.filter((o)=>o.modelId===modelId).map((o)=>o.runtimeId);
-          const addIds=added.filter((o)=>o.modelId===modelId).map((o)=>o.runtimeId);
-          let neighbors=[];
-          if (nearOn&&addIds.length>0) neighbors=await computeNeighbors(modelId, addIds);
-          const addedTotal=new Set([...addIds,...neighbors]);
-          let finalIds=[...new Set([...curIds,...neighbors])];
-          if (exclOn) {
-            const colored=await getColoredObjectEntries().catch(()=>[]);
-            const colorMap=new Map(); for (const c of colored) if (c.modelId===modelId) colorMap.set(c.objectRuntimeId, normalizeColor(c.color));
-            const before=finalIds.length;
-            finalIds=finalIds.filter((id)=>{ if (!addedTotal.has(id)) return true; const c=colorMap.get(id); return !(c&&excludedColors.has(c)); });
-            const removed=before-finalIds.length; if (removed>0) log("Excluir de la selección: quitados "+removed+" objeto(s) por color.");
+        const seedsByModel=new Map();
+        for (const o of (added.length?added:current)) addToMapSet(seedsByModel, o.modelId, [o.runtimeId]);
+
+        recordDebug("selectionDetected",{currentCount:current.length, addedCount:added.length, currentKey});
+
+        const addMap=new Map();
+        if (document.getElementById("nearToggle").checked) {
+          for (const [modelId,set] of seedsByModel.entries()) {
+            const neighbors=await computeNeighbors(modelId, [...set]);
+            const currentSet=currentSelectionSet(current);
+            const filtered=neighbors.filter((id)=>!currentSet.has(keyOfId(modelId,id)));
+            addToMapSet(addMap, modelId, filtered);
           }
-          if (nearOn&&neighbors.length>0) log("Selección cercanos: +"+neighbors.length+" en contacto ("+modelId+").");
-          for (const id of finalIds) finalAll.push({modelId, runtimeId:id});
         }
-        const selector={ modelObjectIds: models.map((m)=>({ modelId:m, objectRuntimeIds: finalAll.filter((o)=>o.modelId===m).map((o)=>o.runtimeId) })) };
-        try { await API.viewer.setSelection(selector, "set"); } catch (e){ try{ await API.viewer.setSelection(selector);}catch(e2){ selBusy=false; return; } }
-        appliedKey=keyList(finalAll); prevSel=finalAll;
-      } catch (err){ log("Selección: "+(err&&err.message?err.message:err)); }
+
+        if (document.getElementById("includeToggle").checked) {
+          const includeMap=await computeIncludeMatches(current);
+          const currentSet=currentSelectionSet(current);
+          for (const [modelId,set] of includeMap.entries()) {
+            const filtered=[...set].filter((id)=>!currentSet.has(keyOfId(modelId,id)));
+            addToMapSet(addMap, modelId, filtered);
+          }
+        }
+
+        const removeMap=await computeExcludedRemovals(current, addMap);
+
+        const addCount=mapSetCount(addMap);
+        const removeCount=mapSetCount(removeMap);
+        if (addCount===0 && removeCount===0) {
+          recordDebug("selectionProcessed.noChange",{currentCount:current.length});
+          prevSel=current;
+          return;
+        }
+
+        await makeHiddenAdditionsVisible(addMap);
+        if (addCount>0) await applySelectionMap(addMap, "add");
+        if (removeCount>0) await applySelectionMap(removeMap, "remove");
+
+        const finalMap=new Map();
+        for (const o of current) addToMapSet(finalMap,o.modelId,[o.runtimeId]);
+        for (const [m,s] of addMap.entries()) addToMapSet(finalMap,m,[...s]);
+        for (const [m,s] of removeMap.entries()) {
+          if (!finalMap.has(m)) continue;
+          for (const id of s) finalMap.get(m).delete(id);
+        }
+        prevSel=[];
+        for (const [modelId,set] of finalMap.entries()) for (const id of set) prevSel.push({modelId,runtimeId:id});
+        recordDebug("selectionProcessed",{addCount,removeCount,finalCount:prevSel.length});
+      } catch (err){ recordError("processSelectionNow", err); log("Selección: "+(err&&err.message?err.message:err)); }
       finally { selBusy=false; }
     }
 
+    function scheduleProcessSelection() {
+      if (!toolsActive()) return;
+      if (Date.now() < suppressSelectionUntil) return;
+      clearTimeout(selectionTimer);
+      selectionTimer=setTimeout(processSelectionNow, 200);
+    }
+
     // ===================== TOOLTIPS =====================
-    function initTooltips() { const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null; document.querySelectorAll("[data-tip]").forEach((el)=>{ el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if (left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); }); el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; }); }); }
+    function initTooltips() {
+      const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null;
+      document.querySelectorAll("[data-tip]").forEach((el)=>{
+        el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if (left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); });
+        el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; });
+      });
+    }
 
     // ===================== WIRING =====================
     function wireUI() {
       const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
-      custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if (!custom.checked) customText.value=""; });
+      custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if (!custom.checked) customText.value=""; recordDebug("customCodesToggle",{checked:custom.checked}); });
+
       const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect"); const folderRefresh=document.getElementById("folderRefresh");
-      ext.addEventListener("change",()=>{ const on=ext.checked; folderSel.disabled=!on; folderRefresh.disabled=!on; if (on) populateFolders(); });
+      ext.addEventListener("change",()=>{ const on=ext.checked; folderSel.disabled=!on; folderRefresh.disabled=!on; recordDebug("extendedExportToggle",{on}); if (on) populateFolders(); });
       folderRefresh.onclick=()=>populateFolders();
-      document.getElementById("nearParam").addEventListener("change", updateUnitLabel);
-      const nearOp=document.getElementById("nearOp"); const opGray=()=>nearOp.classList.toggle("placeholder",!nearOp.value); nearOp.addEventListener("change",opGray); opGray();
+
+      document.getElementById("nearParam").addEventListener("change", ()=>{ updateUnitLabel(); recordDebug("nearParamChange",{value:document.getElementById("nearParam").value}); });
+      const nearOp=document.getElementById("nearOp"); const opGray=()=>nearOp.classList.toggle("placeholder",!nearOp.value); nearOp.addEventListener("change",()=>{opGray(); recordDebug("nearOpChange",{value:nearOp.value});}); opGray();
+
       const nearCustom=document.getElementById("nearCustom");
-      nearCustom.addEventListener("change",()=>{ setNearConfigEnabled(nearCustom.checked); if (nearCustom.checked) populateParameters(); });
+      nearCustom.addEventListener("change",()=>{ syncNearUiState(); if (nearCustom.checked && document.getElementById("nearToggle").checked) populateParameters(); });
       const nearToggle=document.getElementById("nearToggle");
-      nearToggle.addEventListener("change",()=>{ if (nearToggle.checked){ log("Selección cercanos ACTIVADO."); appliedKey=""; prevSel=[]; processSelection(); } else { log("Selección cercanos desactivado."); } });
+      nearToggle.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; recordDebug("nearToggleChange",{checked:nearToggle.checked}); if (nearToggle.checked && nearCustom.checked) populateParameters(); if (nearToggle.checked) scheduleProcessSelection(); });
+
       const excludeToggle=document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change",()=>{ document.getElementById("excludeConfig").style.display=excludeToggle.checked?"block":"none"; if (excludeToggle.checked){ populateExcludeColors(); appliedKey=""; prevSel=[]; processSelection(); } });
+      excludeToggle.addEventListener("change",()=>{ document.getElementById("excludeConfig").style.display=excludeToggle.checked?"block":"none"; prevSel=[]; recordDebug("excludeToggleChange",{checked:excludeToggle.checked}); if (excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
       document.getElementById("excludeRefresh").onclick=()=>populateExcludeColors();
       document.getElementById("excludeConfig").style.display="none";
-      document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
-      setNearConfigEnabled(false);
+
+      const hiddenToggle=document.getElementById("hiddenSelectionToggle");
+      hiddenToggle.addEventListener("change",()=>{ clearSelectionCaches(); prevSel=[]; recordDebug("hiddenSelectionToggleChange",{checked:hiddenToggle.checked}); scheduleProcessSelection(); });
+
+      const includeToggle=document.getElementById("includeToggle");
+      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; recordDebug("includeToggleChange",{checked:includeToggle.checked}); if (includeToggle.checked) populateIncludeParameters(); scheduleProcessSelection(); });
+      document.getElementById("includeParam").addEventListener("change",()=>{ document.getElementById("includeParam").classList.toggle("placeholder",!document.getElementById("includeParam").value); populateIncludeValues(); });
+      document.getElementById("includeValue").addEventListener("change",()=>{ document.getElementById("includeValue").classList.toggle("placeholder",!document.getElementById("includeValue").value); recordDebug("includeValueChange",{value:document.getElementById("includeValue").value}); });
+      document.getElementById("includeRefreshParams").onclick=()=>populateIncludeParameters();
+      document.getElementById("includeRefreshValues").onclick=()=>populateIncludeValues();
+      document.getElementById("includeClearCache").onclick=()=>{ clearSelectionCaches(); populateIncludeParameters(); };
+
+      document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); recordDebug("cancelRequested"); };
+      syncNearUiState();
+      syncIncludeUiState();
     }
-    function handleWorkspaceEvent(event) { if (event==="viewer.onSelectionChanged") processSelection(); }
+
+    function handleWorkspaceEvent(event, data) {
+      recordDebug("workspaceEvent",{event, data: data ? safeJson(data).slice(0,1000) : ""});
+      if (event==="viewer.onSelectionChanged") scheduleProcessSelection();
+      if (event==="view.onViewAction" || event==="viewer.onSettingsChanged") { clearSelectionCaches(); }
+    }
 
     async function main() {
       buildColumnsUI(); wireUI(); initTooltips();
       document.getElementById("devVersion").textContent="Versión: "+SCRIPT_VERSION;
-      document.getElementById("devUpdated").textContent="Última actualización: "+LAST_UPDATED;
+      document.getElementById("devUpdated").textContent="Última modificación del archivo: "+getLastUpdatedLabel();
       const ws=window.TrimbleConnectWorkspace||window.WorkspaceAPI;
       if (!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API de Trimble."); return; }
-      API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event);}catch(e){} });
+      API=await ws.connect(window.parent,(event, data)=>{ try{ handleWorkspaceEvent(event, data);}catch(e){ recordError("workspaceCallback", e); } });
       log("Conectado a Trimble Connect. DEO "+SCRIPT_VERSION);
-      document.getElementById("export").onclick=async ()=>{ if (opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try { if (document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); } catch (err){ console.error(err); log("ERROR: "+err.message); } finally { opRunning=false; btn.disabled=false; showCancel(false); } };
-      document.getElementById("debug").onclick=async ()=>{ try{ await exportDebug();}catch(err){ console.error(err); log("ERROR DEBUG: "+err.message);} };
+      recordDebug("main.connected", {apiKeys:Object.keys(API||{}), viewerKeys:Object.keys((API&&API.viewer)||{}), viewKeys:Object.keys((API&&API.view)||{})});
+
+      document.getElementById("export").onclick=async ()=>{ if (opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try { if (document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); } catch (err){ recordError("export.onclick", err); console.error(err); log("ERROR: "+err.message); } finally { opRunning=false; btn.disabled=false; showCancel(false); } };
+      document.getElementById("debug").onclick=async ()=>{ try{ await exportDebug();}catch(err){ recordError("debug.onclick", err); console.error(err); log("ERROR DEBUG: "+err.message);} };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
-      document.getElementById("importFile").onchange=async (ev)=>{ const file=ev.target.files&&ev.target.files[0]; ev.target.value=""; if (!file) return; if (opRunning) return; opRunning=true; try { await importCsv(file); } catch (err){ console.error(err); log("ERROR IMPORT: "+err.message); } finally { opRunning=false; showCancel(false); } };
+      document.getElementById("importFile").onchange=async (ev)=>{ const file=ev.target.files&&ev.target.files[0]; ev.target.value=""; if (!file) return; if (opRunning) return; opRunning=true; try { await importCsv(file); } catch (err){ recordError("importFile.onchange", err); console.error(err); log("ERROR IMPORT: "+err.message); } finally { opRunning=false; showCancel(false); } };
     }
 
     // ===================== DEBUG =====================
     async function exportDebug() {
-      clearLog(); log("Generando debug..."); const out=[];
-      out.push("SCRIPT_VERSION\n"+SCRIPT_VERSION+"\n"); out.push("LAST_UPDATED\n"+LAST_UPDATED+"\n");
-      try { out.push("Object.keys(API)\n"+JSON.stringify(Object.keys(API))+"\n"); } catch (e) {}
-      try { out.push("Object.keys(API.viewer)\n"+JSON.stringify(Object.keys(API.viewer))+"\n"); } catch (e) {}
-      try { out.push("Object.keys(API.view)\n"+JSON.stringify(Object.keys(API.view))+"\n"); } catch (e) {}
-      try { out.push("VISTA ACTIVA\n"+JSON.stringify(await API.view.getCurrentView(),null,2)+"\n"); } catch (e){ out.push("getCurrentView ERROR: "+e.message+"\n"); }
-      let views=[]; try { views=await API.view.getViews(); } catch (e) {}
-      out.push("GETVIEWS total: "+(views?views.length:0)+"\n");
-      out.push("CLAVES DE UNA VISTA\n"+JSON.stringify(views&&views[0]?Object.keys(views[0]):[],null,2)+"\n");
-      out.push("CARPETAS DETECTADAS\n"+JSON.stringify([...new Set((views||[]).map(detectFolder).filter(Boolean))],null,2)+"\n");
-      out.push("GETVIEWS (primeras 3, JSON completo)\n"+JSON.stringify((views||[]).slice(0,3),null,2)+"\n");
-      try { out.push("SELECCIÓN ACTUAL\n"+JSON.stringify(await API.viewer.getSelection(),null,2)+"\n"); } catch (e) {}
-      let colored=[]; try { colored=await API.viewer.getColoredObjects(); } catch (e){ out.push("getColoredObjects ERROR: "+e.message+"\n"); }
-      const entries=[]; for (const g of colored||[]) for (const o of (g.objects||[])) entries.push({modelId:g.modelId,id:o.id,color:o.color});
-      out.push("PRIMEROS OBJETOS\n"+JSON.stringify(entries.slice(0,20),null,2)+"\n");
-      if (entries.length>0){ const mid=entries[0].modelId; const ids=entries.filter((e)=>e.modelId===mid).slice(0,10).map((e)=>Number(e.id)); try{ const direct=await API.viewer.convertToObjectIds(mid,ids); out.push("CONVERTTOOBJECTIDS\n"+JSON.stringify(direct,null,2)+"\nGUID IFC\n"+JSON.stringify(direct.map(toIfcGuid),null,2)+"\n");}catch(e){ out.push("CONVERTTOOBJECTIDS ERROR: "+e.message+"\n"); } }
-      downloadText("DEO_debug.txt", out.join("\n"), "text/plain"); log("Debug descargado: DEO_debug.txt");
+      recordDebug("debug.requested");
+      log("Generando debug...");
+      const out=[];
+      const addSection=(title, data)=>{ out.push("\n\n==================== "+title+" ====================\n"); out.push(typeof data==="string"?data:safeJson(data,2)); };
+
+      addSection("VERSION", {
+        SCRIPT_VERSION,
+        VERSION_LABEL,
+        documentLastModified: document.lastModified,
+        lastUpdatedLabel:getLastUpdatedLabel(),
+        now:new Date().toString(),
+        nowISO:new Date().toISOString(),
+        userAgent:navigator.userAgent,
+        url:location.href
+      });
+      addSection("UI STATE", uiStateSnapshot());
+      addSection("LOG VISUAL", logLines);
+
+      try { addSection("Object.keys(API)", Object.keys(API||{})); } catch (e) {}
+      try { addSection("Object.keys(API.viewer)", Object.keys((API&&API.viewer)||{})); } catch (e) {}
+      try { addSection("Object.keys(API.view)", Object.keys((API&&API.view)||{})); } catch (e) {}
+      try { if (API.propertyPanel) addSection("Object.keys(API.propertyPanel)", Object.keys(API.propertyPanel)); } catch (e) {}
+
+      try { addSection("VISTA ACTIVA", await API.view.getCurrentView()); } catch (e){ addSection("getCurrentView ERROR", e.message); }
+      try { if (API.viewer.getPresentation) addSection("PRESENTATION", await API.viewer.getPresentation()); } catch (e){ addSection("getPresentation ERROR", e.message); }
+      try { if (API.viewer.getCamera) addSection("CAMERA", await API.viewer.getCamera()); } catch (e){ addSection("getCamera ERROR", e.message); }
+      try { if (API.viewer.getSettings) addSection("VIEWER SETTINGS", await API.viewer.getSettings()); } catch (e){ addSection("getSettings ERROR", e.message); }
+      try {
+        if (API.viewer.getSnapshot) {
+          const snap=await API.viewer.getSnapshot();
+          addSection("SNAPSHOT", {length:String(snap||"").length, prefix:String(snap||"").slice(0,120)});
+        }
+      } catch (e){ addSection("getSnapshot ERROR", e.message); }
+
+      let selection=[];
+      try { selection=await safeGetSelection(); addSection("SELECCIÓN ACTUAL NORMALIZADA", selection); } catch (e){ addSection("getSelection ERROR", e.message); }
+
+      const byModel=new Map();
+      for (const s of selection) { if (!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
+      for (const [modelId, ids] of byModel.entries()) {
+        try { addSection("BOUNDING BOXES SELECCIÓN "+modelId, await API.viewer.getObjectBoundingBoxes(modelId, ids)); } catch (e){ addSection("BBOX ERROR "+modelId, e.message); }
+        try { addSection("PROPIEDADES SELECCIÓN "+modelId, await API.viewer.getObjectProperties(modelId, ids)); } catch (e){ addSection("PROPS ERROR "+modelId, e.message); }
+      }
+
+      let colored=[];
+      try { colored=await getColoredObjectEntries(); } catch (e){ addSection("getColoredObjects ERROR", e.message); }
+      const colorSummary={};
+      const invalidColors=[];
+      for (const c of colored) {
+        const key=c.normalizedColor||"INVALID";
+        colorSummary[key]=(colorSummary[key]||0)+1;
+        if (!c.colorValid) invalidColors.push(c);
+      }
+      addSection("COLORES RESUMEN", {totalObjects:colored.length, colorSummary, invalidColors:invalidColors.slice(0,50), first50:colored.slice(0,50)});
+
+      let views=[];
+      try { views=await API.view.getViews(); } catch (e){ addSection("getViews ERROR", e.message); }
+      addSection("GETVIEWS", {
+        total:(views||[]).length,
+        firstKeys:views&&views[0]?Object.keys(views[0]):[],
+        first10:(views||[]).slice(0,10),
+        realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))],
+        virtualFolders:[...new Set((views||[]).map((v)=>inferVirtualFolder(viewFullName(v))).filter(Boolean))],
+        folderDetectionMode
+      });
+
+      try { addSection("CANDIDATE CACHE STATUS", {candidateCacheKeys:[...candidateCache.keys()], propsModels:[...objectPropertiesCache.keys()], includeParamKeys:[...includeParameterCache.keys()], includeValueKeys:[...includeValueCache.keys()].slice(0,100), hiddenModels:[...hiddenIdsCache.entries()].map(([m,s])=>({modelId:m,count:s.size}))}); } catch (e) {}
+      addSection("DEBUG HISTORY", debugHistory);
+      addSection("ERROR HISTORY", errorHistory);
+
+      downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt", out.join("\n"), "text/plain");
+      log("Debug descargado.");
     }
 
-    main().catch((err)=>{ console.error(err); log("ERROR DE CONEXIÓN: "+err.message); });
+    main().catch((err)=>{ recordError("main.catch", err); console.error(err); log("ERROR DE CONEXIÓN: "+err.message); });
   </script>
 </body>
 </html>
