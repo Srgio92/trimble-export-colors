@@ -1,7 +1,7 @@
 {
-  "title": "Exportar colores IFC",
+  "title": "DEO Tools",
   "icon": "https://srgio92.github.io/trimble-export-colors/icon.svg",
   "url": "https://srgio92.github.io/trimble-export-colors/",
-  "description": "Exporta objetos coloreados del visor 3D a CSV by Sergi Artigas",
+  "description": "Herramientas DEO para Trimble Connect: exportar/importar colores a CSV por GUID IFC y selección por proximidad. by Sergi Artigas",
   "enabled": true
 }
