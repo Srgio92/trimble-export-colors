@@ -39,28 +39,56 @@
     .cols-details { border: 1px solid #e5e7eb; background: #fff; margin: 6px 0; }
     .cols-details > summary { font-weight: normal; padding: 6px 8px; }
     .cols-inner { padding: 6px 10px 10px; }
-    .col-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+    .col-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; padding: 2px 0; }
+    .col-item.drag-over { outline: 1px dashed #1c7fd6; outline-offset: 2px; }
     .col-item .name { flex: 1; }
     .col-item button { padding: 1px 7px; margin: 0; font-size: 12px; line-height: 1.4; }
+    .csv-remove-button { color: #b91c1c; font-weight: bold; background: transparent; border: none; font-size: 16px; cursor: pointer; width: 22px; min-width: 22px; }
+    .csv-add-button { color: #15803d; font-weight: bold; background: transparent; border: none; font-size: 18px; cursor: pointer; width: 24px; min-width: 24px; padding: 0; }
+    .drag-handle { cursor: grab; user-select: none; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; width: 24px; min-width: 24px; text-align: center; font-size: 15px; color: #374151; }
+    .drag-handle:active { cursor: grabbing; }
+    .column-add-box { border-top: 1px solid #ececec; margin-top: 8px; padding-top: 8px; }
+    .column-picker-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+    .column-picker-row select { min-width: 170px; flex: 1; }
+    .column-refresh { width: 28px; min-width: 28px; height: 26px; padding: 0; font-size: 15px; line-height: 1; }
 
     .config-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
     .config-row select, .config-row input { width: 120px; }
     #nearUnit { color: #000; font-weight: bold; }
 
-    #excludeColors label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; font-weight: normal; }
+    #excludeColors label, #includeColors label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; font-weight: normal; }
     .swatch { width: 16px; height: 16px; border: 1px solid #999; border-radius: 3px; display: inline-block; }
 
     #cancelOp { background: #b91c1c; color: #fff; border: none; border-radius: 4px; }
     .status-box { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; min-height: 18px; margin: 4px 0; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
 
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
-    #debug { position: absolute; top: 6px; right: 10px; background: transparent; border: none; padding: 2px 4px; cursor: pointer; line-height: 0; }
+    .dev-static > summary::-webkit-details-marker { display: none; }
+    .dev-static > summary::marker { content: ""; }
+    .dev-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: default; }
+    .dev-title { flex: 1; display: inline-flex; align-items: center; gap: 6px; }
+    .dev-fake-triangle { font-size: 11px; color: #374151; line-height: 1; }
+    #debug { background: transparent; border: none; padding: 2px 4px; cursor: pointer; line-height: 0; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
     .disabled-area { opacity: .45; }
     .disabled-area input, .disabled-area select, .disabled-area button { pointer-events: none; }
+    .icon-btn { width: 28px; min-width: 28px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+    .field-label { min-width: 46px; font-weight: bold; color: #374151; }
+    .tool-spacer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #f1f1f1; }
+    .range-row input[type="range"] { flex: 1; min-width: 130px; }
+    #nearPercentLabel { min-width: 46px; text-align: right; font-weight: bold; }
+    #includeColors { margin-top: 6px; }
     .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
+
+    .template-grid { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; margin: 6px 0; }
+    .template-grid label { color: #374151; }
+    .template-grid input, .template-grid select { width: 100%; }
+    .template-auto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
+    .template-auto div { margin: 2px 0; }
+    #templateDescription { width: 100%; min-height: 88px; padding: 6px; box-sizing: border-box; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
+    #templateInfo { margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -75,23 +103,18 @@
           <span class="summary-switch" id="nearSummarySwitch"><label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
-          <div class="toggle-line" id="nearCustomLine" data-tip="Limita la búsqueda por parámetro, condición y valor.">
+          <div class="toggle-line" id="nearCustomLine" data-tip="Ajusta la sensibilidad del criterio por defecto.">
             <label class="switch"><input type="checkbox" id="nearCustom"><span class="slider"></span></label>
             <label class="txt" for="nearCustom">Configuración personalizada</label>
           </div>
           <div id="nearConfig">
             <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m³.</div>
-            <div class="config-row">
-              <select id="nearParam" class="placeholder" disabled></select>
-              <select id="nearOp" class="placeholder" disabled>
-                <option value="" disabled selected hidden>condición</option>
-                <option value="menos">menos</option>
-                <option value="igual">igual</option>
-                <option value="mas">más</option>
-              </select>
-              <input type="text" id="nearValue" placeholder="Valor" disabled>
-              <span id="nearUnit"></span>
+            <div class="config-row range-row">
+              <label for="nearPercent" class="field-label">Sensibilidad</label>
+              <input type="range" id="nearPercent" min="10" max="300" step="5" value="100" disabled>
+              <span id="nearPercentLabel">100%</span>
             </div>
+            <div class="hint" id="nearCalibInfo">100% mantiene el criterio base. Valores superiores amplían la búsqueda; valores inferiores la restringen.</div>
           </div>
         </div>
       </details>
@@ -102,8 +125,9 @@
           <span class="summary-switch" id="excludeSummarySwitch"><label class="switch"><input type="checkbox" id="excludeToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
-          <div class="hint">Marca los colores que no deben entrar en la selección.</div>
+          <div class="hint" style="margin-bottom:10px;">Marca los colores que no deben entrar en la selección.</div>
           <div id="excludeColors"></div>
+          <div class="row"><button id="excludeRefresh" class="icon-btn" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div>
         </div>
       </details>
 
@@ -121,20 +145,25 @@
       </details>
 
       <details class="tool model-tool" id="includeTool">
-        <summary class="subtitle" data-tip="Limita la selección a los objetos cuyo Name coincide con el valor elegido.">
-          <span class="tool-title-text">Concentrar selección</span>
+        <summary class="subtitle" data-tip="Limita la selección a los objetos que coinciden con el valor elegido.">
+          <span class="tool-title-text">Selector de items</span>
           <span class="summary-switch" id="includeSummarySwitch"><label class="switch"><input type="checkbox" id="includeToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
           <div id="includeConfig">
             <div class="config-row">
-              <select id="includeParam" disabled><option value="Name" selected>Name</option></select>
-              <select id="includeValue" class="placeholder" disabled><option value="" disabled selected hidden>valor</option></select>
+              <span class="field-label">Name</span>
+              <select id="includeValue" class="placeholder" disabled style="flex:1; min-width:160px;"><option value="" disabled selected hidden>elige un valor…</option></select>
             </div>
-          </div>
-          <div class="toggle-line" id="showNamesLine" data-tip="Muestra el Name de los objetos en el propio modelo.">
-            <label class="switch"><input type="checkbox" id="showNamesToggle"><span class="slider"></span></label>
-            <label class="txt" for="showNamesToggle">Mostrar nombres</label>
+            <div class="toggle-line tool-spacer" id="showNamesLine" data-tip="Muestra el Name de los objetos seleccionados en el modelo.">
+              <label class="switch"><input type="checkbox" id="showNamesToggle"><span class="slider"></span></label>
+              <label class="txt" for="showNamesToggle">Mostrar nombres</label>
+            </div>
+            <div class="toggle-line" id="colorModeLine" data-tip="Filtra la selección por color en lugar de por Name.">
+              <label class="switch"><input type="checkbox" id="colorModeToggle"><span class="slider"></span></label>
+              <label class="txt" for="colorModeToggle">Selección por color</label>
+            </div>
+            <div id="includeColors" style="display:none;"></div>
           </div>
         </div>
       </details>
@@ -146,12 +175,66 @@
     <summary>Herramientas del archivo</summary>
     <div class="section">
 
+      <details class="tool" id="viewTemplateTool">
+        <summary class="subtitle" data-tip="Crea una vista normalizada tomando otra vista como base.">Nueva vista desde plantilla</summary>
+        <div class="tool-body">
+          <div class="hint">Crea una vista nueva cargando antes una vista de referencia.</div>
+          <div class="row">
+            Vista de referencia:<br>
+            <select id="templateRefSelect" style="width:72%;"><option value="">Cargando vistas...</option></select>
+            <button id="templateRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+          </div>
+
+          <div class="template-auto">
+            <div>Autor: <strong id="templateAuthor">No disponible</strong></div>
+            <div>Fecha: <strong id="templateDate">No disponible</strong></div>
+            <div>RFI detectada: <strong id="templateDetectedRfi">No detectada</strong></div>
+          </div>
+
+          <div class="template-grid">
+            <label for="templateRfi">RFI</label><input type="text" id="templateRfi" placeholder="RFI_000">
+            <label for="templateModule">Módulo</label><input type="text" id="templateModule" placeholder="G">
+            <label for="templateLevel">Nivel</label><input type="text" id="templateLevel" placeholder="N80">
+            <label for="templateAxes">Ejes</label><input type="text" id="templateAxes" placeholder="GN17-GN19">
+            <label for="templateElement">Elemento</label><input type="text" id="templateElement" placeholder="Placa base">
+            <label for="templateTask">Tarea</label><input type="text" id="templateTask" placeholder="Revisión anclajes">
+          </div>
+
+          <div class="row">
+            Nombre de vista:<br>
+            <input type="text" id="templateName" style="width:100%;" placeholder="Nombre generado de la vista">
+          </div>
+
+          <div class="row">
+            Descripción generada:<br>
+            <textarea id="templateDescription" placeholder="Descripción generada de la vista"></textarea>
+          </div>
+
+          <div class="row">
+            <button id="templateCreateView" data-tip="Carga la vista de referencia y crea una nueva vista con el nombre y descripción indicados.">Crear vista desde plantilla</button>
+          </div>
+          <div class="hint" id="templateInfo">Cámara, visibilidad, secciones y colores se tomarán de la vista de referencia al cargarla antes de crear la nueva vista. Compartir, carpeta y etiquetas solo se copiarán si Trimble las expone en la API.</div>
+        </div>
+      </details>
+
       <details class="tool">
         <summary class="subtitle">Exportar colores a CSV</summary>
         <div class="tool-body">
           <details class="cols-details">
             <summary>Columnas a exportar</summary>
-            <div class="cols-inner"><div id="columnsList"></div></div>
+            <div class="cols-inner">
+              <div id="columnsList"></div>
+              <div class="column-add-box">
+                <div class="column-picker-row">
+                  <button id="csvParamAdd" class="csv-add-button" data-tip="Añade a la lista la columna seleccionada." title="Añadir columna">+</button>
+                  <select id="csvParamSelect">
+                    <option value="" disabled selected hidden>Añadir columna...</option>
+                  </select>
+                  <button id="csvParamRefresh" class="column-refresh" data-tip="Actualiza los parámetros disponibles del modelo." title="Actualizar parámetros">↻</button>
+                </div>
+                <div class="hint" id="csvParamHint">Usa + para añadir valores predefinidos o parámetros disponibles del modelo.</div>
+              </div>
+            </div>
           </details>
           <div class="toggle-line" data-tip="Escribe un aviso en codigo_revision cuando no se encuentre el código RFI en el nombre de la vista.">
             <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
@@ -176,7 +259,7 @@
       <details class="tool">
         <summary class="subtitle">Importar colores desde CSV</summary>
         <div class="tool-body">
-          <div class="hint">Pinta de rojo los objetos cuyo revisado_deo sea TRUE. Puedes seleccionar uno o varios CSV a la vez.</div>
+          <div class="hint">Importar uno o varios CSV.</div>
           <div class="row">
             <button id="importBtn" data-tip="Selecciona uno o varios CSV.">Importar CSV</button>
             <input type="file" id="importFile" accept=".csv,text/csv" multiple style="display:none;">
@@ -192,10 +275,9 @@
     </div>
   </details>
 
-  <details open>
-    <summary>Desarrollador</summary>
+  <details open id="devPanel" class="dev-static">
+    <summary class="dev-summary"><span class="dev-title"><span class="dev-fake-triangle">▾</span><span>Desarrollador</span></span><button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button></summary>
     <div class="section">
-      <button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
       <details class="tool">
@@ -208,7 +290,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.5";
+    const SCRIPT_VERSION = "v8.5.2";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -223,10 +305,18 @@
     let API=null, lastConvertError="", cancelRequested=false, opRunning=false;
     let selectionTimer=null, selBusy=false, suppressSelectionUntil=0, prevSel=[];
     const excludedColors=new Set();
+    const includeColors=new Set();
+    let nameMarkupIds=[];
+    let nameTimer=null;
     const logLines=[];
     const errorHistory=[];
     const propsCache=new Map();             // modelId -> Map(rid -> props)
     const hiddenWhiteRegistry=new Map();    // modelId -> Set(rid)
+    let templateViewsCache=[];
+    let templateCurrentUser=null;
+    let templateDescriptionDirty=false;
+    let csvAvailableParametersCache=[];
+    let draggedColumnIndex=null;
 
     // ===================== LOG / DEBUG =====================
     const log=(t)=>{ const m=String(t); logLines.push(m); if(logLines.length>LOG_MAX_LINES) logLines.splice(0,logLines.length-LOG_MAX_LINES); const el=document.getElementById("log"); if(el){ el.textContent=logLines.join("\n")+"\n"; el.scrollTop=el.scrollHeight; } };
@@ -273,18 +363,73 @@
     async function convertResilient(modelId,runtimeIds){ if(runtimeIds.length===0) return []; try{ const ids=await API.viewer.convertToObjectIds(modelId,runtimeIds); return runtimeIds.map((_,i)=>ids[i]||""); }catch(e){ if(!lastConvertError) lastConvertError=String(e&&e.message?e.message:e); if(runtimeIds.length===1) return [""]; const mid=Math.floor(runtimeIds.length/2); const l=await convertResilient(modelId,runtimeIds.slice(0,mid)); const r=await convertResilient(modelId,runtimeIds.slice(mid)); return l.concat(r); } }
 
     // ===================== COLUMNAS =====================
-    let COLUMNS=[
-      {key:"guidIfc",header:"GUID_IFC",checked:true},
-      {key:"color",header:"color",checked:true},
-      {key:"revisionCode",header:"codigo_revision",checked:true},
-      {key:"reviewedDeo",header:"revisado_deo",checked:true},
-      {key:"viewName",header:"View_name",checked:false},
-      {key:"modelId",header:"modelId",checked:false},
-      {key:"objectRuntimeId",header:"objectRuntimeId",checked:false}
+    const DEFAULT_COLUMNS=[
+      {key:"guidIfc",header:"GUID_IFC"},
+      {key:"color",header:"color"},
+      {key:"revisionCode",header:"codigo_revision"},
+      {key:"reviewedDeo",header:"revisado_deo"},
+      {key:"viewName",header:"View_name"},
+      {key:"modelId",header:"modelId"},
+      {key:"objectRuntimeId",header:"objectRuntimeId"}
     ];
-    function buildColumnsUI(){ const list=document.getElementById("columnsList"); list.innerHTML=""; COLUMNS.forEach((col,index)=>{ const item=document.createElement("div"); item.className="col-item"; const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=col.checked; cb.addEventListener("change",()=>{col.checked=cb.checked;}); const name=document.createElement("span"); name.className="name"; name.textContent=col.header; const up=document.createElement("button"); up.textContent="\u2191"; up.disabled=index===0; up.onclick=()=>moveColumn(index,-1); const down=document.createElement("button"); down.textContent="\u2193"; down.disabled=index===COLUMNS.length-1; down.onclick=()=>moveColumn(index,1); item.appendChild(cb); item.appendChild(name); item.appendChild(up); item.appendChild(down); list.appendChild(item); }); }
-    function moveColumn(i,dir){ const j=i+dir; if(j<0||j>=COLUMNS.length) return; const t=COLUMNS[i]; COLUMNS[i]=COLUMNS[j]; COLUMNS[j]=t; buildColumnsUI(); }
-    function selectedColumns(){ return COLUMNS.filter((c)=>c.checked); }
+    let COLUMNS=DEFAULT_COLUMNS.slice(0,4).map((c)=>({...c}));
+    function isPropertyColumn(col){ return col&&col.type==="property"; }
+    function propertyColumnKey(paramName){ return "property:"+String(paramName||""); }
+    function defaultColumnByKey(key){ return DEFAULT_COLUMNS.find((c)=>c.key===key)||null; }
+    function columnExistsByKey(key){ return COLUMNS.some((c)=>c.key===key); }
+    function columnExistsByHeader(header){ return COLUMNS.some((c)=>String(c.header).trim().toLowerCase()===String(header||"").trim().toLowerCase()); }
+    function addPredefinedColumn(key){ const base=defaultColumnByKey(key); if(!base) return; if(columnExistsByKey(base.key)){ log("La columna ya está en la lista: "+base.header); return; } COLUMNS.push({...base}); buildColumnsUI(); updateCsvColumnSelect(); }
+    function addPropertyColumn(paramName){ paramName=String(paramName||"").trim(); if(!paramName) return; const key=propertyColumnKey(paramName); if(columnExistsByKey(key)||columnExistsByHeader(paramName)){ log("La columna ya está en la lista: "+paramName); return; } COLUMNS.push({key,header:paramName,type:"property",propertyName:paramName}); buildColumnsUI(); updateCsvColumnSelect(); }
+    function addColumnFromPicker(){ const sel=document.getElementById("csvParamSelect"); if(!sel||!sel.value) return; const value=sel.value; if(value.startsWith("default:")) addPredefinedColumn(value.slice(8)); else if(value.startsWith("property:")) addPropertyColumn(value.slice(9)); sel.value=""; }
+    function removeColumn(index){ if(!Number.isInteger(index)||index<0||index>=COLUMNS.length) return; const col=COLUMNS[index]; COLUMNS.splice(index,1); buildColumnsUI(); updateCsvColumnSelect(); log("Columna eliminada: "+col.header); }
+    function buildColumnsUI(){
+      const list=document.getElementById("columnsList"); if(!list) return; list.innerHTML="";
+      COLUMNS.forEach((col,index)=>{
+        const item=document.createElement("div"); item.className="col-item"; item.draggable=true; item.dataset.index=String(index);
+        const remove=document.createElement("button"); remove.type="button"; remove.className="csv-remove-button"; remove.textContent="−"; remove.title="Quitar columna"; remove.addEventListener("click",()=>removeColumn(index));
+        const name=document.createElement("span"); name.className="name"; name.textContent=col.header; if(isPropertyColumn(col)) name.title="Parámetro del modelo: "+col.propertyName;
+        const handle=document.createElement("span"); handle.className="drag-handle"; handle.textContent="☰"; handle.title="Arrastrar para ordenar"; handle.setAttribute("aria-label","Arrastrar columna"); handle.draggable=true;
+        const dragStart=(ev)=>{ draggedColumnIndex=index; item.classList.add("dragging"); if(ev.dataTransfer){ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",String(index)); } };
+        item.addEventListener("dragstart",dragStart); handle.addEventListener("dragstart",dragStart);
+        item.addEventListener("dragend",()=>{ draggedColumnIndex=null; item.classList.remove("dragging"); document.querySelectorAll(".col-item.drag-over").forEach((el)=>el.classList.remove("drag-over")); });
+        item.addEventListener("dragover",(ev)=>{ ev.preventDefault(); if(draggedColumnIndex===null||draggedColumnIndex===index) return; item.classList.add("drag-over"); if(ev.dataTransfer) ev.dataTransfer.dropEffect="move"; });
+        item.addEventListener("dragleave",()=>item.classList.remove("drag-over"));
+        item.addEventListener("drop",(ev)=>{ ev.preventDefault(); item.classList.remove("drag-over"); const from=draggedColumnIndex!==null?draggedColumnIndex:parseInt(ev.dataTransfer&&ev.dataTransfer.getData("text/plain"),10); const to=index; reorderColumn(from,to); });
+        item.appendChild(remove); item.appendChild(name); item.appendChild(handle); list.appendChild(item);
+      });
+    }
+    function reorderColumn(from,to){ if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=COLUMNS.length||to>=COLUMNS.length||from===to) return; const moved=COLUMNS.splice(from,1)[0]; COLUMNS.splice(to,0,moved); buildColumnsUI(); updateCsvColumnSelect(); }
+    function selectedColumns(){ return COLUMNS; }
+
+    async function refreshCsvAvailableParameters(){
+      const hint=document.getElementById("csvParamHint");
+      if(hint) hint.textContent="Leyendo parámetros disponibles del modelo...";
+      const names=new Set();
+      try{
+        let sample=await safeGetSelection();
+        if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); }
+        const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
+        for(const [modelId,ids] of byModel.entries()){
+          for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const x of flattenProps(p)) if(x.name) names.add(String(x.name).trim()); }
+        }
+      }catch(e){ recordError("refreshCsvAvailableParameters",e); }
+      csvAvailableParametersCache=[...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+      updateCsvColumnSelect();
+      if(hint) hint.textContent="Parámetros disponibles: "+csvAvailableParametersCache.length+". Usa + para añadir la columna seleccionada.";
+    }
+    function updateCsvColumnSelect(){
+      const sel=document.getElementById("csvParamSelect"); if(!sel) return;
+      const keep=sel.value; sel.innerHTML="";
+      const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="Añadir columna..."; sel.appendChild(ph);
+      const predefinedMissing=DEFAULT_COLUMNS.filter((c)=>!columnExistsByKey(c.key));
+      if(predefinedMissing.length){ const group=document.createElement("optgroup"); group.label="Valores predefinidos"; for(const c of predefinedMissing){ const o=document.createElement("option"); o.value="default:"+c.key; o.textContent=c.header; group.appendChild(o); } sel.appendChild(group); }
+      const available=csvAvailableParametersCache.filter((p)=>p && !columnExistsByKey(propertyColumnKey(p)) && !columnExistsByHeader(p));
+      const group=document.createElement("optgroup"); group.label="Parámetros de proyecto";
+      if(available.length){ for(const p of available){ const o=document.createElement("option"); o.value="property:"+p; o.textContent=p; group.appendChild(o); } }
+      else { const o=document.createElement("option"); o.disabled=true; o.value=""; o.textContent=csvAvailableParametersCache.length?"No quedan parámetros disponibles":"Actualizar parámetros"; group.appendChild(o); }
+      sel.appendChild(group);
+      if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
+    }
 
     // ===================== VISTA / CARPETAS =====================
     async function getCurrentViewSpecWithRetry(){ let cv=null; for(let a=1;a<=6;a++){ try{ cv=await API.view.getCurrentView(); if(cv&&(cv.name||cv.description||cv.id)){ if(cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } return cv; } }catch(e){ recordError("getCurrentView",e); } if(a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} } return cv; }
@@ -304,13 +449,51 @@
     function viewMatchesFolder(view,folderValue){ if(!folderValue) return true; const [kind,value]=folderValue.split("|"); if(kind==="real") return detectFolder(view)===value; return true; }
     function computeRevisionBase(viewName){ const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked; if(customOn&&customText) return customText.toUpperCase(); const auto=extractRevisionCode(viewName); if(auto) return auto; if(errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")"; return ""; }
 
+    // ===================== NUEVA VISTA DESDE PLANTILLA =====================
+    function userDisplayName(user){ if(!user) return "No disponible"; const name=[user.firstName,user.lastName].filter(Boolean).join(" ").trim(); return name||user.email||user.id||"No disponible"; }
+    function templateDateLabel(){ try{return new Date().toLocaleDateString("es-ES",{timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"});}catch(e){return new Date().toLocaleDateString("es-ES");} }
+    function templateDatetimeLabel(){ try{return new Date().toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return new Date().toLocaleString("es-ES");} }
+    function templateText(id){ const el=document.getElementById(id); return el?String(el.value||"").trim():""; }
+    function cleanViewPart(value){ return String(value||"").trim().replace(/[\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""); }
+    function readableViewName(v){ return String((v&&(v.name||v.description||v.id))||"").trim(); }
+    function selectedTemplateView(){ const sel=document.getElementById("templateRefSelect"); if(!sel) return null; return templateViewsCache.find((v)=>String(v.id)===String(sel.value))||null; }
+    function buildTemplateName(){ const parts=[templateText("templateRfi"),templateText("templateModule"),templateText("templateLevel"),templateText("templateAxes"),templateText("templateElement"),templateText("templateTask")].map(cleanViewPart).filter(Boolean); return parts.join("_"); }
+    function buildTemplateDescription(){ const ref=selectedTemplateView(); const author=userDisplayName(templateCurrentUser); const lines=["RFI: "+(templateText("templateRfi")||""),"Autor: "+author,"Fecha: "+templateDatetimeLabel(),"Módulo: "+templateText("templateModule"),"Nivel: "+templateText("templateLevel"),"Ejes: "+templateText("templateAxes"),"Elemento: "+templateText("templateElement"),"Tarea: "+templateText("templateTask"),"Vista de referencia: "+(readableViewName(ref)||""),"ID vista de referencia: "+((ref&&ref.id)||"")]; const folder=ref?detectFolder(ref):""; if(folder) lines.push("Carpeta detectada: "+folder); return lines.join("\n"); }
+    function describeTemplateReference(ref){ if(!ref) return "Selecciona una vista de referencia."; const exposed=[]; if(ref.camera) exposed.push("cámara"); if(ref.models||ref.files) exposed.push("modelos"); if(ref.sectionPlanes) exposed.push("secciones"); const folder=detectFolder(ref); const extraKeys=Object.keys(ref||{}).filter((k)=>/share|shared|folder|tag|label|group|parent/i.test(k)); let txt="La nueva vista se creará cargando esta referencia y guardando el estado visible actual."; if(exposed.length) txt+=" Campos expuestos: "+exposed.join(", ")+"."; if(folder) txt+=" Carpeta detectada por API: "+folder+"."; if(extraKeys.length) txt+=" Campos adicionales detectados: "+extraKeys.join(", ")+"."; else txt+=" Compartir, carpeta y etiquetas no aparecen como campos públicos en esta vista."; return txt; }
+    function updateTemplatePreview(forceDescription){ const ref=selectedTemplateView(); const detected=extractRevisionCode(viewFullName(ref)); const detEl=document.getElementById("templateDetectedRfi"); if(detEl) detEl.textContent=detected||"No detectada"; const rfiEl=document.getElementById("templateRfi"); if(rfiEl&&!rfiEl.value&&detected) rfiEl.value=detected; const nameEl=document.getElementById("templateName"); if(nameEl){ const generated=buildTemplateName(); if(!nameEl.value||nameEl.dataset.auto==="1"){ nameEl.value=generated; nameEl.dataset.auto="1"; } } const descEl=document.getElementById("templateDescription"); if(descEl&&(forceDescription||!templateDescriptionDirty)){ descEl.value=buildTemplateDescription(); templateDescriptionDirty=false; } const info=document.getElementById("templateInfo"); if(info) info.textContent=describeTemplateReference(ref); }
+    async function populateTemplateViews(){ const sel=document.getElementById("templateRefSelect"); if(!sel||!API||!API.view) return; const previous=sel.value; sel.innerHTML=""; const loading=document.createElement("option"); loading.value=""; loading.textContent="Cargando vistas..."; sel.appendChild(loading); try{ templateViewsCache=await API.view.getViews()||[]; templateViewsCache=templateViewsCache.slice().sort((a,b)=>readableViewName(a).localeCompare(readableViewName(b),"es")); sel.innerHTML=""; if(templateViewsCache.length===0){ const o=document.createElement("option"); o.value=""; o.textContent="No hay vistas disponibles"; sel.appendChild(o); } else { for(const v of templateViewsCache){ const o=document.createElement("option"); o.value=v.id||""; o.textContent=readableViewName(v)||"Vista sin nombre"; sel.appendChild(o); } if(previous&&templateViewsCache.some((v)=>String(v.id)===String(previous))) sel.value=previous; else { try{ const current=await API.view.getCurrentView(); if(current&&current.id&&templateViewsCache.some((v)=>String(v.id)===String(current.id))) sel.value=current.id; }catch(e){} } } }catch(e){ recordError("populateTemplateViews",e); sel.innerHTML=""; const o=document.createElement("option"); o.value=""; o.textContent="Error al leer vistas"; sel.appendChild(o); } updateTemplatePreview(true); }
+    async function loadTemplateUser(){ try{ templateCurrentUser=API&&API.user&&API.user.getUser?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } const author=document.getElementById("templateAuthor"); if(author) author.textContent=userDisplayName(templateCurrentUser); const date=document.getElementById("templateDate"); if(date) date.textContent=templateDateLabel(); updateTemplatePreview(true); }
+    async function createViewFromTemplate(){ if(!API||!API.view||!API.view.createView){ log("La API de vistas no permite crear vistas en este entorno."); setProgress("No se puede crear la vista desde esta API."); return; } const ref=selectedTemplateView(); if(!ref||!ref.id){ log("Selecciona una vista de referencia."); setProgress("Falta vista de referencia."); return; } const name=templateText("templateName")||buildTemplateName(); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; } const description=document.getElementById("templateDescription")?document.getElementById("templateDescription").value:buildTemplateDescription(); const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true; try{ setProgress("Cargando vista de referencia..."); await API.view.selectView(ref.id); await sleep(1200); setProgress("Creando vista desde plantilla..."); const created=await API.view.createView({name,description}); log("Vista creada desde plantilla: "+name); setProgress("Vista creada: "+name); if(created&&created.id&&API.view.selectView){ try{ await API.view.selectView(created.id); }catch(e){ recordError("createViewFromTemplate.selectCreated",e); } } await populateTemplateViews(); const sel=document.getElementById("templateRefSelect"); if(sel&&created&&created.id) sel.value=created.id; }catch(e){ recordError("createViewFromTemplate",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error al crear la vista."); } finally{ if(btn) btn.disabled=false; } }
+    function wireTemplateTool(){ const ids=["templateRfi","templateModule","templateLevel","templateAxes","templateElement","templateTask"]; for(const id of ids){ const el=document.getElementById(id); if(el) el.addEventListener("input",()=>{ const nameEl=document.getElementById("templateName"); if(nameEl&&nameEl.dataset.manual!=="1") nameEl.dataset.auto="1"; updateTemplatePreview(false); }); } const nameEl=document.getElementById("templateName"); if(nameEl) nameEl.addEventListener("input",()=>{ nameEl.dataset.manual="1"; nameEl.dataset.auto="0"; }); const descEl=document.getElementById("templateDescription"); if(descEl) descEl.addEventListener("input",()=>{ templateDescriptionDirty=true; }); const refSel=document.getElementById("templateRefSelect"); if(refSel) refSel.addEventListener("change",()=>{ const rfiEl=document.getElementById("templateRfi"); if(rfiEl) rfiEl.value=""; templateDescriptionDirty=false; updateTemplatePreview(true); }); const refresh=document.getElementById("templateRefreshViews"); if(refresh) refresh.onclick=()=>populateTemplateViews(); const create=document.getElementById("templateCreateView"); if(create) create.onclick=()=>createViewFromTemplate(); }
+    async function initTemplateTool(){ wireTemplateTool(); await loadTemplateUser(); await populateTemplateViews(); }
+
     // ===================== OBJETOS COLOREADOS =====================
     async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,colorValid:an.valid}); } } return entries; }
     async function getColoredObjectEntriesWithRetry(){ for(let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if(e.length>0) return e; await sleep(600);} return []; }
     async function probeColor(modelId,rid){ try{ const c=await getColoredObjectEntries(); const h=c.find((x)=>x.modelId===modelId&&x.objectRuntimeId===rid); return h?h.normalizedColor:""; }catch(e){ return ""; } }
 
     // ===================== CSV =====================
-    async function buildRows(entries,revisionBase,viewName,wantGuid){ const byModel=new Map(); for(const e of entries){ if(!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e);} const rows=[]; for(const [modelId,list] of byModel.entries()){ const bs=200; for(let i=0;i<list.length;i+=bs){ const batch=list.slice(i,i+bs); let guids=[]; if(wantGuid) guids=await convertResilient(modelId,batch.map((e)=>e.objectRuntimeId)); for(let j=0;j<batch.length;j++){ const e=batch[j]; const cn=e.normalizedColor; rows.push({guidIfc:wantGuid?toIfcGuid(guids[j]):"",color:e.color,revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"",reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE",viewName,modelId:e.modelId,objectRuntimeId:e.objectRuntimeId}); } } } return rows; }
+    function getPropertyValueForCsv(propObj,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; const flat=flattenProps(propObj); const hit=flat.find((p)=>String(p.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
+    async function buildRows(entries,revisionBase,viewName,wantGuid){
+      const cols=selectedColumns(); const propertyCols=cols.filter(isPropertyColumn);
+      const byModel=new Map(); for(const e of entries){ if(!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e); }
+      const rows=[];
+      for(const [modelId,list] of byModel.entries()){
+        const bs=200;
+        for(let i=0;i<list.length;i+=bs){
+          const batch=list.slice(i,i+bs); let guids=[]; let propsMap=new Map();
+          if(wantGuid) guids=await convertResilient(modelId,batch.map((e)=>e.objectRuntimeId));
+          if(propertyCols.length) propsMap=await getPropertiesCached(modelId,batch.map((e)=>e.objectRuntimeId));
+          for(let j=0;j<batch.length;j++){
+            const e=batch[j]; const cn=e.normalizedColor;
+            const row={guidIfc:wantGuid?toIfcGuid(guids[j]):"",color:e.color,revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"",reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE",viewName,modelId:e.modelId,objectRuntimeId:e.objectRuntimeId};
+            if(propertyCols.length){ const props=propsMap.get(e.objectRuntimeId)||{}; for(const col of propertyCols) row[col.key]=getPropertyValueForCsv(props,col.propertyName); }
+            rows.push(row);
+          }
+        }
+      }
+      return rows;
+    }
     function rowsToCsv(rows,cols){ const header=cols.map((c)=>c.header).join(";"); const lines=rows.map((r)=>cols.map((c)=>'"'+String(r[c.key]??"").replaceAll('"','""')+'"').join(";")); return [header].concat(lines).join("\n"); }
     function logColorSummary(rows){ const counts={}; for(const r of rows){ const c=normalizeColor(r.color)||String(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n)); }
     function parseCsvLine(line){ const out=[]; let cur=""; let inQ=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(inQ){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; } else { if(ch==='"') inQ=true; else if(ch===';'){ out.push(cur); cur=""; } else cur+=ch; } } out.push(cur); return out; }
@@ -437,8 +620,9 @@
     function mapSetToSelector(map){ return {modelObjectIds:[...map.entries()].map(([modelId,set])=>({modelId,objectRuntimeIds:[...set]})).filter((x)=>x.objectRuntimeIds.length>0)}; }
 
     // ===================== SELECCIÓN CERCANOS (por ensamblaje + contacto) =====================
-    function isFastenerOrWeld(propObj,bb){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<CONTACT_VOLUME_MAX) return true; return false; }
-    function customFilterMatches(propObj){ const customOn=document.getElementById("nearCustom").checked&&document.getElementById("nearToggle").checked; if(!customOn) return null; const paramName=document.getElementById("nearParam").value; const op=document.getElementById("nearOp").value; const target=toNumber(document.getElementById("nearValue").value); if(!paramName||!op||!Number.isFinite(target)){ log("Configuración personalizada incompleta."); return false; } const hit=flattenProps(propObj).find((p)=>p.name.toLowerCase()===paramName.toLowerCase()); if(!hit||!isNumericValue(hit.value)) return false; const v=toNumber(hit.value); if(op==="menos") return v<target; if(op==="mas") return v>target; if(op==="igual") return Math.abs(v-target)<=Math.max(1e-9,Math.abs(target)*0.001); return false; }
+    function getNearCalibrationFactor(){ const customOn=document.getElementById("nearCustom")&&document.getElementById("nearCustom").checked&&document.getElementById("nearToggle").checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0.1,Math.min(3,v/100)):1; }
+    function updateNearPercentLabel(){ const el=document.getElementById("nearPercent"), lab=document.getElementById("nearPercentLabel"); if(el&&lab) lab.textContent=el.value+"%"; }
+    function isFastenerOrWeld(propObj,bb,maxVolume){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<maxVolume) return true; return false; }
 
     async function assemblyCandidateIds(modelId,seedIds){
       const ids=new Set();
@@ -464,12 +648,12 @@
       if(candidateIds.length===0){ log("Selección cercanos: el objeto no tiene ensamblaje con más piezas (o la jerarquía no está disponible)."); return []; }
       // contacto con la caja del objeto seleccionado (tolerancia ajustada)
       const contact=[]; const bboxById=new Map();
-      for(let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){ const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,chunk); }catch(e){ continue; } for(let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if(bb&&boxesOverlap(seedBox,bb,CONTACT_TOLERANCE)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
-      const custom=document.getElementById("nearCustom").checked&&document.getElementById("nearToggle").checked;
-      const propsMap=custom?await getPropertiesCached(modelId,contact):await getPropertiesCached(modelId,contact);
+      for(let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){ const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,chunk); }catch(e){ continue; } for(let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if(bb&&boxesOverlap(seedBox,bb,CONTACT_TOLERANCE*getNearCalibrationFactor())){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
+      const factor=getNearCalibrationFactor();
+      const propsMap=await getPropertiesCached(modelId,contact);
       const matches=[];
-      for(const id of contact){ const prop=propsMap.get(id)||{}; if(custom){ if(customFilterMatches(prop)===true) matches.push(id); } else { if(isFastenerOrWeld(prop,bboxById.get(id))) matches.push(id); } }
-      log("Selección cercanos: ensamblaje="+candidateIds.length+", en contacto="+contact.length+", añadidos="+matches.length+" ("+modelId+").");
+      for(const id of contact){ const prop=propsMap.get(id)||{}; if(isFastenerOrWeld(prop,bboxById.get(id),CONTACT_VOLUME_MAX*factor)) matches.push(id); }
+      log("Selección cercanos: ensamblaje="+candidateIds.length+", en contacto="+contact.length+", añadidos="+matches.length+", sensibilidad="+Math.round(factor*100)+"% ("+modelId+").");
       return matches;
     }
 
@@ -489,11 +673,21 @@
     async function computeIncludeRemovals(current){
       const removeMap=new Map();
       if(!document.getElementById("includeToggle").checked) return removeMap;
-      const value=document.getElementById("includeValue").value; if(!value){ log("Concentrar selección: falta elegir un valor Name."); return removeMap; }
+      const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked;
+      if(colorMode){
+        if(includeColors.size===0){ log("Selector de items: falta elegir al menos un color."); return removeMap; }
+        let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ colored=[]; }
+        const colorMap=new Map(); for(const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor);
+        let kept=0,removed=0;
+        for(const o of current){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&includeColors.has(col)) kept++; else { addToMapSet(removeMap,o.modelId,[o.runtimeId]); removed++; } }
+        if(removed) log("Selector de items: mantenidos "+kept+" por color, quitados "+removed+".");
+        return removeMap;
+      }
+      const value=document.getElementById("includeValue").value; if(!value){ log("Selector de items: falta elegir un valor Name."); return removeMap; }
       const byModel=new Map(); for(const o of current){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
       const wanted=String(value).trim().toLowerCase(); let kept=0,removed=0;
       for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(values.includes(wanted)) kept++; else { addToMapSet(removeMap,modelId,[id]); removed++; } } } }
-      if(removed) log("Concentrar selección: mantenidos "+kept+" con Name="+value+", quitados "+removed+".");
+      if(removed) log("Selector de items: mantenidos "+kept+" con Name="+value+", quitados "+removed+".");
       return removeMap;
     }
 
@@ -571,31 +765,71 @@
 
     // ===================== MOSTRAR NOMBRES (#11) =====================
     let nameMarkupSupported=null;
+    async function clearNameMarkups(){
+      if(nameMarkupIds.length&&API.markup&&typeof API.markup.removeMarkups==="function"){
+        try{ await API.markup.removeMarkups(nameMarkupIds); }catch(e){ recordError("clearNameMarkups",e); }
+      }
+      nameMarkupIds=[];
+    }
+    function centerPickFromBox(modelId,runtimeId,bb,offset){
+      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2;
+      const scale=1000; // MarkupPick trabaja en milímetros.
+      return { type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:(cz+(offset||0))*scale };
+    }
     async function showObjectNames(on){
-      // Intento con posibles APIs de marcado/etiquetas; si no existen, lo registramos para confirmarlo con el debug.
-      const viewer=API.viewer||{};
-      const labelFns=["setObjectLabels","setLabels","addTextMarkup","setText","showLabels"];
-      const found=labelFns.filter((f)=>typeof viewer[f]==="function");
-      nameMarkupSupported=found.length>0;
-      if(!on){ log("Mostrar nombres OFF."); return; }
-      if(!nameMarkupSupported){
-        log("Mostrar nombres: la Workspace API de este entorno no expone un método de etiquetas 3D ("+labelFns.join(", ")+"). Aún no se puede pintar el Name sobre el modelo.");
-        log("Pulsa el debug 🐞 y mándame el TXT: ahí salen los métodos reales de API.viewer y, si hay uno de marcado, lo conecto.");
-        const sel=await safeGetSelection();
-        if(sel.length){ const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId);} for(const [modelId,ids] of byModel.entries()){ const pm=await getPropertiesCached(modelId,ids.slice(0,30)); for(const p of pm.values()){ const n=getNameValues(p); if(n.length) log("   Name: "+n.join(" | ")); } } }
+      if(!on){ await clearNameMarkups(); log("Mostrar nombres OFF."); return; }
+      if(!API.markup||typeof API.markup.addTextMarkup!=="function"){
+        nameMarkupSupported=false;
+        log("Mostrar nombres: la API de markups de texto no está disponible en este entorno.");
         return;
       }
-      log("Mostrar nombres: método de etiquetas detectado ("+found[0]+"). (Conexión pendiente de confirmar con tu modelo.)");
+      nameMarkupSupported=true;
+      await clearNameMarkups();
+      const sel=await safeGetSelection();
+      if(sel.length===0){ log("Mostrar nombres: no hay objetos seleccionados."); return; }
+      const byModel=new Map(); for(const o of sel.slice(0,80)){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
+      const markups=[];
+      for(const [modelId,ids] of byModel.entries()){
+        let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("showNames.bbox",e); continue; }
+        const propsMap=await getPropertiesCached(modelId,ids);
+        for(let i=0;i<ids.length;i++){
+          const bb=bboxOf(boxes[i]); if(!bb) continue;
+          const names=getNameValues(propsMap.get(ids[i])||{}); if(!names.length) continue;
+          const dz=Math.max(0.05,(bb.max.z-bb.min.z)*0.25);
+          const start=centerPickFromBox(modelId,ids[i],bb,0);
+          const end=centerPickFromBox(modelId,ids[i],bb,dz);
+          markups.push({ start, end, text:names[0], color:{r:0,g:0,b:0,a:255} });
+        }
+      }
+      if(markups.length===0){ log("Mostrar nombres: no se han encontrado valores Name en la selección."); return; }
+      try{
+        const added=await API.markup.addTextMarkup(markups);
+        nameMarkupIds=(added||[]).map((m)=>m.id).filter((id)=>id!=null);
+        log("Mostrar nombres: "+markups.length+" etiqueta(s) añadida(s).");
+      }catch(e){
+        recordError("showNames.addTextMarkup",e);
+        log("Mostrar nombres: error al crear etiquetas de texto. Revisa el debug.");
+      }
     }
 
+    function scheduleNameRefresh(){
+      const toggle=document.getElementById("showNamesToggle");
+      if(!toggle||!toggle.checked) return;
+      clearTimeout(nameTimer);
+      nameTimer=setTimeout(()=>showObjectNames(true),380);
+    }
+
+
     // ===================== PARÁMETROS / VALORES UI =====================
-    function updateUnitLabel(){ const sel=document.getElementById("nearParam"); const opt=sel.options[sel.selectedIndex]; sel.classList.toggle("placeholder",!sel.value); document.getElementById("nearUnit").textContent=(opt&&opt.dataset&&opt.dataset.unit)?opt.dataset.unit:""; }
-    function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); document.getElementById("nearParam").disabled=!active; document.getElementById("nearOp").disabled=!active; document.getElementById("nearValue").disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; }
-    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; document.getElementById("includeValue").disabled=!on; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
+    function updateUnitLabel(){ updateNearPercentLabel(); }
+    function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
+    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const colors=document.getElementById("includeColors"); if(colors) colors.style.display=(on&&colorMode)?"block":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
     async function populateParameters(){ const sel=document.getElementById("nearParam"); sel.innerHTML=""; const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph); const found=new Map(); try{ let sample=(await safeGetSelection()).slice(0,10); if(sample.length===0){ const c=await getColoredObjectEntries().catch(()=>[]); sample=c.slice(0,40).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ const pm=await getPropertiesCached(modelId,ids); for(const p of pm.values()) for(const x of flattenProps(p)) if(isNumericValue(x.value)&&!found.has(x.name)) found.set(x.name,x.unit); } }catch(e){ recordError("populateParameters",e); } for(const [name,unit] of found.entries()){ const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); } if(found.size===0) log("No se han detectado parámetros numéricos. Selecciona un objeto y reactiva la configuración."); updateUnitLabel(); }
     async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>valor</option>'; setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b)).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); vsel.classList.toggle("placeholder",!vsel.value); setProgress("Valores Name cargados: "+values.size+"."); }
 
-    async function populateExcludeColors(){ const cont=document.getElementById("excludeColors"); cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateExclude",e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent="No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedColors.has(col); cb.addEventListener("change",()=>{ if(cb.checked) excludedColors.add(col); else excludedColors.delete(col); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"; row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); } }
+    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"; row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); } }
+    async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
+    async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
 
     // ===================== TOOLTIPS =====================
     function initTooltips(){ const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null; document.querySelectorAll("[data-tip]").forEach((el)=>{ el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if(left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); }); el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; }); }); }
@@ -603,6 +837,7 @@
     // ===================== WIRING =====================
     function wireSummarySwitch(switchWrapId,toggleId,detailsId){ const wrap=document.getElementById(switchWrapId); const toggle=document.getElementById(toggleId); const details=document.getElementById(detailsId); if(wrap) wrap.addEventListener("click",(ev)=>ev.stopPropagation()); if(toggle) toggle.addEventListener("change",()=>{ if(details) details.open=!!toggle.checked; }); }
     function wireUI(){
+      const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
       wireSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
       wireSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");
@@ -614,42 +849,65 @@
       const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect");
       ext.addEventListener("change",()=>{ folderSel.disabled=!ext.checked; if(ext.checked) populateFolders(); });
 
-      document.getElementById("nearParam").addEventListener("change",updateUnitLabel);
-      const nearOp=document.getElementById("nearOp"); const opGray=()=>nearOp.classList.toggle("placeholder",!nearOp.value); nearOp.addEventListener("change",opGray); opGray();
+      const nearPercent=document.getElementById("nearPercent"); if(nearPercent) nearPercent.addEventListener("input",()=>{ updateNearPercentLabel(); prevSel=[]; scheduleProcessSelection(); });
       const nearCustom=document.getElementById("nearCustom");
-      nearCustom.addEventListener("change",()=>{ syncNearUiState(); if(nearCustom.checked&&document.getElementById("nearToggle").checked) populateParameters(); });
+      nearCustom.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; scheduleProcessSelection(); });
       const nearToggle=document.getElementById("nearToggle");
-      nearToggle.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; if(nearToggle.checked&&nearCustom.checked) populateParameters(); if(nearToggle.checked) scheduleProcessSelection(); });
+      nearToggle.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; if(nearToggle.checked) scheduleProcessSelection(); });
 
       const excludeToggle=document.getElementById("excludeToggle");
       excludeToggle.addEventListener("change",()=>{ prevSel=[]; if(excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
+      const excludeRefresh=document.getElementById("excludeRefresh"); if(excludeRefresh) excludeRefresh.onclick=()=>populateExcludeColors();
 
       const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
       hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; await clearHiddenWhite(); syncHiddenUiState(); log("Selección ocultos OFF: objetos vueltos a ocultar."); } });
       if(viewHidden) viewHidden.addEventListener("change",async ()=>{ await setRegistryVisible(viewHidden.checked); });
 
       const includeToggle=document.getElementById("includeToggle");
-      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; if(includeToggle.checked) populateIncludeValues(); scheduleProcessSelection(); });
+      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; if(includeToggle.checked){ populateIncludeValues(); if(document.getElementById("colorModeToggle").checked) populateIncludeColors(); } scheduleProcessSelection(); });
       document.getElementById("includeValue").addEventListener("change",()=>{ document.getElementById("includeValue").classList.toggle("placeholder",!document.getElementById("includeValue").value); scheduleProcessSelection(); });
       const showNames=document.getElementById("showNamesToggle");
       showNames.addEventListener("change",()=>showObjectNames(showNames.checked));
+      const colorMode=document.getElementById("colorModeToggle");
+      if(colorMode) colorMode.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; if(colorMode.checked) populateIncludeColors(); scheduleProcessSelection(); });
+
+      const csvParamAdd=document.getElementById("csvParamAdd");
+      if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
+      const csvParamRefresh=document.getElementById("csvParamRefresh");
+      if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
+      updateCsvColumnSelect();
+      wireTemplateTool();
 
       document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
     }
-    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged") scheduleProcessSelection(); }
+    function lockDeveloperPanel(){
+      const panel=document.getElementById("devPanel");
+      if(!panel) return;
+      const summary=panel.querySelector("summary.dev-summary");
+      panel.open=true;
+      if(summary){
+        summary.addEventListener("click",(ev)=>{ ev.preventDefault(); panel.open=true; });
+        summary.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); panel.open=true; } });
+      }
+      panel.addEventListener("toggle",()=>{ if(!panel.open) panel.open=true; });
+    }
+    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ scheduleProcessSelection(); scheduleNameRefresh(); } }
 
     async function main(){
-      buildColumnsUI(); wireUI(); initTooltips();
-      document.getElementById("devVersion").textContent="Versión: "+SCRIPT_VERSION;
+      buildColumnsUI(); wireUI(); initTooltips(); lockDeveloperPanel();
+      document.getElementById("devVersion").textContent="Código de versión: "+SCRIPT_VERSION;
       document.getElementById("devUpdated").textContent="Última modificación del archivo: "+getLastUpdatedLabel();
       const ws=window.TrimbleConnectWorkspace||window.WorkspaceAPI;
       if(!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API."); return; }
       API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
-      log("Conectado a Trimble Connect. "+SCRIPT_VERSION);
+      log("Conectado a Trimble Connect.\nCódigo de versión: "+SCRIPT_VERSION);
+      await loadTemplateUser();
+      await populateTemplateViews();
+      updateCsvColumnSelect();
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
-      document.getElementById("debug").onclick=async ()=>{ try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
+      document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.preventDefault(); ev.stopPropagation(); } try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; try{ await importCsvFiles(files); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showCancel(false); } };
     }
