@@ -25,9 +25,10 @@
     details.param-group > summary { font-weight: bold; padding: 8px 10px; }
     .param-group-body { padding: 4px 10px 10px; }
     .param-defaults-hint { color: #666; font-size: 11px; margin: 4px 0 2px; }
-    .quick-color-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-    .quick-color-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
-    .qc-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid #999; }
+    .quick-color-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0; align-items: center; justify-content: center; }
+    .quick-color-btn { width: 26px; height: 26px; padding: 0; border: 1px solid #c9d1d9; border-radius: 50%; background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .quick-color-btn:hover, .quick-color-btn:focus-visible { outline: 2px solid #1c7fd6; outline-offset: 1px; }
+    .qc-swatch { width: 20px; height: 20px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.35); }
     .quick-select-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
     .quick-select-row .qs-param, .quick-select-row .qs-value { flex: 1; min-width: 90px; }
     .quick-select-btn { flex: 0 0 auto; }
@@ -47,6 +48,7 @@
     input[type="text"], select { padding: 4px; box-sizing: border-box; }
     input:disabled, select:disabled { background: #eee; color: #999; }
     select.placeholder { color: #aaa; }
+    select:not(.placeholder), select option { color: #111827; }
 
     .cols-details { border: 1px solid #e5e7eb; background: #fff; margin: 6px 0; }
     .cols-details > summary { font-weight: normal; padding: 6px 8px; }
@@ -73,15 +75,21 @@
     .color-list-row .color-list { flex: 1; }
     .refresh-right { flex: 0 0 auto; }
 
-    #excludeColors label, #includeColors label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; font-weight: normal; }
-    .swatch { width: 16px; height: 16px; border: 1px solid #999; border-radius: 3px; display: inline-block; }
+    #excludeColors, #includeColors { display: flex; flex-wrap: wrap; gap: 7px; }
+    #excludeColors label, #includeColors label { display: inline-flex; align-items: center; justify-content: center; margin: 0; cursor: pointer; font-weight: normal; width: 24px; height: 24px; position: relative; }
+    #excludeColors input, #includeColors input { position: absolute; opacity: 0; pointer-events: none; }
+    .swatch { width: 20px; height: 20px; border: 1px solid rgba(0,0,0,.35); border-radius: 50%; display: inline-block; box-sizing: border-box; }
+    #excludeColors input:checked + .swatch, #includeColors input:checked + .swatch { outline: 2px solid #1c7fd6; outline-offset: 2px; }
 
     #cancelOp { background: #b91c1c; color: #fff; border: none; border-radius: 4px; }
     .status-box { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; min-height: 18px; margin: 4px 0; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
 
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
     #debug { background: transparent; border: 1px solid #d1d5db; border-radius: 4px; padding: 3px 6px; cursor: pointer; line-height: 0; }
-    summary.dev-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    summary.dev-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; list-style: none; }
+    summary.dev-summary::-webkit-details-marker { display: none; }
+    summary.dev-summary::before { content: ""; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #374151; flex: 0 0 auto; transition: transform .15s ease; }
+    #devPanel[open] > summary.dev-summary::before { transform: rotate(90deg); }
     summary.dev-summary .dev-summary-text { flex: 1; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
@@ -101,11 +109,18 @@
     details.tpl-fold > summary { font-weight: bold; padding: 7px 9px; font-size: 12px; }
     details.tpl-fold > .tpl-block { border: none; background: transparent; margin: 0; padding: 4px 10px 10px; }
     .tpl-block h4 { margin: 0 0 6px; font-size: 12px; color: #111827; }
-    .template-grid { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; margin: 6px 0; }
-    .template-grid label { color: #374151; }
-    .template-grid input, .template-grid select { width: 100%; }
-    .template-auto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
-    .template-auto div { margin: 2px 0; }
+    .template-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px 8px; align-items: end; margin: 6px 0; }
+    .template-field { display: flex; flex-direction: column; gap: 2px; }
+    .template-field label { color: #374151; font-size: 11px; }
+    .template-field input, .template-field select, .template-field textarea { width: 100%; }
+    .template-field textarea { min-height: 42px; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 12px; padding: 4px; box-sizing: border-box; }
+    .template-meta-title { font-weight: bold; font-size: 11px; color: #374151; margin: 8px 0 2px; }
+    .tpl-short { grid-column: span 2; }
+    .tpl-medium { grid-column: span 3; }
+    .tpl-wide { grid-column: span 6; }
+    .tpl-full { grid-column: 1 / -1; }
+    .template-preview { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; line-height: 1.35; word-break: break-word; }
+    .template-preview strong { display: block; margin-bottom: 2px; }
     #templateInfo { margin-top: 6px; }
     .tpl-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
     .tpl-row select, .tpl-row input { flex: 1; min-width: 120px; }
@@ -131,7 +146,7 @@
             <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m&#179;.</div>
             <div class="config-row range-row">
               <label for="nearPercent" class="field-label">Sensibilidad</label>
-              <input type="range" id="nearPercent" min="10" max="300" step="5" value="100" disabled>
+              <input type="range" id="nearPercent" min="0" max="200" step="5" value="100" disabled>
               <span id="nearPercentLabel">100%</span>
             </div>
             <div class="hint" id="nearCalibInfo">100% es el radio base. Sube el porcentaje para ampliar el alcance alrededor del objeto seleccionado; bájalo para restringirlo. El radio es absoluto: depende solo del objeto original, no se acumula.</div>
@@ -193,7 +208,7 @@
       <details class="param-group" id="paramGroup">
         <summary data-tip="Muestra etiquetas con parámetros de los objetos seleccionados.">Mostrar parámetros</summary>
         <div class="param-group-body">
-          <div class="hint" style="margin-bottom:6px;">Cada opción etiqueta únicamente los objetos que tengas seleccionados. Configura los parámetros como en "Columnas a exportar".</div>
+          <div class="hint" style="margin-bottom:6px;">Cada opción etiqueta únicamente los objetos que tengas seleccionados.</div>
 
           <details class="tool model-tool" id="namesTool">
             <summary class="subtitle" data-tip="Etiqueta los objetos seleccionados con su Name (y los parámetros que añadas).">
@@ -276,10 +291,9 @@
         <div class="param-group-body">
           <div class="param-defaults-hint">Pinta al instante los objetos seleccionados.</div>
           <div class="quick-color-row">
-            <button type="button" class="quick-color-btn" id="qcGray"><span class="qc-swatch" style="background:#9aa0a6;"></span>Gris neutro</button>
-            <button type="button" class="quick-color-btn" id="qcMagenta"><span class="qc-swatch" style="background:#ec00b6;"></span>Magenta</button>
-            <button type="button" class="quick-color-btn" id="qcRed"><span class="qc-swatch" style="background:#fc0d1b;"></span>Rojo</button>
-            <button type="button" class="quick-color-btn" id="qcReset"><span class="qc-swatch" style="background:transparent;border:1px dashed #999;"></span>Quitar color</button>
+            <button type="button" class="quick-color-btn" id="qcGray" title="Gris neutro" aria-label="Gris neutro"><span class="qc-swatch" style="background:#9aa0a6;"></span></button>
+            <button type="button" class="quick-color-btn" id="qcMagenta" title="Magenta" aria-label="Magenta"><span class="qc-swatch" style="background:#ec00b6;"></span></button>
+            <button type="button" class="quick-color-btn" id="qcRed" title="Rojo" aria-label="Rojo"><span class="qc-swatch" style="background:#fc0d1b;"></span></button>
           </div>
 
           <div class="param-defaults-hint" style="margin-top:10px;">Selecciona todos los objetos cuyo parámetro coincida con el valor elegido.</div>
@@ -317,51 +331,69 @@
                 <select id="templateSelect"><option value="">(Nueva plantilla)</option></select>
                 <button id="templateDelete" title="Borrar plantilla seleccionada" style="padding:3px 8px;">&#128465;</button>
               </div>
-              <div class="template-grid">
-                <label for="templateTplName">Plantilla</label><input type="text" id="templateTplName" placeholder="Nombre de la plantilla">
-                <label for="templateRfi">RFI</label><input type="text" id="templateRfi" placeholder="RFI_000">
-                <label for="templateModule">Módulo</label><input type="text" id="templateModule" placeholder="G">
-                <label for="templateLevel">Nivel</label><input type="text" id="templateLevel" placeholder="N80">
-                <label for="templateAxes">Ejes</label><input type="text" id="templateAxes" placeholder="GN17-GN19">
-                <label for="templateElement">Elemento</label><input type="text" id="templateElement" placeholder="Placa base">
-                <label for="templateTask">Tarea</label><input type="text" id="templateTask" placeholder="Revisión anclajes">
+              <div class="template-grid" data-template-scope="tplCfg">
+                <div class="template-field tpl-medium"><label for="tplCfg_name">Nombre especial</label><input type="text" id="tplCfg_name" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplCfg_code">Código</label><input type="text" id="tplCfg_code" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplCfg_location">Ubicación</label><input type="text" id="tplCfg_location" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplCfg_level">Nivel</label><input type="text" id="tplCfg_level" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplCfg_axes">Ejes</label><input type="text" id="tplCfg_axes" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplCfg_element">Elemento clave</label><input type="text" id="tplCfg_element" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplCfg_task">Tarea</label><input type="text" id="tplCfg_task" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplCfg_date">Fecha</label><input type="text" id="tplCfg_date" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplCfg_author">Autor</label><input type="text" id="tplCfg_author" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplCfg_folder">Carpeta</label><select id="tplCfg_folder"><option value="">(Sin carpeta)</option></select></div>
+                <div class="template-field tpl-wide"><label for="tplCfg_labels">Etiquetas</label><input type="text" id="tplCfg_labels" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplCfg_share">Compartir con</label><input type="text" id="tplCfg_share" placeholder=""></div>
               </div>
+              <div class="template-preview"><strong>Vista previa</strong><span id="tplCfg_preview"></span></div>
               <div class="row"><button id="templateSave">Guardar plantilla</button></div>
-              <div class="hint" id="templateSaveInfo">Patrón de nombre: RFI_Módulo_Nivel_Ejes_Elemento_Tarea (solo se usan los campos rellenos).</div>
+              <div class="hint" id="templateSaveInfo">Estructura: (Código de inspección) Ubicación, Nivel, Ejes, Elemento clave - Tarea (fecha, autor).</div>
             </div>
           </details>
 
-          <details class="tpl-fold" id="tplFoldView">
-            <summary>2. Actualizar vista</summary>
-            <div class="tpl-block">
-              <div class="template-auto">
-                <div>Autor: <strong id="templateAuthor">No disponible</strong></div>
-                <div>Fecha: <strong id="templateDate">No disponible</strong></div>
-              </div>
-              <div class="row">
-                Nombre de vista:<br>
-                <input type="text" id="templateName" style="width:100%;" placeholder="Nombre de la vista">
-              </div>
-              <div class="row">
-                <button id="templateCreateView">Crear vista</button>
-              </div>
-              <div class="hint" id="templateInfo">Guarda el estado actual del visor (cámara, visibilidad, secciones, colores). Si la vista abierta ya está guardada, este apartado se abre solo y actualiza esa vista.</div>
-            </div>
-          </details>
-
-          <details class="tpl-fold" id="tplFoldRename">
-            <summary>3. Renombrar vista existente</summary>
+          <details class="tpl-fold" id="tplFoldCreate">
+            <summary>2. Crear vista nueva</summary>
             <div class="tpl-block">
               <div class="tpl-row">
-                <select id="renameViewSelect"><option value="">Cargando vistas...</option></select>
-                <button id="renameRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+                <select id="newTemplateSelect"><option value="">(Sin plantilla)</option></select>
               </div>
-              <div class="row">
-                <input type="text" id="renameNewName" style="width:100%;" placeholder="Nuevo nombre de la vista">
+              <div class="template-grid" data-template-scope="tplNew">
+                <div class="template-field tpl-short"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplNew_level">Nivel</label><input type="text" id="tplNew_level" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplNew_element">Elemento clave</label><input type="text" id="tplNew_element" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplNew_task">Tarea</label><input type="text" id="tplNew_task" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplNew_date">Fecha</label><input type="text" id="tplNew_date" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" placeholder=""></div>
               </div>
-              <div class="row">
-                <button id="renameViewBtn">Actualizar nombre</button>
+              <div class="template-preview"><strong>Nombre final</strong><span id="tplNew_preview"></span></div>
+              <div class="row"><button id="templateCreateView">Crear vista</button></div>
+              <div class="hint">Guarda una vista nueva con el estado actual del visor.</div>
+            </div>
+          </details>
+
+          <details class="tpl-fold" id="tplFoldUpdate">
+            <summary>3. Actualizar vista</summary>
+            <div class="tpl-block">
+              <div class="tpl-row">
+                <select id="updateViewSelect"><option value="">Cargando vistas...</option></select>
+                <button id="updateRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
               </div>
+              <div class="hint" id="tplUpdateParseInfo"></div>
+              <div class="template-grid" data-template-scope="tplUpd">
+                <div class="template-field tpl-short"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplUpd_level">Nivel</label><input type="text" id="tplUpd_level" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplUpd_element">Elemento clave</label><input type="text" id="tplUpd_element" placeholder=""></div>
+                <div class="template-field tpl-wide"><label for="tplUpd_task">Tarea</label><input type="text" id="tplUpd_task" placeholder=""></div>
+                <div class="template-field tpl-short"><label for="tplUpd_date">Fecha</label><input type="text" id="tplUpd_date" placeholder=""></div>
+                <div class="template-field tpl-medium"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" placeholder=""></div>
+              </div>
+              <div class="template-preview"><strong>Nombre final</strong><span id="tplUpd_preview"></span></div>
+              <div class="row"><button id="templateUpdateView">Actualizar vista</button></div>
+              <div class="hint">Actualiza el nombre y el estado actual del visor sobre la vista seleccionada.</div>
             </div>
           </details>
 
@@ -441,13 +473,14 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.6.1";
+    const SCRIPT_VERSION = "v8.7.3";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
-    const HIDDEN_MARK_COLOR = "#FFFFFFFF";
-    const HIDDEN_MARK_OPACITY = 0.5;
+    const HIDDEN_MARK_COLOR = {r:255,g:255,b:255,a:255};
+    const HIDDEN_MARK_COLOR_HEX = "#FFFFFFFF";
+    const HIDDEN_MARK_OPACITY = 50;
     const CONTACT_TOLERANCE = 0.012;
     const CONTACT_VOLUME_MAX = 0.001;
     const CANDIDATE_BBOX_BATCH = 400;
@@ -588,15 +621,27 @@
     // ===================== SELECTOR DE PARÁMETROS REUTILIZABLE =====================
     function makeParamPicker(opts){
       let params = opts.defaults.slice();
+      let draggedParamIndex = null;
       function getParams(){ return params.slice(); }
       function buildList(){
         const list=document.getElementById(opts.listId); if(!list) return; list.innerHTML="";
         params.forEach((name,index)=>{
-          const item=document.createElement("div"); item.className="col-item";
+          const item=document.createElement("div"); item.className="col-item"; item.draggable=true; item.dataset.index=String(index);
           const remove=document.createElement("button"); remove.type="button"; remove.className="csv-remove-button"; remove.textContent="\u2212"; remove.title="Quitar parámetro"; remove.addEventListener("click",()=>{ params.splice(index,1); buildList(); updateSelect(); if(opts.onChange) opts.onChange(); });
           const nm=document.createElement("span"); nm.className="name"; nm.textContent=name;
-          item.appendChild(remove); item.appendChild(nm); list.appendChild(item);
+          const handle=document.createElement("span"); handle.className="drag-handle"; handle.textContent="\u2630"; handle.title="Arrastrar para ordenar"; handle.setAttribute("aria-label","Arrastrar parámetro"); handle.draggable=true;
+          const dragStart=(ev)=>{ draggedParamIndex=index; item.classList.add("dragging"); if(ev.dataTransfer){ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",String(index)); } };
+          item.addEventListener("dragstart",dragStart); handle.addEventListener("dragstart",dragStart);
+          item.addEventListener("dragend",()=>{ draggedParamIndex=null; item.classList.remove("dragging"); list.querySelectorAll(".col-item.drag-over").forEach((el)=>el.classList.remove("drag-over")); });
+          item.addEventListener("dragover",(ev)=>{ ev.preventDefault(); if(draggedParamIndex===null||draggedParamIndex===index) return; item.classList.add("drag-over"); if(ev.dataTransfer) ev.dataTransfer.dropEffect="move"; });
+          item.addEventListener("dragleave",()=>item.classList.remove("drag-over"));
+          item.addEventListener("drop",(ev)=>{ ev.preventDefault(); item.classList.remove("drag-over"); const from=draggedParamIndex!==null?draggedParamIndex:parseInt(ev.dataTransfer&&ev.dataTransfer.getData("text/plain"),10); reorderParam(from,index); });
+          item.appendChild(remove); item.appendChild(nm); item.appendChild(handle); list.appendChild(item);
         });
+      }
+      function reorderParam(from,to){
+        if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=params.length||to>=params.length||from===to) return;
+        const moved=params.splice(from,1)[0]; params.splice(to,0,moved); buildList(); updateSelect(); if(opts.onChange) opts.onChange();
       }
       function updateSelect(){
         const sel=document.getElementById(opts.selectId); if(!sel) return; const keep=sel.value; sel.innerHTML="";
@@ -609,7 +654,7 @@
         if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
       }
       function add(){ const sel=document.getElementById(opts.selectId); if(!sel||!sel.value) return; const v=sel.value; if(!params.some((x)=>x.toLowerCase()===v.toLowerCase())) params.push(v); sel.value=""; buildList(); updateSelect(); if(opts.onChange) opts.onChange(); }
-      async function refresh(){ const sel=document.getElementById(opts.selectId); if(sel){ const o=[...sel.options].find((x)=>x.disabled&&!x.hidden); } await scanModelParameters(); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+"."); }
+      async function refresh(){ await scanModelParameters(); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+"."); }
       function wire(){ const a=document.getElementById(opts.addId); if(a) a.onclick=add; const r=document.getElementById(opts.refreshId); if(r) r.onclick=()=>refresh(); buildList(); updateSelect(); }
       return { getParams, buildList, updateSelect, refresh, wire };
     }
@@ -738,73 +783,125 @@
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
+    const IMPORT_REVIEWED_RED = {r:252,g:13,b:27,a:255};
+    function isReviewedTrue(v){ return ["TRUE","VERDADERO","1","YES","SI","SÍ"].includes(String(v||"").trim().toUpperCase()); }
+    function rgbaFromNormalizedColor(col){ const a=analyzeColor(col); return a.valid?{r:a.rgba.r,g:a.rgba.g,b:a.rgba.b,a:a.rgba.a}:null; }
+    function stateKeyFromColor(col){ const a=analyzeColor(col); return a.valid?a.normalizedColor:""; }
+    function importStateForKey(key){ if(key==="__REVIEWED_RED") return {color:{...IMPORT_REVIEWED_RED},opacity:100,visible:true}; const rgba=rgbaFromNormalizedColor(key); return rgba?{color:rgba,opacity:100,visible:true}:null; }
+    function headerIndex(header,names,contains){
+      for(const n of names){ const i=header.findIndex((h)=>h===n); if(i>=0) return i; }
+      if(contains){ const i=header.findIndex((h)=>contains.some((c)=>h.includes(c))); if(i>=0) return i; }
+      return -1;
+    }
+    function importBucket(map,key){ if(!map.has(key)) map.set(key,{direct:new Map(),guidItems:new Map(),rows:0,reviewedRows:0,colorRows:0}); return map.get(key); }
+    function addGuidImportCandidate(bucket,guid){
+      const raw=String(guid||"").trim(); if(!raw) return;
+      if(!bucket.guidItems.has(raw)){
+        const variants=new Set([raw]);
+        const uuid=toExternalUuid(raw); if(uuid) variants.add(uuid);
+        const ifc=toIfcGuid(raw); if(ifc) variants.add(ifc);
+        bucket.guidItems.set(raw,[...variants].filter(Boolean));
+      }
+    }
+    async function convertRuntimeIdsSafe(modelId,candidates){
+      const result=new Map(); const list=[...new Set(candidates.filter(Boolean))];
+      for(let i=0;i<list.length;i+=200){
+        const chunk=list.slice(i,i+200);
+        try{
+          const rids=await API.viewer.convertToObjectRuntimeIds(modelId,chunk);
+          for(let j=0;j<chunk.length;j++){ const rid=rids&&rids[j]; if(rid!=null && Number.isFinite(Number(rid))) result.set(chunk[j],Number(rid)); }
+        }catch(e){ recordError("import.convertRuntimeIds",e); }
+      }
+      return result;
+    }
     async function importCsvFiles(files){
       clearLog(); setProgress("Importando: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV ("+files.length+" archivo/s)");
-      // color (normalizado) -> { uuids:Set, raws:Set }
-      const byColor=new Map();
-      const ensureColor=(col)=>{ if(!byColor.has(col)) byColor.set(col,{uuids:new Set(),raws:new Set()}); return byColor.get(col); };
-      let totalRows=0, redByReviewed=0, byColorCol=0;
+      const buckets=new Map();
+      let rowsRead=0, rowsApplicable=0, reviewedTrueRows=0, colorRows=0, directRows=0, guidRows=0, skippedRows=0;
+
       for(const file of files){
         let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); continue; }
         text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
         if(lines.length<2){ log(file.name+": vacío."); continue; }
         const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
-        const gi=header.findIndex((h)=>h.includes("guid"));
-        const ci=header.findIndex((h)=>h==="color");
-        const ri=header.findIndex((h)=>h==="revisado_deo");
-        if(gi<0){ log(file.name+": no se encontró columna GUID. Omitido."); continue; }
-        if(ci<0&&ri<0){ log(file.name+": no hay columna 'revisado_deo' ni 'color'. Omitido."); continue; }
-        let fileApplied=0;
+        const gi=headerIndex(header,["guid_ifc","guid","ifc_guid"],["guid"]);
+        const ci=headerIndex(header,["color"],null);
+        const ri=headerIndex(header,["revisado_deo","reviewed_deo"],null);
+        const mi=headerIndex(header,["modelid","model_id"],null);
+        const oi=headerIndex(header,["objectruntimeid","object_runtime_id","runtimeid","runtime_id"],null);
+        if(gi<0 && (mi<0 || oi<0)){ log(file.name+": no se encontró GUID ni modelId/objectRuntimeId. Omitido."); continue; }
+        if(ci<0 && ri<0){ log(file.name+": no hay columna 'revisado_deo' ni 'color'. Omitido."); continue; }
+        let fileApplied=0, fileReviewed=0;
         for(let i=1;i<lines.length;i++){
-          const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); if(!guid) continue;
-          let col="";
-          // 1) Prioridad: revisado_deo = TRUE -> rojo.
-          if(ri>=0){ const reviewed=(cells[ri]||"").trim().toUpperCase(); if(reviewed==="TRUE"){ col="#FC0D1BFF"; redByReviewed++; } }
-          // 2) Si no, usa el color de la columna color (para restaurar el resto del coloreado).
-          if(!col && ci>=0){ const raw=(cells[ci]||"").trim(); const an=analyzeColor(raw); if(an.valid){ col=an.normalizedColor; byColorCol++; } }
-          if(!col) continue;
-          totalRows++; fileApplied++;
-          const bucket=ensureColor(col);
-          const uuid=toExternalUuid(guid); if(uuid) bucket.uuids.add(uuid);
-          bucket.raws.add(guid);
+          const cells=parseCsvLine(lines[i]); rowsRead++;
+          const reviewed=ri>=0 && isReviewedTrue(cells[ri]);
+          let key="";
+          if(reviewed){ key="__REVIEWED_RED"; reviewedTrueRows++; fileReviewed++; }
+          else if(ci>=0){ key=stateKeyFromColor((cells[ci]||"").trim()); if(key) colorRows++; }
+          if(!key){ skippedRows++; continue; }
+          const bucket=importBucket(buckets,key); bucket.rows++;
+          if(reviewed) bucket.reviewedRows++; else bucket.colorRows++;
+          const modelId=mi>=0?String(cells[mi]||"").trim():"";
+          const rid=oi>=0?Number(String(cells[oi]||"").trim()):NaN;
+          if(modelId && Number.isFinite(rid)){ addToMapSet(bucket.direct,modelId,[rid]); directRows++; rowsApplicable++; fileApplied++; continue; }
+          const guid=gi>=0?String(cells[gi]||"").trim():"";
+          if(guid){ addGuidImportCandidate(bucket,guid); guidRows++; rowsApplicable++; fileApplied++; }
+          else skippedRows++;
         }
-        log(file.name+": "+fileApplied+" fila(s) con color.");
+        log(file.name+": "+fileApplied+" fila(s) aplicables (revisado_deo TRUE: "+fileReviewed+").");
       }
-      log("Filas a pintar: "+totalRows+" (rojas por revisado_deo TRUE: "+redByReviewed+", por columna color: "+byColorCol+"). Colores distintos: "+byColor.size+".");
-      if(byColor.size===0){ log("No hay filas con color aplicable. Revisa que el CSV tenga columna 'revisado_deo' o 'color'."); setProgress("Nada que importar."); showCancel(false); return; }
+
+      log("Filas leídas: "+rowsRead+". Aplicables: "+rowsApplicable+". Revisado TRUE: "+reviewedTrueRows+". Directas modelId/runtimeId: "+directRows+". Por GUID: "+guidRows+". Omitidas: "+skippedRows+".");
+      if(buckets.size===0){ setProgress("Nada que importar."); showCancel(false); return; }
 
       showCancel(true); setProgress("Importando: detectando modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
       try{ const colored=await API.viewer.getColoredObjects(); for(const g of colored||[]) if(g.modelId) modelIds.push(g.modelId); }catch(e){}
+      for(const bucket of buckets.values()) for(const modelId of bucket.direct.keys()) modelIds.push(modelId);
       modelIds=[...new Set(modelIds)];
       if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
-      log("Modelos: "+modelIds.length);
 
-      let applied=0, matched=0, mi=0;
-      for(const modelId of modelIds){
-        if(cancelRequested){ log("Importación cancelada."); break; }
-        setProgress("Importando: modelo "+(++mi)+"/"+modelIds.length+" (pintados: "+applied+")");
-        for(const [col,bucket] of byColor.entries()){
+      const resolvedGuids=new Set();
+      let resolvedRuntimeObjects=0;
+      for(const [key,bucket] of buckets.entries()){
+        if(cancelRequested) break;
+        const guidItems=[...bucket.guidItems.entries()];
+        if(!guidItems.length) continue;
+        for(const modelId of modelIds){
           if(cancelRequested) break;
-          const uuids=[...bucket.uuids]; const raws=[...bucket.raws];
-          let ridsU=[]; try{ ridsU=uuids.length?await API.viewer.convertToObjectRuntimeIds(modelId,uuids):[]; }catch(e){ ridsU=[]; }
-          let ridsR=[]; try{ ridsR=raws.length?await API.viewer.convertToObjectRuntimeIds(modelId,raws):[]; }catch(e){ ridsR=[]; }
-          const fU=(ridsU||[]).filter((r)=>r!=null).length; const fR=(ridsR||[]).filter((r)=>r!=null).length;
-          const rids=fR>fU?ridsR:ridsU;
-          const ids=[]; for(let i=0;i<(rids||[]).length;i++){ const rid=rids[i]; if(rid!=null) ids.push(Number(rid)); }
-          if(ids.length===0) continue;
-          matched+=ids.length;
-          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:col}); applied+=ids.length; }
-          catch(e){ recordError("import.apply",e); log("Error aplicando color "+col+" en "+modelId+": "+(e&&e.message?e.message:e)); }
+          const allCandidates=[]; guidItems.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
+          const ridByCandidate=await convertRuntimeIdsSafe(modelId,allCandidates);
+          const ids=[];
+          for(const [rawGuid,variants] of guidItems){
+            const rid=variants.map((v)=>ridByCandidate.get(v)).find((x)=>x!=null);
+            if(rid!=null){ ids.push(Number(rid)); resolvedGuids.add(rawGuid); }
+          }
+          if(ids.length){ addToMapSet(bucket.direct,modelId,ids); resolvedRuntimeObjects+=ids.length; }
+        }
+      }
+
+      let paintedRed=0, paintedRestored=0, applied=0;
+      for(const [key,bucket] of buckets.entries()){
+        if(cancelRequested) break;
+        const state=importStateForKey(key); if(!state) continue;
+        for(const [modelId,set] of bucket.direct.entries()){
+          const ids=[...set]; if(!ids.length) continue;
+          try{
+            await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},state);
+            applied+=ids.length;
+            if(key==="__REVIEWED_RED") paintedRed+=ids.length; else paintedRestored+=ids.length;
+          }catch(e){ recordError("import.apply",e); log("Error aplicando estado en "+modelId+": "+(e&&e.message?e.message:e)); }
         }
       }
       showCancel(false);
-      log("Objetos pintados: "+applied+" (coincidencias: "+matched+").");
+      const uniqueGuidCount=[...buckets.values()].reduce((n,b)=>n+b.guidItems.size,0);
+      log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+Math.max(0,uniqueGuidCount-resolvedGuids.size)+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
+      log("Objetos pintados en rojo por revisado_deo TRUE: "+paintedRed+". Objetos restaurados por columna color: "+paintedRestored+". Total aplicado: "+applied+".");
       setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados.");
     }
 
     // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
-    function getNearCalibrationFactor(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0.1,Math.min(3,v/100)):1; }
+    function getNearCalibrationFactor(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0,Math.min(2,v/100)):1; }
     function updateNearPercentLabel(){ const el=document.getElementById("nearPercent"), lab=document.getElementById("nearPercentLabel"); if(el&&lab) lab.textContent=el.value+"%"; }
     function isFastenerOrWeld(propObj,bb,maxVolume){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<maxVolume) return true; return false; }
     async function assemblyCandidateIds(modelId,seedIds){
@@ -934,53 +1031,86 @@
       for(const fn of attempts){ try{ const groups=await fn(); const out=[]; for(const g of groups||[]){ const modelId=g.modelId||g.id||""; for(const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])){ const rid=Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o); if(modelId&&Number.isFinite(rid)) out.push({modelId,objectRuntimeId:rid}); } } if(out.length){ entries=out; break; } }catch(e){ recordError("getHiddenObjects",e); } }
       const seen=new Set(); return entries.filter((e)=>{ const k=e.modelId+":"+e.objectRuntimeId; if(seen.has(k)) return false; seen.add(k); return true; });
     }
+    function hiddenMarkState(visible){ return {color:{...HIDDEN_MARK_COLOR},opacity:HIDDEN_MARK_OPACITY,visible:!!visible}; }
+    async function getWhiteColoredMap(){
+      const map=new Map();
+      try{ const entries=await getColoredObjectEntries(); for(const e of entries){ if(e.normalizedColor===HIDDEN_MARK_COLOR_HEX) addToMapSet(map,e.modelId,[e.objectRuntimeId]); } }catch(e){ recordError("getWhiteColoredMap",e); }
+      return map;
+    }
     async function markHiddenObjectsWhite(){
       const entries=await getHiddenObjectEntries(); hiddenWhiteRegistry.clear();
       if(!entries.length){ log("Selección ocultos: no se han detectado objetos ocultos."); return 0; }
       const byModel=new Map(); for(const e of entries) addToMapSet(byModel,e.modelId,[e.objectRuntimeId]);
       let marked=0;
-      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:HIDDEN_MARK_COLOR,opacity:HIDDEN_MARK_OPACITY,visible:false}); hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=ids.length; }catch(e){ recordError("markHiddenWhite",e); } }
-      log("Selección ocultos: "+marked+" objeto(s) ocultos marcados en blanco al 50%.");
+      for(const [modelId,set] of byModel.entries()){
+        const ids=[...set];
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},hiddenMarkState(false)); hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=ids.length; }
+        catch(e){ recordError("markHiddenWhite",e); }
+      }
+      log("Selección ocultos: "+marked+" objeto(s) ocultos marcados en blanco con opacidad 50%.");
       return marked;
     }
     async function rescueRecolored(){
-      // Las piezas a las que el usuario les ha cambiado el color (ya no son blancas) se rescatan: visibles y opacas.
       const colorMap=await getCurrentColorMap();
       let count=0;
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const recolored=[];
-        for(const id of [...set]){ const col=colorMap.get(modelId+":"+id); if(col && col!==HIDDEN_MARK_COLOR){ recolored.push(id); set.delete(id); } }
-        if(recolored.length){ try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:recolored}]},{visible:true,opacity:1}); count+=recolored.length; }catch(e){ recordError("rescueRecolored",e); } }
+        for(const id of [...set]){ const col=colorMap.get(modelId+":"+id); if(col && col!==HIDDEN_MARK_COLOR_HEX){ recolored.push(id); set.delete(id); } }
+        if(recolored.length){ try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:recolored}]},{visible:true,opacity:100}); count+=recolored.length; }catch(e){ recordError("rescueRecolored",e); } }
       }
-      if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s) (se mantienen visibles).");
+      if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s) y mantenida(s) visible(s).");
       return count;
     }
     async function setRegistryVisible(visible){
       if(visible){
         let count=0;
-        for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:true,color:HIDDEN_MARK_COLOR,opacity:HIDDEN_MARK_OPACITY}); count+=ids.length; }catch(e){ recordError("setRegistryVisible.show",e); } }
-        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco al 50%.");
+        for(const [modelId,set] of hiddenWhiteRegistry.entries()){
+          const ids=[...set]; if(!ids.length) continue;
+          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},hiddenMarkState(true)); count+=ids.length; }
+          catch(e){ recordError("setRegistryVisible.show",e); }
+        }
+        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco con opacidad 50%.");
         return count;
       }
       await rescueRecolored();
+      const whiteMap=await getWhiteColoredMap();
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()) addToMapSet(whiteMap,modelId,[...set]);
       let count=0;
-      for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); count+=ids.length; }catch(e){ recordError("setRegistryVisible.hide",e); } }
-      log("Ver ocultos OFF: ocultados "+count+" objeto(s).");
+      for(const [modelId,set] of whiteMap.entries()){
+        const ids=[...set]; if(!ids.length) continue;
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); count+=ids.length; }
+        catch(e){ recordError("setRegistryVisible.hide",e); }
+      }
+      log("Ver ocultos OFF: ocultados "+count+" objeto(s) blancos con opacidad 50%.");
       return count;
     }
     async function clearHiddenWhite(){
       await rescueRecolored();
-      for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue;
-        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:"reset",opacity:1,visible:false}); }
-        catch(e){ recordError("clearHiddenWhite",e); try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:"reset",visible:false}); }catch(e2){} }
+      const whiteMap=await getWhiteColoredMap();
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()) addToMapSet(whiteMap,modelId,[...set]);
+      let count=0;
+      for(const [modelId,set] of whiteMap.entries()){
+        const ids=[...set]; if(!ids.length) continue;
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); count+=ids.length; }
+        catch(e){ recordError("clearHiddenWhite",e); }
       }
       hiddenWhiteRegistry.clear();
+      log("Selección ocultos OFF: "+count+" objeto(s) blancos ocultados y registro limpiado.");
     }
     function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); if(view) view.disabled=!on; if(line) line.classList.toggle("is-disabled",!on); }
 
     // ===================== MOSTRAR PARÁMETROS (#4-7) =====================
-    async function removeMarkupIds(ids){ if(ids&&ids.length&&API.markup&&typeof API.markup.removeMarkups==="function"){ try{ await API.markup.removeMarkups(ids); }catch(e){ recordError("removeMarkups",e); } } }
-    function centerPickFromBox(modelId,runtimeId,bb,offset){ const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2; const scale=1000; return { type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:(cz+(offset||0))*scale }; }
+    async function removeMarkupIds(ids){
+      const clean=[...(ids||[])].map((id)=>Number(id)).filter((id)=>Number.isFinite(id));
+      if(clean.length&&API.markup&&typeof API.markup.removeMarkups==="function"){ try{ await API.markup.removeMarkups(clean); }catch(e){ recordError("removeMarkups",e); } }
+    }
+    function centerPickFromBox(modelId,runtimeId,bb,offsetMm,staticObjectId){
+      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2; const scale=1000;
+      const pick={ type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:cz*scale+(offsetMm||0) };
+      if(staticObjectId) pick.referenceObjectId=staticObjectId;
+      return pick;
+    }
+    async function staticObjectIdsForRuntime(modelId,ids){ try{ const arr=await API.viewer.convertToObjectIds(modelId,ids); return Array.isArray(arr)?arr:[]; }catch(e){ recordError("paramMarkups.convertToObjectIds",e); return []; } }
     const paramTools={
       names:{toggleId:"namesToggle", picker:namesPicker, filter:null, store:[]},
       bolts:{toggleId:"boltsToggle", picker:boltsPicker, filter:"bolt assembly", store:[]},
@@ -993,7 +1123,7 @@
       await removeMarkupIds(cfg.store); cfg.store=[];
       const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked) return;
       if(!API.markup||typeof API.markup.addTextMarkup!=="function"){ log("Mostrar parámetros: la API de markups de texto no está disponible en este entorno."); return; }
-      const sel=await safeGetSelection(); if(sel.length===0) return;
+      const sel=await safeGetSelection(); if(sel.length===0){ log("Mostrar parámetros ("+toolKey+"): no hay objetos seleccionados."); return; }
       const params=cfg.picker.getParams();
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
       const markups=[];
@@ -1001,268 +1131,313 @@
         if(markups.length>=MAX_PARAM_MARKUPS) break;
         let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("paramMarkups.bbox",e); continue; }
         const propsMap=await getPropertiesCached(modelId,ids);
+        const staticIds=await staticObjectIdsForRuntime(modelId,ids);
         for(let i=0;i<ids.length;i++){
           if(markups.length>=MAX_PARAM_MARKUPS) break;
           const bb=bboxOf(boxes[i]); if(!bb) continue;
           const p=propsMap.get(ids[i])||{};
           if(cfg.filter){ const names=getNameValues(p).map((v)=>v.toLowerCase()); if(!names.some((n)=>n.includes(cfg.filter))) continue; }
           const text=buildParamLabel(p,params); if(!text) continue;
-          const dz=Math.max(0.05,(bb.max.z-bb.min.z)*0.25);
-          markups.push({ start:centerPickFromBox(modelId,ids[i],bb,0), end:centerPickFromBox(modelId,ids[i],bb,dz), text, color:{r:0,g:0,b:0,a:255} });
+          const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
+          const dzMm=Math.max(80,heightMm*0.35);
+          markups.push({
+            start:centerPickFromBox(modelId,ids[i],bb,0,staticIds[i]),
+            end:centerPickFromBox(modelId,ids[i],bb,dzMm,staticIds[i]),
+            text,
+            color:{r:0,g:0,b:0,a:255}
+          });
         }
       }
       if(markups.length===0){ log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en la selección."); return; }
-      try{ const added=await API.markup.addTextMarkup(markups); cfg.store=(added||[]).map((m)=>m.id).filter((id)=>id!=null); log("Mostrar parámetros ("+toolKey+"): "+markups.length+" etiqueta(s)."); }
-      catch(e){ recordError("paramMarkups.add",e); log("Mostrar parámetros ("+toolKey+"): error al crear etiquetas de texto."); }
+      const stored=[];
+      for(let i=0;i<markups.length;i+=50){
+        const batch=markups.slice(i,i+50);
+        try{
+          const added=await API.markup.addTextMarkup(batch);
+          const ids=(Array.isArray(added)?added:[added]).map((m)=>typeof m==="number"?m:(m&&m.id)).filter((id)=>id!=null && Number.isFinite(Number(id))).map(Number);
+          stored.push(...ids);
+        }catch(e){ recordError("paramMarkups.add",e); log("Mostrar parámetros ("+toolKey+"): error creando lote "+(i/50+1)+". Primer texto: "+String(batch[0]&&batch[0].text||"").slice(0,120)); }
+      }
+      cfg.store=stored;
+      log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s).");
     }
     function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeMarkupIds(cfg.store); cfg.store=[]; return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
     function scheduleAllParamMarkups(){ if(!anyParamToolActive()) return; for(const key of Object.keys(paramTools)) scheduleParamMarkups(key); }
 
     // ===================== PLANTILLAS DE VISTA (#9) =====================
-    const TEMPLATE_STORE_KEY="deo_view_templates_v1";
-    const TEMPLATE_LAST_KEY="deo_view_template_last_v1";
+    const TEMPLATE_STORE_KEY="deo_view_templates_v3";
+    const TEMPLATE_LAST_KEY="deo_view_template_last_v3";
     let templateViewsCache=[];
     let templateCurrentUser=null;
-    const TEMPLATE_FIELD_IDS=["templateRfi","templateModule","templateLevel","templateAxes","templateElement","templateTask"];
+    const TEMPLATE_FIELDS=["code","location","level","axes","element","task","date","author"];
+    const TEMPLATE_META_FIELDS=["folder","labels","share"];
+    const VIEW_NAME_RE=/^\(([^)]+)\)\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*(.*?)\s*-\s*(.*?)\s*\((\d{2}-\d{2}-\d{4}),\s*(.*?)\)$/;
 
-    function loadTemplates(){ try{ const raw=localStorage.getItem(TEMPLATE_STORE_KEY); const arr=raw?JSON.parse(raw):[]; return Array.isArray(arr)?arr:[]; }catch(e){ recordError("loadTemplates",e); return []; } }
+    function migrateOldTemplates(){
+      let newer=[];
+      try{
+        const raw=localStorage.getItem(TEMPLATE_STORE_KEY);
+        if(raw!==null){ newer=raw?JSON.parse(raw):[]; return Array.isArray(newer)?newer:[]; }
+      }catch(e){ newer=[]; }
+      try{
+        const raw=localStorage.getItem("deo_view_templates_v2"); const old=raw?JSON.parse(raw):[];
+        if(Array.isArray(old)&&old.length){
+          const now=Date.now(); const migrated=old.map((t,i)=>({...t,createdAt:t.createdAt||now+i,updatedAt:t.updatedAt||now+i,folder:t.folder||"",labels:t.labels||"",share:t.share||""}));
+          localStorage.setItem(TEMPLATE_STORE_KEY,JSON.stringify(migrated));
+          return migrated;
+        }
+      }catch(e){ recordError("migrateOldTemplates",e); }
+      return [];
+    }
+    function loadTemplates(){ try{ const arr=migrateOldTemplates(); return Array.isArray(arr)?arr:[]; }catch(e){ recordError("loadTemplates",e); return []; } }
     function saveTemplates(list){ try{ localStorage.setItem(TEMPLATE_STORE_KEY,JSON.stringify(list)); }catch(e){ recordError("saveTemplates",e); } }
     function loadLastTemplateName(){ try{ return localStorage.getItem(TEMPLATE_LAST_KEY)||""; }catch(e){ return ""; } }
     function saveLastTemplateName(name){ try{ localStorage.setItem(TEMPLATE_LAST_KEY,name||""); }catch(e){} }
-
-    function userDisplayName(user){ if(!user) return "No disponible"; const name=[user.firstName,user.lastName].filter(Boolean).join(" ").trim(); return name||user.email||user.id||"No disponible"; }
-    function templateDateLabel(){ try{return new Date().toLocaleDateString("es-ES",{timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"});}catch(e){return new Date().toLocaleDateString("es-ES");} }
-    function templateDatetimeLabel(){ try{return new Date().toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return new Date().toLocaleString("es-ES");} }
-    function templateText(id){ const el=document.getElementById(id); return el?String(el.value||"").trim():""; }
-    function cleanViewPart(value){ return String(value||"").trim().replace(/[\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""); }
+    function newestTemplate(list){
+      const arr=(list||[]).slice(); if(!arr.length) return null;
+      return arr.sort((a,b)=>Number(b.updatedAt||b.createdAt||0)-Number(a.updatedAt||a.createdAt||0))[0]||arr[arr.length-1]||null;
+    }
+    function formatTemplateDate(ts){ if(!ts) return ""; try{ return new Date(ts).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"2-digit"}); }catch(e){ return ""; } }
+    function templateOptionText(t){ const d=formatTemplateDate(t.updatedAt||t.createdAt); return "◆ "+String(t.name||"Plantilla sin nombre")+(d?" · "+d:""); }
+    function todayDash(){ const d=new Date(); try{ const parts=new Intl.DateTimeFormat("es-ES",{timeZone:"Europe/Madrid",day:"2-digit",month:"2-digit",year:"numeric"}).formatToParts(d); const get=(t)=>parts.find((p)=>p.type===t).value; return get("day")+"-"+get("month")+"-"+get("year"); }catch(e){ return String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear(); } }
+    function userDisplayName(user){ if(!user) return ""; const name=[user.firstName,user.lastName].filter(Boolean).join(" ").trim(); return name||user.email||user.id||""; }
     function readableViewName(v){ return String((v&&(v.name||v.description||v.id))||"").trim(); }
-
-    function currentTemplateFromForm(){ return { name:templateText("templateTplName")||"(sin nombre)", rfi:templateText("templateRfi"), module:templateText("templateModule"), level:templateText("templateLevel"), axes:templateText("templateAxes"), element:templateText("templateElement"), task:templateText("templateTask") }; }
-    function buildTemplateName(){ const parts=[templateText("templateRfi"),templateText("templateModule"),templateText("templateLevel"),templateText("templateAxes"),templateText("templateElement"),templateText("templateTask")].map(cleanViewPart).filter(Boolean); return parts.join("_"); }
-    let currentLoadedView=null;
-    function updateViewButtonLabel(isUpdate){ const b=document.getElementById("templateCreateView"); if(b) b.textContent=isUpdate?"Actualizar vista":"Crear vista"; }
-
-    function applyTemplateToForm(tpl){ if(!tpl) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||""; }; set("templateTplName",(tpl.name&&tpl.name!=="(sin nombre)")?tpl.name:""); set("templateRfi",tpl.rfi); set("templateModule",tpl.module); set("templateLevel",tpl.level); set("templateAxes",tpl.axes); set("templateElement",tpl.element); set("templateTask",tpl.task); updateTemplateGeneratedName(); }
-    function updateTemplateGeneratedName(){ const nameEl=document.getElementById("templateName"); if(nameEl && nameEl.dataset.manual!=="1") nameEl.value=buildTemplateName(); }
-
-    function populateTemplateSelect(selectName){
-      const sel=document.getElementById("templateSelect"); if(!sel) return;
-      const list=loadTemplates(); sel.innerHTML="";
-      const ph=document.createElement("option"); ph.value=""; ph.textContent="(Nueva plantilla)"; sel.appendChild(ph);
-      for(const t of list){ const o=document.createElement("option"); o.value=t.name; o.textContent=t.name; sel.appendChild(o); }
-      const target=selectName!==undefined?selectName:loadLastTemplateName();
-      if(target && list.some((t)=>t.name===target)) sel.value=target;
+    function tplEl(scope,field){ return document.getElementById(scope+"_"+field); }
+    function normalizeDateDash(v){ const s=String(v||"").trim(); if(!s) return ""; const m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/); if(!m) return s; const y=m[3].length===2?"20"+m[3]:m[3]; return m[1].padStart(2,"0")+"-"+m[2].padStart(2,"0")+"-"+y; }
+    function normalizeCodeValue(v){
+      let s=String(v||"").trim().toUpperCase().replace(/\s+/g,"_").replace(/[-]+/g,"_");
+      if(!s) return "";
+      s=s.replace(/^RFI[_\s-]*/i,"");
+      s=s.replace(/^_+|_+$/g,"");
+      return s?"RFI_"+s:"";
     }
-    function saveTemplateFromForm(){
-      const name=templateText("templateTplName");
-      if(!name){ setProgress("Pon un nombre a la plantilla antes de guardar."); log("Plantillas: falta el nombre de la plantilla."); return; }
-      const tpl=currentTemplateFromForm(); tpl.name=name;
-      const list=loadTemplates(); const idx=list.findIndex((t)=>t.name===name);
-      if(idx>=0) list[idx]=tpl; else list.push(tpl);
-      saveTemplates(list); saveLastTemplateName(name); populateTemplateSelect(name);
-      const info=document.getElementById("templateSaveInfo"); if(info) info.textContent="Plantilla \""+name+"\" guardada. Nombre de vista: "+(buildTemplateName()||"(vacío)");
-      log("Plantilla guardada: "+name); setProgress("Plantilla guardada: "+name);
+    function normalizeTplValue(field,value){
+      let v=String(value||"").trim().replace(/\s+/g," ");
+      if(field==="code") return normalizeCodeValue(v);
+      if(field==="date") return normalizeDateDash(v);
+      return v.toUpperCase();
     }
-    function deleteSelectedTemplate(){
-      const sel=document.getElementById("templateSelect"); if(!sel||!sel.value){ setProgress("Selecciona una plantilla guardada para borrarla."); return; }
-      const name=sel.value; const list=loadTemplates().filter((t)=>t.name!==name);
-      saveTemplates(list); if(loadLastTemplateName()===name) saveLastTemplateName(""); populateTemplateSelect("");
-      log("Plantilla borrada: "+name); setProgress("Plantilla borrada: "+name);
+    function getScopeValues(scope){ const out={}; for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); out[f]=normalizeTplValue(f,el?el.value:""); } return out; }
+    function setScopeValues(scope,data){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(!el) continue; const v=data&&data[f]!=null?data[f]:""; el.value=normalizeTplValue(f,v); } updateScopePreview(scope); }
+    function getTemplateMetaFromConfig(){ const out={}; for(const f of TEMPLATE_META_FIELDS){ const el=tplEl("tplCfg",f); out[f]=String(el?el.value:"").trim(); } return out; }
+    function setConfigMeta(tpl){
+      for(const f of TEMPLATE_META_FIELDS){
+        if(f==="folder") continue;
+        const el=tplEl("tplCfg",f); if(el) el.value=String(tpl&&tpl[f]||"");
+      }
+      populateTemplateFolderSelect(tpl&&tpl.folder?tpl.folder:"");
     }
-    async function loadTemplateUser(){ try{ templateCurrentUser=(API&&API.user&&API.user.getUser)?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } const author=document.getElementById("templateAuthor"); if(author) author.textContent=userDisplayName(templateCurrentUser); const date=document.getElementById("templateDate"); if(date) date.textContent=templateDateLabel(); updateTemplateGeneratedName(); }
-    async function createViewFromTemplate(){
-      if(!API||!API.view){ log("La API de vistas no está disponible en este entorno."); setProgress("No disponible."); return; }
-      const name=templateText("templateName")||buildTemplateName(); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; }
-      const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true;
-      try{
-        if(currentLoadedView && currentLoadedView.id && API.view.updateView){
-          // La vista abierta ya existe: actualizar su estado al estado actual del visor y, si cambia, su nombre.
-          setProgress("Actualizando la vista abierta con el estado actual...");
-          await API.view.updateView({id:currentLoadedView.id});
-          if(name && name!==readableViewName(currentLoadedView)){
-            let spec=null; try{ if(API.view.getView) spec=await API.view.getView(currentLoadedView.id); }catch(e){ recordError("update.getView",e); }
-            if(spec && typeof spec==="object"){ spec.name=name; await API.view.updateView(spec); }
-            else { await API.view.updateView({id:currentLoadedView.id,name}); }
-          }
-          log("Vista actualizada: "+name); setProgress("Vista actualizada: "+name);
-        } else {
-          if(!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
-          setProgress("Creando vista con el estado actual del visor...");
-          const created=await API.view.createView({name});
-          log("Vista creada (estado actual del visor): "+name); setProgress("Vista creada: "+name);
-          if(created && created.id){ currentLoadedView=created; updateViewButtonLabel(true); }
-        }
-        await populateRenameViews();
-      }catch(e){ recordError("createViewFromTemplate",e); log("ERROR al guardar la vista: "+(e&&e.message?e.message:e)); setProgress("Error al guardar la vista."); }
-      finally{ if(btn) btn.disabled=false; }
+    function setCreateMeta(tpl){
+      // La plantilla cargada se identifica únicamente por el desplegable newTemplateSelect.
+      // Sus metadatos se conservan en localStorage para uso futuro, sin textboxes auxiliares en Crear vista nueva.
     }
-    async function detectCurrentSavedView(){
-      try{
-        const cv=await API.view.getCurrentView();
-        if(cv && cv.id){
-          let m=(templateViewsCache||[]).find((v)=>String(v.id)===String(cv.id));
-          if(!m && cv.name) m=(templateViewsCache||[]).find((v)=>readableViewName(v)===cv.name);
-          return m||null;
-        }
-      }catch(e){ recordError("detectCurrentSavedView",e); }
-      return null;
+    function templateNameFromValues(v){
+      const code=normalizeTplValue("code",v.code), location=normalizeTplValue("location",v.location), level=normalizeTplValue("level",v.level), axes=normalizeTplValue("axes",v.axes), element=normalizeTplValue("element",v.element), task=normalizeTplValue("task",v.task), date=normalizeTplValue("date",v.date), author=normalizeTplValue("author",v.author);
+      let main=[location,level,axes,element].filter(Boolean).join(", ");
+      if(task) main=main?main+" - "+task:task;
+      let name=code?"("+code+") "+main:main;
+      const tail=[date,author].filter(Boolean).join(", "); if(tail) name=(name?name+" ":"")+"("+tail+")";
+      return name.replace(/\s+/g," ").replace(/\s+,/g,",").trim();
     }
-    async function applyTemplateDefaultOpen(){
-      const foldConfig=document.getElementById("tplFoldConfig");
-      const foldView=document.getElementById("tplFoldView");
-      const foldRename=document.getElementById("tplFoldRename");
-      const saved=await detectCurrentSavedView();
-      const noTemplates=loadTemplates().length===0;
-      if(foldConfig) foldConfig.open=false; if(foldView) foldView.open=false; if(foldRename) foldRename.open=false;
-      if(saved){
-        currentLoadedView=saved;
-        const nm=document.getElementById("templateName"); if(nm){ nm.value=readableViewName(saved); nm.dataset.manual="1"; }
-        updateViewButtonLabel(true);
-        const rsel=document.getElementById("renameViewSelect"); if(rsel && [...rsel.options].some((o)=>String(o.value)===String(saved.id))) rsel.value=String(saved.id);
-        if(foldView) foldView.open=true;
-      } else {
-        currentLoadedView=null; updateViewButtonLabel(false);
-        if(noTemplates){ if(foldConfig) foldConfig.open=true; }
-        else { if(foldRename) foldRename.open=true; }
+    function updateScopePreview(scope){ const el=document.getElementById(scope+"_preview"); if(el) el.textContent=templateNameFromValues(getScopeValues(scope))||"(sin nombre)"; }
+    function currentTemplateFromConfig(){ const tpl=getScopeValues("tplCfg"); tpl.name=String((document.getElementById("tplCfg_name")||{}).value||"").trim(); Object.assign(tpl,getTemplateMetaFromConfig()); return tpl; }
+    function populateTemplateSelects(selected){
+      const list=loadTemplates().sort((a,b)=>String(a.name).localeCompare(String(b.name),"es"));
+      for(const id of ["templateSelect","newTemplateSelect"]){
+        const sel=document.getElementById(id); if(!sel) continue; const keep=selected!==undefined?selected:(sel.value||loadLastTemplateName()); sel.innerHTML="";
+        const ph=document.createElement("option"); ph.value=""; ph.textContent=id==="templateSelect"?"(Nueva plantilla)":"(Sin plantilla)"; sel.appendChild(ph);
+        for(const t of list){ const o=document.createElement("option"); o.value=t.name; o.textContent=templateOptionText(t); o.title=[t.name,t.folder,t.labels,t.share].filter(Boolean).join(" | "); sel.appendChild(o); }
+        if(keep && list.some((t)=>t.name===keep)) sel.value=keep;
       }
     }
-    async function populateRenameViews(){
-      const sel=document.getElementById("renameViewSelect"); if(!sel||!API||!API.view) return;
-      const previous=sel.value; sel.innerHTML=""; const loading=document.createElement("option"); loading.value=""; loading.textContent="Cargando vistas..."; sel.appendChild(loading);
-      try{ templateViewsCache=await API.view.getViews()||[]; templateViewsCache=templateViewsCache.slice().sort((a,b)=>readableViewName(a).localeCompare(readableViewName(b),"es")); sel.innerHTML=""; if(templateViewsCache.length===0){ const o=document.createElement("option"); o.value=""; o.textContent="No hay vistas disponibles"; sel.appendChild(o); } else { for(const v of templateViewsCache){ const o=document.createElement("option"); o.value=v.id||""; o.textContent=readableViewName(v)||"Vista sin nombre"; sel.appendChild(o); } if(previous&&templateViewsCache.some((v)=>String(v.id)===String(previous))) sel.value=previous; } }
-      catch(e){ recordError("populateRenameViews",e); sel.innerHTML=""; const o=document.createElement("option"); o.value=""; o.textContent="Error al leer vistas"; sel.appendChild(o); }
-    }
-    async function renameSelectedView(){
-      const sel=document.getElementById("renameViewSelect"); const newName=templateText("renameNewName");
-      if(!sel||!sel.value){ setProgress("Selecciona una vista para renombrar."); return; }
-      if(!newName){ setProgress("Escribe el nuevo nombre de la vista."); return; }
-      if(!API.view||!API.view.updateView){ log("La API no permite actualizar vistas en este entorno."); setProgress("No disponible."); return; }
-      const btn=document.getElementById("renameViewBtn"); if(btn) btn.disabled=true;
+    async function populateTemplateFolderSelect(keepValue){
+      const sel=document.getElementById("tplCfg_folder"); if(!sel) return;
+      const keep=keepValue!==undefined?String(keepValue||""):String(sel.value||"");
+      const folders=new Set();
       try{
-        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(sel.value); }catch(e){ recordError("rename.getView",e); }
-        if(spec && typeof spec==="object"){ spec.name=newName; await API.view.updateView(spec); }
-        else { await API.view.updateView({id:sel.value,name:newName}); }
-        log("Vista renombrada a: "+newName); setProgress("Vista renombrada: "+newName);
-        const keep=sel.value; await populateRenameViews(); if([...document.getElementById("renameViewSelect").options].some((o)=>o.value===keep)) document.getElementById("renameViewSelect").value=keep;
-      }catch(e){ recordError("renameSelectedView",e); log("ERROR renombrando vista: "+(e&&e.message?e.message:e)); setProgress("Error al renombrar la vista."); }
+        if(API&&API.view&&API.view.getViews){
+          const views=await API.view.getViews()||[];
+          for(const v of views){ const f=detectFolder(v); if(f) folders.add(f); }
+        }
+      }catch(e){ recordError("populateTemplateFolderSelect",e); }
+      for(const t of loadTemplates()){ if(t&&t.folder) folders.add(String(t.folder)); }
+      sel.innerHTML="";
+      const empty=document.createElement("option"); empty.value=""; empty.textContent="(Sin carpeta)"; sel.appendChild(empty);
+      const list=[...folders].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+      for(const f of list){ const o=document.createElement("option"); o.value=f; o.textContent=f; sel.appendChild(o); }
+      if(keep && !list.includes(keep)){ const o=document.createElement("option"); o.value=keep; o.textContent=keep; sel.appendChild(o); }
+      if(keep) sel.value=keep;
+    }
+    function applyTemplateToScope(tpl,scope){ if(!tpl) return; setScopeValues(scope,tpl); if(scope==="tplNew") setCreateMeta(tpl); }
+    function saveTemplateFromForm(){
+      const tpl=currentTemplateFromConfig();
+      if(!tpl.name){ setProgress("Pon un nombre especial a la plantilla antes de guardar."); log("Plantillas: falta el nombre especial de la plantilla."); return; }
+      const now=Date.now(); const list=loadTemplates(); const idx=list.findIndex((t)=>t.name===tpl.name);
+      if(idx>=0){ tpl.createdAt=list[idx].createdAt||now; tpl.updatedAt=now; list[idx]=tpl; }
+      else { tpl.createdAt=now; tpl.updatedAt=now; list.push(tpl); }
+      saveTemplates(list); saveLastTemplateName(tpl.name); populateTemplateSelects(tpl.name);
+      const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=tpl.name; applyTemplateToScope(tpl,"tplNew");
+      log("Plantilla guardada: "+tpl.name); setProgress("Plantilla guardada: "+tpl.name);
+      const info=document.getElementById("templateSaveInfo"); if(info) info.textContent="Plantilla guardada. Nombre generado: "+(templateNameFromValues(tpl)||"(sin nombre)");
+    }
+    function deleteSelectedTemplate(){ const sel=document.getElementById("templateSelect"); if(!sel||!sel.value){ setProgress("Selecciona una plantilla guardada para borrar."); return; } const name=sel.value; saveTemplates(loadTemplates().filter((t)=>t.name!==name)); if(loadLastTemplateName()===name) saveLastTemplateName(""); populateTemplateSelects(""); setCreateMeta(null); log("Plantilla borrada: "+name); setProgress("Plantilla borrada: "+name); }
+    function parseViewName(name){ const m=String(name||"").match(VIEW_NAME_RE); if(!m) return null; return {code:m[1],location:m[2],level:m[3],axes:m[4],element:m[5],task:m[6],date:m[7],author:m[8]}; }
+    async function loadTemplateUser(){ try{ templateCurrentUser=(API&&API.user&&API.user.getUser)?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } }
+    async function createViewFromTemplate(){
+      if(!API||!API.view||!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
+      const name=templateNameFromValues(getScopeValues("tplNew")); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; }
+      const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true;
+      try{ setProgress("Creando vista con el estado actual del visor..."); await API.view.createView({name,description:name}); log("Vista creada: "+name); setProgress("Vista creada: "+name); await populateUpdateViews(); }
+      catch(e){ recordError("createViewFromTemplate",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error creando vista."); }
       finally{ if(btn) btn.disabled=false; }
     }
+    async function populateUpdateViews(){
+      const sel=document.getElementById("updateViewSelect"); if(!sel||!API||!API.view) return; const previous=sel.value; sel.innerHTML='<option value="">Cargando vistas...</option>';
+      try{ templateViewsCache=await API.view.getViews()||[]; templateViewsCache=templateViewsCache.slice().sort((a,b)=>readableViewName(a).localeCompare(readableViewName(b),"es")); sel.innerHTML=""; const ph=document.createElement("option"); ph.value=""; ph.textContent="Selecciona vista..."; sel.appendChild(ph); for(const v of templateViewsCache){ const o=document.createElement("option"); o.value=v.id||""; o.textContent=readableViewName(v)||"Vista sin nombre"; sel.appendChild(o); } if(previous&&templateViewsCache.some((v)=>String(v.id)===String(previous))) sel.value=previous; }
+      catch(e){ recordError("populateUpdateViews",e); sel.innerHTML='<option value="">Error al leer vistas</option>'; }
+    }
+    function loadSelectedViewForUpdate(){
+      const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo"); if(!sel||!sel.value) return;
+      const view=templateViewsCache.find((v)=>String(v.id)===String(sel.value)); const name=readableViewName(view);
+      const parsed=parseViewName(name);
+      if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
+      else { setScopeValues("tplUpd",{}); if(info) info.textContent="No se ha podido leer la estructura del nombre actual. Nombre actual: "+name; }
+    }
+    async function loadCurrentViewForUpdate(){
+      const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo"); if(!sel||!API||!API.view) return false;
+      let current=null; try{ current=await getCurrentViewSpecWithRetry(); }catch(e){ recordError("loadCurrentViewForUpdate.current",e); }
+      if(!current){ if(info) info.textContent="No hay vista actual guardada cargada."; return false; }
+      let id=current.id||current.viewId||""; const currentName=readableViewName(current);
+      if(!id && currentName){ const match=templateViewsCache.find((v)=>readableViewName(v)===currentName); if(match) id=match.id; }
+      if(id && templateViewsCache.some((v)=>String(v.id)===String(id))){ sel.value=id; loadSelectedViewForUpdate(); log("Actualizar vista: cargada la vista actual existente."); return true; }
+      if(info) info.textContent=currentName?"La vista actual no aparece como vista existente: "+currentName:"La vista actual no aparece como vista existente.";
+      return false;
+    }
+    async function updateSelectedView(){
+      const sel=document.getElementById("updateViewSelect"); if(!sel||!sel.value){ setProgress("Selecciona una vista para actualizar."); return; }
+      if(!API.view||!API.view.updateView){ log("La API no permite actualizar vistas en este entorno."); setProgress("No disponible."); return; }
+      const name=templateNameFromValues(getScopeValues("tplUpd")); if(!name){ setProgress("Falta nombre de vista."); return; }
+      const btn=document.getElementById("templateUpdateView"); if(btn) btn.disabled=true;
+      try{
+        setProgress("Actualizando estado de la vista seleccionada...");
+        await API.view.updateView({id:sel.value});
+        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(sel.value); }catch(e){ recordError("updateView.getView",e); }
+        if(spec && typeof spec==="object"){ spec.name=name; spec.description=name; await API.view.updateView(spec); }
+        else { await API.view.updateView({id:sel.value,name,description:name}); }
+        log("Vista actualizada: "+name); setProgress("Vista actualizada: "+name); const keep=sel.value; await populateUpdateViews(); if([...sel.options].some((o)=>String(o.value)===String(keep))) sel.value=keep;
+      }catch(e){ recordError("updateSelectedView",e); log("ERROR actualizando vista: "+(e&&e.message?e.message:e)); setProgress("Error al actualizar la vista."); }
+      finally{ if(btn) btn.disabled=false; }
+    }
+    function wireTemplateScope(scope){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(el){ el.addEventListener("input",()=>{ updateScopePreview(scope); }); el.addEventListener("blur",()=>{ el.value=normalizeTplValue(f,el.value); updateScopePreview(scope); }); } } }
     function wireTemplateTool(){
-      for(const id of TEMPLATE_FIELD_IDS){ const el=document.getElementById(id); if(el) el.addEventListener("input",updateTemplateGeneratedName); }
-      const nameEl=document.getElementById("templateName"); if(nameEl) nameEl.addEventListener("input",()=>{ nameEl.dataset.manual="1"; });
-      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const nm=document.getElementById("templateName"); if(nm) nm.dataset.manual="0"; applyTemplateToForm(t); } else { saveLastTemplateName(""); } });
+      for(const scope of ["tplCfg","tplNew","tplUpd"]) wireTemplateScope(scope);
+      populateTemplateFolderSelect();
+      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; applyTemplateToScope(t,"tplCfg"); setConfigMeta(t); } else { saveLastTemplateName(""); setScopeValues("tplCfg",{}); setConfigMeta(null); } });
+      const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); applyTemplateToScope(t,"tplNew"); } else { setScopeValues("tplNew",{}); setCreateMeta(null); } });
       const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
       const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
       const createBtn=document.getElementById("templateCreateView"); if(createBtn) createBtn.onclick=()=>createViewFromTemplate();
-      const refreshViews=document.getElementById("renameRefreshViews"); if(refreshViews) refreshViews.onclick=()=>populateRenameViews();
-      const renameBtn=document.getElementById("renameViewBtn"); if(renameBtn) renameBtn.onclick=()=>renameSelectedView();
-      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",()=>{ if(tool.open) applyTemplateDefaultOpen(); });
+      const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",loadSelectedViewForUpdate);
+      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await loadCurrentViewForUpdate(); };
+      const updBtn=document.getElementById("templateUpdateView"); if(updBtn) updBtn.onclick=()=>updateSelectedView();
+      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open){ await populateTemplateFolderSelect(); await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
+      const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open){ await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
     }
     async function initTemplateTool(){
-      populateTemplateSelect();
-      const last=loadLastTemplateName(); if(last){ const t=loadTemplates().find((x)=>x.name===last); if(t) applyTemplateToForm(t); }
-      await loadTemplateUser();
-      await populateRenameViews();
-      updateTemplateGeneratedName();
-      await applyTemplateDefaultOpen();
+      populateTemplateSelects(); await populateTemplateFolderSelect(); await loadTemplateUser();
+      const list=loadTemplates(); const latest=newestTemplate(list); const last=loadLastTemplateName(); const cfgTpl=list.find((x)=>x.name===last)||latest;
+      if(cfgTpl){ const n=document.getElementById("tplCfg_name"); if(n) n.value=cfgTpl.name||""; applyTemplateToScope(cfgTpl,"tplCfg"); setConfigMeta(cfgTpl); }
+      else { setScopeValues("tplCfg",{}); setConfigMeta(null); }
+      if(latest){ applyTemplateToScope(latest,"tplNew"); const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=latest.name; saveLastTemplateName(latest.name); }
+      else { setScopeValues("tplNew",{}); setCreateMeta(null); }
+      setScopeValues("tplUpd",{});
+      await populateUpdateViews(); await loadCurrentViewForUpdate();
+      for(const scope of ["tplCfg","tplNew","tplUpd"]) updateScopePreview(scope);
     }
 
     // ===================== COLORES / VALORES UI =====================
     function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
     function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const wrap=document.getElementById("includeColorsWrap"); if(wrap) wrap.style.display=(on&&colorMode)?"flex":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
-    async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>valor</option>'; setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b)).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); vsel.classList.toggle("placeholder",!vsel.value); setProgress("Valores Name cargados: "+values.size+"."); }
+    function syncSelectPlaceholder(sel){ if(sel) sel.classList.toggle("placeholder",!sel.value); }
+    async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>elige un valor…</option>'; syncSelectPlaceholder(vsel); setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); syncSelectPlaceholder(vsel); setProgress("Valores Name cargados: "+values.size+"."); }
 
-    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"; row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); } }
+    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); row.title=col+" ("+byColor.get(col).count+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } }
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
 
     // ===================== ACCIONES RÁPIDAS =====================
-    const QUICK_COLORS={ qcGray:"#9AA0A6FF", qcMagenta:"#EC00B6FF", qcRed:"#FC0D1BFF" };
+    const QUICK_COLORS={ qcGray:{r:154,g:160,b:166,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{r:252,g:13,b:27,a:255} };
     const QUICK_PARAM_DEFAULTS={ qsParam1:"Assembly type", qsParam2:"Bolt standard" };
-    async function applyQuickColor(normalized){
+    const quickParamIndexCache=new Map();
+    async function applyQuickColor(colorObj){
       const sel=await safeGetSelection();
       if(sel.length===0){ setProgress("Acciones rápidas: no hay objetos seleccionados."); log("Acciones rápidas: selecciona objetos antes de pintar."); return; }
       const byModel=new Map(); for(const o of sel) addToMapSet(byModel,o.modelId,[o.runtimeId]);
-      const state=normalized==="reset"?{color:"reset"}:{color:normalized};
       let n=0;
-      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},state); n+=ids.length; }catch(e){ recordError("applyQuickColor",e); } }
-      log("Acciones rápidas: "+(normalized==="reset"?"color quitado de ":"pintados ")+n+" objeto(s).");
-      setProgress((normalized==="reset"?"Color quitado: ":"Pintados: ")+n+" objeto(s).");
+      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:{...colorObj},opacity:100,visible:true}); n+=ids.length; }catch(e){ recordError("applyQuickColor",e); } }
+      log("Acciones rápidas: pintados "+n+" objeto(s)."); setProgress("Pintados: "+n+" objeto(s).");
     }
     function populateQuickParamSelect(selId,defaultParam){
-      const sel=document.getElementById(selId); if(!sel) return; const keep=sel.value||defaultParam;
-      sel.innerHTML="";
-      const params=(csvAvailableParametersCache||[]).slice();
-      if(defaultParam && !params.some((p)=>p.toLowerCase()===defaultParam.toLowerCase())) params.unshift(defaultParam);
+      const sel=document.getElementById(selId); if(!sel) return; const keep=sel.value||defaultParam; sel.innerHTML="";
+      const params=(csvAvailableParametersCache||[]).slice(); if(defaultParam && !params.some((p)=>p.toLowerCase()===defaultParam.toLowerCase())) params.unshift(defaultParam);
       for(const p of params){ const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); }
       if([...sel.options].some((o)=>o.value===keep)) sel.value=keep; else if(defaultParam) sel.value=defaultParam;
     }
     async function getModelObjectsMap(){
-      const map=new Map();
-      const attempts=[ ()=>API.viewer.getObjects(), ()=>API.viewer.getObjects(undefined,{visible:true}) ];
+      const map=new Map(); const attempts=[ ()=>API.viewer.getObjects(), ()=>API.viewer.getObjects(undefined,{visible:true}) ];
       for(const fn of attempts){ try{ const groups=await fn(); for(const g of groups||[]){ const modelId=g.modelId||g.id||""; const ids=(g.objects||g.objectRuntimeIds||g.runtimeIds||[]).map((o)=>Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o)).filter(Number.isFinite); if(modelId&&ids.length){ const prev=map.get(modelId)||[]; map.set(modelId,prev.concat(ids)); } } if(map.size) break; }catch(e){ recordError("getModelObjectsMap",e); } }
-      // dedupe
-      for(const [m,ids] of map.entries()) map.set(m,[...new Set(ids)]);
-      return map;
+      for(const [m,ids] of map.entries()) map.set(m,[...new Set(ids)]); return map;
     }
-    async function populateQuickValueSelect(paramSelId,valueSelId){
-      const param=(document.getElementById(paramSelId)||{}).value||"";
-      const vsel=document.getElementById(valueSelId); if(!vsel) return;
-      vsel.innerHTML='<option value="" disabled selected hidden>valor…</option>';
-      if(!param) return;
-      setProgress("Acciones rápidas: leyendo valores de \""+param+"\"...");
-      const values=new Set();
+    function quickIndexCacheKey(param){ return String(param||"").trim().toLowerCase(); }
+    function setQuickBusy(on){ document.querySelectorAll(".quick-select-btn,.qs-refresh,.qs-param,.qs-value").forEach((el)=>{ el.disabled=!!on; }); }
+    function setQuickValueOptions(valueSelId,values){ const vsel=document.getElementById(valueSelId); if(!vsel) return; vsel.innerHTML='<option value="" disabled selected hidden>valor…</option>'; values.sort((a,b)=>a.localeCompare(b,"es")).slice(0,2000).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); }
+    async function buildQuickParamIndex(paramSelId,valueSelId){
+      const param=(document.getElementById(paramSelId)||{}).value||""; if(!param){ setProgress("Acciones rápidas: elige un parámetro."); return; }
+      cancelRequested=false; showCancel(true); setQuickBusy(true); setProgress("Acciones rápidas: indexando "+param+"...");
+      const valueIndex=new Map(); let scanned=0, indexed=0;
       try{
-        const sel=await safeGetSelection();
-        let byModel=new Map();
-        if(sel.length>0){ for(const o of sel) addToMapSet(byModel,o.modelId,[o.runtimeId]); }
-        else { byModel=await getModelObjectsMap(); }
-        for(const [modelId,idsRaw] of byModel.entries()){ const ids=[...idsRaw]; const cap=Math.min(ids.length,6000); for(let i=0;i<cap;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()){ const v=getParamValue(p,param); if(v!=="" && v!=null) values.add(String(v)); } if(values.size>1500) break; } }
-      }catch(e){ recordError("populateQuickValueSelect",e); }
-      [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); });
-      setProgress("Acciones rápidas: "+values.size+" valor(es) de \""+param+"\".");
-    }
-    async function selectByParamValue(paramSelId,valueSelId){
-      const param=(document.getElementById(paramSelId)||{}).value||"";
-      const value=(document.getElementById(valueSelId)||{}).value||"";
-      if(!param){ setProgress("Acciones rápidas: elige un parámetro."); return; }
-      if(!value){ setProgress("Acciones rápidas: elige un valor."); return; }
-      cancelRequested=false; showCancel(true); setProgress("Acciones rápidas: buscando "+param+" = "+value+"...");
-      const wanted=String(value).trim().toLowerCase();
-      const matchMap=new Map(); let scanned=0, matched=0;
-      try{
-        const byModel=await getModelObjectsMap();
-        let total=0; for(const ids of byModel.values()) total+=ids.length; let done=0;
+        const byModel=await getModelObjectsMap(); let total=0; for(const ids of byModel.values()) total+=ids.length;
         for(const [modelId,ids] of byModel.entries()){
           for(let i=0;i<ids.length;i+=PROPS_BATCH){
-            if(cancelRequested){ log("Acciones rápidas: búsqueda cancelada."); break; }
+            if(cancelRequested){ log("Acciones rápidas: indexación cancelada."); break; }
             const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk);
-            for(const id of chunk){ scanned++; const v=getParamValue(pm.get(id)||{},param); if(String(v).trim().toLowerCase()===wanted){ addToMapSet(matchMap,modelId,[id]); matched++; } }
-            done+=chunk.length; setProgress("Acciones rápidas: "+done+"/"+total+" (coincidencias: "+matched+")");
+            for(const id of chunk){ scanned++; const v=getParamValue(pm.get(id)||{},param); if(v!=="" && v!=null){ const val=String(v); if(!valueIndex.has(val)) valueIndex.set(val,new Map()); addToMapSet(valueIndex.get(val),modelId,[id]); indexed++; } }
+            setProgress("Acciones rápidas: indexando "+param+" "+scanned+"/"+total+" (valores: "+valueIndex.size+")");
+            await sleep(0);
           }
           if(cancelRequested) break;
         }
-      }catch(e){ recordError("selectByParamValue",e); }
-      showCancel(false);
-      if(matched===0){ log("Acciones rápidas: sin coincidencias para "+param+" = "+value+"."); setProgress("Sin coincidencias."); return; }
+        quickParamIndexCache.set(quickIndexCacheKey(param),{builtAt:Date.now(),param,values:valueIndex});
+        setQuickValueOptions(valueSelId,[...valueIndex.keys()]);
+        log("Acciones rápidas: índice creado para "+param+". Objetos leídos: "+scanned+". Objetos indexados: "+indexed+". Valores: "+valueIndex.size+".");
+        setProgress("Índice creado: "+valueIndex.size+" valor(es) de "+param+".");
+      }catch(e){ recordError("buildQuickParamIndex",e); log("Acciones rápidas: error indexando "+param+"."); }
+      finally{ setQuickBusy(false); showCancel(false); }
+    }
+    function populateQuickValueFromCache(paramSelId,valueSelId){ const param=(document.getElementById(paramSelId)||{}).value||""; const cache=quickParamIndexCache.get(quickIndexCacheKey(param)); setQuickValueOptions(valueSelId,cache?[...cache.values.keys()]:[]); if(!cache) log("Acciones rápidas: pulsa ↻ para indexar el parámetro \""+param+"\"."); }
+    async function selectByParamValue(paramSelId,valueSelId){
+      const param=(document.getElementById(paramSelId)||{}).value||""; const value=(document.getElementById(valueSelId)||{}).value||"";
+      if(!param){ setProgress("Acciones rápidas: elige un parámetro."); return; }
+      if(!value){ setProgress("Acciones rápidas: elige un valor."); return; }
+      const cache=quickParamIndexCache.get(quickIndexCacheKey(param)); if(!cache){ log("Acciones rápidas: pulsa refrescar para indexar este parámetro."); setProgress("Falta indexar parámetro."); return; }
+      const matchMap=cache.values.get(value); const matched=matchMap?mapSetCount(matchMap):0;
+      if(!matched){ log("Acciones rápidas: sin coincidencias para "+param+" = "+value+"."); setProgress("Sin coincidencias."); return; }
       suppressSelectionUntil=Date.now()+700;
       try{ await API.viewer.setSelection(mapSetToSelector(matchMap),"set"); }catch(e){ recordError("selectByParamValue.set",e); }
-      log("Acciones rápidas: seleccionados "+matched+" objeto(s) con "+param+" = "+value+".");
-      setProgress("Seleccionados "+matched+" objeto(s).");
+      log("Acciones rápidas: seleccionados "+matched+" objeto(s) con "+param+" = "+value+"."); setProgress("Seleccionados "+matched+" objeto(s).");
     }
-    async function refreshQuickRow(paramSelId,valueSelId,defaultParam){ await scanModelParameters(); populateQuickParamSelect(paramSelId,defaultParam); await populateQuickValueSelect(paramSelId,valueSelId); }
+    async function refreshQuickRow(paramSelId,valueSelId,defaultParam){ await scanModelParameters(); populateQuickParamSelect(paramSelId,defaultParam); await buildQuickParamIndex(paramSelId,valueSelId); }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
-      const reset=document.getElementById("qcReset"); if(reset) reset.onclick=()=>applyQuickColor("reset");
-      const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueSelect("qsParam1","qsValue1"));
-      const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueSelect("qsParam2","qsValue2"));
+      const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
+      const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueFromCache("qsParam2","qsValue2"));
       const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
       const s2=document.getElementById("qsSelect2"); if(s2) s2.onclick=()=>selectByParamValue("qsParam2","qsValue2");
       const r1=document.getElementById("qsRefresh1"); if(r1) r1.onclick=()=>refreshQuickRow("qsParam1","qsValue1",QUICK_PARAM_DEFAULTS.qsParam1);
       const r2=document.getElementById("qsRefresh2"); if(r2) r2.onclick=()=>refreshQuickRow("qsParam2","qsValue2",QUICK_PARAM_DEFAULTS.qsParam2);
-      populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
-      populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+      populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+      setQuickValueOptions("qsValue1",[]); setQuickValueOptions("qsValue2",[]);
       const group=document.getElementById("quickActionsGroup"); let firstOpen=true;
       if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await scanModelParameters(); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
     }
@@ -1271,7 +1446,15 @@
     function initTooltips(){ const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null; document.querySelectorAll("[data-tip]").forEach((el)=>{ el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if(left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); }); el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; }); }); }
 
     // ===================== WIRING =====================
-    function wireSummarySwitch(switchWrapId,toggleId,detailsId){ const wrap=document.getElementById(switchWrapId); const toggle=document.getElementById(toggleId); const details=document.getElementById(detailsId); if(wrap) wrap.addEventListener("click",(ev)=>ev.stopPropagation()); if(toggle) toggle.addEventListener("change",()=>{ if(details) details.open=!!toggle.checked; }); }
+    function wireSummarySwitch(switchWrapId,toggleId,detailsId){
+      const wrap=document.getElementById(switchWrapId); const toggle=document.getElementById(toggleId); const details=document.getElementById(detailsId); const summary=details?details.querySelector("summary"):null;
+      if(summary){
+        summary.addEventListener("click",(ev)=>{ if(ev.target.closest(".summary-switch")) return; ev.preventDefault(); });
+        summary.addEventListener("keydown",(ev)=>{ if(ev.target.closest(".summary-switch")) return; if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); } });
+      }
+      if(wrap) wrap.addEventListener("click",(ev)=>{ ev.stopPropagation(); setTimeout(()=>{ if(details&&toggle) details.open=!!toggle.checked; },0); });
+      if(toggle){ toggle.addEventListener("click",(ev)=>ev.stopPropagation()); toggle.addEventListener("change",()=>{ if(details) details.open=!!toggle.checked; }); }
+    }
     function wireUI(){
       const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
