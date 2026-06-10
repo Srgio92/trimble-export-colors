@@ -104,6 +104,10 @@
     .tool-spacer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #f1f1f1; }
     .range-row input[type="range"] { flex: 1; min-width: 130px; }
     #nearPercentLabel { min-width: 46px; text-align: right; font-weight: bold; }
+    .range-row { position: relative; }
+    .range-row input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333% - 1px), #1c7fd6 calc(33.333% - 1px), #1c7fd6 calc(33.333% + 1px), #c4c9d1 calc(33.333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
+    .range-row input[type="range"]::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333% - 1px), #1c7fd6 calc(33.333% - 1px), #1c7fd6 calc(33.333% + 1px), #c4c9d1 calc(33.333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
+    .range-row input[type="range"]::-webkit-slider-thumb { margin-top: -5px; }
     .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
 
     /* Plantillas de vista */
@@ -160,10 +164,11 @@
             <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m&#179;.</div>
             <div class="config-row range-row">
               <label for="nearPercent" class="field-label">Sensibilidad</label>
-              <input type="range" id="nearPercent" min="0" max="200" step="5" value="100" disabled>
+              <input type="range" id="nearPercent" min="0" max="300" step="5" value="100" list="nearTicks" disabled>
+              <datalist id="nearTicks"><option value="100" label="100%"></option></datalist>
               <span id="nearPercentLabel">100%</span>
             </div>
-            <div class="hint" id="nearCalibInfo">100% es el radio base. Sube el porcentaje para ampliar el alcance alrededor del objeto seleccionado; bájalo para restringirlo. El radio es absoluto: depende solo del objeto original, no se acumula.</div>
+            <div class="hint" id="nearCalibInfo">0%: solo el objeto pulsado, sin añadir cercanos. 100% (marca con efecto imán): comportamiento base, contacto dentro del mismo ensamblaje. Hasta 300%: amplía progresivamente el radio de búsqueda y el tamaño máximo de pieza admitido. El radio es absoluto: depende solo del objeto original, no se acumula.</div>
           </div>
         </div>
       </details>
@@ -299,7 +304,6 @@
             </div>
           </details>
 
-          <div class="hint" style="margin-top:6px;">Nota: la Workspace API de Trimble no expone el tamaño de fuente de las etiquetas de texto, por lo que el tamaño lo fija el visor y no puede escalarse con el volumen del tornillo.</div>
         </div>
       </details>
 
@@ -351,7 +355,7 @@
               </div>
               <div class="template-grid" data-template-scope="tplCfg">
                 <div class="template-field tpl-full"><label for="tplCfg_name">Nombre especial</label><input type="text" id="tplCfg_name" placeholder=""></div>
-                <div class="template-field tpl-full"><label for="tplCfg_folder">Grupo de vistas</label><select id="tplCfg_folder"><option value="">(Sin grupo)</option></select></div>
+                <div class="template-field tpl-full"><label for="tplCfg_folder">Grupo de vistas</label><div style="display:flex; gap:6px; align-items:center;"><select id="tplCfg_folder" style="flex:1;"><option value="">(Sin grupo)</option></select><button type="button" id="tplCfg_folderRefresh" class="icon-btn" title="Actualizar grupos de vistas" aria-label="Actualizar grupos de vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div>
                 <div class="template-field tpl-full"><label for="tplCfg_labels">Etiquetas</label><input type="text" id="tplCfg_labels" placeholder=""></div>
                 <div class="template-field tpl-full tpl-share-field"><label for="tplCfg_shareEntry" id="tplCfg_shareLabel">Compartido con (0)</label><div class="tpl-token-box" id="tplCfg_shareBox"><div id="tplCfg_shareTokens" class="tpl-tokens"></div><input type="text" id="tplCfg_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="tplCfg_share" value=""><div id="tplCfg_shareSuggest" class="tpl-suggest"></div></div>
               </div>
@@ -441,8 +445,9 @@
             <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
             <label class="txt" for="extendedExport">Exportación masiva</label>
           </div>
-          <div class="row" data-tip="Si la API expone carpetas de vistas, aparecerán aquí. Si no, solo estará 'Todas las vistas'.">
-            Carpeta: <select id="folderSelect" disabled style="width:60%;"><option value="">Todas las vistas</option></select>
+          <div class="row" data-tip="Grupos de vistas reales del proyecto. 'Todas las vistas' exporta sin filtrar por grupo.">
+            Grupo de vistas: <select id="folderSelect" disabled style="width:55%;"><option value="">Todas las vistas</option></select>
+            <button id="folderRefresh" class="icon-btn" title="Actualizar grupos de vistas" aria-label="Actualizar grupos de vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
           </div>
           <div class="row"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar CSV</button></div>
         </div>
@@ -482,14 +487,14 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.7.5";
+    const SCRIPT_VERSION = "v8.8.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const HIDDEN_MARK_COLOR = {r:255,g:255,b:255,a:255};
-    const HIDDEN_MARK_COLOR_HEX = "#FFFFFFFF";
-    const HIDDEN_MARK_OPACITY = 0.5;
+    const HIDDEN_MARK_COLOR_SHOWN = {r:255,g:255,b:255,a:128}; // blanco con alfa 50% para el visor
+    const HIDDEN_MARK_OPACITY = 50; // escala 0-100 del Workspace API
     const CONTACT_TOLERANCE = 0.012;
     const CONTACT_VOLUME_MAX = 0.001;
     const CANDIDATE_BBOX_BATCH = 400;
@@ -676,30 +681,98 @@
     function viewFullName(v){ return v?(v.name||v.description||""):""; }
     const FOLDER_KEYS=["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection"];
     function detectFolder(view){ if(!view||typeof view!=="object") return ""; for(const k of Object.keys(view)){ if(FOLDER_KEYS.includes(k.toLowerCase())){ const val=view[k]; if(val==null||val==="") continue; if(typeof val!=="object") return String(val); if(Array.isArray(val)){ const first=val.find((x)=>x); if(first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); } else return String(val.name||val.title||val.groupName||val.id||""); } } return ""; }
-    async function populateFolders(){
+    // ----- Grupos de vistas: caché compartida (plantillas + exportación masiva) -----
+    // 1) Intenta métodos nativos del API (no documentados de forma uniforme; detección de capacidades).
+    // 2) Si no existen, deduce los grupos desde los campos disponibles de cada ViewSpec.
+    // 3) Solo si la lista no aporta nada, pide detalles vista a vista con límite y lotes.
+    let viewGroupsCache={groups:[],byViewId:new Map(),source:"",builtAt:0,building:null};
+    const VIEW_GROUP_DETAIL_LIMIT=150;
+    async function nativeViewGroups(){
+      const methods=["getViewGroups","getGroups","getViewSets","getFolders"];
+      for(const name of methods){
+        const fn=API&&API.view&&API.view[name];
+        if(typeof fn!=="function") continue;
+        try{
+          const res=await fn.call(API.view);
+          const arr=Array.isArray(res)?res:((res&&(res.items||res.groups||res.viewGroups))||[]);
+          const names=[]; const byId=new Map();
+          for(const g of arr||[]){
+            const nm=String((g&&(g.name||g.title||g.label||g.displayName))||(typeof g==="string"?g:"")).trim();
+            if(!nm) continue;
+            names.push(nm);
+            if(g&&g.id!=null) byId.set(String(g.id),nm);
+          }
+          if(names.length) return {names:[...new Set(names)],byId,source:"API.view."+name};
+        }catch(e){ recordError("nativeViewGroups."+name,e); }
+      }
+      return null;
+    }
+    function viewGroupIdOf(view){
+      if(!view||typeof view!=="object") return "";
+      for(const k of Object.keys(view)){ const lk=k.toLowerCase(); if(/^(view)?(group|folder|set)id$/.test(lk)&&view[k]!=null&&view[k]!=="") return String(view[k]); }
+      return "";
+    }
+    async function buildViewGroupsCache(force){
+      if(viewGroupsCache.building) return viewGroupsCache.building;
+      if(!force && viewGroupsCache.builtAt && (Date.now()-viewGroupsCache.builtAt)<60000) return viewGroupsCache;
+      if(!API||!API.view||typeof API.view.getViews!=="function") return viewGroupsCache;
+      viewGroupsCache.building=(async ()=>{
+        const groups=new Set(); const byViewId=new Map(); let source="ViewSpec";
+        let views=[]; try{ views=await API.view.getViews()||[]; }catch(e){ recordError("buildViewGroupsCache.getViews",e); }
+        const native=await nativeViewGroups();
+        if(native){ source=native.source; native.names.forEach((n)=>groups.add(n)); }
+        for(const v of views){
+          let g="";
+          if(native&&native.byId.size){ const gid=viewGroupIdOf(v); if(gid&&native.byId.has(gid)) g=native.byId.get(gid); }
+          if(!g) g=detectFolderDeep(v);
+          if(g){ groups.add(g); if(v&&v.id!=null) byViewId.set(String(v.id),g); }
+        }
+        // Último recurso: detalles por vista (limitado y por lotes para no bloquear ni saturar el API).
+        if(groups.size===0 && API && API.view && typeof API.view.getView==="function" && views.length){
+          const sample=views.slice(0,VIEW_GROUP_DETAIL_LIMIT);
+          log("Grupos de vistas: la lista no expone grupos; consultando detalles de "+sample.length+" vista(s)...");
+          for(let i=0;i<sample.length;i+=10){
+            const chunk=sample.slice(i,i+10);
+            const results=await Promise.all(chunk.map((v)=>API.view.getView(v.id).catch(()=>null)));
+            for(let j=0;j<chunk.length;j++){ const full=results[j]; if(!full) continue; const g=detectFolderDeep(full); if(g){ groups.add(g); if(chunk[j].id!=null) byViewId.set(String(chunk[j].id),g); } }
+            setProgress("Leyendo grupos de vistas: "+Math.min(i+chunk.length,sample.length)+"/"+sample.length+"...");
+            await sleep(40);
+          }
+          source="API.view.getView (detalle)";
+          if(views.length>VIEW_GROUP_DETAIL_LIMIT) log("Grupos de vistas: análisis de detalle limitado a "+VIEW_GROUP_DETAIL_LIMIT+" vistas.");
+        }
+        viewGroupsCache={groups:[...groups].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es")),byViewId,source,builtAt:Date.now(),building:null};
+        if(viewGroupsCache.groups.length) log("Grupos de vistas detectados: "+viewGroupsCache.groups.length+" (fuente: "+source+").");
+        else log("Aviso: el Workspace API no expone grupos de vistas en este proyecto (ni de forma nativa ni en los datos de ViewSpec).");
+        return viewGroupsCache;
+      })();
+      return viewGroupsCache.building;
+    }
+    async function populateFolders(force){
       const sel=document.getElementById("folderSelect"); if(!sel) return;
       const keep=sel.value; sel.innerHTML="";
-      const optAll=document.createElement("option"); optAll.value=""; optAll.textContent="Todas las vistas"; sel.appendChild(optAll);
-      let views=[]; try{ views=await API.view.getViews(); }catch(e){ recordError("populateFolders",e); }
-      const real=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
-      if(real.length>0){ for(const f of real){ const o=document.createElement("option"); o.value="real|"+f; o.textContent=f; sel.appendChild(o);} log("Carpetas detectadas por la API: "+real.length); }
-      else { log("Aviso: la Workspace API no expone carpetas/grupos de vistas. Se exportarán todas."); }
+      const optAll=document.createElement("option"); optAll.value=""; optAll.textContent="Todas las vistas"; optAll.selected=true; sel.appendChild(optAll);
+      const cache=await buildViewGroupsCache(force);
+      for(const f of cache.groups){ const o=document.createElement("option"); o.value="real|"+f; o.textContent=f; sel.appendChild(o); }
       if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
     }
-    function viewMatchesFolder(view,folderValue){ if(!folderValue) return true; const [kind,value]=folderValue.split("|"); if(kind==="real") return detectFolder(view)===value; return true; }
+    function viewMatchesFolder(view,folderValue){
+      if(!folderValue) return true;
+      const [kind,value]=folderValue.split("|");
+      if(kind!=="real") return true;
+      const cached=view&&view.id!=null?viewGroupsCache.byViewId.get(String(view.id)):"";
+      return (cached||detectFolderDeep(view))===value;
+    }
     function computeRevisionBase(viewName){ const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked; if(customOn&&customText) return customText.toUpperCase(); const auto=extractRevisionCode(viewName); if(auto) return auto; if(errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")"; return ""; }
 
     // ===================== OBJETOS COLOREADOS =====================
     async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,colorValid:an.valid}); } } return entries; }
     async function getColoredObjectEntriesWithRetry(){ for(let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if(e.length>0) return e; await sleep(600);} return []; }
-    async function probeColor(modelId,rid){ try{ const c=await getColoredObjectEntries(); const h=c.find((x)=>x.modelId===modelId&&x.objectRuntimeId===rid); return h?h.normalizedColor:""; }catch(e){ return ""; } }
     async function getCurrentColorMap(){ const map=new Map(); let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ colored=[]; } for(const c of colored) map.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor); return map; }
 
     // ===================== PROPIEDADES =====================
     function flattenProps(propsList){ const flat=[]; const walk=(obj)=>{ if(!obj||typeof obj!=="object") return; if(Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key??obj.propertyName; const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue; const unit=obj.unit??obj.units??obj.Unit??""; if(name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value:String(value),unit:String(unit||"")}); for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
     function propsSearchText(p){ const chunks=[]; try{ if(p.class) chunks.push(p.class);}catch(e){} for(const x of flattenProps(p)) chunks.push(x.name,x.value); return chunks.join(" ").toLowerCase(); }
-    function isNumericValue(v){ if(typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
-    function toNumber(v){ return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
     function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
     function getParamValue(p,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; if(target==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
     async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
@@ -770,7 +843,7 @@
       const folder=document.getElementById("folderSelect").value;
       let target=views.filter((v)=>viewMatchesFolder(v,folder));
       if(!folder){ const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if(withRfi.length>0) target=withRfi; }
-      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (carpeta)":"")); if(total===0){ log("Ninguna vista coincide."); setProgress("Sin coincidencias."); return; }
+      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (grupo de vistas)":"")); if(total===0){ log("Ninguna vista coincide."); setProgress("Sin coincidencias."); return; }
       showCancel(true); setProgress("Vistas exportadas 0/"+total+" (ETA: calculando...)");
       const allRows=[]; const exported=[]; const empty=[]; const errored=[]; const startTime=Date.now();
       for(let i=0;i<total;i++){
@@ -784,32 +857,29 @@
         setProgress("Vistas exportadas "+done+"/"+total+" (ETA: "+formatETA(eta)+")");
       }
       showCancel(false);
-      if(allRows.length>0){ const csv=rowsToCsv(allRows,cols); let name="DEO_extended_export"; if(folder) name+="_"+sanitizeFilename(folder); downloadText(name+"_trimble_colores_guid_ifc.csv",csv); }
+      if(allRows.length>0){ const csv=rowsToCsv(allRows,cols); let name="DEO_extended_export"; const folderLabel=folder?folder.split("|").slice(1).join("|"):""; if(folderLabel) name+="_"+sanitizeFilename(folderLabel); downloadText(name+"_trimble_colores_guid_ifc.csv",csv); }
       else log("No se ha generado ninguna fila.");
-      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Carpeta: "+(folder||"(todas)"),(cancelRequested?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),"Total vistas: "+total,"Exportadas: "+exported.length,"Sin objetos: "+empty.length,"Con error: "+errored.length,"Filas: "+allRows.length,"","== EXPORTADAS =="]; exported.forEach((e)=>report.push("- "+e.name+" (filas: "+e.rows+")")); report.push("","== SIN OBJETOS =="); empty.forEach((n)=>report.push("- "+n)); report.push("","== CON ERROR =="); errored.forEach((e)=>report.push("- "+e.name+" -> "+e.error));
-      let rname="DEO_extended_export"; if(folder) rname+="_"+sanitizeFilename(folder); downloadText(rname+"_informe.txt",report.join("\n"),"text/plain");
+      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Grupo de vistas: "+(folder?folder.split("|").slice(1).join("|"):"(todas las vistas)"),(cancelRequested?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),"Total vistas: "+total,"Exportadas: "+exported.length,"Sin objetos: "+empty.length,"Con error: "+errored.length,"Filas: "+allRows.length,"","== EXPORTADAS =="]; exported.forEach((e)=>report.push("- "+e.name+" (filas: "+e.rows+")")); report.push("","== SIN OBJETOS =="); empty.forEach((n)=>report.push("- "+n)); report.push("","== CON ERROR =="); errored.forEach((e)=>report.push("- "+e.name+" -> "+e.error));
+      let rname="DEO_extended_export"; { const folderLabel=folder?folder.split("|").slice(1).join("|"):""; if(folderLabel) rname+="_"+sanitizeFilename(folderLabel); } downloadText(rname+"_informe.txt",report.join("\n"),"text/plain");
       setProgress("Hecho: "+exported.length+" exportadas, "+empty.length+" sin objetos, "+errored.length+" con error.");
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
     const IMPORT_REVIEWED_RED = {r:252,g:13,b:27,a:255};
     function isReviewedTrue(v){ return ["TRUE","VERDADERO","1","YES","SI","SÍ"].includes(String(v||"").trim().toUpperCase()); }
-    function rgbaFromNormalizedColor(col){ const a=analyzeColor(col); return a.valid?{r:a.rgba.r,g:a.rgba.g,b:a.rgba.b,a:a.rgba.a}:null; }
-    function stateKeyFromColor(col){ const a=analyzeColor(col); return a.valid?a.normalizedColor:""; }
-    function importStateForKey(key){ if(key==="__REVIEWED_RED") return {color:{...IMPORT_REVIEWED_RED},opacity:100,visible:true}; const rgba=rgbaFromNormalizedColor(key); return rgba?{color:rgba,opacity:100,visible:true}:null; }
     function headerIndex(header,names,contains){
       for(const n of names){ const i=header.findIndex((h)=>h===n); if(i>=0) return i; }
       if(contains){ const i=header.findIndex((h)=>contains.some((c)=>h.includes(c))); if(i>=0) return i; }
       return -1;
     }
-    function importBucket(map,key){ if(!map.has(key)) map.set(key,{direct:new Map(),guidItems:new Map(),rows:0,reviewedRows:0,colorRows:0}); return map.get(key); }
-    function addGuidImportCandidate(bucket,guid){
+    // Registra un GUID con todas sus variantes (crudo, UUID externo, GUID IFC comprimido) para la conversión por lotes.
+    function addGuidImportCandidate(guidItems,guid){
       const raw=String(guid||"").trim(); if(!raw) return;
-      if(!bucket.guidItems.has(raw)){
+      if(!guidItems.has(raw)){
         const variants=new Set([raw]);
         const uuid=toExternalUuid(raw); if(uuid) variants.add(uuid);
         const ifc=toIfcGuid(raw); if(ifc) variants.add(ifc);
-        bucket.guidItems.set(raw,[...variants].filter(Boolean));
+        guidItems.set(raw,[...variants].filter(Boolean));
       }
     }
     async function convertRuntimeIdsSafe(modelId,candidates){
@@ -849,7 +919,7 @@
           const rid=oi>=0?Number(String(cells[oi]||"").trim()):NaN;
           if(modelId && Number.isFinite(rid)){ addToMapSet(directMap,modelId,[rid]); directRows++; continue; }
           const guid=gi>=0?String(cells[gi]||"").trim():"";
-          if(guid){ const bucket=importBucket(new Map(),"__TMP"); addGuidImportCandidate(bucket,guid); for(const [raw,variants] of bucket.guidItems.entries()) if(!guidItems.has(raw)) guidItems.set(raw,variants); guidRows++; }
+          if(guid){ addGuidImportCandidate(guidItems,guid); guidRows++; }
           else skippedRows++;
         }
         log(file.name+": "+fileTrue+" fila(s) revisado_deo TRUE.");
@@ -866,23 +936,27 @@
       const resolvedGuids=new Set(); let resolvedRuntimeObjects=0;
       const guidEntries=[...guidItems.entries()];
       if(guidEntries.length){
-        for(const modelId of modelIds){
+        for(let m=0;m<modelIds.length;m++){
           if(cancelRequested) break;
-          const allCandidates=[]; guidEntries.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
+          const modelId=modelIds[m];
+          // Solo se convierten los GUID aún pendientes: evita rehacer lotes ya resueltos en modelos anteriores.
+          const pending=guidEntries.filter(([raw])=>!resolvedGuids.has(raw));
+          if(pending.length===0) break;
+          const allCandidates=[]; pending.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
           const ridByCandidate=await convertRuntimeIdsSafe(modelId,allCandidates);
           const ids=[];
-          for(const [rawGuid,variants] of guidEntries){
+          for(const [rawGuid,variants] of pending){
             const rid=variants.map((v)=>ridByCandidate.get(v)).find((x)=>x!=null);
             if(rid!=null){ ids.push(Number(rid)); resolvedGuids.add(rawGuid); }
           }
           if(ids.length){ addToMapSet(directMap,modelId,ids); resolvedRuntimeObjects+=ids.length; }
-          setProgress("Importando revisados DEO: modelo "+(modelIds.indexOf(modelId)+1)+"/"+modelIds.length+". GUID resueltos: "+resolvedGuids.size+"/"+guidItems.size);
+          setProgress("Importando revisados DEO: modelo "+(m+1)+"/"+modelIds.length+". GUID resueltos: "+resolvedGuids.size+"/"+guidItems.size);
           await sleep(0);
         }
       }
 
       let paintedRed=0;
-      const redState={color:{...IMPORT_REVIEWED_RED},opacity:1,visible:true};
+      const redState={color:{...IMPORT_REVIEWED_RED},opacity:100,visible:true}; // opacidad en escala 0-100 del API
       for(const [modelId,set] of directMap.entries()){
         if(cancelRequested) break;
         const ids=[...set];
@@ -898,13 +972,17 @@
       if(paintedRed>0){ try{ suppressSelectionUntil=Date.now()+900; await API.viewer.setSelection(mapSetToSelector(directMap),"set"); }catch(e){ recordError("import.selectReviewed",e); } }
       showCancel(false);
       log("Filas leídas: "+rowsRead+". Filas revisado_deo TRUE: "+trueRows+". Directas modelId/runtimeId: "+directRows+". Por GUID: "+guidRows+". Omitidas/no TRUE: "+skippedRows+".");
-      log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+Math.max(0,guidItems.size-resolvedGuids.size)+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
+      const unresolved=[...guidItems.keys()].filter((g)=>!resolvedGuids.has(g));
+      log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+unresolved.length+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
+      if(unresolved.length) log("GUID no encontrados (muestra de "+Math.min(10,unresolved.length)+"): "+unresolved.slice(0,10).join(", "));
       log("Objetos seleccionados y pintados en rojo por revisado_deo TRUE: "+paintedRed+".");
       setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+paintedRed+" revisados DEO pintados en rojo.");
     }
 
     // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
-    function getNearCalibrationFactor(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0,Math.min(2,v/100)):1; }
+    function getNearCalibrationFactor(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0,Math.min(3,v/100)):1; }
+    // Efecto imán: cerca del 100% el slider se engancha al valor base.
+    function applyNearMagnet(){ const el=document.getElementById("nearPercent"); if(!el) return; const v=parseFloat(el.value); if(Number.isFinite(v)&&v!==100&&Math.abs(v-100)<=10) el.value="100"; }
     function updateNearPercentLabel(){ const el=document.getElementById("nearPercent"), lab=document.getElementById("nearPercentLabel"); if(el&&lab) lab.textContent=el.value+"%"; }
     function isFastenerOrWeld(propObj,bb,maxVolume){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<maxVolume) return true; return false; }
     async function assemblyCandidateIds(modelId,seedIds){
@@ -926,9 +1004,12 @@
       const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if(seedBoxes.length===0) return [];
       const seedBox=unionBox(seedBoxes);
       const seedDiag=boxDiagonal(seedBox);
-      // Radio ABSOLUTO de búsqueda: base de contacto + 4% de la diagonal de la semilla, escalado por la sensibilidad.
-      const margin=(CONTACT_TOLERANCE + seedDiag*0.04) * factor;
-      const volMax=CONTACT_VOLUME_MAX * factor;
+      // Radio ABSOLUTO de búsqueda: base de contacto + 4% de la diagonal de la semilla.
+      // <=100%: escala lineal (100% = comportamiento base). >100%: escala cuadrática para
+      // que el alcance máximo (300% -> 9x base) sea mucho mayor que el comportamiento anterior.
+      const reach = factor<=1 ? factor : factor*factor;
+      const margin=(CONTACT_TOLERANCE + seedDiag*0.04) * reach;
+      const volMax=CONTACT_VOLUME_MAX * reach;
       const seedSet=new Set(seedIds);
       const candidateIds=(await assemblyCandidateIds(modelId,seedIds)).filter((id)=>!seedSet.has(id));
       if(candidateIds.length===0){ log("Selección cercanos: el objeto no tiene ensamblaje con más piezas (o la jerarquía no está disponible)."); return []; }
@@ -1029,113 +1110,157 @@
     }
 
     // ===================== OCULTOS (#3) =====================
+    // Registro: modelId -> Set(runtimeId) de objetos ocultos marcados por la herramienta.
+    // El registro NO se vacía al apagar "Ver ocultos": permite activarlo/desactivarlo varias veces.
+    // Reglas: blanco 50% transparencia al mostrar; al ocultar, los que siguen blancos se ocultan
+    // y los recoloreados manualmente se "rescatan" (permanecen visibles con su color).
+    const HIDDEN_STATE_BATCH = 1000;
     async function getHiddenObjectEntries(){
       const attempts=[ ()=>API.viewer.getObjects(undefined,{visible:false}), ()=>API.viewer.getObjects(undefined,{hidden:true}), ()=>API.viewer.getObjects({visible:false}) ];
       let entries=[];
       for(const fn of attempts){ try{ const groups=await fn(); const out=[]; for(const g of groups||[]){ const modelId=g.modelId||g.id||""; for(const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])){ const rid=Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o); if(modelId&&Number.isFinite(rid)) out.push({modelId,objectRuntimeId:rid}); } } if(out.length){ entries=out; break; } }catch(e){ recordError("getHiddenObjects",e); } }
       const seen=new Set(); return entries.filter((e)=>{ const k=e.modelId+":"+e.objectRuntimeId; if(seen.has(k)) return false; seen.add(k); return true; });
     }
-    function hiddenMarkState(visible){ return {color:{...HIDDEN_MARK_COLOR},opacity:HIDDEN_MARK_OPACITY,visible:!!visible}; }
-    async function getWhiteColoredMap(){
-      const map=new Map();
-      try{ const entries=await getColoredObjectEntries(); for(const e of entries){ if(e.normalizedColor===HIDDEN_MARK_COLOR_HEX) addToMapSet(map,e.modelId,[e.objectRuntimeId]); } }catch(e){ recordError("getWhiteColoredMap",e); }
-      return map;
+    async function setStateInBatches(modelId,ids,state,ctx){
+      let n=0;
+      for(let i=0;i<ids.length;i+=HIDDEN_STATE_BATCH){
+        const chunk=ids.slice(i,i+HIDDEN_STATE_BATCH);
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:chunk}]},state); n+=chunk.length; }
+        catch(e){ recordError(ctx,e); }
+        if(ids.length>HIDDEN_STATE_BATCH){ setProgress("Ocultos: procesados "+Math.min(i+chunk.length,ids.length)+"/"+ids.length+"..."); await sleep(0); }
+      }
+      return n;
     }
+    function isWhiteNormalized(col){ return typeof col==="string" && col.toUpperCase().startsWith("#FFFFFF"); }
     async function markHiddenObjectsWhite(){
+      setProgress("Selección ocultos: detectando objetos ocultos...");
       const entries=await getHiddenObjectEntries(); hiddenWhiteRegistry.clear();
-      if(!entries.length){ log("Selección ocultos: no se han detectado objetos ocultos."); return 0; }
+      if(!entries.length){ log("Selección ocultos: no se han detectado objetos ocultos."); setProgress("Selección ocultos: sin objetos ocultos."); return 0; }
       const byModel=new Map(); for(const e of entries) addToMapSet(byModel,e.modelId,[e.objectRuntimeId]);
       let marked=0;
+      // Se aplica el color blanco mientras siguen ocultos; la transparencia se aplica al mostrarlos.
       for(const [modelId,set] of byModel.entries()){
         const ids=[...set];
-        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},hiddenMarkState(false)); hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=ids.length; }
-        catch(e){ recordError("markHiddenWhite",e); }
+        const n=await setStateInBatches(modelId,ids,{color:{...HIDDEN_MARK_COLOR},visible:false},"markHiddenWhite");
+        if(n){ hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=n; }
       }
-      log("Selección ocultos: "+marked+" objeto(s) ocultos marcados en blanco con opacidad 50%.");
+      log("Selección ocultos: "+marked+" objeto(s) ocultos registrados y marcados en blanco.");
+      setProgress("Selección ocultos: "+marked+" objeto(s) registrados.");
       return marked;
     }
-    async function rescueRecolored(){
+    // Separa el registro entre objetos que siguen blancos y objetos recoloreados manualmente.
+    // Solo consulta colores de objetos VISIBLES; si un color no consta, se asume que sigue blanco
+    // (no se rescata), evitando vaciar el registro por error.
+    async function splitRegistryByColor(){
       const colorMap=await getCurrentColorMap();
-      let count=0;
+      const stillWhite=new Map(); const recolored=new Map();
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
-        const recolored=[];
-        for(const id of [...set]){
+        for(const id of set){
           const col=colorMap.get(modelId+":"+id);
-          // Si ya no consta como blanco marcado, se considera rescatado y no debe volver a ocultarse.
-          if(col!==HIDDEN_MARK_COLOR_HEX){ recolored.push(id); set.delete(id); }
+          if(col!=null && !isWhiteNormalized(col)) addToMapSet(recolored,modelId,[id]);
+          else addToMapSet(stillWhite,modelId,[id]);
         }
-        if(recolored.length){ try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:recolored}]},{visible:true,opacity:1}); count+=recolored.length; }catch(e){ recordError("rescueRecolored",e); } }
       }
-      if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s) y mantenida(s) visible(s).");
+      return {stillWhite,recolored};
+    }
+    async function rescueRecolored(recoloredMap){
+      let count=0;
+      for(const [modelId,set] of recoloredMap.entries()){
+        const ids=[...set]; if(!ids.length) continue;
+        count+=await setStateInBatches(modelId,ids,{visible:true,opacity:100},"rescueRecolored");
+        const reg=hiddenWhiteRegistry.get(modelId); if(reg) ids.forEach((id)=>reg.delete(id));
+      }
+      if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s); permanecerán visibles.");
       return count;
     }
     async function setRegistryVisible(visible){
+      if(!mapSetCount(hiddenWhiteRegistry)){ log("Ver ocultos: no hay objetos ocultos registrados. Reactiva 'Selección ocultos' para volver a detectarlos."); return 0; }
       if(visible){
         let count=0;
         for(const [modelId,set] of hiddenWhiteRegistry.entries()){
           const ids=[...set]; if(!ids.length) continue;
-          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},hiddenMarkState(true)); count+=ids.length; }
-          catch(e){ recordError("setRegistryVisible.show",e); }
+          count+=await setStateInBatches(modelId,ids,{color:{...HIDDEN_MARK_COLOR_SHOWN},opacity:HIDDEN_MARK_OPACITY,visible:true},"setRegistryVisible.show");
         }
         log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco con opacidad 50%.");
+        setProgress("Ver ocultos: "+count+" objeto(s) mostrados.");
         return count;
       }
-      await rescueRecolored();
-      const whiteMap=await getWhiteColoredMap();
-      for(const [modelId,set] of hiddenWhiteRegistry.entries()) addToMapSet(whiteMap,modelId,[...set]);
+      const {stillWhite,recolored}=await splitRegistryByColor();
+      await rescueRecolored(recolored);
       let count=0;
-      for(const [modelId,set] of whiteMap.entries()){
+      for(const [modelId,set] of stillWhite.entries()){
         const ids=[...set]; if(!ids.length) continue;
-        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); count+=ids.length; }
-        catch(e){ recordError("setRegistryVisible.hide",e); }
+        count+=await setStateInBatches(modelId,ids,{visible:false},"setRegistryVisible.hide");
       }
-      log("Ver ocultos OFF: ocultados "+count+" objeto(s) blancos con opacidad 50%.");
+      log("Ver ocultos OFF: "+count+" objeto(s) blancos vueltos a ocultar (el registro se conserva para reactivar).");
+      setProgress("Ver ocultos: "+count+" objeto(s) ocultados.");
       return count;
     }
     async function clearHiddenWhite(){
-      await rescueRecolored();
-      const whiteMap=await getWhiteColoredMap();
-      for(const [modelId,set] of hiddenWhiteRegistry.entries()) addToMapSet(whiteMap,modelId,[...set]);
+      if(!mapSetCount(hiddenWhiteRegistry)){ log("Selección ocultos OFF: registro vacío."); return; }
+      const {stillWhite,recolored}=await splitRegistryByColor();
+      await rescueRecolored(recolored);
       let count=0;
-      for(const [modelId,set] of whiteMap.entries()){
+      for(const [modelId,set] of stillWhite.entries()){
         const ids=[...set]; if(!ids.length) continue;
-        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); count+=ids.length; }
-        catch(e){ recordError("clearHiddenWhite",e); }
+        count+=await setStateInBatches(modelId,ids,{visible:false},"clearHiddenWhite");
       }
       hiddenWhiteRegistry.clear();
       log("Selección ocultos OFF: "+count+" objeto(s) blancos ocultados y registro limpiado.");
+      setProgress("Selección ocultos desactivada.");
     }
     function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); if(view) view.disabled=!on; if(line) line.classList.toggle("is-disabled",!on); }
 
     // ===================== MOSTRAR PARÁMETROS (#4-7) =====================
+    // Detecta el namespace de markups disponible (varía según versión del Workspace API).
+    function markupApi(){
+      if(API&&API.markup&&typeof API.markup.addTextMarkup==="function") return API.markup;
+      if(API&&API.viewer&&API.viewer.markup&&typeof API.viewer.markup.addTextMarkup==="function") return API.viewer.markup;
+      return null;
+    }
     async function removeMarkupIds(ids){
       const clean=[...(ids||[])].map((id)=>Number(id)).filter((id)=>Number.isFinite(id));
-      if(clean.length&&API.markup&&typeof API.markup.removeMarkups==="function"){ try{ await API.markup.removeMarkups(clean); }catch(e){ recordError("removeMarkups",e); } }
+      const mk=markupApi();
+      if(clean.length&&mk&&typeof mk.removeMarkups==="function"){ try{ await mk.removeMarkups(clean); }catch(e){ recordError("removeMarkups",e); } }
     }
     function normalizeMarkupIds(added){
       const arr=Array.isArray(added)?added:(added?[added]:[]);
       return arr.map((m)=>typeof m==="number"?m:(m&&m.id)).filter((id)=>id!=null && Number.isFinite(Number(id))).map(Number);
     }
+    // Pick en el formato estándar del Workspace API: posiciones en milímetros + referencias de objeto.
+    // Se eliminan los campos no documentados (type, referenceObjectId) que provocaban el rechazo del API.
+    function markupPick(modelId,runtimeId,bb,offsetMm){
+      const scale=1000;
+      return {
+        positionX:((bb.min.x+bb.max.x)/2)*scale,
+        positionY:((bb.min.y+bb.max.y)/2)*scale,
+        positionZ:((bb.min.z+bb.max.z)/2)*scale+(offsetMm||0),
+        modelId:modelId,
+        objectRuntimeId:runtimeId
+      };
+    }
+    function stripPickRefs(m){
+      const strip=(p)=>({positionX:p.positionX,positionY:p.positionY,positionZ:p.positionZ});
+      return {start:strip(m.start),end:strip(m.end),text:m.text,color:m.color};
+    }
+    // Cascada: lote completo -> uno a uno -> lote sin referencias de objeto (solo coordenadas).
     async function addTextMarkupsRobust(batch){
       if(!batch||!batch.length) return [];
-      try{ const added=await API.markup.addTextMarkup(batch); const ids=normalizeMarkupIds(added); if(ids.length) return ids; }
+      const mk=markupApi(); if(!mk) return [];
+      try{ const added=await mk.addTextMarkup(batch); const ids=normalizeMarkupIds(added); if(ids.length) return ids; }
       catch(e){ recordError("paramMarkups.add.batch",e); }
       const ids=[];
       for(const m of batch){
-        try{ const added=await API.markup.addTextMarkup([m]); ids.push(...normalizeMarkupIds(added)); }
-        catch(e1){
-          recordError("paramMarkups.add.singleArray",e1);
-          try{ const added=await API.markup.addTextMarkup(m); ids.push(...normalizeMarkupIds(added)); }
-          catch(e2){ recordError("paramMarkups.add.single",e2); log("Mostrar parámetros: no se ha podido crear etiqueta para " + String(m.text||"").slice(0,100)); }
-        }
+        try{ const added=await mk.addTextMarkup([m]); const got=normalizeMarkupIds(added); if(got.length){ ids.push(...got); continue; } }
+        catch(e1){ recordError("paramMarkups.add.single",e1); }
+        try{ const added=await mk.addTextMarkup([stripPickRefs(m)]); ids.push(...normalizeMarkupIds(added)); }
+        catch(e2){ recordError("paramMarkups.add.stripped",e2); }
+      }
+      if(!ids.length){
+        try{ const added=await mk.addTextMarkup(batch.map(stripPickRefs)); ids.push(...normalizeMarkupIds(added)); }
+        catch(e3){ recordError("paramMarkups.add.strippedBatch",e3); }
       }
       return ids;
-    }
-    function centerPickFromBox(modelId,runtimeId,bb,offsetMm,staticObjectId){
-      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2; const scale=1000;
-      const pick={ type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:cz*scale+(offsetMm||0) };
-      if(staticObjectId) pick.referenceObjectId=staticObjectId;
-      return pick;
     }
     let paramIconSeq=880000;
     function xmlEsc(v){ return String(v||"").replace(/[&<>'"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&apos;","\"":"&quot;"}[c]||c)); }
@@ -1156,61 +1281,84 @@
     }
     async function removeParamIcons(ids){ const clean=[...(ids||[])].map(Number).filter(Number.isFinite); if(clean.length&&API.viewer&&typeof API.viewer.removeIcon==="function"){ try{ await API.viewer.removeIcon(clean); }catch(e){ recordError("removeParamIcons",e); } } }
     async function removeParamVisuals(cfg){ await removeMarkupIds(cfg.store); cfg.store=[]; await removeParamIcons(cfg.iconStore); cfg.iconStore=[]; }
-    async function staticObjectIdsForRuntime(modelId,ids){ try{ const arr=await API.viewer.convertToObjectIds(modelId,ids); return Array.isArray(arr)?arr:[]; }catch(e){ recordError("paramMarkups.convertToObjectIds",e); return []; } }
+    // Identificación de tornillería y soldaduras: Name del objeto + clase/propiedades IFC como respaldo.
+    function matchBolt(p){
+      const names=getNameValues(p).map((v)=>v.toLowerCase());
+      if(names.some((n)=>n.includes("bolt"))) return true;
+      const t=propsSearchText(p);
+      return t.includes("bolt assembly")||t.includes("mechanicalfastener")||t.includes("ifcmechanicalfastener")||t.includes("tornillo")||t.includes("perno");
+    }
+    function matchWeld(p){
+      const names=getNameValues(p).map((v)=>v.toLowerCase());
+      if(names.some((n)=>n.includes("weld"))) return true;
+      const t=propsSearchText(p);
+      return t.includes("weld")||t.includes("soldadura");
+    }
     const paramTools={
-      names:{toggleId:"namesToggle", picker:namesPicker, filter:null, store:[], iconStore:[]},
-      bolts:{toggleId:"boltsToggle", picker:boltsPicker, filter:"bolt assembly", store:[], iconStore:[]},
-      welds:{toggleId:"weldsToggle", picker:weldsPicker, filter:"weld", store:[], iconStore:[]}
+      names:{toggleId:"namesToggle", picker:namesPicker, match:null, store:[], iconStore:[]},
+      bolts:{toggleId:"boltsToggle", picker:boltsPicker, match:matchBolt, store:[], iconStore:[]},
+      welds:{toggleId:"weldsToggle", picker:weldsPicker, match:matchWeld, store:[], iconStore:[]}
     };
     const paramTimers={};
+    let paramRefreshSeq=0; // cancela refrescos solapados (cambios rápidos de selección)
     function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const val=getParamValue(p,name); if(val===""||val==null) continue; if(String(name).trim().toLowerCase()==="name") lines.push(val); else lines.push(name+": "+val); } return lines.join("\n"); }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
+      const mySeq=++paramRefreshSeq;
       await removeParamVisuals(cfg);
       const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked) return;
-      if(!API.markup||typeof API.markup.addTextMarkup!=="function"){ log("Mostrar parámetros: la API de markups de texto no está disponible en este entorno."); return; }
       const sel=await safeGetSelection(); if(sel.length===0){ log("Mostrar parámetros ("+toolKey+"): no hay objetos seleccionados."); return; }
       const params=cfg.picker.getParams();
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
-      const markups=[]; const iconItems=[];
+      const markups=[]; const iconItems=[]; let truncated=false;
       for(const [modelId,ids] of byModel.entries()){
-        if(markups.length>=MAX_PARAM_MARKUPS) break;
+        if(markups.length>=MAX_PARAM_MARKUPS){ truncated=true; break; }
         let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("paramMarkups.bbox",e); continue; }
         const propsMap=await getPropertiesCached(modelId,ids);
-        const staticIds=await staticObjectIdsForRuntime(modelId,ids);
+        if(mySeq!==paramRefreshSeq) return; // la selección cambió mientras se leían datos
         for(let i=0;i<ids.length;i++){
-          if(markups.length>=MAX_PARAM_MARKUPS) break;
+          if(markups.length>=MAX_PARAM_MARKUPS){ truncated=true; break; }
           const bb=bboxOf(boxes[i]); if(!bb) continue;
           const p=propsMap.get(ids[i])||{};
-          if(cfg.filter){ const names=getNameValues(p).map((v)=>v.toLowerCase()); if(!names.some((n)=>n.includes(cfg.filter))) continue; }
+          if(cfg.match && !cfg.match(p)) continue;
           const text=buildParamLabel(p,params); if(!text) continue;
           const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
           const dzMm=Math.max(80,heightMm*0.35);
           markups.push({
-            start:centerPickFromBox(modelId,ids[i],bb,0,staticIds[i]),
-            end:centerPickFromBox(modelId,ids[i],bb,dzMm,staticIds[i]),
+            start:markupPick(modelId,ids[i],bb,0),
+            end:markupPick(modelId,ids[i],bb,dzMm),
             text,
             color:{r:0,g:0,b:0,a:255}
           });
           iconItems.push({bb,text});
         }
       }
+      if(truncated) log("Mostrar parámetros ("+toolKey+"): selección demasiado grande; se limita a "+MAX_PARAM_MARKUPS+" etiqueta(s). Reduce la selección para etiquetar el resto.");
       if(markups.length===0){ log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en la selección."); return; }
+      if(!markupApi() && (!API.viewer||typeof API.viewer.addIcon!=="function")){ log("Mostrar parámetros: ni la API de markups de texto ni la de iconos están disponibles en este entorno."); setProgress("Mostrar parámetros no disponible en este entorno."); return; }
+      const manyMarkups=markups.length>50;
+      if(manyMarkups && !opRunning){ cancelRequested=false; showCancel(true); }
       const stored=[];
-      for(let i=0;i<markups.length;i+=50){
-        const batch=markups.slice(i,i+50);
-        const ids=await addTextMarkupsRobust(batch);
-        stored.push(...ids);
-        setProgress("Mostrar parámetros: "+Math.min(i+batch.length,markups.length)+"/"+markups.length+" procesadas.");
-        await sleep(0);
-      }
+      try{
+        if(markupApi()){
+          for(let i=0;i<markups.length;i+=50){
+            if(cancelRequested){ log("Mostrar parámetros ("+toolKey+"): cancelado por el usuario."); break; }
+            if(mySeq!==paramRefreshSeq) return;
+            const batch=markups.slice(i,i+50);
+            const ids=await addTextMarkupsRobust(batch);
+            stored.push(...ids);
+            setProgress("Mostrar parámetros: "+Math.min(i+batch.length,markups.length)+"/"+markups.length+" procesadas.");
+            await sleep(0);
+          }
+        } else log("Mostrar parámetros: la API de markups de texto no está disponible; se usa el fallback de iconos.");
+      } finally { if(manyMarkups && !opRunning) showCancel(false); }
       cfg.store=stored;
-      if(stored.length===0){
-        const iconIds=await addLabelIcons(iconItems); cfg.iconStore=iconIds;
-        if(iconIds.length) log("Mostrar parámetros ("+toolKey+"): creadas "+iconIds.length+" etiqueta(s) como iconos SVG 3D porque la API de text markup no devolvió ids.");
-        else log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas y el fallback de iconos no está disponible.");
+      if(stored.length===0 && !cancelRequested){
+        const iconIds=await addLabelIcons(iconItems.slice(0,markups.length)); cfg.iconStore=iconIds;
+        if(iconIds.length){ log("Mostrar parámetros ("+toolKey+"): creadas "+iconIds.length+" etiqueta(s) como iconos SVG 3D (fallback: la API de text markup no devolvió ids)."); setProgress("Etiquetas creadas (fallback iconos): "+iconIds.length+"."); }
+        else { log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas y el fallback de iconos no está disponible. Revisa permisos del visor."); setProgress("No se han podido crear etiquetas."); }
       }
-      else log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s).");
+      else if(stored.length){ log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s)."); setProgress("Etiquetas creadas: "+stored.length+"."); }
     }
     function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeParamVisuals(cfg); return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
@@ -1321,25 +1469,18 @@
       }
       return walk(view,0);
     }
-    async function collectViewGroups(){
+    async function collectViewGroups(force){
       const folders=new Set();
-      try{
-        if(API&&API.view&&API.view.getViews){
-          const views=await API.view.getViews()||[];
-          for(const v of views){
-            const f=detectFolderDeep(v); if(f) folders.add(f);
-            if(API.view.getView&&v.id){ try{ const full=await API.view.getView(v.id); const ff=detectFolderDeep(full); if(ff) folders.add(ff); }catch(e){} }
-          }
-        }
-      }catch(e){ recordError("collectViewGroups",e); }
+      try{ const cache=await buildViewGroupsCache(force); cache.groups.forEach((g)=>folders.add(g)); }
+      catch(e){ recordError("collectViewGroups",e); }
       for(const t of loadTemplates()){ if(t&&t.folder) folders.add(String(t.folder)); }
       templateProjectGroups=[...folders].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
       return templateProjectGroups;
     }
-    async function populateTemplateFolderSelect(keepValue){
+    async function populateTemplateFolderSelect(keepValue,force){
       const sel=document.getElementById("tplCfg_folder"); if(!sel) return;
       const keep=keepValue!==undefined?String(keepValue||""):String(sel.value||"");
-      const list=await collectViewGroups();
+      const list=await collectViewGroups(force);
       sel.innerHTML="";
       const empty=document.createElement("option"); empty.value=""; empty.textContent="(Sin grupo)"; sel.appendChild(empty);
       for(const f of list){ const o=document.createElement("option"); o.value=f; o.textContent=f; sel.appendChild(o); }
@@ -1526,6 +1667,7 @@
       const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; setConfigMeta(t); } else { saveLastTemplateName(""); const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); } });
       const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); setCreateMeta(t); } else { setCreateMeta(null); } ensureCreateAutoFields(); });
       const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
+      const tplFolderRefresh=document.getElementById("tplCfg_folderRefresh"); if(tplFolderRefresh) tplFolderRefresh.onclick=async ()=>{ setProgress("Actualizando grupos de vistas..."); await populateTemplateFolderSelect(undefined,true); setProgress("Grupos de vistas actualizados: "+(viewGroupsCache.groups.length||0)+"."); };
       const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
       const createBtn=document.getElementById("templateCreateView"); if(createBtn) createBtn.onclick=()=>createViewFromTemplate();
       const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",loadSelectedViewForUpdate);
@@ -1670,18 +1812,19 @@
 
       const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect");
       ext.addEventListener("change",()=>{ folderSel.disabled=!ext.checked; if(ext.checked) populateFolders(); });
+      const folderRefresh=document.getElementById("folderRefresh"); if(folderRefresh) folderRefresh.onclick=async ()=>{ setProgress("Actualizando grupos de vistas..."); await populateFolders(true); setProgress("Grupos de vistas actualizados: "+(viewGroupsCache.groups.length||0)+"."); };
 
       // Selección cercanos (#1): la sensibilidad es un radio absoluto; recalcula sin reiniciar el estado.
-      const nearPercent=document.getElementById("nearPercent"); if(nearPercent) nearPercent.addEventListener("input",()=>{ updateNearPercentLabel(); scheduleProcessSelection(); });
+      const nearPercent=document.getElementById("nearPercent"); if(nearPercent){ nearPercent.addEventListener("input",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); nearPercent.addEventListener("change",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); }
       const nearCustom=document.getElementById("nearCustom"); nearCustom.addEventListener("change",()=>{ syncNearUiState(); scheduleProcessSelection(); });
       const nearToggle=document.getElementById("nearToggle"); nearToggle.addEventListener("change",async ()=>{ syncNearUiState(); if(nearToggle.checked) scheduleProcessSelection(); else await removeToolAddedFromSelection(); });
 
       const excludeToggle=document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change",()=>{ if(excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
+      excludeToggle.addEventListener("change",()=>{ if(excludeToggle.checked) populateExcludeColors(); scheduleProcessSelection(); });
       const excludeRefresh=document.getElementById("excludeRefresh"); if(excludeRefresh) excludeRefresh.onclick=()=>populateExcludeColors();
 
       const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
-      hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; await clearHiddenWhite(); syncHiddenUiState(); log("Selección ocultos OFF: objetos vueltos a ocultar (las piezas recoloreadas se mantienen)."); } });
+      hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; syncHiddenUiState(); await clearHiddenWhite(); } });
       if(viewHidden) viewHidden.addEventListener("change",async ()=>{ await setRegistryVisible(viewHidden.checked); });
 
       const includeToggle=document.getElementById("includeToggle");
@@ -1712,9 +1855,11 @@
       document.getElementById("devVersion").textContent="Código de versión: "+SCRIPT_VERSION;
       document.getElementById("devUpdated").textContent="Última modificación del archivo: "+getLastUpdatedLabel();
       const ws=window.TrimbleConnectWorkspace||window.WorkspaceAPI;
-      if(!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API."); return; }
+      if(!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API."); setProgress("Error: no se ha cargado la Workspace API."); return; }
+      setProgress("Conectando con Trimble Connect...");
       API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
       log("Conectado a Trimble Connect.\nCódigo de versión: "+SCRIPT_VERSION);
+      setProgress("Conectado a Trimble Connect.");
       await initTemplateTool();
       updateCsvColumnSelect();
 
@@ -1750,7 +1895,7 @@
       log("Debug descargado.");
     }
 
-    main().catch((err)=>{ recordError("main",err); log("ERROR DE CONEXIÓN: "+err.message); });
+    main().catch((err)=>{ recordError("main",err); log("ERROR DE CONEXIÓN: "+err.message); setProgress("Error de conexión con Trimble Connect."); });
   </script>
 </body>
 </html>
