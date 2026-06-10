@@ -477,7 +477,6 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
-      <button id="testMarkupBtn" style="margin-top:6px;font-size:11px;padding:3px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;cursor:pointer;" title="DIAGNÓSTICO TEMPORAL — Crea dos markups de prueba para verificar unidades (metros vs ×1000)">Test markup parámetros</button>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
         <div class="tool-body"><pre id="log"></pre></div>
@@ -488,7 +487,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.3";
+    const SCRIPT_VERSION = "v8.8.4";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -523,6 +522,9 @@
     function showCancel(on){ const el=document.getElementById("cancelOp"); if(el) el.style.display=on?"inline-block":"none"; }
     function recordError(ctx,err){ errorHistory.push({ts:new Date().toISOString(),ctx,message:err&&err.message?err.message:String(err),stack:err&&err.stack?String(err.stack).slice(0,2000):""}); if(errorHistory.length>80) errorHistory.shift(); }
     function safeJson(v,sp){ try{ return JSON.stringify(v,(k,val)=>(typeof val==="string"&&val.length>4000)?val.slice(0,4000)+"...[TRUNCADO]":val,sp||0); }catch(e){ return String(v); } }
+    // Igual que safeJson pero tolerante a referencias circulares (las propiedades de Trimble suelen tenerlas,
+    // y entonces safeJson caía a String(v) => "[object Object]"). Solo se usa en el debug.
+    function safeJsonDeep(v,sp){ const seen=new WeakSet(); try{ return JSON.stringify(v,(k,val)=>{ if(typeof val==="object"&&val!==null){ if(seen.has(val)) return "[Circular]"; seen.add(val); } if(typeof val==="string"&&val.length>4000) return val.slice(0,4000)+"...[TRUNCADO]"; return val; },sp||0); }catch(e){ return String(v); } }
     function formatETA(sec){ if(!isFinite(sec)||sec<0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
     function downloadText(filename,text,mime){ const blob=new Blob(["\uFEFF"+text],{type:(mime||"text/csv")+";charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
     function sanitizeFilename(name){ return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
@@ -1333,26 +1335,140 @@
     const paramTimers={};
     let paramRefreshSeq=0; // cancela refrescos solapados (cambios rápidos de selección)
     function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const val=getParamValue(p,name); if(val===""||val==null) continue; if(String(name).trim().toLowerCase()==="name") lines.push(val); else lines.push(name+": "+val); } return lines.join("\n"); }
+    // --- Resolución robusta de nombres (v8.8.4): evita nombres genéricos tipo BEAM/PLATE/... ---
+    const GENERIC_NAME_SET=new Set(["beam","plate","bolt","object","part","assembly","item","element","member","nut","washer","screw","weld","profile","column","brace","slab","wall","unknown","no name"]);
+    function isGenericName(s){ const t=String(s||"").trim().toLowerCase(); if(!t) return true; return GENERIC_NAME_SET.has(t); }
+    const NAME_PROFILE_PROPS=["profile","section","cross section","crosssection","cross-section"];
+    const NAME_MARK_PROPS=["part mark","assembly mark","cast unit mark","part position","assembly position","piece mark","piecemark","mark","position","reference","tag"];
+    function pickNamedProp(p,wanted){ const flat=flattenProps(p); for(const want of wanted){ const w=want.toLowerCase(); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===w && String(x.value||"").trim()); if(hit) return String(hit.value).trim(); } return ""; }
+    // Mejor nombre a partir SOLO de las propiedades propias del objeto.
+    function resolveBestNameLocal(p){
+      const direct=(getNameValues(p)[0]||"").trim();
+      if(direct && !isGenericName(direct)) return {text:direct,source:"objeto",prop:"Name"};
+      const profile=pickNamedProp(p,NAME_PROFILE_PROPS);
+      const mark=pickNamedProp(p,NAME_MARK_PROPS);
+      if(profile && mark) return {text:profile+" "+mark,source:"objeto",prop:"Profile+Mark"};
+      if(profile) return {text:profile,source:"objeto",prop:"Profile"};
+      if(mark) return {text:mark,source:"objeto",prop:"Mark"};
+      if(direct) return {text:direct,source:"objeto",prop:"Name(genérico)"};
+      return {text:"",source:"",prop:""};
+    }
+    // Propiedades de padres jerárquicos de UN objeto (defensivo, una llamada por objeto).
+    async function fetchParentProps(modelId,id){
+      try{
+        const parents=await API.viewer.getHierarchyParents(modelId,[id],undefined,false,false);
+        if(!(parents||[]).length) return [];
+        // Agrupar por fileId/modelId del padre (puede diferir del modelId del objeto seleccionado).
+        const byModel=new Map();
+        for(const x of parents){
+          const tid=x.fileId||x.modelId||modelId;
+          const rid=Number(x&&(x.id??x.runtimeId??x.objectRuntimeId));
+          if(!Number.isFinite(rid)) continue;
+          if(!byModel.has(tid)) byModel.set(tid,[]);
+          byModel.get(tid).push(rid);
+        }
+        const result=[];
+        for(const [tid,tids] of byModel.entries()){
+          const props=await getPropertiesCached(tid,tids);
+          for(const q of tids){ const p=props.get(q); if(p) result.push(p); }
+        }
+        return result;
+      }catch(e){ recordError("fetchParentProps",e); return []; }
+    }
+    // Propiedades de hijos cercanos (capado) para tornillería/soldaduras.
+    async function fetchChildProps(modelId,id,limit){
+      try{
+        const kids=await API.viewer.getHierarchyChildren(modelId,[id],undefined,true);
+        if(!(kids||[]).length) return [];
+        // Agrupar por fileId/modelId del hijo (puede diferir del modelId del objeto seleccionado).
+        const byModel=new Map(); let total=0; const cap=limit||20;
+        for(const x of kids){
+          if(total>=cap) break;
+          const tid=typeof x==="object"?(x.fileId||x.modelId||modelId):modelId;
+          const rid=Number(typeof x==="object"?(x.id??x.runtimeId??x.objectRuntimeId):x);
+          if(!Number.isFinite(rid)) continue;
+          if(!byModel.has(tid)) byModel.set(tid,[]);
+          byModel.get(tid).push(rid); total++;
+        }
+        if(!total) return [];
+        const result=[];
+        for(const [tid,tids] of byModel.entries()){
+          const props=await getPropertiesCached(tid,tids);
+          for(const q of tids){ const p=props.get(q); if(p) result.push(p); }
+        }
+        return result;
+      }catch(e){ recordError("fetchChildProps",e); return []; }
+    }
+    const DEEP_LOOKUP_CAP=25; // máx. objetos para los que se busca dato en padres/hijos (coste acotado)
+    // Nombre robusto: objeto y, si no hay nada útil, padres.
+    async function resolveNameDeep(modelId,id,p,allowDeep){
+      const local=resolveBestNameLocal(p);
+      if(local.text && local.prop!=="Name(genérico)") return local;
+      if(allowDeep){
+        for(const pp of await fetchParentProps(modelId,id)){
+          const r=resolveBestNameLocal(pp);
+          if(r.text && r.prop!=="Name(genérico)") return {text:r.text,source:"padre",prop:r.prop};
+        }
+      }
+      return local; // se queda con lo local (genérico o vacío) si no hay mejor
+    }
+    // Coincidencia tornillo/soldadura: objeto -> padre -> hijo. SOLO añade; nunca quita lo que ya casaba.
+    async function matchDeep(matchFn,modelId,id,p,allowDeep){
+      if(matchFn(p)) return {ok:true,source:"objeto"};
+      if(!allowDeep) return {ok:false,source:""};
+      for(const pp of await fetchParentProps(modelId,id)) if(matchFn(pp)) return {ok:true,source:"padre"};
+      for(const kp of await fetchChildProps(modelId,id,20)) if(matchFn(kp)) return {ok:true,source:"hijo"};
+      return {ok:false,source:""};
+    }
+    // Etiqueta de la herramienta "names": el parámetro Name usa el nombre resuelto; el resto, valor directo.
+    function buildNamesLabel(p,params,resolvedName){
+      const lines=[];
+      for(const name of params){
+        const key=String(name).trim().toLowerCase();
+        if(key==="name"){ if(resolvedName) lines.push(resolvedName); }
+        else { const val=getParamValue(p,name); if(val!==""&&val!=null) lines.push(name+": "+val); }
+      }
+      return lines.join("\n");
+    }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
       const mySeq=++paramRefreshSeq;
-      await removeParamVisuals(cfg);
-      const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked) return;
-      const sel=await safeGetSelection(); if(sel.length===0){ log("Mostrar parámetros ("+toolKey+"): no hay objetos seleccionados."); return; }
+      const toggle=document.getElementById(cfg.toggleId);
+      if(!toggle||!toggle.checked){ await removeParamVisuals(cfg); return; } // apagado: borrar siempre
+      const sel=await safeGetSelection();
+      if(sel.length===0){
+        // Selección vacía transitoria (p. ej. al cambiar de vista): NO borrar etiquetas ya creadas.
+        if(cfg.store.length||cfg.iconStore.length){ log("Mostrar parámetros ("+toolKey+"): selección vacía transitoria; se conservan "+(cfg.store.length+cfg.iconStore.length)+" etiqueta(s)."); return; }
+        log("Mostrar parámetros ("+toolKey+"): no hay objetos seleccionados."); return;
+      }
       const params=cfg.picker.getParams();
+      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
       const markups=[]; const iconItems=[]; let truncated=false;
+      let noBox=0, noMatch=0, noText=0; const srcTally={objeto:0,padre:0,hijo:0};
       for(const [modelId,ids] of byModel.entries()){
         if(markups.length>=MAX_PARAM_MARKUPS){ truncated=true; break; }
         let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("paramMarkups.bbox",e); continue; }
         const propsMap=await getPropertiesCached(modelId,ids);
-        if(mySeq!==paramRefreshSeq) return; // la selección cambió mientras se leían datos
+        if(mySeq!==paramRefreshSeq) return; // la selección cambió: dejamos intactas las etiquetas actuales
         for(let i=0;i<ids.length;i++){
           if(markups.length>=MAX_PARAM_MARKUPS){ truncated=true; break; }
-          const bb=bboxOf(boxes[i]); if(!bb) continue;
+          const bb=bboxOf(boxes[i]); if(!bb){ noBox++; continue; }
           const p=propsMap.get(ids[i])||{};
-          if(cfg.match && !cfg.match(p)) continue;
-          const text=buildParamLabel(p,params); if(!text) continue;
+          let text="";
+          if(toolKey==="names"){
+            const rn=await resolveNameDeep(modelId,ids[i],p,allowDeep);
+            if(mySeq!==paramRefreshSeq) return;
+            if(rn.source) srcTally[rn.source]=(srcTally[rn.source]||0)+1;
+            text=buildNamesLabel(p,params,rn.text);
+          } else {
+            const m=await matchDeep(cfg.match,modelId,ids[i],p,allowDeep);
+            if(mySeq!==paramRefreshSeq) return;
+            if(!m.ok){ noMatch++; continue; }
+            if(m.source) srcTally[m.source]=(srcTally[m.source]||0)+1;
+            text=buildParamLabel(p,params);
+          }
+          if(!text){ noText++; continue; }
           const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
           const dzMm=Math.max(80,heightMm*0.35);
           markups.push({
@@ -1364,9 +1480,18 @@
           iconItems.push({bb,text});
         }
       }
+      const srcLabel="objeto:"+srcTally.objeto+" padre:"+srcTally.padre+" hijo:"+srcTally.hijo;
       if(truncated) log("Mostrar parámetros ("+toolKey+"): selección demasiado grande; se limita a "+MAX_PARAM_MARKUPS+" etiqueta(s). Reduce la selección para etiquetar el resto.");
-      if(markups.length===0){ log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en la selección."); return; }
+      if(!allowDeep && toolKey!=="names") log("Mostrar parámetros ("+toolKey+"): selección grande ("+sel.length+"); no se amplía la búsqueda a padres/hijos.");
+      if(markups.length===0){
+        await removeParamVisuals(cfg); // selección válida pero sin candidatos: limpiar y explicar el motivo
+        log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en "+sel.length+" seleccionado(s). Descartes -> sin bbox:"+noBox+", sin coincidencia:"+noMatch+", sin texto:"+noText+".");
+        setProgress("Mostrar parámetros: sin objetos válidos.");
+        return;
+      }
       if(!markupApi() && (!API.viewer||typeof API.viewer.addIcon!=="function")){ log("Mostrar parámetros: ni la API de markups de texto ni la de iconos están disponibles en este entorno."); setProgress("Mostrar parámetros no disponible en este entorno."); return; }
+      if(mySeq!==paramRefreshSeq) return;
+      await removeParamVisuals(cfg); // swap: quitar etiquetas previas justo antes de crear las nuevas
       const manyMarkups=markups.length>50;
       if(manyMarkups && !opRunning){ cancelRequested=false; showCancel(true); }
       const stored=[];
@@ -1386,48 +1511,14 @@
       cfg.store=stored;
       if(stored.length===0 && !cancelRequested){
         const iconIds=await addLabelIcons(iconItems.slice(0,markups.length)); cfg.iconStore=iconIds;
-        if(iconIds.length){ log("Mostrar parámetros ("+toolKey+"): creadas "+iconIds.length+" etiqueta(s) como iconos SVG 3D (fallback: la API de text markup no devolvió ids)."); setProgress("Etiquetas creadas (fallback iconos): "+iconIds.length+"."); }
+        if(iconIds.length){ log("Mostrar parámetros ("+toolKey+"): "+iconIds.length+" etiqueta(s) como iconos SVG 3D (fallback). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas (fallback iconos): "+iconIds.length+"."); }
         else { log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas y el fallback de iconos no está disponible. Revisa permisos del visor."); setProgress("No se han podido crear etiquetas."); }
       }
-      else if(stored.length){ log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s)."); setProgress("Etiquetas creadas: "+stored.length+"."); }
+      else if(stored.length){ log("Mostrar parámetros ("+toolKey+"): "+stored.length+"/"+markups.length+" etiqueta(s) creada(s) sobre "+sel.length+" seleccionado(s). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas: "+stored.length+"."); }
     }
     function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeParamVisuals(cfg); return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
     function scheduleAllParamMarkups(){ if(!anyParamToolActive()) return; for(const key of Object.keys(paramTools)) scheduleParamMarkups(key); }
-
-    // === DIAGNÓSTICO TEMPORAL "Mostrar parámetros" — ELIMINAR tras confirmar unidades ===
-    async function deoTestMarkup(){
-      log("TEST markup: iniciando diagnóstico de unidades...");
-      const sel=await safeGetSelection();
-      if(!sel.length){ log("TEST markup: selecciona un objeto primero."); return; }
-      const {modelId,runtimeId}=sel[0];
-      let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,[runtimeId]); }catch(e){ log("TEST markup: error al obtener bbox — "+e.message); return; }
-      const bb=bboxOf(boxes[0]);
-      if(!bb){ log("TEST markup: no se ha podido obtener el bounding box."); return; }
-      log("TEST markup bbox CRUDO: min="+JSON.stringify(bb.min)+" max="+JSON.stringify(bb.max));
-      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
-      // Hipótesis A: coordenadas en metros (sin multiplicar)
-      const payloadM={start:{positionX:cx,positionY:cy,positionZ:bb.max.z+0.5},end:{positionX:cx,positionY:cy,positionZ:bb.max.z+0.5},text:"TEST DEO (m)",color:{r:0,g:150,b:0,a:255}};
-      // Hipótesis B: coordenadas ×1000 (como hace hoy markupPick)
-      const payloadK={start:{positionX:cx*1000,positionY:cy*1000,positionZ:(bb.max.z+0.5)*1000},end:{positionX:cx*1000,positionY:cy*1000,positionZ:(bb.max.z+0.5)*1000},text:"TEST DEO (x1000)",color:{r:200,g:0,b:0,a:255}};
-      log("TEST markup payload metros: "+JSON.stringify(payloadM.start));
-      log("TEST markup payload x1000: "+JSON.stringify(payloadK.start));
-      const mk=markupApi();
-      if(!mk){ log("TEST markup: markupApi() devuelve null — la API de markups no está disponible."); return; }
-      let beforeCount=0;
-      try{ const t=await mk.getTextMarkups(); beforeCount=Array.isArray(t)?t.length:0; }catch(e){ log("TEST markup: getTextMarkups() antes — error: "+e.message); }
-      log("TEST markup: markups de texto existentes ANTES: "+beforeCount);
-      let rM=null, rK=null;
-      try{ rM=await mk.addTextMarkup([payloadM]); log("TEST markup addTextMarkup(metros) respuesta: "+JSON.stringify(rM)); }catch(e){ log("TEST markup addTextMarkup(metros) ERROR: "+e.message); }
-      try{ rK=await mk.addTextMarkup([payloadK]); log("TEST markup addTextMarkup(x1000) respuesta: "+JSON.stringify(rK)); }catch(e){ log("TEST markup addTextMarkup(x1000) ERROR: "+e.message); }
-      let afterMarkups=[];
-      try{ afterMarkups=await mk.getTextMarkups()||[]; }catch(e){ log("TEST markup: getTextMarkups() después — error: "+e.message); }
-      const afterIds=afterMarkups.map((m)=>m&&(m.id||m)).filter(Boolean);
-      log("TEST markup: markups de texto existentes DESPUÉS: "+afterMarkups.length+" — IDs: "+JSON.stringify(afterIds));
-      log("TEST markup: COMPRUEBA en el visor — ¿ves 'TEST DEO (m)' verde encima del objeto? ¿O 'TEST DEO (x1000)' rojo? Descarga el debug para conservar estos logs.");
-    }
-    window.deoTestMarkup=deoTestMarkup;
-    // === FIN DIAGNÓSTICO TEMPORAL ===
 
     // ===================== PLANTILLAS DE VISTA (#9) =====================
     const TEMPLATE_STORE_KEY="deo_view_templates_v3";
@@ -1930,7 +2021,6 @@
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
       document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.stopPropagation(); } try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
-      const testMarkupBtn=document.getElementById("testMarkupBtn"); if(testMarkupBtn) testMarkupBtn.onclick=async ()=>{ try{ await deoTestMarkup(); }catch(err){ recordError("deoTestMarkup",err); log("TEST markup ERROR: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; try{ await importCsvFiles(files); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showCancel(false); } };
     }
@@ -1948,7 +2038,7 @@
       try{ add("VISTA ACTIVA",await API.view.getCurrentView()); }catch(e){ add("getCurrentView ERROR",e.message); }
       let selection=[]; try{ selection=await safeGetSelection(); add("SELECCIÓN",selection); }catch(e){ add("getSelection ERROR",e.message); }
       const byModel=new Map(); for(const s of selection){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
-      for(const [modelId,ids] of byModel.entries()){ try{ add("BBOX "+modelId,await API.viewer.getObjectBoundingBoxes(modelId,ids)); }catch(e){ add("BBOX ERROR",e.message); } try{ add("PROPS "+modelId,await API.viewer.getObjectProperties(modelId,ids)); }catch(e){ add("PROPS ERROR",e.message); } try{ add("PARENTS "+modelId,await API.viewer.getHierarchyParents(modelId,ids,undefined,false,false)); }catch(e){ add("PARENTS ERROR",e.message); } }
+      for(const [modelId,ids] of byModel.entries()){ try{ add("BBOX "+modelId,await API.viewer.getObjectBoundingBoxes(modelId,ids)); }catch(e){ add("BBOX ERROR",e.message); } try{ add("PROPS "+modelId,safeJsonDeep(await API.viewer.getObjectProperties(modelId,ids),2)); }catch(e){ add("PROPS ERROR",e.message); } try{ add("PARENTS "+modelId,await API.viewer.getHierarchyParents(modelId,ids,undefined,false,false)); }catch(e){ add("PARENTS ERROR",e.message); } }
       let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ add("getColoredObjects ERROR",e.message); }
       const colorSummary={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; colorSummary[k]=(colorSummary[k]||0)+1; }
       add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
