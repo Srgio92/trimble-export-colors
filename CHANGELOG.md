@@ -3,6 +3,48 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.7.5] — 2026-06-10
+
+### Añadido
+
+* Autocompletado en el campo “Compartido con” de plantillas de vista, imitando el funcionamiento nativo de Trimble.
+* Carga de miembros del proyecto mediante la API de Trimble para sugerir usuarios coincidentes con el texto escrito.
+* Sugerencias en formato `nombre | correo`.
+* Chips eliminables para los usuarios añadidos en “Compartido con”.
+* Contador dinámico de usuarios compartidos.
+* Lectura ampliada de grupos de vistas desde vistas existentes y desde los datos disponibles de `ViewSpec`.
+* Uso automático del usuario activo de Trimble como autor en “Crear vista nueva”.
+* Relleno automático de fecha y autor en “Actualizar vista” cuando una vista existente no contiene esos campos.
+* Fallback de visualización de parámetros mediante iconos SVG 3D cuando `API.markup.addTextMarkup()` no devuelve identificadores utilizables.
+* Logs específicos para importación CSV, ocultos y visualización de parámetros.
+
+### Cambiado
+
+* La importación CSV queda limitada exclusivamente a filas con `revisado_deo = TRUE`.
+* La importación CSV deja de restaurar colores de la columna `color`; ya no importa magentas ni colores no revisados.
+* Los GUID revisados se seleccionan y se pintan directamente en rojo calibrado.
+* “Selección cercanos” corrige la interpretación de la sensibilidad:
+
+  * `0 %`: mantiene únicamente el objeto seleccionado.
+  * `100 %`: aplica el comportamiento base.
+  * `200 %`: amplía el alcance sobre el criterio base.
+* “Ver ocultos” ajusta la aplicación de opacidad para intentar representar correctamente el 50 % de transparencia en el visor.
+* La lógica de ocultos se reorganiza para comprobar si un objeto marcado en blanco ha sido recoloreado antes de volver a ocultarlo.
+* El desplegable de grupo de vistas se alimenta con más fuentes de información disponibles en la API.
+
+### Corregido
+
+* Corrección de importación CSV lenta por procesar filas innecesarias.
+* Corrección de importación de colores no deseados desde CSV.
+* Corrección de la lógica de sensibilidad al 0 % en “Selección cercanos”.
+* Corrección parcial de “Ver ocultos” para no volver a ocultar elementos que hayan sido recoloreados manualmente.
+* Mejora de robustez en “Ver nombres”, “Ver tornillos” y “Ver soldaduras” con fallback si los markups nativos no se crean correctamente.
+
+### Limitaciones conocidas
+
+* La API pública de Trimble no documenta de forma completa la escritura de grupo de vistas, etiquetas y compartición al crear una vista desde extensión. El código intenta usar esos datos cuando están disponibles, pero si Trimble los rechaza, la vista se crea con nombre y descripción.
+* La visualización de nombres, tornillos y soldaduras depende del soporte real de `API.markup.addTextMarkup()` en el entorno cargado. Si la API no permite crear markups persistentes, se usa un fallback visual.
+
 ## [v8.7.4] — 2026-06-10 12:09 — d349af7
 
 ### Añadido
