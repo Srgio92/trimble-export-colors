@@ -1179,34 +1179,30 @@
         let count=0;
         for(const [modelId,set] of hiddenWhiteRegistry.entries()){
           const ids=[...set]; if(!ids.length) continue;
-          count+=await setStateInBatches(modelId,ids,{color:{...HIDDEN_MARK_COLOR_SHOWN},opacity:HIDDEN_MARK_OPACITY,visible:true},"setRegistryVisible.show");
+          count+=await setStateInBatches(modelId,ids,{opacity:HIDDEN_MARK_OPACITY,visible:true},"setRegistryVisible.show");
         }
-        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco con opacidad 50%.");
+        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco con opacidad "+HIDDEN_MARK_OPACITY+"%.");
         setProgress("Ver ocultos: "+count+" objeto(s) mostrados.");
         return count;
       }
-      const {stillWhite,recolored}=await splitRegistryByColor();
-      await rescueRecolored(recolored);
       let count=0;
-      for(const [modelId,set] of stillWhite.entries()){
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const ids=[...set]; if(!ids.length) continue;
         count+=await setStateInBatches(modelId,ids,{visible:false},"setRegistryVisible.hide");
       }
-      log("Ver ocultos OFF: "+count+" objeto(s) blancos vueltos a ocultar (el registro se conserva para reactivar).");
+      log("Ver ocultos OFF: "+count+" objeto(s) ocultados (el registro se conserva para reactivar).");
       setProgress("Ver ocultos: "+count+" objeto(s) ocultados.");
       return count;
     }
     async function clearHiddenWhite(){
       if(!mapSetCount(hiddenWhiteRegistry)){ log("Selección ocultos OFF: registro vacío."); return; }
-      const {stillWhite,recolored}=await splitRegistryByColor();
-      await rescueRecolored(recolored);
       let count=0;
-      for(const [modelId,set] of stillWhite.entries()){
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const ids=[...set]; if(!ids.length) continue;
         count+=await setStateInBatches(modelId,ids,{visible:false},"clearHiddenWhite");
       }
       hiddenWhiteRegistry.clear();
-      log("Selección ocultos OFF: "+count+" objeto(s) blancos ocultados y registro limpiado.");
+      log("Selección ocultos OFF: "+count+" objeto(s) ocultados y registro limpiado.");
       setProgress("Selección ocultos desactivada.");
     }
     function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); if(view) view.disabled=!on; if(line) line.classList.toggle("is-disabled",!on); }
