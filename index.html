@@ -487,7 +487,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.4";
+    const SCRIPT_VERSION = "v8.8.5";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -522,9 +522,48 @@
     function showCancel(on){ const el=document.getElementById("cancelOp"); if(el) el.style.display=on?"inline-block":"none"; }
     function recordError(ctx,err){ errorHistory.push({ts:new Date().toISOString(),ctx,message:err&&err.message?err.message:String(err),stack:err&&err.stack?String(err.stack).slice(0,2000):""}); if(errorHistory.length>80) errorHistory.shift(); }
     function safeJson(v,sp){ try{ return JSON.stringify(v,(k,val)=>(typeof val==="string"&&val.length>4000)?val.slice(0,4000)+"...[TRUNCADO]":val,sp||0); }catch(e){ return String(v); } }
-    // Igual que safeJson pero tolerante a referencias circulares (las propiedades de Trimble suelen tenerlas,
-    // y entonces safeJson caía a String(v) => "[object Object]"). Solo se usa en el debug.
-    function safeJsonDeep(v,sp){ const seen=new WeakSet(); try{ return JSON.stringify(v,(k,val)=>{ if(typeof val==="object"&&val!==null){ if(seen.has(val)) return "[Circular]"; seen.add(val); } if(typeof val==="string"&&val.length>4000) return val.slice(0,4000)+"...[TRUNCADO]"; return val; },sp||0); }catch(e){ return String(v); } }
+    // Serializador robusto SOLO para el debug. safeJson/replacer fallaban porque JSON.stringify LANZA
+    // con BigInt (TypeError) aunque haya guard de ciclos -> caía a String(v) = "[object Object]".
+    // Estrategia: SANEAR la estructura a tipos seguros y luego stringify (que ya no puede lanzar).
+    // Soporta: BigInt, Map, Set, arrays, no enumerables (getOwnPropertyNames), ciclos, strings largos,
+    // funciones, errores y getters que lanzan.
+    function debugSanitize(value,opts){
+      const seen=new WeakSet();
+      const MAX_DEPTH=(opts&&opts.maxDepth)||6, MAX_ITEMS=(opts&&opts.maxItems)||200, MAX_STR=(opts&&opts.maxStr)||4000;
+      function san(v,depth){
+        if(v===null) return null;
+        const t=typeof v;
+        if(t==="string") return v.length>MAX_STR?v.slice(0,MAX_STR)+"...[TRUNCADO]":v;
+        if(t==="number"||t==="boolean") return v;
+        if(t==="bigint") return v.toString()+"n";
+        if(t==="undefined") return "[undefined]";
+        if(t==="symbol") return v.toString();
+        if(t==="function") return "[Function "+(v.name||"anon")+"]";
+        if(t!=="object") return String(v);
+        if(seen.has(v)) return "[Circular]";
+        if(depth>=MAX_DEPTH) return "[Profundidad máx]";
+        seen.add(v);
+        try{
+          if(v instanceof Error) return {__error:String(v.name||"Error"),message:String(v.message||""),stack:String(v.stack||"").slice(0,1000)};
+          if(v instanceof Map){ const o={__map:true}; let n=0; for(const [k,val] of v.entries()){ if(n++>=MAX_ITEMS){o.__truncado=true;break;} o[String(k)]=san(val,depth+1); } return o; }
+          if(v instanceof Set){ const a=[]; let n=0; for(const val of v.values()){ if(n++>=MAX_ITEMS){a.push("...[TRUNCADO]");break;} a.push(san(val,depth+1)); } return {__set:a}; }
+          if(Array.isArray(v)){ const a=[]; for(let i=0;i<v.length;i++){ if(i>=MAX_ITEMS){a.push("...[TRUNCADO]");break;} a.push(san(v[i],depth+1)); } return a; }
+          let keys=[]; try{ keys=Object.getOwnPropertyNames(v); }catch(e){ try{ keys=Object.keys(v); }catch(e2){ keys=[]; } }
+          if(keys.length===0) return {}; // objeto sin propiedades -> {} nunca "[object Object]"
+          const o={}; let n=0;
+          for(const k of keys){
+            if(k==="__proto__") continue;
+            if(n++>=MAX_ITEMS){ o.__truncado=true; break; }
+            let val; try{ val=v[k]; }catch(e){ o[k]="[getter error: "+e.message+"]"; continue; }
+            if(typeof val==="function") continue;
+            o[k]=san(val,depth+1);
+          }
+          return o;
+        } finally { seen.delete(v); }
+      }
+      return san(value,0);
+    }
+    function safeJsonDeep(v,sp){ try{ return JSON.stringify(debugSanitize(v),null,sp||0); }catch(e){ return "[debugSerialize fallo: "+e.message+"]"; } }
     function formatETA(sec){ if(!isFinite(sec)||sec<0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
     function downloadText(filename,text,mime){ const blob=new Blob(["\uFEFF"+text],{type:(mime||"text/csv")+";charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
     function sanitizeFilename(name){ return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
@@ -1443,6 +1482,7 @@
       }
       const params=cfg.picker.getParams();
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
+      log("Mostrar parámetros ("+toolKey+"): selección recibida "+sel.length+" objeto(s), allowDeep="+allowDeep+".");
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
       const markups=[]; const iconItems=[]; let truncated=false;
       let noBox=0, noMatch=0, noText=0; const srcTally={objeto:0,padre:0,hijo:0};
@@ -2039,6 +2079,26 @@
       let selection=[]; try{ selection=await safeGetSelection(); add("SELECCIÓN",selection); }catch(e){ add("getSelection ERROR",e.message); }
       const byModel=new Map(); for(const s of selection){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
       for(const [modelId,ids] of byModel.entries()){ try{ add("BBOX "+modelId,await API.viewer.getObjectBoundingBoxes(modelId,ids)); }catch(e){ add("BBOX ERROR",e.message); } try{ add("PROPS "+modelId,safeJsonDeep(await API.viewer.getObjectProperties(modelId,ids),2)); }catch(e){ add("PROPS ERROR",e.message); } try{ add("PARENTS "+modelId,await API.viewer.getHierarchyParents(modelId,ids,undefined,false,false)); }catch(e){ add("PARENTS ERROR",e.message); } }
+      // ===== Diagnóstico específico de "Mostrar parámetros" (v8.8.5): estructura real de propiedades =====
+      const PARAM_DIAG_KEYS=/name|profile|mark|bolt|weld|diameter|length|material/i;
+      for(const s of selection.slice(0,5)){
+        const diag={modelId:s.modelId,runtimeId:s.runtimeId};
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(s.modelId,[s.runtimeId]); const bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; diag.bboxValid=!!bb; diag.bbox=bb; }catch(e){ diag.bboxError=e.message; }
+        let ownProps={}; try{ const pr=await API.viewer.getObjectProperties(s.modelId,[s.runtimeId]); ownProps=pr&&pr[0]?pr[0]:{}; diag.ownProps=ownProps; }catch(e){ diag.ownPropsError=e.message; }
+        let parents=[]; try{ parents=await API.viewer.getHierarchyParents(s.modelId,[s.runtimeId],undefined,false,false)||[]; }catch(e){ diag.parentsError=e.message; }
+        diag.parents=parents.map((x)=>({id:x&&(x.id??x.runtimeId??x.objectRuntimeId),fileId:x&&x.fileId,modelId:x&&x.modelId,name:x&&x.name}));
+        let kids=[]; try{ kids=await API.viewer.getHierarchyChildren(s.modelId,[s.runtimeId],undefined,true)||[]; }catch(e){ diag.childrenError=e.message; }
+        diag.childrenSample=kids.slice(0,5).map((x)=>(typeof x==="object"?{id:x.id??x.runtimeId??x.objectRuntimeId,fileId:x.fileId,modelId:x.modelId,name:x.name}:x));
+        diag.parentProps=[];
+        for(const x of parents.slice(0,3)){ const tid=(x&&(x.fileId||x.modelId))||s.modelId; const rid=Number(x&&(x.id??x.runtimeId??x.objectRuntimeId)); if(!Number.isFinite(rid)) continue; try{ const pr=await API.viewer.getObjectProperties(tid,[rid]); diag.parentProps.push({tid,rid,props:pr&&pr[0]?pr[0]:{}}); }catch(e){ diag.parentProps.push({tid,rid,error:e.message}); } }
+        diag.childProps=[];
+        for(const x of kids.slice(0,3)){ const tid=(typeof x==="object"&&(x.fileId||x.modelId))||s.modelId; const rid=Number(typeof x==="object"?(x.id??x.runtimeId??x.objectRuntimeId):x); if(!Number.isFinite(rid)) continue; try{ const pr=await API.viewer.getObjectProperties(tid,[rid]); diag.childProps.push({tid,rid,props:pr&&pr[0]?pr[0]:{}}); }catch(e){ diag.childProps.push({tid,rid,error:e.message}); } }
+        const cand=new Set();
+        const collect=(p)=>{ try{ for(const f of flattenProps(p)){ if(PARAM_DIAG_KEYS.test(f.name)) cand.add(f.name+" = "+f.value); } }catch(e){} };
+        collect(ownProps); for(const pp of diag.parentProps) if(pp.props) collect(pp.props); for(const cp of diag.childProps) if(cp.props) collect(cp.props);
+        diag.candidateNameProps=[...cand];
+        add("PARAM_DIAG "+s.modelId+":"+s.runtimeId,safeJsonDeep(diag,2));
+      }
       let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ add("getColoredObjects ERROR",e.message); }
       const colorSummary={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; colorSummary[k]=(colorSummary[k]||0)+1; }
       add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
