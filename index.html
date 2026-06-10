@@ -20,6 +20,12 @@
     .row { margin: 6px 0; }
     button { padding: 6px 12px; margin: 2px 0; cursor: pointer; }
 
+    /* Grupo desplegable de segundo nivel (Mostrar parámetros) con flecha estándar, sin interruptor */
+    details.param-group { border: 1px solid #e5e7eb; border-radius: 6px; background: #fafafa; margin: 8px 0; }
+    details.param-group > summary { font-weight: bold; padding: 8px 10px; }
+    .param-group-body { padding: 4px 10px 10px; }
+    .param-defaults-hint { color: #666; font-size: 11px; margin: 4px 0 2px; }
+
     .switch { position: relative; display: inline-block; width: 38px; height: 20px; vertical-align: middle; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; inset: 0; background: #c4c9d1; border-radius: 20px; transition: .2s; }
@@ -34,7 +40,6 @@
     input[type="text"], select { padding: 4px; box-sizing: border-box; }
     input:disabled, select:disabled { background: #eee; color: #999; }
     select.placeholder { color: #aaa; }
-    #nearParam option, #nearOp option { color: #000; }
 
     .cols-details { border: 1px solid #e5e7eb; background: #fff; margin: 6px 0; }
     .cols-details > summary { font-weight: normal; padding: 6px 8px; }
@@ -56,6 +61,11 @@
     .config-row select, .config-row input { width: 120px; }
     #nearUnit { color: #000; font-weight: bold; }
 
+    /* Lista de colores con botón de refrescar alineado a la derecha de la primera línea */
+    .color-list-row { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; }
+    .color-list-row .color-list { flex: 1; }
+    .refresh-right { flex: 0 0 auto; }
+
     #excludeColors label, #includeColors label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; font-weight: normal; }
     .swatch { width: 16px; height: 16px; border: 1px solid #999; border-radius: 3px; display: inline-block; }
 
@@ -63,12 +73,7 @@
     .status-box { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; min-height: 18px; margin: 4px 0; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
 
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
-    .dev-static > summary::-webkit-details-marker { display: none; }
-    .dev-static > summary::marker { content: ""; }
-    .dev-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: default; }
-    .dev-title { flex: 1; display: inline-flex; align-items: center; gap: 6px; }
-    .dev-fake-triangle { font-size: 11px; color: #374151; line-height: 1; }
-    #debug { background: transparent; border: none; padding: 2px 4px; cursor: pointer; line-height: 0; }
+    #debug { background: transparent; border: 1px solid #d1d5db; border-radius: 4px; padding: 3px 6px; cursor: pointer; line-height: 0; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
@@ -79,16 +84,20 @@
     .tool-spacer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #f1f1f1; }
     .range-row input[type="range"] { flex: 1; min-width: 130px; }
     #nearPercentLabel { min-width: 46px; text-align: right; font-weight: bold; }
-    #includeColors { margin-top: 6px; }
     .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
 
+    /* Plantillas de vista */
+    .tpl-block { border: 1px solid #ececec; border-radius: 6px; background: #fbfbfb; padding: 8px 10px; margin: 8px 0; }
+    .tpl-block h4 { margin: 0 0 6px; font-size: 12px; color: #111827; }
     .template-grid { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; margin: 6px 0; }
     .template-grid label { color: #374151; }
     .template-grid input, .template-grid select { width: 100%; }
     .template-auto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
     .template-auto div { margin: 2px 0; }
-    #templateDescription { width: 100%; min-height: 88px; padding: 6px; box-sizing: border-box; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
+    #templateDescription { width: 100%; min-height: 78px; padding: 6px; box-sizing: border-box; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
     #templateInfo { margin-top: 6px; }
+    .tpl-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+    .tpl-row select, .tpl-row input { flex: 1; min-width: 120px; }
   </style>
 </head>
 <body>
@@ -108,13 +117,13 @@
             <label class="txt" for="nearCustom">Configuración personalizada</label>
           </div>
           <div id="nearConfig">
-            <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m³.</div>
+            <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m&#179;.</div>
             <div class="config-row range-row">
               <label for="nearPercent" class="field-label">Sensibilidad</label>
               <input type="range" id="nearPercent" min="10" max="300" step="5" value="100" disabled>
               <span id="nearPercentLabel">100%</span>
             </div>
-            <div class="hint" id="nearCalibInfo">100% mantiene el criterio base. Valores superiores amplían la búsqueda; valores inferiores la restringen.</div>
+            <div class="hint" id="nearCalibInfo">100% es el radio base. Sube el porcentaje para ampliar el alcance alrededor del objeto seleccionado; bájalo para restringirlo. El radio es absoluto: depende solo del objeto original, no se acumula.</div>
           </div>
         </div>
       </details>
@@ -126,21 +135,24 @@
         </summary>
         <div class="tool-body">
           <div class="hint" style="margin-bottom:10px;">Marca los colores que no deben entrar en la selección.</div>
-          <div id="excludeColors"></div>
-          <div class="row"><button id="excludeRefresh" class="icon-btn" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div>
+          <div class="color-list-row">
+            <div id="excludeColors" class="color-list"></div>
+            <button id="excludeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+          </div>
         </div>
       </details>
 
       <details class="tool model-tool" id="hiddenTool">
-        <summary class="subtitle" data-tip="Marca en blanco los objetos ocultos para poder mostrarlos y ocultarlos de forma controlada.">
+        <summary class="subtitle" data-tip="Marca en blanco (50% transparencia) los objetos ocultos para poder mostrarlos y ocultarlos de forma controlada.">
           <span class="tool-title-text">Selección ocultos</span>
           <span class="summary-switch" id="hiddenSummarySwitch"><label class="switch"><input type="checkbox" id="hiddenSelectionToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
-          <div class="toggle-line" id="viewHiddenLine" data-tip="Muestra u oculta los objetos ocultos marcados en blanco.">
+          <div class="toggle-line" id="viewHiddenLine" data-tip="Muestra u oculta los objetos ocultos marcados en blanco. Si recoloreas alguno mientras está visible, al desactivar se conservará visible.">
             <label class="switch"><input type="checkbox" id="viewHiddenToggle" disabled><span class="slider"></span></label>
             <label class="txt" for="viewHiddenToggle">Ver ocultos</label>
           </div>
+          <div class="hint">Recolorea un objeto mostrado para "rescatarlo": al apagar Ver ocultos o Selección ocultos no se volverá a ocultar.</div>
         </div>
       </details>
 
@@ -153,18 +165,98 @@
           <div id="includeConfig">
             <div class="config-row">
               <span class="field-label">Name</span>
-              <select id="includeValue" class="placeholder" disabled style="flex:1; min-width:160px;"><option value="" disabled selected hidden>elige un valor…</option></select>
+              <select id="includeValue" class="placeholder" disabled style="flex:1; min-width:160px;"><option value="" disabled selected hidden>elige un valor&#8230;</option></select>
             </div>
-            <div class="toggle-line tool-spacer" id="showNamesLine" data-tip="Muestra el Name de los objetos seleccionados en el modelo.">
-              <label class="switch"><input type="checkbox" id="showNamesToggle"><span class="slider"></span></label>
-              <label class="txt" for="showNamesToggle">Mostrar nombres</label>
-            </div>
-            <div class="toggle-line" id="colorModeLine" data-tip="Filtra la selección por color en lugar de por Name.">
+            <div class="toggle-line tool-spacer" id="colorModeLine" data-tip="Filtra la selección por color en lugar de por Name.">
               <label class="switch"><input type="checkbox" id="colorModeToggle"><span class="slider"></span></label>
               <label class="txt" for="colorModeToggle">Selección por color</label>
             </div>
-            <div id="includeColors" style="display:none;"></div>
+            <div class="color-list-row" id="includeColorsWrap" style="display:none;">
+              <div id="includeColors" class="color-list"></div>
+              <button id="includeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            </div>
           </div>
+        </div>
+      </details>
+
+      <details class="param-group" id="paramGroup">
+        <summary data-tip="Muestra etiquetas con parámetros de los objetos seleccionados.">Mostrar parámetros</summary>
+        <div class="param-group-body">
+          <div class="hint" style="margin-bottom:6px;">Cada opción etiqueta únicamente los objetos que tengas seleccionados. Configura los parámetros como en "Columnas a exportar".</div>
+
+          <details class="tool model-tool" id="namesTool">
+            <summary class="subtitle" data-tip="Etiqueta los objetos seleccionados con su Name (y los parámetros que añadas).">
+              <span class="tool-title-text">Ver nombres</span>
+              <span class="summary-switch" id="namesSummarySwitch"><label class="switch"><input type="checkbox" id="namesToggle"><span class="slider"></span></label></span>
+            </summary>
+            <div class="tool-body">
+              <details class="cols-details">
+                <summary>Parámetros a mostrar</summary>
+                <div class="cols-inner">
+                  <div class="param-defaults-hint">Valor predefinido: Name.</div>
+                  <div id="namesParamList"></div>
+                  <div class="column-add-box">
+                    <div class="column-picker-row">
+                      <button id="namesParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
+                      <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
+                      <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                    </div>
+                    <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </details>
+
+          <details class="tool model-tool" id="boltsTool">
+            <summary class="subtitle" data-tip="Etiqueta solo los tornillos (Name = Bolt assembly) de la selección.">
+              <span class="tool-title-text">Ver tornillos</span>
+              <span class="summary-switch" id="boltsSummarySwitch"><label class="switch"><input type="checkbox" id="boltsToggle"><span class="slider"></span></label></span>
+            </summary>
+            <div class="tool-body">
+              <details class="cols-details">
+                <summary>Parámetros a mostrar</summary>
+                <div class="cols-inner">
+                  <div class="param-defaults-hint">Filtra Name = "Bolt assembly". Predefinidos: Bolt standard, Bolt size, Bolt length, Slotted hole X, Slotted hole Y, Material.</div>
+                  <div id="boltsParamList"></div>
+                  <div class="column-add-box">
+                    <div class="column-picker-row">
+                      <button id="boltsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
+                      <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
+                      <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                    </div>
+                    <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </details>
+
+          <details class="tool model-tool" id="weldsTool">
+            <summary class="subtitle" data-tip="Etiqueta solo las soldaduras (Name = Weld) de la selección.">
+              <span class="tool-title-text">Ver soldaduras</span>
+              <span class="summary-switch" id="weldsSummarySwitch"><label class="switch"><input type="checkbox" id="weldsToggle"><span class="slider"></span></label></span>
+            </summary>
+            <div class="tool-body">
+              <details class="cols-details">
+                <summary>Parámetros a mostrar</summary>
+                <div class="cols-inner">
+                  <div class="param-defaults-hint">Filtra Name = "Weld". Predefinidos: Assembly type, Length, Size 1, Type 1.</div>
+                  <div id="weldsParamList"></div>
+                  <div class="column-add-box">
+                    <div class="column-picker-row">
+                      <button id="weldsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
+                      <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
+                      <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                    </div>
+                    <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </details>
+
+          <div class="hint" style="margin-top:6px;">Nota: la Workspace API de Trimble no expone el tamaño de fuente de las etiquetas de texto, por lo que el tamaño lo fija el visor y no puede escalarse con el volumen del tornillo.</div>
         </div>
       </details>
 
@@ -176,44 +268,62 @@
     <div class="section">
 
       <details class="tool" id="viewTemplateTool">
-        <summary class="subtitle" data-tip="Crea una vista normalizada tomando otra vista como base.">Nueva vista desde plantilla</summary>
+        <summary class="subtitle" data-tip="Configura plantillas de nombre, crea vistas a partir de ellas y renombra vistas existentes.">Plantillas de vista</summary>
         <div class="tool-body">
-          <div class="hint">Crea una vista nueva cargando antes una vista de referencia.</div>
-          <div class="row">
-            Vista de referencia:<br>
-            <select id="templateRefSelect" style="width:72%;"><option value="">Cargando vistas...</option></select>
-            <button id="templateRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+
+          <div class="tpl-block">
+            <h4>1. Configurar plantilla</h4>
+            <div class="tpl-row">
+              <select id="templateSelect" data-tip="Plantillas guardadas. La última usada se selecciona por defecto."><option value="">(Nueva plantilla)</option></select>
+              <button id="templateDelete" title="Borrar plantilla seleccionada" style="padding:3px 8px;">&#128465;</button>
+            </div>
+            <div class="template-grid">
+              <label for="templateTplName">Plantilla</label><input type="text" id="templateTplName" placeholder="Nombre de la plantilla">
+              <label for="templateRfi">RFI</label><input type="text" id="templateRfi" placeholder="RFI_000">
+              <label for="templateModule">Módulo</label><input type="text" id="templateModule" placeholder="G">
+              <label for="templateLevel">Nivel</label><input type="text" id="templateLevel" placeholder="N80">
+              <label for="templateAxes">Ejes</label><input type="text" id="templateAxes" placeholder="GN17-GN19">
+              <label for="templateElement">Elemento</label><input type="text" id="templateElement" placeholder="Placa base">
+              <label for="templateTask">Tarea</label><input type="text" id="templateTask" placeholder="Revisión anclajes">
+            </div>
+            <div class="row"><button id="templateSave" data-tip="Guarda o actualiza la plantilla (se conserva entre sesiones).">Guardar plantilla</button></div>
+            <div class="hint" id="templateSaveInfo">Patrón de nombre: RFI_Módulo_Nivel_Ejes_Elemento_Tarea (solo se usan los campos rellenos).</div>
           </div>
 
-          <div class="template-auto">
-            <div>Autor: <strong id="templateAuthor">No disponible</strong></div>
-            <div>Fecha: <strong id="templateDate">No disponible</strong></div>
-            <div>RFI detectada: <strong id="templateDetectedRfi">No detectada</strong></div>
+          <div class="tpl-block">
+            <h4>2. Crear vista desde plantilla</h4>
+            <div class="template-auto">
+              <div>Autor: <strong id="templateAuthor">No disponible</strong></div>
+              <div>Fecha: <strong id="templateDate">No disponible</strong></div>
+            </div>
+            <div class="row">
+              Nombre de vista:<br>
+              <input type="text" id="templateName" style="width:100%;" placeholder="Nombre generado de la vista">
+            </div>
+            <div class="row">
+              Descripción:<br>
+              <textarea id="templateDescription" placeholder="Descripción generada de la vista"></textarea>
+            </div>
+            <div class="row">
+              <button id="templateCreateView" data-tip="Crea una vista nueva con el estado visible actual del visor y el nombre/descripción indicados.">Crear vista</button>
+            </div>
+            <div class="hint" id="templateInfo">La vista nueva guarda el estado visible actual del visor (cámara, visibilidad, secciones, colores) con el nombre y la descripción de arriba.</div>
           </div>
 
-          <div class="template-grid">
-            <label for="templateRfi">RFI</label><input type="text" id="templateRfi" placeholder="RFI_000">
-            <label for="templateModule">Módulo</label><input type="text" id="templateModule" placeholder="G">
-            <label for="templateLevel">Nivel</label><input type="text" id="templateLevel" placeholder="N80">
-            <label for="templateAxes">Ejes</label><input type="text" id="templateAxes" placeholder="GN17-GN19">
-            <label for="templateElement">Elemento</label><input type="text" id="templateElement" placeholder="Placa base">
-            <label for="templateTask">Tarea</label><input type="text" id="templateTask" placeholder="Revisión anclajes">
+          <div class="tpl-block">
+            <h4>3. Renombrar vista existente</h4>
+            <div class="tpl-row">
+              <select id="renameViewSelect"><option value="">Cargando vistas...</option></select>
+              <button id="renameRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+            </div>
+            <div class="row">
+              <input type="text" id="renameNewName" style="width:100%;" placeholder="Nuevo nombre de la vista">
+            </div>
+            <div class="row">
+              <button id="renameViewBtn" data-tip="Cambia el nombre de la vista seleccionada conservando su estado.">Actualizar nombre</button>
+            </div>
           </div>
 
-          <div class="row">
-            Nombre de vista:<br>
-            <input type="text" id="templateName" style="width:100%;" placeholder="Nombre generado de la vista">
-          </div>
-
-          <div class="row">
-            Descripción generada:<br>
-            <textarea id="templateDescription" placeholder="Descripción generada de la vista"></textarea>
-          </div>
-
-          <div class="row">
-            <button id="templateCreateView" data-tip="Carga la vista de referencia y crea una nueva vista con el nombre y descripción indicados.">Crear vista desde plantilla</button>
-          </div>
-          <div class="hint" id="templateInfo">Cámara, visibilidad, secciones y colores se tomarán de la vista de referencia al cargarla antes de crear la nueva vista. Compartir, carpeta y etiquetas solo se copiarán si Trimble las expone en la API.</div>
         </div>
       </details>
 
@@ -230,7 +340,7 @@
                   <select id="csvParamSelect">
                     <option value="" disabled selected hidden>Añadir columna...</option>
                   </select>
-                  <button id="csvParamRefresh" class="column-refresh" data-tip="Actualiza los parámetros disponibles del modelo." title="Actualizar parámetros">↻</button>
+                  <button id="csvParamRefresh" class="column-refresh" data-tip="Actualiza los parámetros disponibles del modelo." title="Actualizar parámetros">&#8635;</button>
                 </div>
                 <div class="hint" id="csvParamHint">Usa + para añadir valores predefinidos o parámetros disponibles del modelo.</div>
               </div>
@@ -259,7 +369,7 @@
       <details class="tool">
         <summary class="subtitle">Importar colores desde CSV</summary>
         <div class="tool-body">
-          <div class="hint">Importar uno o varios CSV.</div>
+          <div class="hint">Importar uno o varios CSV. Se aplica el color de la columna <code>color</code> a cada GUID. Si el CSV no tiene columna de color, se pintan de rojo las filas con revisado_deo = TRUE.</div>
           <div class="row">
             <button id="importBtn" data-tip="Selecciona uno o varios CSV.">Importar CSV</button>
             <input type="file" id="importFile" accept=".csv,text/csv" multiple style="display:none;">
@@ -270,14 +380,18 @@
       <div class="tool-status">
         <div class="subtitle">Estado</div>
         <div class="row"><button id="cancelOp" style="display:none;">Cancelar</button></div>
-        <div id="progress" class="status-box">Vista cargada con éxito.</div>
+        <div id="progress" class="status-box">Esperando conexión...</div>
       </div>
     </div>
   </details>
 
-  <details open id="devPanel" class="dev-static">
-    <summary class="dev-summary"><span class="dev-title"><span class="dev-fake-triangle">▾</span><span>Desarrollador</span></span><button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button></summary>
+  <details open id="devPanel">
+    <summary>Desarrollador</summary>
     <div class="section">
+      <div class="row">
+        <button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug" title="Descargar informe de diagnóstico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
+        Descargar informe de diagnóstico
+      </div>
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
       <details class="tool">
@@ -290,31 +404,29 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.5.2";
+    const SCRIPT_VERSION = "v8.6.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const HIDDEN_MARK_COLOR = "#FFFFFFFF";
+    const HIDDEN_MARK_OPACITY = 0.5;
     const CONTACT_TOLERANCE = 0.012;
     const CONTACT_VOLUME_MAX = 0.001;
     const CANDIDATE_BBOX_BATCH = 400;
     const PROPS_BATCH = 60;
     const LOG_MAX_LINES = 160;
+    const MAX_PARAM_MARKUPS = 200;
 
     let API=null, lastConvertError="", cancelRequested=false, opRunning=false;
-    let selectionTimer=null, selBusy=false, suppressSelectionUntil=0, prevSel=[];
+    let selectionTimer=null, selBusy=false, suppressSelectionUntil=0;
+    let toolAddedKeys=new Set();            // claves modelId:runtimeId añadidas por "Selección cercanos"
     const excludedColors=new Set();
     const includeColors=new Set();
-    let nameMarkupIds=[];
-    let nameTimer=null;
     const logLines=[];
     const errorHistory=[];
     const propsCache=new Map();             // modelId -> Map(rid -> props)
     const hiddenWhiteRegistry=new Map();    // modelId -> Set(rid)
-    let templateViewsCache=[];
-    let templateCurrentUser=null;
-    let templateDescriptionDirty=false;
     let csvAvailableParametersCache=[];
     let draggedColumnIndex=null;
 
@@ -362,7 +474,7 @@
     function toExternalUuid(guid){ const s=String(guid||"").trim(); if(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)) return s.toLowerCase(); if(/^[0-9a-fA-F]{32}$/.test(s)) return [s.slice(0,8),s.slice(8,12),s.slice(12,16),s.slice(16,20),s.slice(20)].join("-").toLowerCase(); if(s.length===22&&/^[0-9A-Za-z_$]+$/.test(s)) return decompressIfcGuid(s); return null; }
     async function convertResilient(modelId,runtimeIds){ if(runtimeIds.length===0) return []; try{ const ids=await API.viewer.convertToObjectIds(modelId,runtimeIds); return runtimeIds.map((_,i)=>ids[i]||""); }catch(e){ if(!lastConvertError) lastConvertError=String(e&&e.message?e.message:e); if(runtimeIds.length===1) return [""]; const mid=Math.floor(runtimeIds.length/2); const l=await convertResilient(modelId,runtimeIds.slice(0,mid)); const r=await convertResilient(modelId,runtimeIds.slice(mid)); return l.concat(r); } }
 
-    // ===================== COLUMNAS =====================
+    // ===================== COLUMNAS CSV =====================
     const DEFAULT_COLUMNS=[
       {key:"guidIfc",header:"GUID_IFC"},
       {key:"color",header:"color"},
@@ -386,9 +498,9 @@
       const list=document.getElementById("columnsList"); if(!list) return; list.innerHTML="";
       COLUMNS.forEach((col,index)=>{
         const item=document.createElement("div"); item.className="col-item"; item.draggable=true; item.dataset.index=String(index);
-        const remove=document.createElement("button"); remove.type="button"; remove.className="csv-remove-button"; remove.textContent="−"; remove.title="Quitar columna"; remove.addEventListener("click",()=>removeColumn(index));
+        const remove=document.createElement("button"); remove.type="button"; remove.className="csv-remove-button"; remove.textContent="\u2212"; remove.title="Quitar columna"; remove.addEventListener("click",()=>removeColumn(index));
         const name=document.createElement("span"); name.className="name"; name.textContent=col.header; if(isPropertyColumn(col)) name.title="Parámetro del modelo: "+col.propertyName;
-        const handle=document.createElement("span"); handle.className="drag-handle"; handle.textContent="☰"; handle.title="Arrastrar para ordenar"; handle.setAttribute("aria-label","Arrastrar columna"); handle.draggable=true;
+        const handle=document.createElement("span"); handle.className="drag-handle"; handle.textContent="\u2630"; handle.title="Arrastrar para ordenar"; handle.setAttribute("aria-label","Arrastrar columna"); handle.draggable=true;
         const dragStart=(ev)=>{ draggedColumnIndex=index; item.classList.add("dragging"); if(ev.dataTransfer){ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",String(index)); } };
         item.addEventListener("dragstart",dragStart); handle.addEventListener("dragstart",dragStart);
         item.addEventListener("dragend",()=>{ draggedColumnIndex=null; item.classList.remove("dragging"); document.querySelectorAll(".col-item.drag-over").forEach((el)=>el.classList.remove("drag-over")); });
@@ -401,9 +513,8 @@
     function reorderColumn(from,to){ if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=COLUMNS.length||to>=COLUMNS.length||from===to) return; const moved=COLUMNS.splice(from,1)[0]; COLUMNS.splice(to,0,moved); buildColumnsUI(); updateCsvColumnSelect(); }
     function selectedColumns(){ return COLUMNS; }
 
-    async function refreshCsvAvailableParameters(){
-      const hint=document.getElementById("csvParamHint");
-      if(hint) hint.textContent="Leyendo parámetros disponibles del modelo...";
+    // ===================== ESCANEO DE PARÁMETROS =====================
+    async function scanModelParameters(){
       const names=new Set();
       try{
         let sample=await safeGetSelection();
@@ -412,8 +523,14 @@
         for(const [modelId,ids] of byModel.entries()){
           for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const x of flattenProps(p)) if(x.name) names.add(String(x.name).trim()); }
         }
-      }catch(e){ recordError("refreshCsvAvailableParameters",e); }
+      }catch(e){ recordError("scanModelParameters",e); }
       csvAvailableParametersCache=[...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+      return csvAvailableParametersCache;
+    }
+    async function refreshCsvAvailableParameters(){
+      const hint=document.getElementById("csvParamHint");
+      if(hint) hint.textContent="Leyendo parámetros disponibles del modelo...";
+      await scanModelParameters();
       updateCsvColumnSelect();
       if(hint) hint.textContent="Parámetros disponibles: "+csvAvailableParametersCache.length+". Usa + para añadir la columna seleccionada.";
     }
@@ -431,6 +548,38 @@
       if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
     }
 
+    // ===================== SELECTOR DE PARÁMETROS REUTILIZABLE =====================
+    function makeParamPicker(opts){
+      let params = opts.defaults.slice();
+      function getParams(){ return params.slice(); }
+      function buildList(){
+        const list=document.getElementById(opts.listId); if(!list) return; list.innerHTML="";
+        params.forEach((name,index)=>{
+          const item=document.createElement("div"); item.className="col-item";
+          const remove=document.createElement("button"); remove.type="button"; remove.className="csv-remove-button"; remove.textContent="\u2212"; remove.title="Quitar parámetro"; remove.addEventListener("click",()=>{ params.splice(index,1); buildList(); updateSelect(); if(opts.onChange) opts.onChange(); });
+          const nm=document.createElement("span"); nm.className="name"; nm.textContent=name;
+          item.appendChild(remove); item.appendChild(nm); list.appendChild(item);
+        });
+      }
+      function updateSelect(){
+        const sel=document.getElementById(opts.selectId); if(!sel) return; const keep=sel.value; sel.innerHTML="";
+        const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="Añadir parámetro..."; sel.appendChild(ph);
+        const available=(csvAvailableParametersCache||[]).filter((p)=>p && !params.some((x)=>x.toLowerCase()===p.toLowerCase()));
+        const grp=document.createElement("optgroup"); grp.label="Parámetros del modelo";
+        if(available.length){ for(const p of available){ const o=document.createElement("option"); o.value=p; o.textContent=p; grp.appendChild(o); } }
+        else { const o=document.createElement("option"); o.disabled=true; o.value=""; o.textContent=(csvAvailableParametersCache&&csvAvailableParametersCache.length)?"No quedan parámetros":"Pulsa \u21BB para leer parámetros"; grp.appendChild(o); }
+        sel.appendChild(grp);
+        if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
+      }
+      function add(){ const sel=document.getElementById(opts.selectId); if(!sel||!sel.value) return; const v=sel.value; if(!params.some((x)=>x.toLowerCase()===v.toLowerCase())) params.push(v); sel.value=""; buildList(); updateSelect(); if(opts.onChange) opts.onChange(); }
+      async function refresh(){ const sel=document.getElementById(opts.selectId); if(sel){ const o=[...sel.options].find((x)=>x.disabled&&!x.hidden); } await scanModelParameters(); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+"."); }
+      function wire(){ const a=document.getElementById(opts.addId); if(a) a.onclick=add; const r=document.getElementById(opts.refreshId); if(r) r.onclick=()=>refresh(); buildList(); updateSelect(); }
+      return { getParams, buildList, updateSelect, refresh, wire };
+    }
+    const namesPicker=makeParamPicker({listId:"namesParamList",addId:"namesParamAdd",selectId:"namesParamSelect",refreshId:"namesParamRefresh",defaults:["Name"],onChange:()=>scheduleParamMarkups("names")});
+    const boltsPicker=makeParamPicker({listId:"boltsParamList",addId:"boltsParamAdd",selectId:"boltsParamSelect",refreshId:"boltsParamRefresh",defaults:["Bolt standard","Bolt size","Bolt length","Slotted hole X","Slotted hole Y","Material"],onChange:()=>scheduleParamMarkups("bolts")});
+    const weldsPicker=makeParamPicker({listId:"weldsParamList",addId:"weldsParamAdd",selectId:"weldsParamSelect",refreshId:"weldsParamRefresh",defaults:["Assembly type","Length","Size 1","Type 1"],onChange:()=>scheduleParamMarkups("welds")});
+
     // ===================== VISTA / CARPETAS =====================
     async function getCurrentViewSpecWithRetry(){ let cv=null; for(let a=1;a<=6;a++){ try{ cv=await API.view.getCurrentView(); if(cv&&(cv.name||cv.description||cv.id)){ if(cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } return cv; } }catch(e){ recordError("getCurrentView",e); } if(a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} } return cv; }
     function viewFullName(v){ return v?(v.name||v.description||""):""; }
@@ -443,37 +592,42 @@
       let views=[]; try{ views=await API.view.getViews(); }catch(e){ recordError("populateFolders",e); }
       const real=[...new Set((views||[]).map(detectFolder).filter(Boolean))].sort();
       if(real.length>0){ for(const f of real){ const o=document.createElement("option"); o.value="real|"+f; o.textContent=f; sel.appendChild(o);} log("Carpetas detectadas por la API: "+real.length); }
-      else { log("Aviso: la Workspace API no expone carpetas/grupos de vistas (solo devuelve la lista de vistas). Se exportarán todas. Ejecuta el debug 🐞 y mándame el TXT para confirmar si tus vistas traen algún campo de grupo."); }
+      else { log("Aviso: la Workspace API no expone carpetas/grupos de vistas. Se exportarán todas."); }
       if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
     }
     function viewMatchesFolder(view,folderValue){ if(!folderValue) return true; const [kind,value]=folderValue.split("|"); if(kind==="real") return detectFolder(view)===value; return true; }
     function computeRevisionBase(viewName){ const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked; if(customOn&&customText) return customText.toUpperCase(); const auto=extractRevisionCode(viewName); if(auto) return auto; if(errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")"; return ""; }
 
-    // ===================== NUEVA VISTA DESDE PLANTILLA =====================
-    function userDisplayName(user){ if(!user) return "No disponible"; const name=[user.firstName,user.lastName].filter(Boolean).join(" ").trim(); return name||user.email||user.id||"No disponible"; }
-    function templateDateLabel(){ try{return new Date().toLocaleDateString("es-ES",{timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"});}catch(e){return new Date().toLocaleDateString("es-ES");} }
-    function templateDatetimeLabel(){ try{return new Date().toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return new Date().toLocaleString("es-ES");} }
-    function templateText(id){ const el=document.getElementById(id); return el?String(el.value||"").trim():""; }
-    function cleanViewPart(value){ return String(value||"").trim().replace(/[\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""); }
-    function readableViewName(v){ return String((v&&(v.name||v.description||v.id))||"").trim(); }
-    function selectedTemplateView(){ const sel=document.getElementById("templateRefSelect"); if(!sel) return null; return templateViewsCache.find((v)=>String(v.id)===String(sel.value))||null; }
-    function buildTemplateName(){ const parts=[templateText("templateRfi"),templateText("templateModule"),templateText("templateLevel"),templateText("templateAxes"),templateText("templateElement"),templateText("templateTask")].map(cleanViewPart).filter(Boolean); return parts.join("_"); }
-    function buildTemplateDescription(){ const ref=selectedTemplateView(); const author=userDisplayName(templateCurrentUser); const lines=["RFI: "+(templateText("templateRfi")||""),"Autor: "+author,"Fecha: "+templateDatetimeLabel(),"Módulo: "+templateText("templateModule"),"Nivel: "+templateText("templateLevel"),"Ejes: "+templateText("templateAxes"),"Elemento: "+templateText("templateElement"),"Tarea: "+templateText("templateTask"),"Vista de referencia: "+(readableViewName(ref)||""),"ID vista de referencia: "+((ref&&ref.id)||"")]; const folder=ref?detectFolder(ref):""; if(folder) lines.push("Carpeta detectada: "+folder); return lines.join("\n"); }
-    function describeTemplateReference(ref){ if(!ref) return "Selecciona una vista de referencia."; const exposed=[]; if(ref.camera) exposed.push("cámara"); if(ref.models||ref.files) exposed.push("modelos"); if(ref.sectionPlanes) exposed.push("secciones"); const folder=detectFolder(ref); const extraKeys=Object.keys(ref||{}).filter((k)=>/share|shared|folder|tag|label|group|parent/i.test(k)); let txt="La nueva vista se creará cargando esta referencia y guardando el estado visible actual."; if(exposed.length) txt+=" Campos expuestos: "+exposed.join(", ")+"."; if(folder) txt+=" Carpeta detectada por API: "+folder+"."; if(extraKeys.length) txt+=" Campos adicionales detectados: "+extraKeys.join(", ")+"."; else txt+=" Compartir, carpeta y etiquetas no aparecen como campos públicos en esta vista."; return txt; }
-    function updateTemplatePreview(forceDescription){ const ref=selectedTemplateView(); const detected=extractRevisionCode(viewFullName(ref)); const detEl=document.getElementById("templateDetectedRfi"); if(detEl) detEl.textContent=detected||"No detectada"; const rfiEl=document.getElementById("templateRfi"); if(rfiEl&&!rfiEl.value&&detected) rfiEl.value=detected; const nameEl=document.getElementById("templateName"); if(nameEl){ const generated=buildTemplateName(); if(!nameEl.value||nameEl.dataset.auto==="1"){ nameEl.value=generated; nameEl.dataset.auto="1"; } } const descEl=document.getElementById("templateDescription"); if(descEl&&(forceDescription||!templateDescriptionDirty)){ descEl.value=buildTemplateDescription(); templateDescriptionDirty=false; } const info=document.getElementById("templateInfo"); if(info) info.textContent=describeTemplateReference(ref); }
-    async function populateTemplateViews(){ const sel=document.getElementById("templateRefSelect"); if(!sel||!API||!API.view) return; const previous=sel.value; sel.innerHTML=""; const loading=document.createElement("option"); loading.value=""; loading.textContent="Cargando vistas..."; sel.appendChild(loading); try{ templateViewsCache=await API.view.getViews()||[]; templateViewsCache=templateViewsCache.slice().sort((a,b)=>readableViewName(a).localeCompare(readableViewName(b),"es")); sel.innerHTML=""; if(templateViewsCache.length===0){ const o=document.createElement("option"); o.value=""; o.textContent="No hay vistas disponibles"; sel.appendChild(o); } else { for(const v of templateViewsCache){ const o=document.createElement("option"); o.value=v.id||""; o.textContent=readableViewName(v)||"Vista sin nombre"; sel.appendChild(o); } if(previous&&templateViewsCache.some((v)=>String(v.id)===String(previous))) sel.value=previous; else { try{ const current=await API.view.getCurrentView(); if(current&&current.id&&templateViewsCache.some((v)=>String(v.id)===String(current.id))) sel.value=current.id; }catch(e){} } } }catch(e){ recordError("populateTemplateViews",e); sel.innerHTML=""; const o=document.createElement("option"); o.value=""; o.textContent="Error al leer vistas"; sel.appendChild(o); } updateTemplatePreview(true); }
-    async function loadTemplateUser(){ try{ templateCurrentUser=API&&API.user&&API.user.getUser?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } const author=document.getElementById("templateAuthor"); if(author) author.textContent=userDisplayName(templateCurrentUser); const date=document.getElementById("templateDate"); if(date) date.textContent=templateDateLabel(); updateTemplatePreview(true); }
-    async function createViewFromTemplate(){ if(!API||!API.view||!API.view.createView){ log("La API de vistas no permite crear vistas en este entorno."); setProgress("No se puede crear la vista desde esta API."); return; } const ref=selectedTemplateView(); if(!ref||!ref.id){ log("Selecciona una vista de referencia."); setProgress("Falta vista de referencia."); return; } const name=templateText("templateName")||buildTemplateName(); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; } const description=document.getElementById("templateDescription")?document.getElementById("templateDescription").value:buildTemplateDescription(); const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true; try{ setProgress("Cargando vista de referencia..."); await API.view.selectView(ref.id); await sleep(1200); setProgress("Creando vista desde plantilla..."); const created=await API.view.createView({name,description}); log("Vista creada desde plantilla: "+name); setProgress("Vista creada: "+name); if(created&&created.id&&API.view.selectView){ try{ await API.view.selectView(created.id); }catch(e){ recordError("createViewFromTemplate.selectCreated",e); } } await populateTemplateViews(); const sel=document.getElementById("templateRefSelect"); if(sel&&created&&created.id) sel.value=created.id; }catch(e){ recordError("createViewFromTemplate",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error al crear la vista."); } finally{ if(btn) btn.disabled=false; } }
-    function wireTemplateTool(){ const ids=["templateRfi","templateModule","templateLevel","templateAxes","templateElement","templateTask"]; for(const id of ids){ const el=document.getElementById(id); if(el) el.addEventListener("input",()=>{ const nameEl=document.getElementById("templateName"); if(nameEl&&nameEl.dataset.manual!=="1") nameEl.dataset.auto="1"; updateTemplatePreview(false); }); } const nameEl=document.getElementById("templateName"); if(nameEl) nameEl.addEventListener("input",()=>{ nameEl.dataset.manual="1"; nameEl.dataset.auto="0"; }); const descEl=document.getElementById("templateDescription"); if(descEl) descEl.addEventListener("input",()=>{ templateDescriptionDirty=true; }); const refSel=document.getElementById("templateRefSelect"); if(refSel) refSel.addEventListener("change",()=>{ const rfiEl=document.getElementById("templateRfi"); if(rfiEl) rfiEl.value=""; templateDescriptionDirty=false; updateTemplatePreview(true); }); const refresh=document.getElementById("templateRefreshViews"); if(refresh) refresh.onclick=()=>populateTemplateViews(); const create=document.getElementById("templateCreateView"); if(create) create.onclick=()=>createViewFromTemplate(); }
-    async function initTemplateTool(){ wireTemplateTool(); await loadTemplateUser(); await populateTemplateViews(); }
-
     // ===================== OBJETOS COLOREADOS =====================
     async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,colorValid:an.valid}); } } return entries; }
     async function getColoredObjectEntriesWithRetry(){ for(let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if(e.length>0) return e; await sleep(600);} return []; }
     async function probeColor(modelId,rid){ try{ const c=await getColoredObjectEntries(); const h=c.find((x)=>x.modelId===modelId&&x.objectRuntimeId===rid); return h?h.normalizedColor:""; }catch(e){ return ""; } }
+    async function getCurrentColorMap(){ const map=new Map(); let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ colored=[]; } for(const c of colored) map.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor); return map; }
+
+    // ===================== PROPIEDADES =====================
+    function flattenProps(propsList){ const flat=[]; const walk=(obj)=>{ if(!obj||typeof obj!=="object") return; if(Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key??obj.propertyName; const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue; const unit=obj.unit??obj.units??obj.Unit??""; if(name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value:String(value),unit:String(unit||"")}); for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
+    function propsSearchText(p){ const chunks=[]; try{ if(p.class) chunks.push(p.class);}catch(e){} for(const x of flattenProps(p)) chunks.push(x.name,x.value); return chunks.join(" ").toLowerCase(); }
+    function isNumericValue(v){ if(typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
+    function toNumber(v){ return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
+    function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
+    function getParamValue(p,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; if(target==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
+    async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
+    async function safeGetSelection(){ let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
+
+    // ===================== BBOX HELPERS =====================
+    function bboxOf(box){ const b=box&&box.boundingBox?box.boundingBox:box; if(!b) return null; const min=b.min||b.minPoint||b.start; const max=b.max||b.maxPoint||b.end; if(!min||!max) return null; return {min:{x:Number(min.x),y:Number(min.y),z:Number(min.z)},max:{x:Number(max.x),y:Number(max.y),z:Number(max.z)}}; }
+    function boxesOverlap(a,b,tol){ return a.min.x-tol<=b.max.x&&a.max.x+tol>=b.min.x&&a.min.y-tol<=b.max.y&&a.max.y+tol>=b.min.y&&a.min.z-tol<=b.max.z&&a.max.z+tol>=b.min.z; }
+    function unionBox(boxes){ const u={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}}; for(const b of boxes){ u.min.x=Math.min(u.min.x,b.min.x);u.min.y=Math.min(u.min.y,b.min.y);u.min.z=Math.min(u.min.z,b.min.z);u.max.x=Math.max(u.max.x,b.max.x);u.max.y=Math.max(u.max.y,b.max.y);u.max.z=Math.max(u.max.z,b.max.z);} return u; }
+    function boxVolume(b){ return Math.max(0,(b.max.x-b.min.x))*Math.max(0,(b.max.y-b.min.y))*Math.max(0,(b.max.z-b.min.z)); }
+    function boxDiagonal(b){ const dx=b.max.x-b.min.x,dy=b.max.y-b.min.y,dz=b.max.z-b.min.z; return Math.sqrt(dx*dx+dy*dy+dz*dz); }
+    const keyOf=(o)=>o.modelId+":"+o.runtimeId;
+    function splitKey(k){ const i=k.lastIndexOf(":"); return [k.slice(0,i), Number(k.slice(i+1))]; }
+    function addToMapSet(map,modelId,ids){ if(!ids||ids.length===0) return; if(!map.has(modelId)) map.set(modelId,new Set()); for(const id of ids) if(Number.isFinite(Number(id))) map.get(modelId).add(Number(id)); }
+    function mapSetCount(map){ let n=0; for(const s of map.values()) n+=s.size; return n; }
+    function mapSetToSelector(map){ return {modelObjectIds:[...map.entries()].map(([modelId,set])=>({modelId,objectRuntimeIds:[...set]})).filter((x)=>x.objectRuntimeIds.length>0)}; }
 
     // ===================== CSV =====================
-    function getPropertyValueForCsv(propObj,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; const flat=flattenProps(propObj); const hit=flat.find((p)=>String(p.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
+    function getPropertyValueForCsv(propObj,paramName){ return getParamValue(propObj,paramName); }
     async function buildRows(entries,revisionBase,viewName,wantGuid){
       const cols=selectedColumns(); const propertyCols=cols.filter(isPropertyColumn);
       const byModel=new Map(); for(const e of entries){ if(!byModel.has(e.modelId)) byModel.set(e.modelId,[]); byModel.get(e.modelId).push(e); }
@@ -549,20 +703,36 @@
     // ===================== IMPORTAR (uno o varios CSV) =====================
     async function importCsvFiles(files){
       clearLog(); setProgress("Importando: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV ("+files.length+" archivo/s)");
-      const uuids=[]; const raws=[]; const seen=new Set(); let trueTotal=0;
+      // color (normalizado) -> { uuids:Set, raws:Set }
+      const byColor=new Map();
+      const ensureColor=(col)=>{ if(!byColor.has(col)) byColor.set(col,{uuids:new Set(),raws:new Set()}); return byColor.get(col); };
+      let totalRows=0, withColorCol=0, fallbackTrue=0;
       for(const file of files){
         let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); continue; }
         text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
         if(lines.length<2){ log(file.name+": vacío."); continue; }
         const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
-        const gi=header.findIndex((h)=>h.includes("guid")); const ri=header.findIndex((h)=>h==="revisado_deo");
-        if(gi<0||ri<0){ log(file.name+": faltan columnas GUID/revisado_deo. Omitido."); continue; }
-        let fileTrue=0;
-        for(let i=1;i<lines.length;i++){ const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); const reviewed=(cells[ri]||"").trim().toUpperCase(); if(reviewed!=="TRUE") continue; fileTrue++; const uuid=toExternalUuid(guid); if(uuid && !seen.has(uuid)){ seen.add(uuid); uuids.push(uuid); raws.push(guid); } }
-        trueTotal+=fileTrue; log(file.name+": "+fileTrue+" filas TRUE.");
+        const gi=header.findIndex((h)=>h.includes("guid"));
+        const ci=header.findIndex((h)=>h==="color");
+        const ri=header.findIndex((h)=>h==="revisado_deo");
+        if(gi<0){ log(file.name+": no se encontró columna GUID. Omitido."); continue; }
+        if(ci<0&&ri<0){ log(file.name+": no hay columna 'color' ni 'revisado_deo'. Omitido."); continue; }
+        let fileApplied=0;
+        for(let i=1;i<lines.length;i++){
+          const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); if(!guid) continue;
+          let col="";
+          if(ci>=0){ const raw=(cells[ci]||"").trim(); const an=analyzeColor(raw); if(an.valid){ col=an.normalizedColor; withColorCol++; } }
+          if(!col && ri>=0){ const reviewed=(cells[ri]||"").trim().toUpperCase(); if(reviewed==="TRUE"){ col="#FC0D1BFF"; fallbackTrue++; } }
+          if(!col) continue;
+          totalRows++; fileApplied++;
+          const bucket=ensureColor(col);
+          const uuid=toExternalUuid(guid); if(uuid) bucket.uuids.add(uuid);
+          bucket.raws.add(guid);
+        }
+        log(file.name+": "+fileApplied+" fila(s) con color.");
       }
-      log("Total GUID únicos TRUE: "+uuids.length+" (de "+trueTotal+" filas TRUE).");
-      if(uuids.length===0){ log("No hay GUID válidos marcados como TRUE."); setProgress("Sin GUID TRUE válidos."); showCancel(false); return; }
+      log("Filas con color: "+totalRows+" (por columna color: "+withColorCol+", por revisado_deo TRUE: "+fallbackTrue+"). Colores distintos: "+byColor.size+".");
+      if(byColor.size===0){ log("No hay filas con color aplicable. Revisa que el CSV tenga columna 'color' o 'revisado_deo'."); setProgress("Nada que importar."); showCancel(false); return; }
 
       showCancel(true); setProgress("Importando: detectando modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
@@ -571,64 +741,37 @@
       if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
       log("Modelos: "+modelIds.length);
 
-      const byModel=new Map(); let totalFound=0; let mi=0;
+      let applied=0, matched=0, mi=0;
       for(const modelId of modelIds){
         if(cancelRequested){ log("Importación cancelada."); break; }
-        setProgress("Importando: modelo "+(++mi)+"/"+modelIds.length+" (encontrados: "+totalFound+")");
-        let ridsU=[]; try{ ridsU=await API.viewer.convertToObjectRuntimeIds(modelId,uuids); }catch(e){ ridsU=[]; }
-        let ridsR=[]; try{ ridsR=await API.viewer.convertToObjectRuntimeIds(modelId,raws); }catch(e){ ridsR=[]; }
-        const fU=(ridsU||[]).filter((r)=>r!=null).length; const fR=(ridsR||[]).filter((r)=>r!=null).length;
-        const rids=fR>fU?ridsR:ridsU; log("   "+modelId+": UUID="+fU+", GUID="+fR);
-        const ids=[]; for(let i=0;i<(rids||[]).length;i++){ const rid=rids[i]; if(rid!=null) ids.push(Number(rid)); }
-        if(ids.length>0){ byModel.set(modelId,ids); totalFound+=ids.length; }
+        setProgress("Importando: modelo "+(++mi)+"/"+modelIds.length+" (pintados: "+applied+")");
+        for(const [col,bucket] of byColor.entries()){
+          if(cancelRequested) break;
+          const uuids=[...bucket.uuids]; const raws=[...bucket.raws];
+          let ridsU=[]; try{ ridsU=uuids.length?await API.viewer.convertToObjectRuntimeIds(modelId,uuids):[]; }catch(e){ ridsU=[]; }
+          let ridsR=[]; try{ ridsR=raws.length?await API.viewer.convertToObjectRuntimeIds(modelId,raws):[]; }catch(e){ ridsR=[]; }
+          const fU=(ridsU||[]).filter((r)=>r!=null).length; const fR=(ridsR||[]).filter((r)=>r!=null).length;
+          const rids=fR>fU?ridsR:ridsU;
+          const ids=[]; for(let i=0;i<(rids||[]).length;i++){ const rid=rids[i]; if(rid!=null) ids.push(Number(rid)); }
+          if(ids.length===0) continue;
+          matched+=ids.length;
+          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:col}); applied+=ids.length; }
+          catch(e){ recordError("import.apply",e); log("Error aplicando color "+col+" en "+modelId+": "+(e&&e.message?e.message:e)); }
+        }
       }
-      log("Objetos encontrados: "+totalFound+" / "+uuids.length);
-      if(totalFound===0){ log("Ningún GUID está en el modelo. ¿Es el mismo modelo/versión?"); setProgress("Ningún GUID coincide."); showCancel(false); return; }
-
-      setProgress("Importando: calibrando color...");
-      const first=[...byModel.entries()][0]; const pModel=first[0]; const pId=first[1][0];
-      const formats=["#FC0D1BFF","#FC0D1B",{r:252,g:13,b:27,a:255},{r:252,g:13,b:27},{r:252,g:13,b:27,a:1}];
-      let chosen=null;
-      for(const fmt of formats){ if(cancelRequested) break; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId:pModel,objectRuntimeIds:[pId]}]},{color:fmt}); }catch(e){ continue; } await sleep(220); const ap=await probeColor(pModel,pId); log("   formato "+JSON.stringify(fmt)+" -> "+(ap||"(no detectado)")); if(looksRed(ap)){ chosen=fmt; break; } }
-      if(!chosen){ chosen=formats[0]; log("No se pudo verificar el formato; aplico "+JSON.stringify(chosen)+"."); } else log("Formato válido: "+JSON.stringify(chosen));
-
-      let applied=0;
-      for(const [modelId,ids] of byModel.entries()){ if(cancelRequested) break; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:chosen}); applied+=ids.length; }catch(e){ recordError("import.apply",e); log("Error color en "+modelId+": "+e.message); } }
       showCancel(false);
-      log("Pintados de rojo: "+applied+" objetos."); setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados.");
+      log("Objetos pintados: "+applied+" (coincidencias: "+matched+").");
+      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados.");
     }
 
-    // ===================== PROPIEDADES =====================
-    function flattenProps(propsList){ const flat=[]; const walk=(obj)=>{ if(!obj||typeof obj!=="object") return; if(Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key??obj.propertyName; const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue; const unit=obj.unit??obj.units??obj.Unit??""; if(name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value:String(value),unit:String(unit||"")}); for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
-    function propsSearchText(p){ const chunks=[]; try{ if(p.class) chunks.push(p.class);}catch(e){} for(const x of flattenProps(p)) chunks.push(x.name,x.value); return chunks.join(" ").toLowerCase(); }
-    function isNumericValue(v){ if(typeof v==="number") return true; return Number.isFinite(parseFloat(String(v).replace(",","."))); }
-    function toNumber(v){ return typeof v==="number"?v:parseFloat(String(v).replace(",",".")); }
-    function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
-
-    async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
-
-    async function safeGetSelection(){ let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
-
-    function bboxOf(box){ const b=box&&box.boundingBox?box.boundingBox:box; if(!b) return null; const min=b.min||b.minPoint||b.start; const max=b.max||b.maxPoint||b.end; if(!min||!max) return null; return {min:{x:Number(min.x),y:Number(min.y),z:Number(min.z)},max:{x:Number(max.x),y:Number(max.y),z:Number(max.z)}}; }
-    function boxesOverlap(a,b,tol){ return a.min.x-tol<=b.max.x&&a.max.x+tol>=b.min.x&&a.min.y-tol<=b.max.y&&a.max.y+tol>=b.min.y&&a.min.z-tol<=b.max.z&&a.max.z+tol>=b.min.z; }
-    function unionBox(boxes){ const u={min:{x:Infinity,y:Infinity,z:Infinity},max:{x:-Infinity,y:-Infinity,z:-Infinity}}; for(const b of boxes){ u.min.x=Math.min(u.min.x,b.min.x);u.min.y=Math.min(u.min.y,b.min.y);u.min.z=Math.min(u.min.z,b.min.z);u.max.x=Math.max(u.max.x,b.max.x);u.max.y=Math.max(u.max.y,b.max.y);u.max.z=Math.max(u.max.z,b.max.z);} return u; }
-    function boxVolume(b){ return Math.max(0,(b.max.x-b.min.x))*Math.max(0,(b.max.y-b.min.y))*Math.max(0,(b.max.z-b.min.z)); }
-    const keyOf=(o)=>o.modelId+":"+o.runtimeId;
-    const keyList=(list)=>JSON.stringify(list.map(keyOf).sort());
-    function addToMapSet(map,modelId,ids){ if(!ids||ids.length===0) return; if(!map.has(modelId)) map.set(modelId,new Set()); for(const id of ids) if(Number.isFinite(Number(id))) map.get(modelId).add(Number(id)); }
-    function mapSetCount(map){ let n=0; for(const s of map.values()) n+=s.size; return n; }
-    function mapSetToSelector(map){ return {modelObjectIds:[...map.entries()].map(([modelId,set])=>({modelId,objectRuntimeIds:[...set]})).filter((x)=>x.objectRuntimeIds.length>0)}; }
-
-    // ===================== SELECCIÓN CERCANOS (por ensamblaje + contacto) =====================
-    function getNearCalibrationFactor(){ const customOn=document.getElementById("nearCustom")&&document.getElementById("nearCustom").checked&&document.getElementById("nearToggle").checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0.1,Math.min(3,v/100)):1; }
+    // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
+    function getNearCalibrationFactor(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0.1,Math.min(3,v/100)):1; }
     function updateNearPercentLabel(){ const el=document.getElementById("nearPercent"), lab=document.getElementById("nearPercentLabel"); if(el&&lab) lab.textContent=el.value+"%"; }
     function isFastenerOrWeld(propObj,bb,maxVolume){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<maxVolume) return true; return false; }
-
     async function assemblyCandidateIds(modelId,seedIds){
       const ids=new Set();
       const add=(arr)=>{ for(const x of arr||[]){ const id=Number(typeof x==="object"?(x.id??x.runtimeId??x.objectRuntimeId):x); if(Number.isFinite(id)) ids.add(id); } };
       try{
-        // Padres directos (el ensamblaje) y luego todos sus descendientes
         const parents=await API.viewer.getHierarchyParents(modelId,seedIds,undefined,false,false);
         const parentIds=(parents||[]).map((p)=>Number(p.id??p.runtimeId??p.objectRuntimeId)).filter(Number.isFinite);
         const roots=parentIds.length?parentIds:seedIds;
@@ -637,101 +780,115 @@
       if(ids.size===0){ try{ add(await API.viewer.getHierarchyChildren(modelId,seedIds,undefined,true)); }catch(e){} }
       return [...ids];
     }
-
-    async function computeNeighbors(modelId,seedIds){
+    async function computeNeighbors(modelId,seedIds,factor){
       if(seedIds.length===0) return [];
       let seedBoxesRaw=[]; try{ seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId,seedIds); }catch(e){ recordError("computeNeighbors.seedBbox",e); return []; }
       const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if(seedBoxes.length===0) return [];
       const seedBox=unionBox(seedBoxes);
+      const seedDiag=boxDiagonal(seedBox);
+      // Radio ABSOLUTO de búsqueda: base de contacto + 4% de la diagonal de la semilla, escalado por la sensibilidad.
+      const margin=(CONTACT_TOLERANCE + seedDiag*0.04) * factor;
+      const volMax=CONTACT_VOLUME_MAX * factor;
       const seedSet=new Set(seedIds);
-      let candidateIds=(await assemblyCandidateIds(modelId,seedIds)).filter((id)=>!seedSet.has(id));
+      const candidateIds=(await assemblyCandidateIds(modelId,seedIds)).filter((id)=>!seedSet.has(id));
       if(candidateIds.length===0){ log("Selección cercanos: el objeto no tiene ensamblaje con más piezas (o la jerarquía no está disponible)."); return []; }
-      // contacto con la caja del objeto seleccionado (tolerancia ajustada)
       const contact=[]; const bboxById=new Map();
-      for(let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){ const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,chunk); }catch(e){ continue; } for(let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if(bb&&boxesOverlap(seedBox,bb,CONTACT_TOLERANCE*getNearCalibrationFactor())){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
-      const factor=getNearCalibrationFactor();
+      for(let i=0;i<candidateIds.length;i+=CANDIDATE_BBOX_BATCH){ const chunk=candidateIds.slice(i,i+CANDIDATE_BBOX_BATCH); let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,chunk); }catch(e){ continue; } for(let j=0;j<chunk.length;j++){ const bb=boxes[j]?bboxOf(boxes[j]):null; if(bb&&boxesOverlap(seedBox,bb,margin)){ contact.push(chunk[j]); bboxById.set(chunk[j],bb);} } }
       const propsMap=await getPropertiesCached(modelId,contact);
       const matches=[];
-      for(const id of contact){ const prop=propsMap.get(id)||{}; if(isFastenerOrWeld(prop,bboxById.get(id),CONTACT_VOLUME_MAX*factor)) matches.push(id); }
-      log("Selección cercanos: ensamblaje="+candidateIds.length+", en contacto="+contact.length+", añadidos="+matches.length+", sensibilidad="+Math.round(factor*100)+"% ("+modelId+").");
+      for(const id of contact){ const prop=propsMap.get(id)||{}; if(isFastenerOrWeld(prop,bboxById.get(id),volMax)) matches.push(id); }
+      log("Selección cercanos: ensamblaje="+candidateIds.length+", en radio="+contact.length+", añadidos="+matches.length+", sensibilidad="+Math.round(factor*100)+"% ("+modelId+").");
       return matches;
     }
 
     // ===================== EXCLUIR / CONCENTRAR =====================
-    async function computeExcludedRemovals(current,addMap){
+    async function computeExcludedRemovals(list){
       const removeMap=new Map();
-      const exclOn=document.getElementById("excludeToggle").checked&&excludedColors.size>0;
-      if(!exclOn) return removeMap;
-      let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ colored=[]; }
-      const colorMap=new Map(); for(const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor);
-      // solo sobre lo recién añadido en la última selección (usuario + cercanos)
-      for(const o of current){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); }
-      for(const [modelId,set] of addMap.entries()){ for(const id of [...set]){ const col=colorMap.get(modelId+":"+id); if(col&&excludedColors.has(col)){ set.delete(id); addToMapSet(removeMap,modelId,[id]); } } }
-      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: quitados "+n+" objeto(s) por color.");
+      if(!(document.getElementById("excludeToggle").checked && excludedColors.size>0)) return removeMap;
+      const colorMap=await getCurrentColorMap();
+      for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); }
+      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: marcados "+n+" objeto(s) por color.");
       return removeMap;
     }
-    async function computeIncludeRemovals(current){
+    async function computeIncludeRemovals(list){
       const removeMap=new Map();
       if(!document.getElementById("includeToggle").checked) return removeMap;
       const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked;
       if(colorMode){
         if(includeColors.size===0){ log("Selector de items: falta elegir al menos un color."); return removeMap; }
-        let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ colored=[]; }
-        const colorMap=new Map(); for(const c of colored) colorMap.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor);
-        let kept=0,removed=0;
-        for(const o of current){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&includeColors.has(col)) kept++; else { addToMapSet(removeMap,o.modelId,[o.runtimeId]); removed++; } }
-        if(removed) log("Selector de items: mantenidos "+kept+" por color, quitados "+removed+".");
+        const colorMap=await getCurrentColorMap();
+        for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(!(col&&includeColors.has(col))) addToMapSet(removeMap,o.modelId,[o.runtimeId]); }
         return removeMap;
       }
       const value=document.getElementById("includeValue").value; if(!value){ log("Selector de items: falta elegir un valor Name."); return removeMap; }
-      const byModel=new Map(); for(const o of current){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
-      const wanted=String(value).trim().toLowerCase(); let kept=0,removed=0;
-      for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(values.includes(wanted)) kept++; else { addToMapSet(removeMap,modelId,[id]); removed++; } } } }
-      if(removed) log("Selector de items: mantenidos "+kept+" con Name="+value+", quitados "+removed+".");
+      const byModel=new Map(); for(const o of list){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
+      const wanted=String(value).trim().toLowerCase();
+      for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(!values.includes(wanted)) addToMapSet(removeMap,modelId,[id]); } } }
       return removeMap;
     }
 
     // ===================== MOTOR DE SELECCIÓN =====================
     function toolsActive(){ return !!(document.getElementById("nearToggle").checked||document.getElementById("excludeToggle").checked||document.getElementById("includeToggle").checked); }
     async function processSelectionNow(){
-      if(!toolsActive()){ return; }
+      if(!toolsActive()) return;
       if(selBusy) return;
       if(Date.now()<suppressSelectionUntil) return;
       selBusy=true;
       try{
         const current=await safeGetSelection();
-        if(current.length===0){ prevSel=[]; return; }
-        const prevSet=new Set(prevSel.map(keyOf));
-        const added=current.filter((o)=>!prevSet.has(keyOf(o)));
-        const seedsByModel=new Map(); for(const o of (added.length?added:current)) addToMapSet(seedsByModel,o.modelId,[o.runtimeId]);
-        const currentKeys=new Set(current.map(keyOf));
+        if(current.length===0){ toolAddedKeys=new Set(); return; }
+        const currentKeySet=new Set(current.map(keyOf));
+        // Semillas reales = lo seleccionado por el usuario (descontando lo que añadió la herramienta).
+        const genuineSeeds=current.filter((o)=>!toolAddedKeys.has(keyOf(o)));
 
-        // añadir cercanos
-        const addMap=new Map();
-        if(document.getElementById("nearToggle").checked){ for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set]); const filtered=neighbors.filter((id)=>!currentKeys.has(modelId+":"+id)); addToMapSet(addMap,modelId,filtered); } }
+        // Conjunto de vecinos DESEADO, recalculado desde cero solo a partir de las semillas reales.
+        const desiredMap=new Map();
+        if(document.getElementById("nearToggle").checked && genuineSeeds.length>0){
+          const factor=getNearCalibrationFactor();
+          const seedsByModel=new Map(); for(const o of genuineSeeds) addToMapSet(seedsByModel,o.modelId,[o.runtimeId]);
+          for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set],factor); addToMapSet(desiredMap,modelId,neighbors); }
+        }
+        for(const o of genuineSeeds){ if(desiredMap.has(o.modelId)) desiredMap.get(o.modelId).delete(o.runtimeId); }
+        const desiredKeys=new Set(); for(const [m,s] of desiredMap.entries()) for(const id of s) desiredKeys.add(m+":"+id);
 
-        // quitar por color / por Name
+        // Selección proyectada (semillas + vecinos deseados) para evaluar exclusión / filtros.
+        const projected=genuineSeeds.slice();
+        for(const [m,s] of desiredMap.entries()) for(const id of s) projected.push({modelId:m,runtimeId:id});
+
         const removeMap=new Map();
-        for(const [m,s] of (await computeExcludedRemovals(current,addMap)).entries()) addToMapSet(removeMap,m,[...s]);
-        for(const [m,s] of (await computeIncludeRemovals(current)).entries()) addToMapSet(removeMap,m,[...s]);
+        for(const [m,s] of (await computeExcludedRemovals(projected)).entries()) addToMapSet(removeMap,m,[...s]);
+        for(const [m,s] of (await computeIncludeRemovals(projected)).entries()) addToMapSet(removeMap,m,[...s]);
+        const removeKeys=new Set(); for(const [m,s] of removeMap.entries()) for(const id of s) removeKeys.add(m+":"+id);
 
-        const addCount=mapSetCount(addMap), removeCount=mapSetCount(removeMap);
-        if(addCount===0 && removeCount===0){ prevSel=current; return; }  // no tocar la selección (mantiene el panel de propiedades)
+        // A añadir: vecinos deseados que no estén ya seleccionados y que no caigan en exclusión/filtro.
+        const addMap=new Map();
+        for(const k of desiredKeys){ if(!currentKeySet.has(k) && !removeKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(addMap,m,[id]); } }
+        // A quitar: lo que la herramienta había añadido y ya no se desea, más lo seleccionado que cae en exclusión/filtro.
+        const removeFromSel=new Map();
+        for(const k of toolAddedKeys){ if(!desiredKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
+        for(const k of removeKeys){ if(currentKeySet.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
 
-        // aplicar de forma mínima: add y remove (nunca un set completo)
+        const addCount=mapSetCount(addMap), removeCount=mapSetCount(removeFromSel);
+        // toolAddedKeys final = vecinos deseados que no han sido excluidos.
+        const newToolKeys=new Set([...desiredKeys].filter((k)=>!removeKeys.has(k)));
+        if(addCount===0 && removeCount===0){ toolAddedKeys=newToolKeys; return; }
         suppressSelectionUntil=Date.now()+650;
         if(addCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(addMap),"add"); }catch(e){ recordError("setSelection.add",e); } }
-        if(removeCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(removeMap),"remove"); }catch(e){ recordError("setSelection.remove",e); } }
-
-        // recalcular prevSel
-        const finalMap=new Map(); for(const o of current) addToMapSet(finalMap,o.modelId,[o.runtimeId]); for(const [m,s] of addMap.entries()) addToMapSet(finalMap,m,[...s]); for(const [m,s] of removeMap.entries()){ if(finalMap.has(m)) for(const id of s) finalMap.get(m).delete(id); }
-        prevSel=[]; for(const [m,s] of finalMap.entries()) for(const id of s) prevSel.push({modelId:m,runtimeId:id});
+        if(removeCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(removeFromSel),"remove"); }catch(e){ recordError("setSelection.remove",e); } }
+        toolAddedKeys=newToolKeys;
       }catch(err){ recordError("processSelectionNow",err); log("Selección: "+(err&&err.message?err.message:err)); }
       finally{ selBusy=false; }
     }
     function scheduleProcessSelection(){ if(!toolsActive()) return; if(Date.now()<suppressSelectionUntil) return; clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,220); }
+    async function removeToolAddedFromSelection(){
+      if(toolAddedKeys.size===0) return;
+      const map=new Map(); for(const k of toolAddedKeys){ const [m,id]=splitKey(k); addToMapSet(map,m,[id]); }
+      suppressSelectionUntil=Date.now()+650;
+      try{ await API.viewer.setSelection(mapSetToSelector(map),"remove"); }catch(e){ recordError("removeToolAdded",e); }
+      toolAddedKeys=new Set();
+    }
 
-    // ===================== OCULTOS =====================
+    // ===================== OCULTOS (#3) =====================
     async function getHiddenObjectEntries(){
       const attempts=[ ()=>API.viewer.getObjects(undefined,{visible:false}), ()=>API.viewer.getObjects(undefined,{hidden:true}), ()=>API.viewer.getObjects({visible:false}) ];
       let entries=[];
@@ -743,88 +900,189 @@
       if(!entries.length){ log("Selección ocultos: no se han detectado objetos ocultos."); return 0; }
       const byModel=new Map(); for(const e of entries) addToMapSet(byModel,e.modelId,[e.objectRuntimeId]);
       let marked=0;
-      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:HIDDEN_MARK_COLOR,visible:false}); hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=ids.length; }catch(e){ recordError("markHiddenWhite",e); } }
-      log("Selección ocultos: "+marked+" objeto(s) ocultos marcados en blanco.");
+      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:HIDDEN_MARK_COLOR,opacity:HIDDEN_MARK_OPACITY,visible:false}); hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=ids.length; }catch(e){ recordError("markHiddenWhite",e); } }
+      log("Selección ocultos: "+marked+" objeto(s) ocultos marcados en blanco al 50%.");
       return marked;
     }
-    async function setRegistryVisible(visible){
+    async function rescueRecolored(){
+      // Las piezas a las que el usuario les ha cambiado el color (ya no son blancas) se rescatan: visibles y opacas.
+      const colorMap=await getCurrentColorMap();
       let count=0;
-      for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:!!visible}); count+=ids.length; }catch(e){ recordError("setRegistryVisible",e); } }
-      log((visible?"Ver ocultos ON: mostrados ":"Ver ocultos OFF: ocultados ")+count+" objeto(s).");
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()){
+        const recolored=[];
+        for(const id of [...set]){ const col=colorMap.get(modelId+":"+id); if(col && col!==HIDDEN_MARK_COLOR){ recolored.push(id); set.delete(id); } }
+        if(recolored.length){ try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:recolored}]},{visible:true,opacity:1}); count+=recolored.length; }catch(e){ recordError("rescueRecolored",e); } }
+      }
+      if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s) (se mantienen visibles).");
+      return count;
+    }
+    async function setRegistryVisible(visible){
+      if(visible){
+        let count=0;
+        for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:true,color:HIDDEN_MARK_COLOR,opacity:HIDDEN_MARK_OPACITY}); count+=ids.length; }catch(e){ recordError("setRegistryVisible.show",e); } }
+        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco al 50%.");
+        return count;
+      }
+      await rescueRecolored();
+      let count=0;
+      for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); count+=ids.length; }catch(e){ recordError("setRegistryVisible.hide",e); } }
+      log("Ver ocultos OFF: ocultados "+count+" objeto(s).");
       return count;
     }
     async function clearHiddenWhite(){
-      // intenta quitar el blanco y volver a ocultar
+      await rescueRecolored();
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){ const ids=[...set]; if(!ids.length) continue;
-        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{visible:false}); }catch(e){ recordError("clearHidden.hide",e); }
-        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:null}); }catch(e){ /* algunos visores no aceptan null */ }
+        try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:"reset",opacity:1,visible:false}); }
+        catch(e){ recordError("clearHiddenWhite",e); try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:"reset",visible:false}); }catch(e2){} }
       }
       hiddenWhiteRegistry.clear();
     }
     function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); if(view) view.disabled=!on; if(line) line.classList.toggle("is-disabled",!on); }
 
-    // ===================== MOSTRAR NOMBRES (#11) =====================
-    let nameMarkupSupported=null;
-    async function clearNameMarkups(){
-      if(nameMarkupIds.length&&API.markup&&typeof API.markup.removeMarkups==="function"){
-        try{ await API.markup.removeMarkups(nameMarkupIds); }catch(e){ recordError("clearNameMarkups",e); }
-      }
-      nameMarkupIds=[];
-    }
-    function centerPickFromBox(modelId,runtimeId,bb,offset){
-      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2;
-      const scale=1000; // MarkupPick trabaja en milímetros.
-      return { type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:(cz+(offset||0))*scale };
-    }
-    async function showObjectNames(on){
-      if(!on){ await clearNameMarkups(); log("Mostrar nombres OFF."); return; }
-      if(!API.markup||typeof API.markup.addTextMarkup!=="function"){
-        nameMarkupSupported=false;
-        log("Mostrar nombres: la API de markups de texto no está disponible en este entorno.");
-        return;
-      }
-      nameMarkupSupported=true;
-      await clearNameMarkups();
-      const sel=await safeGetSelection();
-      if(sel.length===0){ log("Mostrar nombres: no hay objetos seleccionados."); return; }
-      const byModel=new Map(); for(const o of sel.slice(0,80)){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
+    // ===================== MOSTRAR PARÁMETROS (#4-7) =====================
+    async function removeMarkupIds(ids){ if(ids&&ids.length&&API.markup&&typeof API.markup.removeMarkups==="function"){ try{ await API.markup.removeMarkups(ids); }catch(e){ recordError("removeMarkups",e); } } }
+    function centerPickFromBox(modelId,runtimeId,bb,offset){ const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2; const scale=1000; return { type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:(cz+(offset||0))*scale }; }
+    const paramTools={
+      names:{toggleId:"namesToggle", picker:namesPicker, filter:null, store:[]},
+      bolts:{toggleId:"boltsToggle", picker:boltsPicker, filter:"bolt assembly", store:[]},
+      welds:{toggleId:"weldsToggle", picker:weldsPicker, filter:"weld", store:[]}
+    };
+    const paramTimers={};
+    function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const val=getParamValue(p,name); if(val===""||val==null) continue; if(String(name).trim().toLowerCase()==="name") lines.push(val); else lines.push(name+": "+val); } return lines.join("\n"); }
+    async function refreshParamMarkups(toolKey){
+      const cfg=paramTools[toolKey]; if(!cfg) return;
+      await removeMarkupIds(cfg.store); cfg.store=[];
+      const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked) return;
+      if(!API.markup||typeof API.markup.addTextMarkup!=="function"){ log("Mostrar parámetros: la API de markups de texto no está disponible en este entorno."); return; }
+      const sel=await safeGetSelection(); if(sel.length===0) return;
+      const params=cfg.picker.getParams();
+      const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
       const markups=[];
       for(const [modelId,ids] of byModel.entries()){
-        let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("showNames.bbox",e); continue; }
+        if(markups.length>=MAX_PARAM_MARKUPS) break;
+        let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("paramMarkups.bbox",e); continue; }
         const propsMap=await getPropertiesCached(modelId,ids);
         for(let i=0;i<ids.length;i++){
+          if(markups.length>=MAX_PARAM_MARKUPS) break;
           const bb=bboxOf(boxes[i]); if(!bb) continue;
-          const names=getNameValues(propsMap.get(ids[i])||{}); if(!names.length) continue;
+          const p=propsMap.get(ids[i])||{};
+          if(cfg.filter){ const names=getNameValues(p).map((v)=>v.toLowerCase()); if(!names.some((n)=>n.includes(cfg.filter))) continue; }
+          const text=buildParamLabel(p,params); if(!text) continue;
           const dz=Math.max(0.05,(bb.max.z-bb.min.z)*0.25);
-          const start=centerPickFromBox(modelId,ids[i],bb,0);
-          const end=centerPickFromBox(modelId,ids[i],bb,dz);
-          markups.push({ start, end, text:names[0], color:{r:0,g:0,b:0,a:255} });
+          markups.push({ start:centerPickFromBox(modelId,ids[i],bb,0), end:centerPickFromBox(modelId,ids[i],bb,dz), text, color:{r:0,g:0,b:0,a:255} });
         }
       }
-      if(markups.length===0){ log("Mostrar nombres: no se han encontrado valores Name en la selección."); return; }
+      if(markups.length===0){ log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en la selección."); return; }
+      try{ const added=await API.markup.addTextMarkup(markups); cfg.store=(added||[]).map((m)=>m.id).filter((id)=>id!=null); log("Mostrar parámetros ("+toolKey+"): "+markups.length+" etiqueta(s)."); }
+      catch(e){ recordError("paramMarkups.add",e); log("Mostrar parámetros ("+toolKey+"): error al crear etiquetas de texto."); }
+    }
+    function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeMarkupIds(cfg.store); cfg.store=[]; return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
+    function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
+    function scheduleAllParamMarkups(){ if(!anyParamToolActive()) return; for(const key of Object.keys(paramTools)) scheduleParamMarkups(key); }
+
+    // ===================== PLANTILLAS DE VISTA (#9) =====================
+    const TEMPLATE_STORE_KEY="deo_view_templates_v1";
+    const TEMPLATE_LAST_KEY="deo_view_template_last_v1";
+    let templateViewsCache=[];
+    let templateCurrentUser=null;
+    const TEMPLATE_FIELD_IDS=["templateRfi","templateModule","templateLevel","templateAxes","templateElement","templateTask"];
+
+    function loadTemplates(){ try{ const raw=localStorage.getItem(TEMPLATE_STORE_KEY); const arr=raw?JSON.parse(raw):[]; return Array.isArray(arr)?arr:[]; }catch(e){ recordError("loadTemplates",e); return []; } }
+    function saveTemplates(list){ try{ localStorage.setItem(TEMPLATE_STORE_KEY,JSON.stringify(list)); }catch(e){ recordError("saveTemplates",e); } }
+    function loadLastTemplateName(){ try{ return localStorage.getItem(TEMPLATE_LAST_KEY)||""; }catch(e){ return ""; } }
+    function saveLastTemplateName(name){ try{ localStorage.setItem(TEMPLATE_LAST_KEY,name||""); }catch(e){} }
+
+    function userDisplayName(user){ if(!user) return "No disponible"; const name=[user.firstName,user.lastName].filter(Boolean).join(" ").trim(); return name||user.email||user.id||"No disponible"; }
+    function templateDateLabel(){ try{return new Date().toLocaleDateString("es-ES",{timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"});}catch(e){return new Date().toLocaleDateString("es-ES");} }
+    function templateDatetimeLabel(){ try{return new Date().toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return new Date().toLocaleString("es-ES");} }
+    function templateText(id){ const el=document.getElementById(id); return el?String(el.value||"").trim():""; }
+    function cleanViewPart(value){ return String(value||"").trim().replace(/[\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""); }
+    function readableViewName(v){ return String((v&&(v.name||v.description||v.id))||"").trim(); }
+
+    function currentTemplateFromForm(){ return { name:templateText("templateTplName")||"(sin nombre)", rfi:templateText("templateRfi"), module:templateText("templateModule"), level:templateText("templateLevel"), axes:templateText("templateAxes"), element:templateText("templateElement"), task:templateText("templateTask") }; }
+    function buildTemplateName(){ const parts=[templateText("templateRfi"),templateText("templateModule"),templateText("templateLevel"),templateText("templateAxes"),templateText("templateElement"),templateText("templateTask")].map(cleanViewPart).filter(Boolean); return parts.join("_"); }
+    function buildTemplateDescription(){ const author=userDisplayName(templateCurrentUser); const lines=["RFI: "+(templateText("templateRfi")||""),"Autor: "+author,"Fecha: "+templateDatetimeLabel(),"Módulo: "+templateText("templateModule"),"Nivel: "+templateText("templateLevel"),"Ejes: "+templateText("templateAxes"),"Elemento: "+templateText("templateElement"),"Tarea: "+templateText("templateTask")]; return lines.join("\n"); }
+
+    function applyTemplateToForm(tpl){ if(!tpl) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||""; }; set("templateTplName",(tpl.name&&tpl.name!=="(sin nombre)")?tpl.name:""); set("templateRfi",tpl.rfi); set("templateModule",tpl.module); set("templateLevel",tpl.level); set("templateAxes",tpl.axes); set("templateElement",tpl.element); set("templateTask",tpl.task); updateTemplateGeneratedName(); }
+    function updateTemplateGeneratedName(){ const nameEl=document.getElementById("templateName"); if(nameEl && nameEl.dataset.manual!=="1") nameEl.value=buildTemplateName(); const descEl=document.getElementById("templateDescription"); if(descEl && descEl.dataset.manual!=="1") descEl.value=buildTemplateDescription(); }
+
+    function populateTemplateSelect(selectName){
+      const sel=document.getElementById("templateSelect"); if(!sel) return;
+      const list=loadTemplates(); sel.innerHTML="";
+      const ph=document.createElement("option"); ph.value=""; ph.textContent="(Nueva plantilla)"; sel.appendChild(ph);
+      for(const t of list){ const o=document.createElement("option"); o.value=t.name; o.textContent=t.name; sel.appendChild(o); }
+      const target=selectName!==undefined?selectName:loadLastTemplateName();
+      if(target && list.some((t)=>t.name===target)) sel.value=target;
+    }
+    function saveTemplateFromForm(){
+      const name=templateText("templateTplName");
+      if(!name){ setProgress("Pon un nombre a la plantilla antes de guardar."); log("Plantillas: falta el nombre de la plantilla."); return; }
+      const tpl=currentTemplateFromForm(); tpl.name=name;
+      const list=loadTemplates(); const idx=list.findIndex((t)=>t.name===name);
+      if(idx>=0) list[idx]=tpl; else list.push(tpl);
+      saveTemplates(list); saveLastTemplateName(name); populateTemplateSelect(name);
+      const info=document.getElementById("templateSaveInfo"); if(info) info.textContent="Plantilla \""+name+"\" guardada. Nombre de vista: "+(buildTemplateName()||"(vacío)");
+      log("Plantilla guardada: "+name); setProgress("Plantilla guardada: "+name);
+    }
+    function deleteSelectedTemplate(){
+      const sel=document.getElementById("templateSelect"); if(!sel||!sel.value){ setProgress("Selecciona una plantilla guardada para borrarla."); return; }
+      const name=sel.value; const list=loadTemplates().filter((t)=>t.name!==name);
+      saveTemplates(list); if(loadLastTemplateName()===name) saveLastTemplateName(""); populateTemplateSelect("");
+      log("Plantilla borrada: "+name); setProgress("Plantilla borrada: "+name);
+    }
+    async function loadTemplateUser(){ try{ templateCurrentUser=(API&&API.user&&API.user.getUser)?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } const author=document.getElementById("templateAuthor"); if(author) author.textContent=userDisplayName(templateCurrentUser); const date=document.getElementById("templateDate"); if(date) date.textContent=templateDateLabel(); updateTemplateGeneratedName(); }
+    async function createViewFromTemplate(){
+      if(!API||!API.view||!API.view.createView){ log("La API de vistas no permite crear vistas en este entorno."); setProgress("No se puede crear la vista desde esta API."); return; }
+      const name=templateText("templateName")||buildTemplateName(); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; }
+      const descEl=document.getElementById("templateDescription"); const description=descEl?descEl.value:buildTemplateDescription();
+      const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true;
+      try{ setProgress("Creando vista con el estado actual del visor..."); const created=await API.view.createView({name,description}); log("Vista creada (estado actual del visor): "+name); setProgress("Vista creada: "+name); await populateRenameViews(); if(created&&created.id&&API.view.selectView){ try{ await API.view.selectView(created.id); }catch(e){ recordError("createView.select",e); } } }
+      catch(e){ recordError("createViewFromTemplate",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error al crear la vista."); }
+      finally{ if(btn) btn.disabled=false; }
+    }
+    async function populateRenameViews(){
+      const sel=document.getElementById("renameViewSelect"); if(!sel||!API||!API.view) return;
+      const previous=sel.value; sel.innerHTML=""; const loading=document.createElement("option"); loading.value=""; loading.textContent="Cargando vistas..."; sel.appendChild(loading);
+      try{ templateViewsCache=await API.view.getViews()||[]; templateViewsCache=templateViewsCache.slice().sort((a,b)=>readableViewName(a).localeCompare(readableViewName(b),"es")); sel.innerHTML=""; if(templateViewsCache.length===0){ const o=document.createElement("option"); o.value=""; o.textContent="No hay vistas disponibles"; sel.appendChild(o); } else { for(const v of templateViewsCache){ const o=document.createElement("option"); o.value=v.id||""; o.textContent=readableViewName(v)||"Vista sin nombre"; sel.appendChild(o); } if(previous&&templateViewsCache.some((v)=>String(v.id)===String(previous))) sel.value=previous; } }
+      catch(e){ recordError("populateRenameViews",e); sel.innerHTML=""; const o=document.createElement("option"); o.value=""; o.textContent="Error al leer vistas"; sel.appendChild(o); }
+    }
+    async function renameSelectedView(){
+      const sel=document.getElementById("renameViewSelect"); const newName=templateText("renameNewName");
+      if(!sel||!sel.value){ setProgress("Selecciona una vista para renombrar."); return; }
+      if(!newName){ setProgress("Escribe el nuevo nombre de la vista."); return; }
+      if(!API.view||!API.view.updateView){ log("La API no permite actualizar vistas en este entorno."); setProgress("No disponible."); return; }
+      const btn=document.getElementById("renameViewBtn"); if(btn) btn.disabled=true;
       try{
-        const added=await API.markup.addTextMarkup(markups);
-        nameMarkupIds=(added||[]).map((m)=>m.id).filter((id)=>id!=null);
-        log("Mostrar nombres: "+markups.length+" etiqueta(s) añadida(s).");
-      }catch(e){
-        recordError("showNames.addTextMarkup",e);
-        log("Mostrar nombres: error al crear etiquetas de texto. Revisa el debug.");
-      }
+        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(sel.value); }catch(e){ recordError("rename.getView",e); }
+        if(spec && typeof spec==="object"){ spec.name=newName; await API.view.updateView(spec); }
+        else { await API.view.updateView({id:sel.value,name:newName}); }
+        log("Vista renombrada a: "+newName); setProgress("Vista renombrada: "+newName);
+        const keep=sel.value; await populateRenameViews(); if([...document.getElementById("renameViewSelect").options].some((o)=>o.value===keep)) document.getElementById("renameViewSelect").value=keep;
+      }catch(e){ recordError("renameSelectedView",e); log("ERROR renombrando vista: "+(e&&e.message?e.message:e)); setProgress("Error al renombrar la vista."); }
+      finally{ if(btn) btn.disabled=false; }
+    }
+    function wireTemplateTool(){
+      for(const id of TEMPLATE_FIELD_IDS){ const el=document.getElementById(id); if(el) el.addEventListener("input",updateTemplateGeneratedName); }
+      const nameEl=document.getElementById("templateName"); if(nameEl) nameEl.addEventListener("input",()=>{ nameEl.dataset.manual="1"; });
+      const descEl=document.getElementById("templateDescription"); if(descEl) descEl.addEventListener("input",()=>{ descEl.dataset.manual="1"; });
+      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const nm=document.getElementById("templateName"); if(nm) nm.dataset.manual="0"; const ds=document.getElementById("templateDescription"); if(ds) ds.dataset.manual="0"; applyTemplateToForm(t); } else { saveLastTemplateName(""); } });
+      const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
+      const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
+      const createBtn=document.getElementById("templateCreateView"); if(createBtn) createBtn.onclick=()=>createViewFromTemplate();
+      const refreshViews=document.getElementById("renameRefreshViews"); if(refreshViews) refreshViews.onclick=()=>populateRenameViews();
+      const renameBtn=document.getElementById("renameViewBtn"); if(renameBtn) renameBtn.onclick=()=>renameSelectedView();
+    }
+    async function initTemplateTool(){
+      populateTemplateSelect();
+      const last=loadLastTemplateName(); if(last){ const t=loadTemplates().find((x)=>x.name===last); if(t) applyTemplateToForm(t); }
+      await loadTemplateUser();
+      await populateRenameViews();
+      updateTemplateGeneratedName();
     }
 
-    function scheduleNameRefresh(){
-      const toggle=document.getElementById("showNamesToggle");
-      if(!toggle||!toggle.checked) return;
-      clearTimeout(nameTimer);
-      nameTimer=setTimeout(()=>showObjectNames(true),380);
-    }
-
-
-    // ===================== PARÁMETROS / VALORES UI =====================
-    function updateUnitLabel(){ updateNearPercentLabel(); }
+    // ===================== COLORES / VALORES UI =====================
     function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
-    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const colors=document.getElementById("includeColors"); if(colors) colors.style.display=(on&&colorMode)?"block":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
-    async function populateParameters(){ const sel=document.getElementById("nearParam"); sel.innerHTML=""; const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="parámetro"; sel.appendChild(ph); const found=new Map(); try{ let sample=(await safeGetSelection()).slice(0,10); if(sample.length===0){ const c=await getColoredObjectEntries().catch(()=>[]); sample=c.slice(0,40).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ const pm=await getPropertiesCached(modelId,ids); for(const p of pm.values()) for(const x of flattenProps(p)) if(isNumericValue(x.value)&&!found.has(x.name)) found.set(x.name,x.unit); } }catch(e){ recordError("populateParameters",e); } for(const [name,unit] of found.entries()){ const o=document.createElement("option"); o.value=name; o.textContent=name; o.dataset.unit=unit||""; sel.appendChild(o); } if(found.size===0) log("No se han detectado parámetros numéricos. Selecciona un objeto y reactiva la configuración."); updateUnitLabel(); }
+    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const wrap=document.getElementById("includeColorsWrap"); if(wrap) wrap.style.display=(on&&colorMode)?"flex":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
     async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>valor</option>'; setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b)).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); vsel.classList.toggle("placeholder",!vsel.value); setProgress("Valores Name cargados: "+values.size+"."); }
 
     async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"; row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); } }
@@ -842,6 +1100,9 @@
       wireSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
       wireSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");
       wireSummarySwitch("includeSummarySwitch","includeToggle","includeTool");
+      wireSummarySwitch("namesSummarySwitch","namesToggle","namesTool");
+      wireSummarySwitch("boltsSummarySwitch","boltsToggle","boltsTool");
+      wireSummarySwitch("weldsSummarySwitch","weldsToggle","weldsTool");
 
       const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
       custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if(!custom.checked) customText.value=""; });
@@ -849,65 +1110,54 @@
       const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect");
       ext.addEventListener("change",()=>{ folderSel.disabled=!ext.checked; if(ext.checked) populateFolders(); });
 
-      const nearPercent=document.getElementById("nearPercent"); if(nearPercent) nearPercent.addEventListener("input",()=>{ updateNearPercentLabel(); prevSel=[]; scheduleProcessSelection(); });
-      const nearCustom=document.getElementById("nearCustom");
-      nearCustom.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; scheduleProcessSelection(); });
-      const nearToggle=document.getElementById("nearToggle");
-      nearToggle.addEventListener("change",()=>{ syncNearUiState(); prevSel=[]; if(nearToggle.checked) scheduleProcessSelection(); });
+      // Selección cercanos (#1): la sensibilidad es un radio absoluto; recalcula sin reiniciar el estado.
+      const nearPercent=document.getElementById("nearPercent"); if(nearPercent) nearPercent.addEventListener("input",()=>{ updateNearPercentLabel(); scheduleProcessSelection(); });
+      const nearCustom=document.getElementById("nearCustom"); nearCustom.addEventListener("change",()=>{ syncNearUiState(); scheduleProcessSelection(); });
+      const nearToggle=document.getElementById("nearToggle"); nearToggle.addEventListener("change",async ()=>{ syncNearUiState(); if(nearToggle.checked) scheduleProcessSelection(); else await removeToolAddedFromSelection(); });
 
       const excludeToggle=document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change",()=>{ prevSel=[]; if(excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
+      excludeToggle.addEventListener("change",()=>{ if(excludeToggle.checked){ populateExcludeColors(); scheduleProcessSelection(); } });
       const excludeRefresh=document.getElementById("excludeRefresh"); if(excludeRefresh) excludeRefresh.onclick=()=>populateExcludeColors();
 
       const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
-      hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; await clearHiddenWhite(); syncHiddenUiState(); log("Selección ocultos OFF: objetos vueltos a ocultar."); } });
+      hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; await clearHiddenWhite(); syncHiddenUiState(); log("Selección ocultos OFF: objetos vueltos a ocultar (las piezas recoloreadas se mantienen)."); } });
       if(viewHidden) viewHidden.addEventListener("change",async ()=>{ await setRegistryVisible(viewHidden.checked); });
 
       const includeToggle=document.getElementById("includeToggle");
-      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; if(includeToggle.checked){ populateIncludeValues(); if(document.getElementById("colorModeToggle").checked) populateIncludeColors(); } scheduleProcessSelection(); });
+      includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); if(includeToggle.checked){ populateIncludeValues(); if(document.getElementById("colorModeToggle").checked) populateIncludeColors(); } scheduleProcessSelection(); });
       document.getElementById("includeValue").addEventListener("change",()=>{ document.getElementById("includeValue").classList.toggle("placeholder",!document.getElementById("includeValue").value); scheduleProcessSelection(); });
-      const showNames=document.getElementById("showNamesToggle");
-      showNames.addEventListener("change",()=>showObjectNames(showNames.checked));
       const colorMode=document.getElementById("colorModeToggle");
-      if(colorMode) colorMode.addEventListener("change",()=>{ syncIncludeUiState(); prevSel=[]; if(colorMode.checked) populateIncludeColors(); scheduleProcessSelection(); });
+      if(colorMode) colorMode.addEventListener("change",()=>{ syncIncludeUiState(); if(colorMode.checked) populateIncludeColors(); scheduleProcessSelection(); });
+      const includeRefresh=document.getElementById("includeRefresh"); if(includeRefresh) includeRefresh.onclick=()=>populateIncludeColors();
 
-      const csvParamAdd=document.getElementById("csvParamAdd");
-      if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
-      const csvParamRefresh=document.getElementById("csvParamRefresh");
-      if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
+      // Mostrar parámetros (#4-7)
+      for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>scheduleParamMarkups(key)); }
+      namesPicker.wire(); boltsPicker.wire(); weldsPicker.wire();
+
+      const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
+      const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
       updateCsvColumnSelect();
+
       wireTemplateTool();
 
       document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
     }
-    function lockDeveloperPanel(){
-      const panel=document.getElementById("devPanel");
-      if(!panel) return;
-      const summary=panel.querySelector("summary.dev-summary");
-      panel.open=true;
-      if(summary){
-        summary.addEventListener("click",(ev)=>{ ev.preventDefault(); panel.open=true; });
-        summary.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); panel.open=true; } });
-      }
-      panel.addEventListener("toggle",()=>{ if(!panel.open) panel.open=true; });
-    }
-    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ scheduleProcessSelection(); scheduleNameRefresh(); } }
+    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ scheduleProcessSelection(); scheduleAllParamMarkups(); } }
 
     async function main(){
-      buildColumnsUI(); wireUI(); initTooltips(); lockDeveloperPanel();
+      buildColumnsUI(); wireUI(); initTooltips();
       document.getElementById("devVersion").textContent="Código de versión: "+SCRIPT_VERSION;
       document.getElementById("devUpdated").textContent="Última modificación del archivo: "+getLastUpdatedLabel();
       const ws=window.TrimbleConnectWorkspace||window.WorkspaceAPI;
       if(!ws||!ws.connect){ log("ERROR: no se ha cargado la Workspace API."); return; }
       API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
       log("Conectado a Trimble Connect.\nCódigo de versión: "+SCRIPT_VERSION);
-      await loadTemplateUser();
-      await populateTemplateViews();
+      await initTemplateTool();
       updateCsvColumnSelect();
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
-      document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.preventDefault(); ev.stopPropagation(); } try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
+      document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.stopPropagation(); } try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; try{ await importCsvFiles(files); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showCancel(false); } };
     }
@@ -921,6 +1171,7 @@
       try{ add("Object.keys(API)",Object.keys(API||{})); }catch(e){}
       try{ add("Object.keys(API.viewer)",Object.keys((API&&API.viewer)||{})); }catch(e){}
       try{ add("Object.keys(API.view)",Object.keys((API&&API.view)||{})); }catch(e){}
+      try{ add("Object.keys(API.markup)",Object.keys((API&&API.markup)||{})); }catch(e){}
       try{ add("VISTA ACTIVA",await API.view.getCurrentView()); }catch(e){ add("getCurrentView ERROR",e.message); }
       let selection=[]; try{ selection=await safeGetSelection(); add("SELECCIÓN",selection); }catch(e){ add("getSelection ERROR",e.message); }
       const byModel=new Map(); for(const s of selection){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
@@ -930,6 +1181,7 @@
       add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
       let views=[]; try{ views=await API.view.getViews(); }catch(e){ add("getViews ERROR",e.message); }
       add("VISTAS",{total:(views||[]).length,firstKeys:views&&views[0]?Object.keys(views[0]):[],first10:(views||[]).slice(0,10),realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))]});
+      add("PLANTILLAS GUARDADAS",loadTemplates());
       try{ add("HIDDEN SAMPLE",(await getHiddenObjectEntries()).slice(0,20)); }catch(e){ add("HIDDEN ERROR",e.message); }
       add("ERRORES",errorHistory);
       downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt",out.join("\n"),"text/plain");
