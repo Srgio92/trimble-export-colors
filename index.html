@@ -128,6 +128,16 @@
     #templateInfo { margin-top: 6px; }
     .tpl-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
     .tpl-row select, .tpl-row input { flex: 1; min-width: 120px; }
+    .tpl-token-box { min-height: 36px; border: 1px solid #cfd6df; background: #fff; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 4px; box-sizing: border-box; position: relative; }
+    .tpl-token-box:focus-within { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; }
+    .tpl-token-box input { border: none; outline: none; flex: 1 1 110px; min-width: 80px; height: 22px; font-size: 11px; padding: 2px 3px; }
+    .tpl-token { display: inline-flex; align-items: center; gap: 4px; background: #e5e7eb; border-radius: 13px; padding: 3px 6px; font-size: 11px; color: #374151; max-width: 100%; }
+    .tpl-token button { width: 15px; min-width: 15px; height: 15px; border: none; border-radius: 50%; padding: 0; margin: 0; background: #6b7280; color: #fff; font-size: 10px; line-height: 1; cursor: pointer; }
+    .tpl-suggest { display: none; position: absolute; z-index: 10000; background: #fff; border: 1px solid #cfd6df; box-shadow: 0 3px 8px rgba(0,0,0,.15); max-height: 160px; overflow: auto; font-size: 11px; }
+    .tpl-suggest-item { padding: 6px 8px; cursor: pointer; border-bottom: 1px solid #f1f1f1; }
+    .tpl-suggest-item:last-child { border-bottom: none; }
+    .tpl-suggest-item:hover, .tpl-suggest-item.is-active { background: #eef6ff; }
+    .tpl-suggest-mail { color: #4b5563; }
   </style>
 </head>
 <body>
@@ -343,7 +353,7 @@
                 <div class="template-field tpl-full"><label for="tplCfg_name">Nombre especial</label><input type="text" id="tplCfg_name" placeholder=""></div>
                 <div class="template-field tpl-full"><label for="tplCfg_folder">Grupo de vistas</label><select id="tplCfg_folder"><option value="">(Sin grupo)</option></select></div>
                 <div class="template-field tpl-full"><label for="tplCfg_labels">Etiquetas</label><input type="text" id="tplCfg_labels" placeholder=""></div>
-                <div class="template-field tpl-full"><label for="tplCfg_share">Compartido con</label><input type="text" id="tplCfg_share" placeholder=""></div>
+                <div class="template-field tpl-full tpl-share-field"><label for="tplCfg_shareEntry" id="tplCfg_shareLabel">Compartido con (0)</label><div class="tpl-token-box" id="tplCfg_shareBox"><div id="tplCfg_shareTokens" class="tpl-tokens"></div><input type="text" id="tplCfg_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="tplCfg_share" value=""><div id="tplCfg_shareSuggest" class="tpl-suggest"></div></div>
               </div>
               <div class="row"><button id="templateSave">Guardar plantilla</button></div>
               <div class="hint" id="templateSaveInfo">La plantilla guarda grupo de vistas, etiquetas y correos de compartición. El nombre de la vista se define al crear o actualizar la vista.</div>
@@ -441,7 +451,7 @@
       <details class="tool">
         <summary class="subtitle">Importar colores desde CSV</summary>
         <div class="tool-body">
-          <div class="hint">Importa uno o varios CSV. Se pintan de <strong>rojo</strong> las filas con <code>revisado_deo = TRUE</code>; el resto recupera el color de la columna <code>color</code> si existe. Los GUID que no estén en el modelo se omiten.</div>
+          <div class="hint">Importa uno o varios CSV. Solo procesa las filas con <code>revisado_deo = TRUE</code>, selecciona esos GUID y los pinta en rojo. El resto de filas se omite.</div>
           <div class="row">
             <button id="importBtn" data-tip="Selecciona uno o varios CSV.">Importar CSV</button>
             <input type="file" id="importFile" accept=".csv,text/csv" multiple style="display:none;">
@@ -472,14 +482,14 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.7.4";
+    const SCRIPT_VERSION = "v8.7.5";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
     const HIDDEN_MARK_COLOR = {r:255,g:255,b:255,a:255};
     const HIDDEN_MARK_COLOR_HEX = "#FFFFFFFF";
-    const HIDDEN_MARK_OPACITY = 50;
+    const HIDDEN_MARK_OPACITY = 0.5;
     const CONTACT_TOLERANCE = 0.012;
     const CONTACT_VOLUME_MAX = 0.001;
     const CANDIDATE_BBOX_BATCH = 400;
@@ -814,89 +824,83 @@
       return result;
     }
     async function importCsvFiles(files){
-      clearLog(); setProgress("Importando: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV ("+files.length+" archivo/s)");
-      const buckets=new Map();
-      let rowsRead=0, rowsApplicable=0, reviewedTrueRows=0, colorRows=0, directRows=0, guidRows=0, skippedRows=0;
+      clearLog(); setProgress("Importando revisados DEO: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV solo revisado_deo TRUE ("+files.length+" archivo/s)");
+      const directMap=new Map();
+      const guidItems=new Map();
+      let rowsRead=0, trueRows=0, directRows=0, guidRows=0, skippedRows=0;
 
       for(const file of files){
         let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); continue; }
         text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
         if(lines.length<2){ log(file.name+": vacío."); continue; }
         const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
-        const gi=headerIndex(header,["guid_ifc","guid","ifc_guid"],["guid"]);
-        const ci=headerIndex(header,["color"],null);
         const ri=headerIndex(header,["revisado_deo","reviewed_deo"],null);
+        const gi=headerIndex(header,["guid_ifc","guid","ifc_guid"],["guid"]);
         const mi=headerIndex(header,["modelid","model_id"],null);
         const oi=headerIndex(header,["objectruntimeid","object_runtime_id","runtimeid","runtime_id"],null);
+        if(ri<0){ log(file.name+": no hay columna revisado_deo. Omitido."); continue; }
         if(gi<0 && (mi<0 || oi<0)){ log(file.name+": no se encontró GUID ni modelId/objectRuntimeId. Omitido."); continue; }
-        if(ci<0 && ri<0){ log(file.name+": no hay columna 'revisado_deo' ni 'color'. Omitido."); continue; }
-        let fileApplied=0, fileReviewed=0;
+        let fileTrue=0;
         for(let i=1;i<lines.length;i++){
           const cells=parseCsvLine(lines[i]); rowsRead++;
-          const reviewed=ri>=0 && isReviewedTrue(cells[ri]);
-          let key="";
-          if(reviewed){ key="__REVIEWED_RED"; reviewedTrueRows++; fileReviewed++; }
-          else if(ci>=0){ key=stateKeyFromColor((cells[ci]||"").trim()); if(key) colorRows++; }
-          if(!key){ skippedRows++; continue; }
-          const bucket=importBucket(buckets,key); bucket.rows++;
-          if(reviewed) bucket.reviewedRows++; else bucket.colorRows++;
+          if(!isReviewedTrue(cells[ri])){ skippedRows++; continue; }
+          trueRows++; fileTrue++;
           const modelId=mi>=0?String(cells[mi]||"").trim():"";
           const rid=oi>=0?Number(String(cells[oi]||"").trim()):NaN;
-          if(modelId && Number.isFinite(rid)){ addToMapSet(bucket.direct,modelId,[rid]); directRows++; rowsApplicable++; fileApplied++; continue; }
+          if(modelId && Number.isFinite(rid)){ addToMapSet(directMap,modelId,[rid]); directRows++; continue; }
           const guid=gi>=0?String(cells[gi]||"").trim():"";
-          if(guid){ addGuidImportCandidate(bucket,guid); guidRows++; rowsApplicable++; fileApplied++; }
+          if(guid){ const bucket=importBucket(new Map(),"__TMP"); addGuidImportCandidate(bucket,guid); for(const [raw,variants] of bucket.guidItems.entries()) if(!guidItems.has(raw)) guidItems.set(raw,variants); guidRows++; }
           else skippedRows++;
         }
-        log(file.name+": "+fileApplied+" fila(s) aplicables (revisado_deo TRUE: "+fileReviewed+").");
+        log(file.name+": "+fileTrue+" fila(s) revisado_deo TRUE.");
       }
 
-      log("Filas leídas: "+rowsRead+". Aplicables: "+rowsApplicable+". Revisado TRUE: "+reviewedTrueRows+". Directas modelId/runtimeId: "+directRows+". Por GUID: "+guidRows+". Omitidas: "+skippedRows+".");
-      if(buckets.size===0){ setProgress("Nada que importar."); showCancel(false); return; }
-
-      showCancel(true); setProgress("Importando: detectando modelos...");
+      if(trueRows===0){ log("No hay filas con revisado_deo = TRUE. No se importa ningún color."); setProgress("Sin revisados DEO TRUE."); return; }
+      showCancel(true); setProgress("Importando revisados DEO: resolviendo modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
       try{ const colored=await API.viewer.getColoredObjects(); for(const g of colored||[]) if(g.modelId) modelIds.push(g.modelId); }catch(e){}
-      for(const bucket of buckets.values()) for(const modelId of bucket.direct.keys()) modelIds.push(modelId);
+      for(const modelId of directMap.keys()) modelIds.push(modelId);
       modelIds=[...new Set(modelIds)];
       if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
 
-      const resolvedGuids=new Set();
-      let resolvedRuntimeObjects=0;
-      for(const [key,bucket] of buckets.entries()){
-        if(cancelRequested) break;
-        const guidItems=[...bucket.guidItems.entries()];
-        if(!guidItems.length) continue;
+      const resolvedGuids=new Set(); let resolvedRuntimeObjects=0;
+      const guidEntries=[...guidItems.entries()];
+      if(guidEntries.length){
         for(const modelId of modelIds){
           if(cancelRequested) break;
-          const allCandidates=[]; guidItems.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
+          const allCandidates=[]; guidEntries.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
           const ridByCandidate=await convertRuntimeIdsSafe(modelId,allCandidates);
           const ids=[];
-          for(const [rawGuid,variants] of guidItems){
+          for(const [rawGuid,variants] of guidEntries){
             const rid=variants.map((v)=>ridByCandidate.get(v)).find((x)=>x!=null);
             if(rid!=null){ ids.push(Number(rid)); resolvedGuids.add(rawGuid); }
           }
-          if(ids.length){ addToMapSet(bucket.direct,modelId,ids); resolvedRuntimeObjects+=ids.length; }
+          if(ids.length){ addToMapSet(directMap,modelId,ids); resolvedRuntimeObjects+=ids.length; }
+          setProgress("Importando revisados DEO: modelo "+(modelIds.indexOf(modelId)+1)+"/"+modelIds.length+". GUID resueltos: "+resolvedGuids.size+"/"+guidItems.size);
+          await sleep(0);
         }
       }
 
-      let paintedRed=0, paintedRestored=0, applied=0;
-      for(const [key,bucket] of buckets.entries()){
+      let paintedRed=0;
+      const redState={color:{...IMPORT_REVIEWED_RED},opacity:1,visible:true};
+      for(const [modelId,set] of directMap.entries()){
         if(cancelRequested) break;
-        const state=importStateForKey(key); if(!state) continue;
-        for(const [modelId,set] of bucket.direct.entries()){
-          const ids=[...set]; if(!ids.length) continue;
-          try{
-            await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},state);
-            applied+=ids.length;
-            if(key==="__REVIEWED_RED") paintedRed+=ids.length; else paintedRestored+=ids.length;
-          }catch(e){ recordError("import.apply",e); log("Error aplicando estado en "+modelId+": "+(e&&e.message?e.message:e)); }
+        const ids=[...set];
+        for(let i=0;i<ids.length;i+=500){
+          const chunk=ids.slice(i,i+500);
+          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:chunk}]},redState); paintedRed+=chunk.length; }
+          catch(e){ recordError("import.apply.red",e); log("Error pintando rojo en "+modelId+": "+(e&&e.message?e.message:e)); }
+          setProgress("Importando revisados DEO: pintados "+paintedRed+" objeto(s)...");
+          await sleep(0);
         }
       }
+      // Además se deja seleccionados los GUID revisados para control visual inmediato.
+      if(paintedRed>0){ try{ suppressSelectionUntil=Date.now()+900; await API.viewer.setSelection(mapSetToSelector(directMap),"set"); }catch(e){ recordError("import.selectReviewed",e); } }
       showCancel(false);
-      const uniqueGuidCount=[...buckets.values()].reduce((n,b)=>n+b.guidItems.size,0);
-      log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+Math.max(0,uniqueGuidCount-resolvedGuids.size)+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
-      log("Objetos pintados en rojo por revisado_deo TRUE: "+paintedRed+". Objetos restaurados por columna color: "+paintedRestored+". Total aplicado: "+applied+".");
-      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+applied+" objetos pintados.");
+      log("Filas leídas: "+rowsRead+". Filas revisado_deo TRUE: "+trueRows+". Directas modelId/runtimeId: "+directRows+". Por GUID: "+guidRows+". Omitidas/no TRUE: "+skippedRows+".");
+      log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+Math.max(0,guidItems.size-resolvedGuids.size)+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
+      log("Objetos seleccionados y pintados en rojo por revisado_deo TRUE: "+paintedRed+".");
+      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+paintedRed+" revisados DEO pintados en rojo.");
     }
 
     // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
@@ -917,6 +921,7 @@
     }
     async function computeNeighbors(modelId,seedIds,factor){
       if(seedIds.length===0) return [];
+      if(factor<=0){ log("Selección cercanos: sensibilidad 0%, no se añaden objetos cercanos."); return []; }
       let seedBoxesRaw=[]; try{ seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId,seedIds); }catch(e){ recordError("computeNeighbors.seedBbox",e); return []; }
       const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if(seedBoxes.length===0) return [];
       const seedBox=unionBox(seedBoxes);
@@ -1054,8 +1059,12 @@
       let count=0;
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const recolored=[];
-        for(const id of [...set]){ const col=colorMap.get(modelId+":"+id); if(col && col!==HIDDEN_MARK_COLOR_HEX){ recolored.push(id); set.delete(id); } }
-        if(recolored.length){ try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:recolored}]},{visible:true,opacity:100}); count+=recolored.length; }catch(e){ recordError("rescueRecolored",e); } }
+        for(const id of [...set]){
+          const col=colorMap.get(modelId+":"+id);
+          // Si ya no consta como blanco marcado, se considera rescatado y no debe volver a ocultarse.
+          if(col!==HIDDEN_MARK_COLOR_HEX){ recolored.push(id); set.delete(id); }
+        }
+        if(recolored.length){ try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:recolored}]},{visible:true,opacity:1}); count+=recolored.length; }catch(e){ recordError("rescueRecolored",e); } }
       }
       if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s) y mantenida(s) visible(s).");
       return count;
@@ -1128,23 +1137,42 @@
       if(staticObjectId) pick.referenceObjectId=staticObjectId;
       return pick;
     }
+    let paramIconSeq=880000;
+    function xmlEsc(v){ return String(v||"").replace(/[&<>'"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&apos;","\"":"&quot;"}[c]||c)); }
+    function labelIconPath(text){
+      const lines=String(text||"").split(/\n/).slice(0,8);
+      const max=Math.max(4,...lines.map((l)=>l.length));
+      const w=Math.min(520,Math.max(90,max*7+18)); const h=Math.max(28,lines.length*14+10);
+      const rows=lines.map((l,i)=>'<text x="8" y="'+(17+i*14)+'" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#111827">'+xmlEsc(l)+'</text>').join("");
+      const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><rect x="1" y="1" width="'+(w-2)+'" height="'+(h-2)+'" rx="4" fill="white" fill-opacity="0.92" stroke="#1c7fd6" stroke-width="1"/>'+rows+'</svg>';
+      return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+    }
+    function centerIconFromBox(bb){ return {x:(bb.min.x+bb.max.x)/2,y:(bb.min.y+bb.max.y)/2,z:bb.max.z+Math.max(0.08,(bb.max.z-bb.min.z)*0.35)}; }
+    async function addLabelIcons(items){
+      if(!API.viewer||typeof API.viewer.addIcon!=="function") return [];
+      const icons=items.map((it)=>({id:paramIconSeq++, position:centerIconFromBox(it.bb), size:42, iconPath:labelIconPath(it.text)}));
+      try{ await API.viewer.addIcon(icons); return icons.map((x)=>x.id); }
+      catch(e){ recordError("paramIcons.add",e); return []; }
+    }
+    async function removeParamIcons(ids){ const clean=[...(ids||[])].map(Number).filter(Number.isFinite); if(clean.length&&API.viewer&&typeof API.viewer.removeIcon==="function"){ try{ await API.viewer.removeIcon(clean); }catch(e){ recordError("removeParamIcons",e); } } }
+    async function removeParamVisuals(cfg){ await removeMarkupIds(cfg.store); cfg.store=[]; await removeParamIcons(cfg.iconStore); cfg.iconStore=[]; }
     async function staticObjectIdsForRuntime(modelId,ids){ try{ const arr=await API.viewer.convertToObjectIds(modelId,ids); return Array.isArray(arr)?arr:[]; }catch(e){ recordError("paramMarkups.convertToObjectIds",e); return []; } }
     const paramTools={
-      names:{toggleId:"namesToggle", picker:namesPicker, filter:null, store:[]},
-      bolts:{toggleId:"boltsToggle", picker:boltsPicker, filter:"bolt assembly", store:[]},
-      welds:{toggleId:"weldsToggle", picker:weldsPicker, filter:"weld", store:[]}
+      names:{toggleId:"namesToggle", picker:namesPicker, filter:null, store:[], iconStore:[]},
+      bolts:{toggleId:"boltsToggle", picker:boltsPicker, filter:"bolt assembly", store:[], iconStore:[]},
+      welds:{toggleId:"weldsToggle", picker:weldsPicker, filter:"weld", store:[], iconStore:[]}
     };
     const paramTimers={};
     function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const val=getParamValue(p,name); if(val===""||val==null) continue; if(String(name).trim().toLowerCase()==="name") lines.push(val); else lines.push(name+": "+val); } return lines.join("\n"); }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
-      await removeMarkupIds(cfg.store); cfg.store=[];
+      await removeParamVisuals(cfg);
       const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked) return;
       if(!API.markup||typeof API.markup.addTextMarkup!=="function"){ log("Mostrar parámetros: la API de markups de texto no está disponible en este entorno."); return; }
       const sel=await safeGetSelection(); if(sel.length===0){ log("Mostrar parámetros ("+toolKey+"): no hay objetos seleccionados."); return; }
       const params=cfg.picker.getParams();
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
-      const markups=[];
+      const markups=[]; const iconItems=[];
       for(const [modelId,ids] of byModel.entries()){
         if(markups.length>=MAX_PARAM_MARKUPS) break;
         let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("paramMarkups.bbox",e); continue; }
@@ -1164,6 +1192,7 @@
             text,
             color:{r:0,g:0,b:0,a:255}
           });
+          iconItems.push({bb,text});
         }
       }
       if(markups.length===0){ log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en la selección."); return; }
@@ -1176,10 +1205,14 @@
         await sleep(0);
       }
       cfg.store=stored;
-      if(stored.length===0) log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas. Revisa permisos de markups en la vista/proyecto.");
+      if(stored.length===0){
+        const iconIds=await addLabelIcons(iconItems); cfg.iconStore=iconIds;
+        if(iconIds.length) log("Mostrar parámetros ("+toolKey+"): creadas "+iconIds.length+" etiqueta(s) como iconos SVG 3D porque la API de text markup no devolvió ids.");
+        else log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas y el fallback de iconos no está disponible.");
+      }
       else log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s).");
     }
-    function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeMarkupIds(cfg.store); cfg.store=[]; return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
+    function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeParamVisuals(cfg); return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
     function scheduleAllParamMarkups(){ if(!anyParamToolActive()) return; for(const key of Object.keys(paramTools)) scheduleParamMarkups(key); }
 
@@ -1188,6 +1221,9 @@
     const TEMPLATE_LAST_KEY="deo_view_template_last_v3";
     let templateViewsCache=[];
     let templateCurrentUser=null;
+    let templateProjectMembers=[];
+    let templateProjectGroups=[];
+    let shareTokens=[];
     const TEMPLATE_FIELDS=["code","location","level","axes","element","task","date","author"];
     const TEMPLATE_META_FIELDS=["folder","labels","share"];
     const VIEW_NAME_RE=/^\(([^)]+)\)\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*(.*?)\s*-\s*(.*?)\s*\((\d{2}-\d{2}-\d{4}),\s*(.*?)\)$/;
@@ -1238,12 +1274,10 @@
     }
     function getScopeValues(scope){ const out={}; for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); out[f]=normalizeTplValue(f,el?el.value:""); } return out; }
     function setScopeValues(scope,data){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(!el) continue; const v=data&&data[f]!=null?data[f]:""; el.value=normalizeTplValue(f,v); } updateScopePreview(scope); }
-    function getTemplateMetaFromConfig(){ const out={}; for(const f of TEMPLATE_META_FIELDS){ const el=tplEl("tplCfg",f); out[f]=String(el?el.value:"").trim(); } return out; }
+    function getTemplateMetaFromConfig(){ const out={}; for(const f of TEMPLATE_META_FIELDS){ const el=tplEl("tplCfg",f); out[f]=String(el?el.value:"").trim(); } out.share=getShareTokens().join(", "); return out; }
     function setConfigMeta(tpl){
-      for(const f of TEMPLATE_META_FIELDS){
-        if(f==="folder") continue;
-        const el=tplEl("tplCfg",f); if(el) el.value=String(tpl&&tpl[f]||"");
-      }
+      const labels=tplEl("tplCfg","labels"); if(labels) labels.value=String(tpl&&tpl.labels||"");
+      setShareTokens(parseTemplateList(tpl&&tpl.share?tpl.share:""));
       populateTemplateFolderSelect(tpl&&tpl.folder?tpl.folder:"");
     }
     function setCreateMeta(tpl){
@@ -1269,20 +1303,45 @@
         if(keep && list.some((t)=>t.name===keep)) sel.value=keep;
       }
     }
-    async function populateTemplateFolderSelect(keepValue){
-      const sel=document.getElementById("tplCfg_folder"); if(!sel) return;
-      const keep=keepValue!==undefined?String(keepValue||""):String(sel.value||"");
+    function detectFolderDeep(view){
+      const direct=detectFolder(view); if(direct) return direct;
+      const seen=new Set();
+      function walk(obj,depth){
+        if(!obj||typeof obj!=="object"||depth>4||seen.has(obj)) return ""; seen.add(obj);
+        for(const k of Object.keys(obj)){
+          const lk=k.toLowerCase(); const val=obj[k];
+          if(val==null||val==="") continue;
+          if(/(view)?group|folder|category|collection/.test(lk)){
+            if(typeof val==="string") return val;
+            if(typeof val==="object") return String(val.name||val.title||val.label||val.displayName||val.value||"");
+          }
+        }
+        for(const k of Object.keys(obj)){ const got=walk(obj[k],depth+1); if(got) return got; }
+        return "";
+      }
+      return walk(view,0);
+    }
+    async function collectViewGroups(){
       const folders=new Set();
       try{
         if(API&&API.view&&API.view.getViews){
           const views=await API.view.getViews()||[];
-          for(const v of views){ const f=detectFolder(v); if(f) folders.add(f); }
+          for(const v of views){
+            const f=detectFolderDeep(v); if(f) folders.add(f);
+            if(API.view.getView&&v.id){ try{ const full=await API.view.getView(v.id); const ff=detectFolderDeep(full); if(ff) folders.add(ff); }catch(e){} }
+          }
         }
-      }catch(e){ recordError("populateTemplateFolderSelect",e); }
+      }catch(e){ recordError("collectViewGroups",e); }
       for(const t of loadTemplates()){ if(t&&t.folder) folders.add(String(t.folder)); }
+      templateProjectGroups=[...folders].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+      return templateProjectGroups;
+    }
+    async function populateTemplateFolderSelect(keepValue){
+      const sel=document.getElementById("tplCfg_folder"); if(!sel) return;
+      const keep=keepValue!==undefined?String(keepValue||""):String(sel.value||"");
+      const list=await collectViewGroups();
       sel.innerHTML="";
-      const empty=document.createElement("option"); empty.value=""; empty.textContent="(Sin carpeta)"; sel.appendChild(empty);
-      const list=[...folders].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+      const empty=document.createElement("option"); empty.value=""; empty.textContent="(Sin grupo)"; sel.appendChild(empty);
       for(const f of list){ const o=document.createElement("option"); o.value=f; o.textContent=f; sel.appendChild(o); }
       if(keep && !list.includes(keep)){ const o=document.createElement("option"); o.value=keep; o.textContent=keep; sel.appendChild(o); }
       if(keep) sel.value=keep;
@@ -1301,15 +1360,34 @@
     }
     function deleteSelectedTemplate(){ const sel=document.getElementById("templateSelect"); if(!sel||!sel.value){ setProgress("Selecciona una plantilla guardada para borrar."); return; } const name=sel.value; saveTemplates(loadTemplates().filter((t)=>t.name!==name)); if(loadLastTemplateName()===name) saveLastTemplateName(""); populateTemplateSelects(""); setCreateMeta(null); log("Plantilla borrada: "+name); setProgress("Plantilla borrada: "+name); }
     function parseViewName(name){ const m=String(name||"").match(VIEW_NAME_RE); if(!m) return null; return {code:m[1],location:m[2],level:m[3],axes:m[4],element:m[5],task:m[6],date:m[7],author:m[8]}; }
+    function memberEmail(u){ return String(u.email||u.mail||u.userEmail||u.login||u.upn||"").trim(); }
+    function memberName(u){ return String(u.name||u.fullName||u.displayName||[u.firstName,u.lastName].filter(Boolean).join(" ")||u.username||u.id||"").trim(); }
+    function normalizeMember(u){ const email=memberEmail(u); const name=memberName(u)||email; const key=(email||name).toLowerCase(); return {raw:u,email,name,key,label:name||email}; }
+    async function loadProjectMembers(){
+      try{
+        if(API&&API.project&&API.project.getMembers){
+          const members=await API.project.getMembers()||[];
+          const map=new Map();
+          for(const u of members){ const m=normalizeMember(u); if(m.email||m.name) map.set(m.key,m); }
+          templateProjectMembers=[...map.values()].sort((a,b)=>(a.label||a.email).localeCompare(b.label||b.email,"es"));
+          log("Plantillas: miembros de proyecto cargados para sugerencias: "+templateProjectMembers.length+".");
+        }
+      }catch(e){ recordError("loadProjectMembers",e); templateProjectMembers=[]; }
+      return templateProjectMembers;
+    }
     async function loadTemplateUser(){
       templateCurrentUser=null;
       const candidates=[
         ()=>API&&API.user&&API.user.getUser&&API.user.getUser(),
+        ()=>API&&API.user&&API.user.getCurrentUser&&API.user.getCurrentUser(),
+        ()=>API&&API.account&&API.account.getUser&&API.account.getUser(),
         ()=>API&&API.extension&&API.extension.getUser&&API.extension.getUser(),
         ()=>API&&API.project&&API.project.getCurrentUser&&API.project.getCurrentUser(),
         ()=>API&&API.user&&API.user.getUserSettings&&API.user.getUserSettings()
       ];
       for(const fn of candidates){ try{ const u=await fn(); if(u){ templateCurrentUser=u; return; } }catch(e){ recordError("loadTemplateUser",e); } }
+      // Fallback razonable: si la API no expone usuario activo, no se inventa; solo se usa si hay un único miembro.
+      if(templateProjectMembers.length===1) templateCurrentUser=templateProjectMembers[0].raw;
     }
     function autoAuthorValue(){
       const u=templateCurrentUser||{};
@@ -1319,10 +1397,48 @@
       const parts=raw.split(/\s+/).filter(Boolean);
       return (parts.length>1?parts[parts.length-1]:raw).toUpperCase();
     }
-    function ensureCreateAutoFields(){
-      const d=tplEl("tplNew","date"); if(d&&!String(d.value||"").trim()) d.value=todayDash();
-      const a=tplEl("tplNew","author"); if(a&&!String(a.value||"").trim()){ const v=autoAuthorValue(); if(v) a.value=v; }
-      updateScopePreview("tplNew");
+    function ensureScopeAutoFields(scope){
+      const d=tplEl(scope,"date"); if(d&&!String(d.value||"").trim()) d.value=todayDash();
+      const a=tplEl(scope,"author"); if(a&&!String(a.value||"").trim()){ const v=autoAuthorValue(); if(v) a.value=v; }
+      updateScopePreview(scope);
+    }
+    function ensureCreateAutoFields(){ ensureScopeAutoFields("tplNew"); }
+    function getShareTokens(){ return shareTokens.slice(); }
+    function setShareTokens(list){
+      const seen=new Set(); shareTokens=[];
+      for(const raw of list||[]){ const v=String(raw||"").trim(); if(!v) continue; const key=v.toLowerCase(); if(seen.has(key)) continue; seen.add(key); shareTokens.push(v); }
+      renderShareTokens();
+    }
+    function shareTokenLabel(v){ const s=String(v||""); const m=templateProjectMembers.find((x)=>x.email.toLowerCase()===s.toLowerCase()||x.name.toLowerCase()===s.toLowerCase()); return m?(m.name||m.email.split("@")[0]):(s.includes("@")?s.split("@")[0]:s); }
+    function renderShareTokens(){
+      const hidden=document.getElementById("tplCfg_share"); if(hidden) hidden.value=shareTokens.join(", ");
+      const label=document.getElementById("tplCfg_shareLabel"); if(label) label.textContent="Compartido con ("+shareTokens.length+")";
+      const box=document.getElementById("tplCfg_shareTokens"); if(!box) return; box.innerHTML="";
+      shareTokens.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; const txt=document.createElement("span"); txt.textContent=shareTokenLabel(v); const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ shareTokens.splice(idx,1); renderShareTokens(); }; chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
+    }
+    function addShareToken(v){ const token=String(v||"").trim(); if(!token) return; setShareTokens(shareTokens.concat([token])); const input=document.getElementById("tplCfg_shareEntry"); if(input) input.value=""; hideShareSuggest(); }
+    function shareSuggestions(q){
+      const term=String(q||"").trim().toLowerCase(); if(!term) return [];
+      const used=new Set(shareTokens.map((x)=>x.toLowerCase()));
+      return templateProjectMembers.filter((m)=>!used.has((m.email||m.name).toLowerCase()) && ((m.email||"").toLowerCase().includes(term)||(m.name||"").toLowerCase().includes(term))).slice(0,8);
+    }
+    function positionShareSuggest(){ const input=document.getElementById("tplCfg_shareEntry"), sug=document.getElementById("tplCfg_shareSuggest"); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(220,r.width)+"px"; }
+    function hideShareSuggest(){ const sug=document.getElementById("tplCfg_shareSuggest"); if(sug) sug.style.display="none"; }
+    function showShareSuggest(){
+      const input=document.getElementById("tplCfg_shareEntry"), sug=document.getElementById("tplCfg_shareSuggest"); if(!input||!sug) return;
+      const items=shareSuggestions(input.value); sug.innerHTML="";
+      if(!items.length){ hideShareSuggest(); return; }
+      for(const m of items){ const row=document.createElement("div"); row.className="tpl-suggest-item"; row.innerHTML='<strong>'+xmlEsc(m.name||m.email)+'</strong>'+(m.email?' <span class="tpl-suggest-mail">| '+xmlEsc(m.email)+'</span>':''); row.onmousedown=(ev)=>{ ev.preventDefault(); addShareToken(m.email||m.name); }; sug.appendChild(row); }
+      positionShareSuggest(); sug.style.display="block";
+    }
+    function wireShareAutocomplete(){
+      const input=document.getElementById("tplCfg_shareEntry"); if(!input) return;
+      input.addEventListener("input",showShareSuggest);
+      input.addEventListener("focus",showShareSuggest);
+      input.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#tplCfg_shareSuggest .tpl-suggest-item"); if(first&&document.getElementById("tplCfg_shareSuggest").style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else addShareToken(input.value); } else if(ev.key==="Escape") hideShareSuggest(); });
+      input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) addShareToken(input.value); hideShareSuggest(); },180); });
+      window.addEventListener("resize",positionShareSuggest);
+      renderShareTokens();
     }
     function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
     function selectedNewTemplate(){ const sel=document.getElementById("newTemplateSelect"); if(!sel||!sel.value) return null; return loadTemplates().find((t)=>t.name===sel.value)||null; }
@@ -1363,6 +1479,7 @@
       const parsed=parseViewName(name);
       if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
       else { setScopeValues("tplUpd",{}); if(info) info.textContent="No se ha podido leer la estructura del nombre actual. Nombre actual: "+name; }
+      ensureScopeAutoFields("tplUpd");
     }
     async function loadCurrentViewForUpdate(){
       const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo"); if(!sel||!API||!API.view) return false;
@@ -1377,6 +1494,7 @@
     async function updateSelectedView(){
       const sel=document.getElementById("updateViewSelect"); if(!sel||!sel.value){ setProgress("Selecciona una vista para actualizar."); return; }
       if(!API.view||!API.view.updateView){ log("La API no permite actualizar vistas en este entorno."); setProgress("No disponible."); return; }
+      ensureScopeAutoFields("tplUpd");
       const name=templateNameFromValues(getScopeValues("tplUpd")); if(!name){ setProgress("Falta nombre de vista."); return; }
       const btn=document.getElementById("templateUpdateView"); if(btn) btn.disabled=true;
       try{
@@ -1404,6 +1522,7 @@
     function wireTemplateTool(){
       for(const scope of ["tplCfg","tplNew","tplUpd"]) wireTemplateScope(scope);
       populateTemplateFolderSelect();
+      wireShareAutocomplete();
       const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; setConfigMeta(t); } else { saveLastTemplateName(""); const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); } });
       const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); setCreateMeta(t); } else { setCreateMeta(null); } ensureCreateAutoFields(); });
       const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
@@ -1412,11 +1531,11 @@
       const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",loadSelectedViewForUpdate);
       const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await loadCurrentViewForUpdate(); };
       const updBtn=document.getElementById("templateUpdateView"); if(updBtn) updBtn.onclick=()=>updateSelectedView();
-      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open){ await populateTemplateFolderSelect(); await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
+      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open){ await loadProjectMembers(); await loadTemplateUser(); await populateTemplateFolderSelect(); await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
       const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open){ await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
     }
     async function initTemplateTool(){
-      populateTemplateSelects(); await populateTemplateFolderSelect(); await loadTemplateUser();
+      populateTemplateSelects(); await loadProjectMembers(); await loadTemplateUser(); await populateTemplateFolderSelect();
       const list=loadTemplates(); const latest=newestTemplate(list); const last=loadLastTemplateName(); const cfgTpl=list.find((x)=>x.name===last)||latest;
       if(cfgTpl){ const n=document.getElementById("tplCfg_name"); if(n) n.value=cfgTpl.name||""; setConfigMeta(cfgTpl); }
       else { const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); }
