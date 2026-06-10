@@ -477,6 +477,7 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
+      <button id="testMarkupBtn" style="margin-top:6px;font-size:11px;padding:3px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;cursor:pointer;" title="DIAGNÓSTICO TEMPORAL — Crea dos markups de prueba para verificar unidades (metros vs ×1000)">Test markup parámetros</button>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
         <div class="tool-body"><pre id="log"></pre></div>
@@ -487,7 +488,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.2";
+    const SCRIPT_VERSION = "v8.8.3";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1394,6 +1395,40 @@
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
     function scheduleAllParamMarkups(){ if(!anyParamToolActive()) return; for(const key of Object.keys(paramTools)) scheduleParamMarkups(key); }
 
+    // === DIAGNÓSTICO TEMPORAL "Mostrar parámetros" — ELIMINAR tras confirmar unidades ===
+    async function deoTestMarkup(){
+      log("TEST markup: iniciando diagnóstico de unidades...");
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("TEST markup: selecciona un objeto primero."); return; }
+      const {modelId,runtimeId}=sel[0];
+      let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,[runtimeId]); }catch(e){ log("TEST markup: error al obtener bbox — "+e.message); return; }
+      const bb=bboxOf(boxes[0]);
+      if(!bb){ log("TEST markup: no se ha podido obtener el bounding box."); return; }
+      log("TEST markup bbox CRUDO: min="+JSON.stringify(bb.min)+" max="+JSON.stringify(bb.max));
+      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
+      // Hipótesis A: coordenadas en metros (sin multiplicar)
+      const payloadM={start:{positionX:cx,positionY:cy,positionZ:bb.max.z+0.5},end:{positionX:cx,positionY:cy,positionZ:bb.max.z+0.5},text:"TEST DEO (m)",color:{r:0,g:150,b:0,a:255}};
+      // Hipótesis B: coordenadas ×1000 (como hace hoy markupPick)
+      const payloadK={start:{positionX:cx*1000,positionY:cy*1000,positionZ:(bb.max.z+0.5)*1000},end:{positionX:cx*1000,positionY:cy*1000,positionZ:(bb.max.z+0.5)*1000},text:"TEST DEO (x1000)",color:{r:200,g:0,b:0,a:255}};
+      log("TEST markup payload metros: "+JSON.stringify(payloadM.start));
+      log("TEST markup payload x1000: "+JSON.stringify(payloadK.start));
+      const mk=markupApi();
+      if(!mk){ log("TEST markup: markupApi() devuelve null — la API de markups no está disponible."); return; }
+      let beforeCount=0;
+      try{ const t=await mk.getTextMarkups(); beforeCount=Array.isArray(t)?t.length:0; }catch(e){ log("TEST markup: getTextMarkups() antes — error: "+e.message); }
+      log("TEST markup: markups de texto existentes ANTES: "+beforeCount);
+      let rM=null, rK=null;
+      try{ rM=await mk.addTextMarkup([payloadM]); log("TEST markup addTextMarkup(metros) respuesta: "+JSON.stringify(rM)); }catch(e){ log("TEST markup addTextMarkup(metros) ERROR: "+e.message); }
+      try{ rK=await mk.addTextMarkup([payloadK]); log("TEST markup addTextMarkup(x1000) respuesta: "+JSON.stringify(rK)); }catch(e){ log("TEST markup addTextMarkup(x1000) ERROR: "+e.message); }
+      let afterMarkups=[];
+      try{ afterMarkups=await mk.getTextMarkups()||[]; }catch(e){ log("TEST markup: getTextMarkups() después — error: "+e.message); }
+      const afterIds=afterMarkups.map((m)=>m&&(m.id||m)).filter(Boolean);
+      log("TEST markup: markups de texto existentes DESPUÉS: "+afterMarkups.length+" — IDs: "+JSON.stringify(afterIds));
+      log("TEST markup: COMPRUEBA en el visor — ¿ves 'TEST DEO (m)' verde encima del objeto? ¿O 'TEST DEO (x1000)' rojo? Descarga el debug para conservar estos logs.");
+    }
+    window.deoTestMarkup=deoTestMarkup;
+    // === FIN DIAGNÓSTICO TEMPORAL ===
+
     // ===================== PLANTILLAS DE VISTA (#9) =====================
     const TEMPLATE_STORE_KEY="deo_view_templates_v3";
     const TEMPLATE_LAST_KEY="deo_view_template_last_v3";
@@ -1895,6 +1930,7 @@
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
       document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.stopPropagation(); } try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
+      const testMarkupBtn=document.getElementById("testMarkupBtn"); if(testMarkupBtn) testMarkupBtn.onclick=async ()=>{ try{ await deoTestMarkup(); }catch(err){ recordError("deoTestMarkup",err); log("TEST markup ERROR: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; try{ await importCsvFiles(files); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showCancel(false); } };
     }
