@@ -487,7 +487,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.0";
+    const SCRIPT_VERSION = "v8.8.1-test-ocultos-02";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1132,6 +1132,17 @@
       return n;
     }
     function isWhiteNormalized(col){ return typeof col==="string" && col.toUpperCase().startsWith("#FFFFFF"); }
+    // Un objeto sigue "gestionado por la herramienta" si su color CRUDO empieza por #FFFFFF,
+    // incluso si viene en formato inválido tipo #FFFFFF1CE (translúcido) que normalizeColor() vacía.
+    function isToolManagedWhite(rawCol){ return typeof rawCol==="string" && rawCol.trim().toUpperCase().startsWith("#FFFFFF"); }
+    // Mapa de color CRUDO (no normalizado) solo para el rescate de ocultos. No usa getCurrentColorMap()
+    // porque ese normaliza los blancos translúcidos a "" y los confundía con recoloreados.
+    async function getRegistryRawColorMap(){
+      const map=new Map(); let colored=[];
+      try{ colored=await getColoredObjectEntries(); }catch(e){ recordError("getRegistryRawColorMap",e); }
+      for(const c of colored) map.set(c.modelId+":"+c.objectRuntimeId,c.color);
+      return map;
+    }
     async function markHiddenObjectsWhite(){
       setProgress("Selección ocultos: detectando objetos ocultos...");
       const entries=await getHiddenObjectEntries(); hiddenWhiteRegistry.clear();
@@ -1152,12 +1163,14 @@
     // Solo consulta colores de objetos VISIBLES; si un color no consta, se asume que sigue blanco
     // (no se rescata), evitando vaciar el registro por error.
     async function splitRegistryByColor(){
-      const colorMap=await getCurrentColorMap();
+      const colorMap=await getRegistryRawColorMap();
       const stillWhite=new Map(); const recolored=new Map();
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         for(const id of set){
           const col=colorMap.get(modelId+":"+id);
-          if(col!=null && !isWhiteNormalized(col)) addToMapSet(recolored,modelId,[id]);
+          // Recoloreado SOLO si hay un color presente, no vacío y que NO empieza por #FFFFFF.
+          // Ausencia de color, "" o blanco (incl. inválido) => sigue gestionado => se oculta.
+          if(col!=null && col!=="" && !isToolManagedWhite(col)) addToMapSet(recolored,modelId,[id]);
           else addToMapSet(stillWhite,modelId,[id]);
         }
       }
@@ -1176,21 +1189,28 @@
     async function setRegistryVisible(visible){
       if(!mapSetCount(hiddenWhiteRegistry)){ log("Ver ocultos: no hay objetos ocultos registrados. Reactiva 'Selección ocultos' para volver a detectarlos."); return 0; }
       if(visible){
-        let count=0;
+        const t0=performance.now(); let count=0;
+        // Un solo mecanismo de transparencia: color blanco con alfa 50%. No se combina con 'opacity'
+        // porque esa combinación devolvía colores inválidos (#FFFFFF1CE) y rompía el rescate.
         for(const [modelId,set] of hiddenWhiteRegistry.entries()){
           const ids=[...set]; if(!ids.length) continue;
-          count+=await setStateInBatches(modelId,ids,{opacity:HIDDEN_MARK_OPACITY,visible:true},"setRegistryVisible.show");
+          count+=await setStateInBatches(modelId,ids,{color:{...HIDDEN_MARK_COLOR_SHOWN},visible:true},"setRegistryVisible.show");
         }
-        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco con opacidad "+HIDDEN_MARK_OPACITY+"%.");
+        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco (alfa 50%) en "+Math.round(performance.now()-t0)+"ms. Si no ves transparencia, este entorno no aplica alfa de color a objetos coloreados.");
         setProgress("Ver ocultos: "+count+" objeto(s) mostrados.");
         return count;
       }
+      const t0=performance.now();
+      // Rescate: solo se sacan del registro (y se dejan visibles) los recoloreados de forma fiable.
+      const {recolored}=await splitRegistryByColor();
+      const rescued=await rescueRecolored(recolored);
+      // OFF robusto: oculta TODO lo que queda en el registro (rescueRecolored ya quitó los rescatados).
       let count=0;
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const ids=[...set]; if(!ids.length) continue;
         count+=await setStateInBatches(modelId,ids,{visible:false},"setRegistryVisible.hide");
       }
-      log("Ver ocultos OFF: "+count+" objeto(s) ocultados (el registro se conserva para reactivar).");
+      log("Ver ocultos OFF: "+count+" objeto(s) ocultados, "+rescued+" rescatado(s) por recoloreado, en "+Math.round(performance.now()-t0)+"ms (registro conservado).");
       setProgress("Ver ocultos: "+count+" objeto(s) ocultados.");
       return count;
     }
