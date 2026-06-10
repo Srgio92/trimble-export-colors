@@ -487,7 +487,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.1-test-ocultos-02";
+    const SCRIPT_VERSION = "v8.8.2";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1131,6 +1131,18 @@
       }
       return n;
     }
+    // Envía setObjectState con todos los IDs en una sola llamada por modelo.
+    // Si el visor rechaza el array (límite no documentado), hace fallback a setStateInBatches.
+    async function setStateOneShot(modelId,ids,state,ctx){
+      if(!ids.length) return 0;
+      try{
+        await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},state);
+        return ids.length;
+      }catch(e){
+        recordError(ctx+".oneshot",e);
+        return await setStateInBatches(modelId,ids,state,ctx);
+      }
+    }
     function isWhiteNormalized(col){ return typeof col==="string" && col.toUpperCase().startsWith("#FFFFFF"); }
     // Un objeto sigue "gestionado por la herramienta" si su color CRUDO empieza por #FFFFFF,
     // incluso si viene en formato inválido tipo #FFFFFF1CE (translúcido) que normalizeColor() vacía.
@@ -1180,7 +1192,7 @@
       let count=0;
       for(const [modelId,set] of recoloredMap.entries()){
         const ids=[...set]; if(!ids.length) continue;
-        count+=await setStateInBatches(modelId,ids,{visible:true,opacity:100},"rescueRecolored");
+        count+=await setStateOneShot(modelId,ids,{visible:true,opacity:100},"rescueRecolored");
         const reg=hiddenWhiteRegistry.get(modelId); if(reg) ids.forEach((id)=>reg.delete(id));
       }
       if(count) log("Ver ocultos: "+count+" pieza(s) recoloreada(s) rescatada(s); permanecerán visibles.");
@@ -1189,14 +1201,15 @@
     async function setRegistryVisible(visible){
       if(!mapSetCount(hiddenWhiteRegistry)){ log("Ver ocultos: no hay objetos ocultos registrados. Reactiva 'Selección ocultos' para volver a detectarlos."); return 0; }
       if(visible){
-        const t0=performance.now(); let count=0;
+        const t0=performance.now(); let count=0; let calls=0;
         // Un solo mecanismo de transparencia: color blanco con alfa 50%. No se combina con 'opacity'
         // porque esa combinación devolvía colores inválidos (#FFFFFF1CE) y rompía el rescate.
         for(const [modelId,set] of hiddenWhiteRegistry.entries()){
           const ids=[...set]; if(!ids.length) continue;
-          count+=await setStateInBatches(modelId,ids,{color:{...HIDDEN_MARK_COLOR_SHOWN},visible:true},"setRegistryVisible.show");
+          count+=await setStateOneShot(modelId,ids,{color:{...HIDDEN_MARK_COLOR_SHOWN},visible:true},"setRegistryVisible.show");
+          calls++;
         }
-        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco (alfa 50%) en "+Math.round(performance.now()-t0)+"ms. Si no ves transparencia, este entorno no aplica alfa de color a objetos coloreados.");
+        log("Ver ocultos ON: mostrados "+count+" objeto(s) en blanco (alfa 50%) en "+Math.round(performance.now()-t0)+"ms ("+calls+" llamada(s) al visor). Si no ves transparencia, este entorno no aplica alfa de color a objetos coloreados.");
         setProgress("Ver ocultos: "+count+" objeto(s) mostrados.");
         return count;
       }
@@ -1205,12 +1218,13 @@
       const {recolored}=await splitRegistryByColor();
       const rescued=await rescueRecolored(recolored);
       // OFF robusto: oculta TODO lo que queda en el registro (rescueRecolored ya quitó los rescatados).
-      let count=0;
+      let count=0; let calls=0;
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const ids=[...set]; if(!ids.length) continue;
-        count+=await setStateInBatches(modelId,ids,{visible:false},"setRegistryVisible.hide");
+        count+=await setStateOneShot(modelId,ids,{visible:false},"setRegistryVisible.hide");
+        calls++;
       }
-      log("Ver ocultos OFF: "+count+" objeto(s) ocultados, "+rescued+" rescatado(s) por recoloreado, en "+Math.round(performance.now()-t0)+"ms (registro conservado).");
+      log("Ver ocultos OFF: "+count+" objeto(s) ocultados, "+rescued+" rescatado(s) por recoloreado, en "+Math.round(performance.now()-t0)+"ms ("+calls+" llamada(s) al visor, registro conservado).");
       setProgress("Ver ocultos: "+count+" objeto(s) ocultados.");
       return count;
     }
@@ -1219,7 +1233,7 @@
       let count=0;
       for(const [modelId,set] of hiddenWhiteRegistry.entries()){
         const ids=[...set]; if(!ids.length) continue;
-        count+=await setStateInBatches(modelId,ids,{visible:false},"clearHiddenWhite");
+        count+=await setStateOneShot(modelId,ids,{visible:false},"clearHiddenWhite");
       }
       hiddenWhiteRegistry.clear();
       log("Selección ocultos OFF: "+count+" objeto(s) ocultados y registro limpiado.");
