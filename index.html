@@ -25,6 +25,13 @@
     details.param-group > summary { font-weight: bold; padding: 8px 10px; }
     .param-group-body { padding: 4px 10px 10px; }
     .param-defaults-hint { color: #666; font-size: 11px; margin: 4px 0 2px; }
+    .quick-color-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .quick-color-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
+    .qc-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid #999; }
+    .quick-select-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+    .quick-select-row .qs-param, .quick-select-row .qs-value { flex: 1; min-width: 90px; }
+    .quick-select-btn { flex: 0 0 auto; }
+    .qs-refresh { width: 28px; min-width: 28px; height: 26px; padding: 0; font-size: 15px; line-height: 1; }
 
     .switch { position: relative; display: inline-block; width: 38px; height: 20px; vertical-align: middle; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -74,6 +81,8 @@
 
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
     #debug { background: transparent; border: 1px solid #d1d5db; border-radius: 4px; padding: 3px 6px; cursor: pointer; line-height: 0; }
+    summary.dev-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    summary.dev-summary .dev-summary-text { flex: 1; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
@@ -88,13 +97,15 @@
 
     /* Plantillas de vista */
     .tpl-block { border: 1px solid #ececec; border-radius: 6px; background: #fbfbfb; padding: 8px 10px; margin: 8px 0; }
+    details.tpl-fold { border: 1px solid #ececec; border-radius: 6px; background: #fbfbfb; margin: 8px 0; }
+    details.tpl-fold > summary { font-weight: bold; padding: 7px 9px; font-size: 12px; }
+    details.tpl-fold > .tpl-block { border: none; background: transparent; margin: 0; padding: 4px 10px 10px; }
     .tpl-block h4 { margin: 0 0 6px; font-size: 12px; color: #111827; }
     .template-grid { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; margin: 6px 0; }
     .template-grid label { color: #374151; }
     .template-grid input, .template-grid select { width: 100%; }
     .template-auto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
     .template-auto div { margin: 2px 0; }
-    #templateDescription { width: 100%; min-height: 78px; padding: 6px; box-sizing: border-box; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
     #templateInfo { margin-top: 6px; }
     .tpl-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
     .tpl-row select, .tpl-row input { flex: 1; min-width: 120px; }
@@ -260,6 +271,34 @@
         </div>
       </details>
 
+      <details class="param-group" id="quickActionsGroup">
+        <summary>Acciones rápidas</summary>
+        <div class="param-group-body">
+          <div class="param-defaults-hint">Pinta al instante los objetos seleccionados.</div>
+          <div class="quick-color-row">
+            <button type="button" class="quick-color-btn" id="qcGray"><span class="qc-swatch" style="background:#9aa0a6;"></span>Gris neutro</button>
+            <button type="button" class="quick-color-btn" id="qcMagenta"><span class="qc-swatch" style="background:#ec00b6;"></span>Magenta</button>
+            <button type="button" class="quick-color-btn" id="qcRed"><span class="qc-swatch" style="background:#fc0d1b;"></span>Rojo</button>
+            <button type="button" class="quick-color-btn" id="qcReset"><span class="qc-swatch" style="background:transparent;border:1px dashed #999;"></span>Quitar color</button>
+          </div>
+
+          <div class="param-defaults-hint" style="margin-top:10px;">Selecciona todos los objetos cuyo parámetro coincida con el valor elegido.</div>
+          <div class="quick-select-row">
+            <button type="button" class="quick-select-btn" id="qsSelect1">Seleccionar</button>
+            <select id="qsParam1" class="qs-param"></select>
+            <select id="qsValue1" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
+            <button type="button" class="qs-refresh" id="qsRefresh1" title="Actualizar valores">&#8635;</button>
+          </div>
+          <div class="quick-select-row">
+            <button type="button" class="quick-select-btn" id="qsSelect2">Seleccionar</button>
+            <select id="qsParam2" class="qs-param"></select>
+            <select id="qsValue2" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
+            <button type="button" class="qs-refresh" id="qsRefresh2" title="Actualizar valores">&#8635;</button>
+          </div>
+          <div class="hint">El primer desplegable elige el parámetro; el segundo, sus valores disponibles. Pulsa &#8635; para releer parámetros y valores.</div>
+        </div>
+      </details>
+
     </div>
   </details>
 
@@ -268,61 +307,63 @@
     <div class="section">
 
       <details class="tool" id="viewTemplateTool">
-        <summary class="subtitle" data-tip="Configura plantillas de nombre, crea vistas a partir de ellas y renombra vistas existentes.">Plantillas de vista</summary>
+        <summary class="subtitle">Plantillas de vista</summary>
         <div class="tool-body">
 
-          <div class="tpl-block">
-            <h4>1. Configurar plantilla</h4>
-            <div class="tpl-row">
-              <select id="templateSelect" data-tip="Plantillas guardadas. La última usada se selecciona por defecto."><option value="">(Nueva plantilla)</option></select>
-              <button id="templateDelete" title="Borrar plantilla seleccionada" style="padding:3px 8px;">&#128465;</button>
+          <details class="tpl-fold" id="tplFoldConfig">
+            <summary>1. Configurar plantilla</summary>
+            <div class="tpl-block">
+              <div class="tpl-row">
+                <select id="templateSelect"><option value="">(Nueva plantilla)</option></select>
+                <button id="templateDelete" title="Borrar plantilla seleccionada" style="padding:3px 8px;">&#128465;</button>
+              </div>
+              <div class="template-grid">
+                <label for="templateTplName">Plantilla</label><input type="text" id="templateTplName" placeholder="Nombre de la plantilla">
+                <label for="templateRfi">RFI</label><input type="text" id="templateRfi" placeholder="RFI_000">
+                <label for="templateModule">Módulo</label><input type="text" id="templateModule" placeholder="G">
+                <label for="templateLevel">Nivel</label><input type="text" id="templateLevel" placeholder="N80">
+                <label for="templateAxes">Ejes</label><input type="text" id="templateAxes" placeholder="GN17-GN19">
+                <label for="templateElement">Elemento</label><input type="text" id="templateElement" placeholder="Placa base">
+                <label for="templateTask">Tarea</label><input type="text" id="templateTask" placeholder="Revisión anclajes">
+              </div>
+              <div class="row"><button id="templateSave">Guardar plantilla</button></div>
+              <div class="hint" id="templateSaveInfo">Patrón de nombre: RFI_Módulo_Nivel_Ejes_Elemento_Tarea (solo se usan los campos rellenos).</div>
             </div>
-            <div class="template-grid">
-              <label for="templateTplName">Plantilla</label><input type="text" id="templateTplName" placeholder="Nombre de la plantilla">
-              <label for="templateRfi">RFI</label><input type="text" id="templateRfi" placeholder="RFI_000">
-              <label for="templateModule">Módulo</label><input type="text" id="templateModule" placeholder="G">
-              <label for="templateLevel">Nivel</label><input type="text" id="templateLevel" placeholder="N80">
-              <label for="templateAxes">Ejes</label><input type="text" id="templateAxes" placeholder="GN17-GN19">
-              <label for="templateElement">Elemento</label><input type="text" id="templateElement" placeholder="Placa base">
-              <label for="templateTask">Tarea</label><input type="text" id="templateTask" placeholder="Revisión anclajes">
-            </div>
-            <div class="row"><button id="templateSave" data-tip="Guarda o actualiza la plantilla (se conserva entre sesiones).">Guardar plantilla</button></div>
-            <div class="hint" id="templateSaveInfo">Patrón de nombre: RFI_Módulo_Nivel_Ejes_Elemento_Tarea (solo se usan los campos rellenos).</div>
-          </div>
+          </details>
 
-          <div class="tpl-block">
-            <h4>2. Crear vista desde plantilla</h4>
-            <div class="template-auto">
-              <div>Autor: <strong id="templateAuthor">No disponible</strong></div>
-              <div>Fecha: <strong id="templateDate">No disponible</strong></div>
+          <details class="tpl-fold" id="tplFoldView">
+            <summary>2. Actualizar vista</summary>
+            <div class="tpl-block">
+              <div class="template-auto">
+                <div>Autor: <strong id="templateAuthor">No disponible</strong></div>
+                <div>Fecha: <strong id="templateDate">No disponible</strong></div>
+              </div>
+              <div class="row">
+                Nombre de vista:<br>
+                <input type="text" id="templateName" style="width:100%;" placeholder="Nombre de la vista">
+              </div>
+              <div class="row">
+                <button id="templateCreateView">Crear vista</button>
+              </div>
+              <div class="hint" id="templateInfo">Guarda el estado actual del visor (cámara, visibilidad, secciones, colores). Si la vista abierta ya está guardada, este apartado se abre solo y actualiza esa vista.</div>
             </div>
-            <div class="row">
-              Nombre de vista:<br>
-              <input type="text" id="templateName" style="width:100%;" placeholder="Nombre generado de la vista">
-            </div>
-            <div class="row">
-              Descripción:<br>
-              <textarea id="templateDescription" placeholder="Descripción generada de la vista"></textarea>
-            </div>
-            <div class="row">
-              <button id="templateCreateView" data-tip="Crea una vista nueva con el estado visible actual del visor y el nombre/descripción indicados.">Crear vista</button>
-            </div>
-            <div class="hint" id="templateInfo">La vista nueva guarda el estado visible actual del visor (cámara, visibilidad, secciones, colores) con el nombre y la descripción de arriba.</div>
-          </div>
+          </details>
 
-          <div class="tpl-block">
-            <h4>3. Renombrar vista existente</h4>
-            <div class="tpl-row">
-              <select id="renameViewSelect"><option value="">Cargando vistas...</option></select>
-              <button id="renameRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+          <details class="tpl-fold" id="tplFoldRename">
+            <summary>3. Renombrar vista existente</summary>
+            <div class="tpl-block">
+              <div class="tpl-row">
+                <select id="renameViewSelect"><option value="">Cargando vistas...</option></select>
+                <button id="renameRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+              </div>
+              <div class="row">
+                <input type="text" id="renameNewName" style="width:100%;" placeholder="Nuevo nombre de la vista">
+              </div>
+              <div class="row">
+                <button id="renameViewBtn">Actualizar nombre</button>
+              </div>
             </div>
-            <div class="row">
-              <input type="text" id="renameNewName" style="width:100%;" placeholder="Nuevo nombre de la vista">
-            </div>
-            <div class="row">
-              <button id="renameViewBtn" data-tip="Cambia el nombre de la vista seleccionada conservando su estado.">Actualizar nombre</button>
-            </div>
-          </div>
+          </details>
 
         </div>
       </details>
@@ -369,7 +410,7 @@
       <details class="tool">
         <summary class="subtitle">Importar colores desde CSV</summary>
         <div class="tool-body">
-          <div class="hint">Importar uno o varios CSV. Se aplica el color de la columna <code>color</code> a cada GUID. Si el CSV no tiene columna de color, se pintan de rojo las filas con revisado_deo = TRUE.</div>
+          <div class="hint">Importa uno o varios CSV. Se pintan de <strong>rojo</strong> las filas con <code>revisado_deo = TRUE</code>; el resto recupera el color de la columna <code>color</code> si existe. Los GUID que no estén en el modelo se omiten.</div>
           <div class="row">
             <button id="importBtn" data-tip="Selecciona uno o varios CSV.">Importar CSV</button>
             <input type="file" id="importFile" accept=".csv,text/csv" multiple style="display:none;">
@@ -386,12 +427,8 @@
   </details>
 
   <details open id="devPanel">
-    <summary>Desarrollador</summary>
+    <summary class="dev-summary"><span class="dev-summary-text">Desarrollador</span><button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug" title="Descargar informe de diagnóstico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button></summary>
     <div class="section">
-      <div class="row">
-        <button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug" title="Descargar informe de diagnóstico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button>
-        Descargar informe de diagnóstico
-      </div>
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
       <details class="tool">
@@ -404,7 +441,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.6.0";
+    const SCRIPT_VERSION = "v8.6.1";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -706,7 +743,7 @@
       // color (normalizado) -> { uuids:Set, raws:Set }
       const byColor=new Map();
       const ensureColor=(col)=>{ if(!byColor.has(col)) byColor.set(col,{uuids:new Set(),raws:new Set()}); return byColor.get(col); };
-      let totalRows=0, withColorCol=0, fallbackTrue=0;
+      let totalRows=0, redByReviewed=0, byColorCol=0;
       for(const file of files){
         let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); continue; }
         text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
@@ -716,13 +753,15 @@
         const ci=header.findIndex((h)=>h==="color");
         const ri=header.findIndex((h)=>h==="revisado_deo");
         if(gi<0){ log(file.name+": no se encontró columna GUID. Omitido."); continue; }
-        if(ci<0&&ri<0){ log(file.name+": no hay columna 'color' ni 'revisado_deo'. Omitido."); continue; }
+        if(ci<0&&ri<0){ log(file.name+": no hay columna 'revisado_deo' ni 'color'. Omitido."); continue; }
         let fileApplied=0;
         for(let i=1;i<lines.length;i++){
           const cells=parseCsvLine(lines[i]); const guid=(cells[gi]||"").trim(); if(!guid) continue;
           let col="";
-          if(ci>=0){ const raw=(cells[ci]||"").trim(); const an=analyzeColor(raw); if(an.valid){ col=an.normalizedColor; withColorCol++; } }
-          if(!col && ri>=0){ const reviewed=(cells[ri]||"").trim().toUpperCase(); if(reviewed==="TRUE"){ col="#FC0D1BFF"; fallbackTrue++; } }
+          // 1) Prioridad: revisado_deo = TRUE -> rojo.
+          if(ri>=0){ const reviewed=(cells[ri]||"").trim().toUpperCase(); if(reviewed==="TRUE"){ col="#FC0D1BFF"; redByReviewed++; } }
+          // 2) Si no, usa el color de la columna color (para restaurar el resto del coloreado).
+          if(!col && ci>=0){ const raw=(cells[ci]||"").trim(); const an=analyzeColor(raw); if(an.valid){ col=an.normalizedColor; byColorCol++; } }
           if(!col) continue;
           totalRows++; fileApplied++;
           const bucket=ensureColor(col);
@@ -731,8 +770,8 @@
         }
         log(file.name+": "+fileApplied+" fila(s) con color.");
       }
-      log("Filas con color: "+totalRows+" (por columna color: "+withColorCol+", por revisado_deo TRUE: "+fallbackTrue+"). Colores distintos: "+byColor.size+".");
-      if(byColor.size===0){ log("No hay filas con color aplicable. Revisa que el CSV tenga columna 'color' o 'revisado_deo'."); setProgress("Nada que importar."); showCancel(false); return; }
+      log("Filas a pintar: "+totalRows+" (rojas por revisado_deo TRUE: "+redByReviewed+", por columna color: "+byColorCol+"). Colores distintos: "+byColor.size+".");
+      if(byColor.size===0){ log("No hay filas con color aplicable. Revisa que el CSV tenga columna 'revisado_deo' o 'color'."); setProgress("Nada que importar."); showCancel(false); return; }
 
       showCancel(true); setProgress("Importando: detectando modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
@@ -1001,10 +1040,11 @@
 
     function currentTemplateFromForm(){ return { name:templateText("templateTplName")||"(sin nombre)", rfi:templateText("templateRfi"), module:templateText("templateModule"), level:templateText("templateLevel"), axes:templateText("templateAxes"), element:templateText("templateElement"), task:templateText("templateTask") }; }
     function buildTemplateName(){ const parts=[templateText("templateRfi"),templateText("templateModule"),templateText("templateLevel"),templateText("templateAxes"),templateText("templateElement"),templateText("templateTask")].map(cleanViewPart).filter(Boolean); return parts.join("_"); }
-    function buildTemplateDescription(){ const author=userDisplayName(templateCurrentUser); const lines=["RFI: "+(templateText("templateRfi")||""),"Autor: "+author,"Fecha: "+templateDatetimeLabel(),"Módulo: "+templateText("templateModule"),"Nivel: "+templateText("templateLevel"),"Ejes: "+templateText("templateAxes"),"Elemento: "+templateText("templateElement"),"Tarea: "+templateText("templateTask")]; return lines.join("\n"); }
+    let currentLoadedView=null;
+    function updateViewButtonLabel(isUpdate){ const b=document.getElementById("templateCreateView"); if(b) b.textContent=isUpdate?"Actualizar vista":"Crear vista"; }
 
     function applyTemplateToForm(tpl){ if(!tpl) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||""; }; set("templateTplName",(tpl.name&&tpl.name!=="(sin nombre)")?tpl.name:""); set("templateRfi",tpl.rfi); set("templateModule",tpl.module); set("templateLevel",tpl.level); set("templateAxes",tpl.axes); set("templateElement",tpl.element); set("templateTask",tpl.task); updateTemplateGeneratedName(); }
-    function updateTemplateGeneratedName(){ const nameEl=document.getElementById("templateName"); if(nameEl && nameEl.dataset.manual!=="1") nameEl.value=buildTemplateName(); const descEl=document.getElementById("templateDescription"); if(descEl && descEl.dataset.manual!=="1") descEl.value=buildTemplateDescription(); }
+    function updateTemplateGeneratedName(){ const nameEl=document.getElementById("templateName"); if(nameEl && nameEl.dataset.manual!=="1") nameEl.value=buildTemplateName(); }
 
     function populateTemplateSelect(selectName){
       const sel=document.getElementById("templateSelect"); if(!sel) return;
@@ -1032,13 +1072,60 @@
     }
     async function loadTemplateUser(){ try{ templateCurrentUser=(API&&API.user&&API.user.getUser)?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } const author=document.getElementById("templateAuthor"); if(author) author.textContent=userDisplayName(templateCurrentUser); const date=document.getElementById("templateDate"); if(date) date.textContent=templateDateLabel(); updateTemplateGeneratedName(); }
     async function createViewFromTemplate(){
-      if(!API||!API.view||!API.view.createView){ log("La API de vistas no permite crear vistas en este entorno."); setProgress("No se puede crear la vista desde esta API."); return; }
+      if(!API||!API.view){ log("La API de vistas no está disponible en este entorno."); setProgress("No disponible."); return; }
       const name=templateText("templateName")||buildTemplateName(); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; }
-      const descEl=document.getElementById("templateDescription"); const description=descEl?descEl.value:buildTemplateDescription();
       const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true;
-      try{ setProgress("Creando vista con el estado actual del visor..."); const created=await API.view.createView({name,description}); log("Vista creada (estado actual del visor): "+name); setProgress("Vista creada: "+name); await populateRenameViews(); if(created&&created.id&&API.view.selectView){ try{ await API.view.selectView(created.id); }catch(e){ recordError("createView.select",e); } } }
-      catch(e){ recordError("createViewFromTemplate",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error al crear la vista."); }
+      try{
+        if(currentLoadedView && currentLoadedView.id && API.view.updateView){
+          // La vista abierta ya existe: actualizar su estado al estado actual del visor y, si cambia, su nombre.
+          setProgress("Actualizando la vista abierta con el estado actual...");
+          await API.view.updateView({id:currentLoadedView.id});
+          if(name && name!==readableViewName(currentLoadedView)){
+            let spec=null; try{ if(API.view.getView) spec=await API.view.getView(currentLoadedView.id); }catch(e){ recordError("update.getView",e); }
+            if(spec && typeof spec==="object"){ spec.name=name; await API.view.updateView(spec); }
+            else { await API.view.updateView({id:currentLoadedView.id,name}); }
+          }
+          log("Vista actualizada: "+name); setProgress("Vista actualizada: "+name);
+        } else {
+          if(!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
+          setProgress("Creando vista con el estado actual del visor...");
+          const created=await API.view.createView({name});
+          log("Vista creada (estado actual del visor): "+name); setProgress("Vista creada: "+name);
+          if(created && created.id){ currentLoadedView=created; updateViewButtonLabel(true); }
+        }
+        await populateRenameViews();
+      }catch(e){ recordError("createViewFromTemplate",e); log("ERROR al guardar la vista: "+(e&&e.message?e.message:e)); setProgress("Error al guardar la vista."); }
       finally{ if(btn) btn.disabled=false; }
+    }
+    async function detectCurrentSavedView(){
+      try{
+        const cv=await API.view.getCurrentView();
+        if(cv && cv.id){
+          let m=(templateViewsCache||[]).find((v)=>String(v.id)===String(cv.id));
+          if(!m && cv.name) m=(templateViewsCache||[]).find((v)=>readableViewName(v)===cv.name);
+          return m||null;
+        }
+      }catch(e){ recordError("detectCurrentSavedView",e); }
+      return null;
+    }
+    async function applyTemplateDefaultOpen(){
+      const foldConfig=document.getElementById("tplFoldConfig");
+      const foldView=document.getElementById("tplFoldView");
+      const foldRename=document.getElementById("tplFoldRename");
+      const saved=await detectCurrentSavedView();
+      const noTemplates=loadTemplates().length===0;
+      if(foldConfig) foldConfig.open=false; if(foldView) foldView.open=false; if(foldRename) foldRename.open=false;
+      if(saved){
+        currentLoadedView=saved;
+        const nm=document.getElementById("templateName"); if(nm){ nm.value=readableViewName(saved); nm.dataset.manual="1"; }
+        updateViewButtonLabel(true);
+        const rsel=document.getElementById("renameViewSelect"); if(rsel && [...rsel.options].some((o)=>String(o.value)===String(saved.id))) rsel.value=String(saved.id);
+        if(foldView) foldView.open=true;
+      } else {
+        currentLoadedView=null; updateViewButtonLabel(false);
+        if(noTemplates){ if(foldConfig) foldConfig.open=true; }
+        else { if(foldRename) foldRename.open=true; }
+      }
     }
     async function populateRenameViews(){
       const sel=document.getElementById("renameViewSelect"); if(!sel||!API||!API.view) return;
@@ -1064,13 +1151,13 @@
     function wireTemplateTool(){
       for(const id of TEMPLATE_FIELD_IDS){ const el=document.getElementById(id); if(el) el.addEventListener("input",updateTemplateGeneratedName); }
       const nameEl=document.getElementById("templateName"); if(nameEl) nameEl.addEventListener("input",()=>{ nameEl.dataset.manual="1"; });
-      const descEl=document.getElementById("templateDescription"); if(descEl) descEl.addEventListener("input",()=>{ descEl.dataset.manual="1"; });
-      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const nm=document.getElementById("templateName"); if(nm) nm.dataset.manual="0"; const ds=document.getElementById("templateDescription"); if(ds) ds.dataset.manual="0"; applyTemplateToForm(t); } else { saveLastTemplateName(""); } });
+      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const nm=document.getElementById("templateName"); if(nm) nm.dataset.manual="0"; applyTemplateToForm(t); } else { saveLastTemplateName(""); } });
       const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
       const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
       const createBtn=document.getElementById("templateCreateView"); if(createBtn) createBtn.onclick=()=>createViewFromTemplate();
       const refreshViews=document.getElementById("renameRefreshViews"); if(refreshViews) refreshViews.onclick=()=>populateRenameViews();
       const renameBtn=document.getElementById("renameViewBtn"); if(renameBtn) renameBtn.onclick=()=>renameSelectedView();
+      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",()=>{ if(tool.open) applyTemplateDefaultOpen(); });
     }
     async function initTemplateTool(){
       populateTemplateSelect();
@@ -1078,6 +1165,7 @@
       await loadTemplateUser();
       await populateRenameViews();
       updateTemplateGeneratedName();
+      await applyTemplateDefaultOpen();
     }
 
     // ===================== COLORES / VALORES UI =====================
@@ -1088,6 +1176,96 @@
     async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; const txt=document.createElement("span"); txt.textContent=col+" ("+byColor.get(col).count+")"; row.appendChild(cb); row.appendChild(sw); row.appendChild(txt); cont.appendChild(row); } }
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
+
+    // ===================== ACCIONES RÁPIDAS =====================
+    const QUICK_COLORS={ qcGray:"#9AA0A6FF", qcMagenta:"#EC00B6FF", qcRed:"#FC0D1BFF" };
+    const QUICK_PARAM_DEFAULTS={ qsParam1:"Assembly type", qsParam2:"Bolt standard" };
+    async function applyQuickColor(normalized){
+      const sel=await safeGetSelection();
+      if(sel.length===0){ setProgress("Acciones rápidas: no hay objetos seleccionados."); log("Acciones rápidas: selecciona objetos antes de pintar."); return; }
+      const byModel=new Map(); for(const o of sel) addToMapSet(byModel,o.modelId,[o.runtimeId]);
+      const state=normalized==="reset"?{color:"reset"}:{color:normalized};
+      let n=0;
+      for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},state); n+=ids.length; }catch(e){ recordError("applyQuickColor",e); } }
+      log("Acciones rápidas: "+(normalized==="reset"?"color quitado de ":"pintados ")+n+" objeto(s).");
+      setProgress((normalized==="reset"?"Color quitado: ":"Pintados: ")+n+" objeto(s).");
+    }
+    function populateQuickParamSelect(selId,defaultParam){
+      const sel=document.getElementById(selId); if(!sel) return; const keep=sel.value||defaultParam;
+      sel.innerHTML="";
+      const params=(csvAvailableParametersCache||[]).slice();
+      if(defaultParam && !params.some((p)=>p.toLowerCase()===defaultParam.toLowerCase())) params.unshift(defaultParam);
+      for(const p of params){ const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); }
+      if([...sel.options].some((o)=>o.value===keep)) sel.value=keep; else if(defaultParam) sel.value=defaultParam;
+    }
+    async function getModelObjectsMap(){
+      const map=new Map();
+      const attempts=[ ()=>API.viewer.getObjects(), ()=>API.viewer.getObjects(undefined,{visible:true}) ];
+      for(const fn of attempts){ try{ const groups=await fn(); for(const g of groups||[]){ const modelId=g.modelId||g.id||""; const ids=(g.objects||g.objectRuntimeIds||g.runtimeIds||[]).map((o)=>Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o)).filter(Number.isFinite); if(modelId&&ids.length){ const prev=map.get(modelId)||[]; map.set(modelId,prev.concat(ids)); } } if(map.size) break; }catch(e){ recordError("getModelObjectsMap",e); } }
+      // dedupe
+      for(const [m,ids] of map.entries()) map.set(m,[...new Set(ids)]);
+      return map;
+    }
+    async function populateQuickValueSelect(paramSelId,valueSelId){
+      const param=(document.getElementById(paramSelId)||{}).value||"";
+      const vsel=document.getElementById(valueSelId); if(!vsel) return;
+      vsel.innerHTML='<option value="" disabled selected hidden>valor…</option>';
+      if(!param) return;
+      setProgress("Acciones rápidas: leyendo valores de \""+param+"\"...");
+      const values=new Set();
+      try{
+        const sel=await safeGetSelection();
+        let byModel=new Map();
+        if(sel.length>0){ for(const o of sel) addToMapSet(byModel,o.modelId,[o.runtimeId]); }
+        else { byModel=await getModelObjectsMap(); }
+        for(const [modelId,idsRaw] of byModel.entries()){ const ids=[...idsRaw]; const cap=Math.min(ids.length,6000); for(let i=0;i<cap;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()){ const v=getParamValue(p,param); if(v!=="" && v!=null) values.add(String(v)); } if(values.size>1500) break; } }
+      }catch(e){ recordError("populateQuickValueSelect",e); }
+      [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); });
+      setProgress("Acciones rápidas: "+values.size+" valor(es) de \""+param+"\".");
+    }
+    async function selectByParamValue(paramSelId,valueSelId){
+      const param=(document.getElementById(paramSelId)||{}).value||"";
+      const value=(document.getElementById(valueSelId)||{}).value||"";
+      if(!param){ setProgress("Acciones rápidas: elige un parámetro."); return; }
+      if(!value){ setProgress("Acciones rápidas: elige un valor."); return; }
+      cancelRequested=false; showCancel(true); setProgress("Acciones rápidas: buscando "+param+" = "+value+"...");
+      const wanted=String(value).trim().toLowerCase();
+      const matchMap=new Map(); let scanned=0, matched=0;
+      try{
+        const byModel=await getModelObjectsMap();
+        let total=0; for(const ids of byModel.values()) total+=ids.length; let done=0;
+        for(const [modelId,ids] of byModel.entries()){
+          for(let i=0;i<ids.length;i+=PROPS_BATCH){
+            if(cancelRequested){ log("Acciones rápidas: búsqueda cancelada."); break; }
+            const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk);
+            for(const id of chunk){ scanned++; const v=getParamValue(pm.get(id)||{},param); if(String(v).trim().toLowerCase()===wanted){ addToMapSet(matchMap,modelId,[id]); matched++; } }
+            done+=chunk.length; setProgress("Acciones rápidas: "+done+"/"+total+" (coincidencias: "+matched+")");
+          }
+          if(cancelRequested) break;
+        }
+      }catch(e){ recordError("selectByParamValue",e); }
+      showCancel(false);
+      if(matched===0){ log("Acciones rápidas: sin coincidencias para "+param+" = "+value+"."); setProgress("Sin coincidencias."); return; }
+      suppressSelectionUntil=Date.now()+700;
+      try{ await API.viewer.setSelection(mapSetToSelector(matchMap),"set"); }catch(e){ recordError("selectByParamValue.set",e); }
+      log("Acciones rápidas: seleccionados "+matched+" objeto(s) con "+param+" = "+value+".");
+      setProgress("Seleccionados "+matched+" objeto(s).");
+    }
+    async function refreshQuickRow(paramSelId,valueSelId,defaultParam){ await scanModelParameters(); populateQuickParamSelect(paramSelId,defaultParam); await populateQuickValueSelect(paramSelId,valueSelId); }
+    function wireQuickActions(){
+      for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
+      const reset=document.getElementById("qcReset"); if(reset) reset.onclick=()=>applyQuickColor("reset");
+      const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueSelect("qsParam1","qsValue1"));
+      const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueSelect("qsParam2","qsValue2"));
+      const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
+      const s2=document.getElementById("qsSelect2"); if(s2) s2.onclick=()=>selectByParamValue("qsParam2","qsValue2");
+      const r1=document.getElementById("qsRefresh1"); if(r1) r1.onclick=()=>refreshQuickRow("qsParam1","qsValue1",QUICK_PARAM_DEFAULTS.qsParam1);
+      const r2=document.getElementById("qsRefresh2"); if(r2) r2.onclick=()=>refreshQuickRow("qsParam2","qsValue2",QUICK_PARAM_DEFAULTS.qsParam2);
+      populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
+      populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+      const group=document.getElementById("quickActionsGroup"); let firstOpen=true;
+      if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await scanModelParameters(); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
+    }
 
     // ===================== TOOLTIPS =====================
     function initTooltips(){ const tip=document.createElement("div"); tip.className="floating-tip"; tip.style.display="none"; document.body.appendChild(tip); let timer=null; document.querySelectorAll("[data-tip]").forEach((el)=>{ el.addEventListener("mouseenter",()=>{ timer=setTimeout(()=>{ tip.textContent=el.getAttribute("data-tip"); const r=el.getBoundingClientRect(); tip.style.display="block"; let left=r.left; if(left+270>window.innerWidth) left=Math.max(6,window.innerWidth-270); tip.style.top=(r.bottom+6)+"px"; tip.style.left=left+"px"; },400); }); el.addEventListener("mouseleave",()=>{ clearTimeout(timer); tip.style.display="none"; }); }); }
@@ -1139,6 +1317,7 @@
       updateCsvColumnSelect();
 
       wireTemplateTool();
+      wireQuickActions();
 
       document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
