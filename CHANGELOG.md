@@ -3,6 +3,62 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.8.0] — 2026-06-10
+
+### Añadido
+
+* Marca visual en el 100% del slider de "Selección cercanos" con efecto imán (±10% se engancha al valor base).
+* Botón de refresco de grupos de vistas en "Configurar plantilla" y en "Exportar colores a CSV".
+* Caché compartida de grupos de vistas (`buildViewGroupsCache`) con detección de métodos nativos del API y deducción desde `ViewSpec`.
+* Función `nativeViewGroups()` para probar `getViewGroups`, `getGroups`, `getViewSets` y `getFolders` cuando existan.
+* Detección de namespace de markups mediante `markupApi()` (`API.markup` o `API.viewer.markup`).
+* Pick estándar de markup con `markupPick()` y variante sin referencias de objeto con `stripPickRefs()`.
+* Detección de tornillería y soldaduras por `Name` y por clase/propiedades IFC con `matchBolt()` y `matchWeld()`.
+* Cancelación automática de "Mostrar parámetros" cuando la selección cambia a mitad de proceso (`paramRefreshSeq`).
+* Aplicación de estado por lotes con progreso mediante `setStateInBatches()`.
+* Detección de blanco normalizado con `isWhiteNormalized()`.
+* Separación del registro de ocultos entre blancos y recoloreados con `splitRegistryByColor()`.
+* Log de importación CSV con muestra de hasta 10 GUID no encontrados.
+
+### Cambiado
+
+* "Selección cercanos" amplía el rango de sensibilidad de 0–200% a 0–300%.
+* El alcance de "Selección cercanos" escala de forma cuadrática por encima del 100% (300% ≈ 9× el radio y el volumen máximo base), de modo que el alcance máximo es muy superior al anterior.
+* Textos explicativos de "Selección cercanos" reescritos para describir los tramos 0%, 100% y hasta 300%.
+* "Ver ocultos" conserva el registro de objetos ocultos al desactivarse, permitiendo activarlo y desactivarlo de forma repetida sin perder estado.
+* "Ver ocultos" usa la escala de opacidad correcta del Workspace API (0–100) en lugar de 0–1.
+* "Mostrar parámetros" envía los picks en formato estándar (posiciones en milímetros más `modelId` y `objectRuntimeId`), sin los campos no documentados que provocaban el rechazo del API.
+* "Mostrar parámetros" aplica una cascada de fallbacks: lote completo, uno a uno, picks solo con coordenadas y, por último, iconos SVG 3D.
+* La importación CSV solo convierte los GUID aún pendientes en cada modelo, evitando reconvertir lotes ya resueltos.
+* El campo "Carpeta" de la exportación masiva pasa a denominarse "Grupo de vistas", con "Todas las vistas" como valor por defecto del propio desplegable.
+* El filtrado por grupo y los nombres de archivo e informe de la exportación masiva usan el nombre real del grupo.
+* "Configurar plantilla" obtiene los grupos de vistas desde la caché compartida en lugar de consultar el detalle de cada vista en serie.
+
+### Corregido
+
+* Corrección de "Ver ocultos", que solo funcionaba una vez: ya puede usarse de forma repetida.
+* Corrección de la fuga de estado que ocultaba todos los objetos blancos del modelo al desactivar "Ver ocultos", aunque nunca hubieran estado ocultos.
+* Corrección del rescate de ocultos: un objeto cuyo color no consta deja de interpretarse como recoloreado, evitando vaciar el registro por error.
+* Corrección de la opacidad de objetos rescatados y mostrados en "Ver ocultos" (antes quedaban prácticamente invisibles).
+* Corrección de "Ver nombres", "Ver tornillos" y "Ver soldaduras", que no creaban etiquetas por el formato incorrecto de los picks de markup.
+* Corrección del rojo calibrado de la importación CSV, que se aplicaba con opacidad casi nula y provocaba parpadeos.
+* Corrección de los grupos de vistas de "Configurar plantillas de vista" y de la exportación masiva para mostrar los grupos reales del proyecto.
+* Corrección del estado, que quedaba en "Esperando conexión..." tras conectar: ahora refleja conectado, operación en curso, completada, error y cancelado.
+* "Excluir de selección" recalcula la selección también al desactivarse.
+
+### Eliminado
+
+* Funciones obsoletas: `probeColor()`, `importStateForKey()`, `stateKeyFromColor()`, `rgbaFromNormalizedColor()`, `isNumericValue()` y `toNumber()`.
+* Uso del Map temporal por fila en la importación CSV (`importBucket(new Map(), "__TMP")`).
+* Nota obsoleta sobre el tamaño de fuente de las etiquetas de texto en "Mostrar parámetros".
+
+### Limitaciones conocidas
+
+* Si el visor rechaza incluso el formato estándar de markup de texto, se recurre a coordenadas puras y, después, a iconos SVG 3D; si tampoco hay `addIcon`, se informa en el log y en el Estado.
+* Si Trimble no expone grupos de vistas de forma nativa ni en el `ViewSpec` (ni en el detalle de las primeras 150 vistas), el desplegable solo muestra "Todas las vistas" con aviso en el log.
+* Los objetos vueltos a ocultar en "Ver ocultos" conservan el color blanco interno; no se restaura el color original del modelo.
+* El análisis de detalle de grupos de vistas se limita a 150 vistas para no bloquear el navegador ni saturar el API.
+
 ## [v8.7.5] — 2026-06-10
 
 ### Añadido
