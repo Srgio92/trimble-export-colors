@@ -29,10 +29,12 @@
     .quick-color-btn { width: 26px; height: 26px; padding: 0; border: 1px solid #c9d1d9; border-radius: 50%; background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .quick-color-btn:hover, .quick-color-btn:focus-visible { outline: 2px solid #1c7fd6; outline-offset: 1px; }
     .qc-swatch { width: 20px; height: 20px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.35); }
-    .quick-select-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
-    .quick-select-row .qs-param, .quick-select-row .qs-value { flex: 1; min-width: 90px; }
-    .quick-select-btn { flex: 0 0 auto; }
-    .qs-refresh { width: 28px; min-width: 28px; height: 26px; padding: 0; font-size: 15px; line-height: 1; }
+    .quick-select-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 4px; }
+    .quick-select-grid { display: grid; grid-template-columns: 28px minmax(92px, 1fr) minmax(92px, 1fr); gap: 6px; align-items: center; margin: 6px 0; }
+    .quick-select-grid select { min-width: 0; width: 100%; }
+    .quick-select-btn { width: 28px; min-width: 28px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+    .qs-refresh { width: 28px; min-width: 28px; height: 26px; padding: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    @media (max-width: 330px) { .quick-select-grid { grid-template-columns: 28px minmax(0, 1fr); } .quick-select-grid .qs-value { grid-column: 2; } }
 
     .switch { position: relative; display: inline-block; width: 38px; height: 20px; vertical-align: middle; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -73,6 +75,7 @@
     /* Lista de colores con botón de refrescar alineado a la derecha de la primera línea */
     .color-list-row { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; }
     .color-list-row .color-list { flex: 1; }
+    .color-mode-hint { margin: 10px 0 5px; }
     .refresh-right { flex: 0 0 auto; }
 
     #excludeColors, #includeColors { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -112,12 +115,13 @@
     .template-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px 8px; align-items: end; margin: 6px 0; }
     .template-field { display: flex; flex-direction: column; gap: 2px; }
     .template-field label { color: #374151; font-size: 11px; }
-    .template-field input, .template-field select, .template-field textarea { width: 100%; }
-    .template-field textarea { min-height: 42px; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 12px; padding: 4px; box-sizing: border-box; }
+    .template-field input, .template-field select, .template-field textarea { width: 100%; font-size: 11px; line-height: 1.2; }
+    .template-field input, .template-field select { height: 24px; }
+    .template-field textarea { min-height: 42px; resize: vertical; font-family: Arial, Helvetica, sans-serif; padding: 4px; box-sizing: border-box; }
     .template-meta-title { font-weight: bold; font-size: 11px; color: #374151; margin: 8px 0 2px; }
-    .tpl-short { grid-column: span 2; }
-    .tpl-medium { grid-column: span 3; }
-    .tpl-wide { grid-column: span 6; }
+    .tpl-short { grid-column: span 3; }
+    .tpl-medium { grid-column: span 4; }
+    .tpl-wide { grid-column: span 12; }
     .tpl-full { grid-column: 1 / -1; }
     .template-preview { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; margin: 6px 0; font-size: 12px; line-height: 1.35; word-break: break-word; }
     .template-preview strong { display: block; margin-bottom: 2px; }
@@ -197,9 +201,12 @@
               <label class="switch"><input type="checkbox" id="colorModeToggle"><span class="slider"></span></label>
               <label class="txt" for="colorModeToggle">Selección por color</label>
             </div>
-            <div class="color-list-row" id="includeColorsWrap" style="display:none;">
-              <div id="includeColors" class="color-list"></div>
-              <button id="includeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <div id="includeColorsWrap" style="display:none;">
+              <div class="hint color-mode-hint">Marca los colores que deben permanecer en la selección.</div>
+              <div class="color-list-row">
+                <div id="includeColors" class="color-list"></div>
+                <button id="includeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+              </div>
             </div>
           </div>
         </div>
@@ -296,20 +303,21 @@
             <button type="button" class="quick-color-btn" id="qcRed" title="Rojo" aria-label="Rojo"><span class="qc-swatch" style="background:#fc0d1b;"></span></button>
           </div>
 
-          <div class="param-defaults-hint" style="margin-top:10px;">Selecciona todos los objetos cuyo parámetro coincida con el valor elegido.</div>
-          <div class="quick-select-row">
-            <button type="button" class="quick-select-btn" id="qsSelect1">Seleccionar</button>
+          <div class="quick-select-head">
+            <div class="param-defaults-hint" style="margin:0;">Selecciona objetos por parámetro y valor.</div>
+            <button type="button" class="qs-refresh" id="qsRefreshAll" title="Actualizar valores" aria-label="Actualizar valores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+          </div>
+          <div class="quick-select-grid">
+            <button type="button" class="quick-select-btn" id="qsSelect1" title="Seleccionar" aria-label="Seleccionar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></button>
             <select id="qsParam1" class="qs-param"></select>
             <select id="qsValue1" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
-            <button type="button" class="qs-refresh" id="qsRefresh1" title="Actualizar valores">&#8635;</button>
           </div>
-          <div class="quick-select-row">
-            <button type="button" class="quick-select-btn" id="qsSelect2">Seleccionar</button>
+          <div class="quick-select-grid">
+            <button type="button" class="quick-select-btn" id="qsSelect2" title="Seleccionar" aria-label="Seleccionar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></button>
             <select id="qsParam2" class="qs-param"></select>
             <select id="qsValue2" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
-            <button type="button" class="qs-refresh" id="qsRefresh2" title="Actualizar valores">&#8635;</button>
           </div>
-          <div class="hint">El primer desplegable elige el parámetro; el segundo, sus valores disponibles. Pulsa &#8635; para releer parámetros y valores.</div>
+          <div class="hint">Pulsa el botón de refrescar para leer parámetros y preparar los valores disponibles. El botón cuadrado selecciona el valor elegido.</div>
         </div>
       </details>
 
@@ -332,22 +340,13 @@
                 <button id="templateDelete" title="Borrar plantilla seleccionada" style="padding:3px 8px;">&#128465;</button>
               </div>
               <div class="template-grid" data-template-scope="tplCfg">
-                <div class="template-field tpl-medium"><label for="tplCfg_name">Nombre especial</label><input type="text" id="tplCfg_name" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplCfg_code">Código</label><input type="text" id="tplCfg_code" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplCfg_location">Ubicación</label><input type="text" id="tplCfg_location" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplCfg_level">Nivel</label><input type="text" id="tplCfg_level" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplCfg_axes">Ejes</label><input type="text" id="tplCfg_axes" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplCfg_element">Elemento clave</label><input type="text" id="tplCfg_element" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplCfg_task">Tarea</label><input type="text" id="tplCfg_task" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplCfg_date">Fecha</label><input type="text" id="tplCfg_date" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplCfg_author">Autor</label><input type="text" id="tplCfg_author" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplCfg_folder">Carpeta</label><select id="tplCfg_folder"><option value="">(Sin carpeta)</option></select></div>
-                <div class="template-field tpl-wide"><label for="tplCfg_labels">Etiquetas</label><input type="text" id="tplCfg_labels" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplCfg_share">Compartir con</label><input type="text" id="tplCfg_share" placeholder=""></div>
+                <div class="template-field tpl-full"><label for="tplCfg_name">Nombre especial</label><input type="text" id="tplCfg_name" placeholder=""></div>
+                <div class="template-field tpl-full"><label for="tplCfg_folder">Grupo de vistas</label><select id="tplCfg_folder"><option value="">(Sin grupo)</option></select></div>
+                <div class="template-field tpl-full"><label for="tplCfg_labels">Etiquetas</label><input type="text" id="tplCfg_labels" placeholder=""></div>
+                <div class="template-field tpl-full"><label for="tplCfg_share">Compartido con</label><input type="text" id="tplCfg_share" placeholder=""></div>
               </div>
-              <div class="template-preview"><strong>Vista previa</strong><span id="tplCfg_preview"></span></div>
               <div class="row"><button id="templateSave">Guardar plantilla</button></div>
-              <div class="hint" id="templateSaveInfo">Estructura: (Código de inspección) Ubicación, Nivel, Ejes, Elemento clave - Tarea (fecha, autor).</div>
+              <div class="hint" id="templateSaveInfo">La plantilla guarda grupo de vistas, etiquetas y correos de compartición. El nombre de la vista se define al crear o actualizar la vista.</div>
             </div>
           </details>
 
@@ -378,7 +377,7 @@
             <div class="tpl-block">
               <div class="tpl-row">
                 <select id="updateViewSelect"><option value="">Cargando vistas...</option></select>
-                <button id="updateRefreshViews" title="Actualizar vistas" style="padding:3px 8px;">&#8635;</button>
+                <button id="updateRefreshViews" class="icon-btn" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
               </div>
               <div class="hint" id="tplUpdateParseInfo"></div>
               <div class="template-grid" data-template-scope="tplUpd">
@@ -473,7 +472,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.7.3";
+    const SCRIPT_VERSION = "v8.7.4";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1104,6 +1103,25 @@
       const clean=[...(ids||[])].map((id)=>Number(id)).filter((id)=>Number.isFinite(id));
       if(clean.length&&API.markup&&typeof API.markup.removeMarkups==="function"){ try{ await API.markup.removeMarkups(clean); }catch(e){ recordError("removeMarkups",e); } }
     }
+    function normalizeMarkupIds(added){
+      const arr=Array.isArray(added)?added:(added?[added]:[]);
+      return arr.map((m)=>typeof m==="number"?m:(m&&m.id)).filter((id)=>id!=null && Number.isFinite(Number(id))).map(Number);
+    }
+    async function addTextMarkupsRobust(batch){
+      if(!batch||!batch.length) return [];
+      try{ const added=await API.markup.addTextMarkup(batch); const ids=normalizeMarkupIds(added); if(ids.length) return ids; }
+      catch(e){ recordError("paramMarkups.add.batch",e); }
+      const ids=[];
+      for(const m of batch){
+        try{ const added=await API.markup.addTextMarkup([m]); ids.push(...normalizeMarkupIds(added)); }
+        catch(e1){
+          recordError("paramMarkups.add.singleArray",e1);
+          try{ const added=await API.markup.addTextMarkup(m); ids.push(...normalizeMarkupIds(added)); }
+          catch(e2){ recordError("paramMarkups.add.single",e2); log("Mostrar parámetros: no se ha podido crear etiqueta para " + String(m.text||"").slice(0,100)); }
+        }
+      }
+      return ids;
+    }
     function centerPickFromBox(modelId,runtimeId,bb,offsetMm,staticObjectId){
       const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2, cz=(bb.min.z+bb.max.z)/2; const scale=1000;
       const pick={ type:"point", modelId:modelId, objectId:runtimeId, positionX:cx*scale, positionY:cy*scale, positionZ:cz*scale+(offsetMm||0) };
@@ -1152,14 +1170,14 @@
       const stored=[];
       for(let i=0;i<markups.length;i+=50){
         const batch=markups.slice(i,i+50);
-        try{
-          const added=await API.markup.addTextMarkup(batch);
-          const ids=(Array.isArray(added)?added:[added]).map((m)=>typeof m==="number"?m:(m&&m.id)).filter((id)=>id!=null && Number.isFinite(Number(id))).map(Number);
-          stored.push(...ids);
-        }catch(e){ recordError("paramMarkups.add",e); log("Mostrar parámetros ("+toolKey+"): error creando lote "+(i/50+1)+". Primer texto: "+String(batch[0]&&batch[0].text||"").slice(0,120)); }
+        const ids=await addTextMarkupsRobust(batch);
+        stored.push(...ids);
+        setProgress("Mostrar parámetros: "+Math.min(i+batch.length,markups.length)+"/"+markups.length+" procesadas.");
+        await sleep(0);
       }
       cfg.store=stored;
-      log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s).");
+      if(stored.length===0) log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas. Revisa permisos de markups en la vista/proyecto.");
+      else log("Mostrar parámetros ("+toolKey+"): "+stored.length+" etiqueta(s) creada(s) de "+markups.length+" solicitada(s).");
     }
     function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeMarkupIds(cfg.store); cfg.store=[]; return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
@@ -1241,7 +1259,7 @@
       return name.replace(/\s+/g," ").replace(/\s+,/g,",").trim();
     }
     function updateScopePreview(scope){ const el=document.getElementById(scope+"_preview"); if(el) el.textContent=templateNameFromValues(getScopeValues(scope))||"(sin nombre)"; }
-    function currentTemplateFromConfig(){ const tpl=getScopeValues("tplCfg"); tpl.name=String((document.getElementById("tplCfg_name")||{}).value||"").trim(); Object.assign(tpl,getTemplateMetaFromConfig()); return tpl; }
+    function currentTemplateFromConfig(){ const tpl={}; tpl.name=String((document.getElementById("tplCfg_name")||{}).value||"").trim(); Object.assign(tpl,getTemplateMetaFromConfig()); return tpl; }
     function populateTemplateSelects(selected){
       const list=loadTemplates().sort((a,b)=>String(a.name).localeCompare(String(b.name),"es"));
       for(const id of ["templateSelect","newTemplateSelect"]){
@@ -1277,18 +1295,60 @@
       if(idx>=0){ tpl.createdAt=list[idx].createdAt||now; tpl.updatedAt=now; list[idx]=tpl; }
       else { tpl.createdAt=now; tpl.updatedAt=now; list.push(tpl); }
       saveTemplates(list); saveLastTemplateName(tpl.name); populateTemplateSelects(tpl.name);
-      const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=tpl.name; applyTemplateToScope(tpl,"tplNew");
+      const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=tpl.name;
       log("Plantilla guardada: "+tpl.name); setProgress("Plantilla guardada: "+tpl.name);
-      const info=document.getElementById("templateSaveInfo"); if(info) info.textContent="Plantilla guardada. Nombre generado: "+(templateNameFromValues(tpl)||"(sin nombre)");
+      const info=document.getElementById("templateSaveInfo"); if(info) info.textContent="Plantilla guardada: "+tpl.name;
     }
     function deleteSelectedTemplate(){ const sel=document.getElementById("templateSelect"); if(!sel||!sel.value){ setProgress("Selecciona una plantilla guardada para borrar."); return; } const name=sel.value; saveTemplates(loadTemplates().filter((t)=>t.name!==name)); if(loadLastTemplateName()===name) saveLastTemplateName(""); populateTemplateSelects(""); setCreateMeta(null); log("Plantilla borrada: "+name); setProgress("Plantilla borrada: "+name); }
     function parseViewName(name){ const m=String(name||"").match(VIEW_NAME_RE); if(!m) return null; return {code:m[1],location:m[2],level:m[3],axes:m[4],element:m[5],task:m[6],date:m[7],author:m[8]}; }
-    async function loadTemplateUser(){ try{ templateCurrentUser=(API&&API.user&&API.user.getUser)?await API.user.getUser():null; }catch(e){ recordError("loadTemplateUser",e); templateCurrentUser=null; } }
+    async function loadTemplateUser(){
+      templateCurrentUser=null;
+      const candidates=[
+        ()=>API&&API.user&&API.user.getUser&&API.user.getUser(),
+        ()=>API&&API.extension&&API.extension.getUser&&API.extension.getUser(),
+        ()=>API&&API.project&&API.project.getCurrentUser&&API.project.getCurrentUser(),
+        ()=>API&&API.user&&API.user.getUserSettings&&API.user.getUserSettings()
+      ];
+      for(const fn of candidates){ try{ const u=await fn(); if(u){ templateCurrentUser=u; return; } }catch(e){ recordError("loadTemplateUser",e); } }
+    }
+    function autoAuthorValue(){
+      const u=templateCurrentUser||{};
+      const raw=String(u.lastName||u.familyName||u.name||u.fullName||u.displayName||userDisplayName(u)||u.email||"").trim();
+      if(!raw) return "";
+      if(raw.includes("@")) return raw.split("@")[0].replace(/[._-]+/g," ").trim().toUpperCase();
+      const parts=raw.split(/\s+/).filter(Boolean);
+      return (parts.length>1?parts[parts.length-1]:raw).toUpperCase();
+    }
+    function ensureCreateAutoFields(){
+      const d=tplEl("tplNew","date"); if(d&&!String(d.value||"").trim()) d.value=todayDash();
+      const a=tplEl("tplNew","author"); if(a&&!String(a.value||"").trim()){ const v=autoAuthorValue(); if(v) a.value=v; }
+      updateScopePreview("tplNew");
+    }
+    function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
+    function selectedNewTemplate(){ const sel=document.getElementById("newTemplateSelect"); if(!sel||!sel.value) return null; return loadTemplates().find((t)=>t.name===sel.value)||null; }
+    function buildViewSpec(name,tpl){
+      const spec={name,description:name};
+      if(tpl){
+        const labels=parseTemplateList(tpl.labels); const share=parseTemplateList(tpl.share); const folder=String(tpl.folder||"").trim();
+        if(labels.length){ spec.tags=labels; spec.labels=labels; }
+        if(share.length){ spec.sharedWith=share; spec.shareWith=share; spec.sharedUsers=share.map((email)=>({email})); }
+        if(folder){ spec.folderName=folder; spec.groupName=folder; spec.viewGroupName=folder; spec.group=folder; }
+      }
+      return spec;
+    }
     async function createViewFromTemplate(){
       if(!API||!API.view||!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
+      ensureCreateAutoFields();
       const name=templateNameFromValues(getScopeValues("tplNew")); if(!name){ log("Define al menos un nombre para la vista."); setProgress("Falta nombre de vista."); return; }
+      const tpl=selectedNewTemplate();
       const btn=document.getElementById("templateCreateView"); if(btn) btn.disabled=true;
-      try{ setProgress("Creando vista con el estado actual del visor..."); await API.view.createView({name,description:name}); log("Vista creada: "+name); setProgress("Vista creada: "+name); await populateUpdateViews(); }
+      try{
+        setProgress("Creando vista con el estado actual del visor...");
+        const spec=buildViewSpec(name,tpl);
+        try{ await API.view.createView(spec); }
+        catch(metaErr){ recordError("createViewFromTemplate.metaSpec",metaErr); log("Plantillas: la API no ha aceptado metadatos de plantilla. Se crea la vista solo con nombre/descripción."); await API.view.createView({name,description:name}); }
+        log("Vista creada: "+name+(tpl?" | plantilla: "+tpl.name:"")); setProgress("Vista creada: "+name); await populateUpdateViews();
+      }
       catch(e){ recordError("createViewFromTemplate",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error creando vista."); }
       finally{ if(btn) btn.disabled=false; }
     }
@@ -1329,12 +1389,23 @@
       }catch(e){ recordError("updateSelectedView",e); log("ERROR actualizando vista: "+(e&&e.message?e.message:e)); setProgress("Error al actualizar la vista."); }
       finally{ if(btn) btn.disabled=false; }
     }
-    function wireTemplateScope(scope){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(el){ el.addEventListener("input",()=>{ updateScopePreview(scope); }); el.addEventListener("blur",()=>{ el.value=normalizeTplValue(f,el.value); updateScopePreview(scope); }); } } }
+    function wireTemplateScope(scope){
+      for(const f of TEMPLATE_FIELDS){
+        const el=tplEl(scope,f); if(!el) continue;
+        if(f==="code"){
+          el.addEventListener("focus",()=>{ if(!String(el.value||"").trim()) el.value="RFI_"; });
+          el.addEventListener("input",()=>{ if(el.value && !/^RFI[_\s-]?/i.test(el.value)) el.value="RFI_"+el.value.replace(/^_+/,""); updateScopePreview(scope); });
+        } else {
+          el.addEventListener("input",()=>{ updateScopePreview(scope); });
+        }
+        el.addEventListener("blur",()=>{ el.value=normalizeTplValue(f,el.value); updateScopePreview(scope); });
+      }
+    }
     function wireTemplateTool(){
       for(const scope of ["tplCfg","tplNew","tplUpd"]) wireTemplateScope(scope);
       populateTemplateFolderSelect();
-      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; applyTemplateToScope(t,"tplCfg"); setConfigMeta(t); } else { saveLastTemplateName(""); setScopeValues("tplCfg",{}); setConfigMeta(null); } });
-      const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); applyTemplateToScope(t,"tplNew"); } else { setScopeValues("tplNew",{}); setCreateMeta(null); } });
+      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; setConfigMeta(t); } else { saveLastTemplateName(""); const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); } });
+      const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); setCreateMeta(t); } else { setCreateMeta(null); } ensureCreateAutoFields(); });
       const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
       const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
       const createBtn=document.getElementById("templateCreateView"); if(createBtn) createBtn.onclick=()=>createViewFromTemplate();
@@ -1347,10 +1418,12 @@
     async function initTemplateTool(){
       populateTemplateSelects(); await populateTemplateFolderSelect(); await loadTemplateUser();
       const list=loadTemplates(); const latest=newestTemplate(list); const last=loadLastTemplateName(); const cfgTpl=list.find((x)=>x.name===last)||latest;
-      if(cfgTpl){ const n=document.getElementById("tplCfg_name"); if(n) n.value=cfgTpl.name||""; applyTemplateToScope(cfgTpl,"tplCfg"); setConfigMeta(cfgTpl); }
-      else { setScopeValues("tplCfg",{}); setConfigMeta(null); }
-      if(latest){ applyTemplateToScope(latest,"tplNew"); const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=latest.name; saveLastTemplateName(latest.name); }
-      else { setScopeValues("tplNew",{}); setCreateMeta(null); }
+      if(cfgTpl){ const n=document.getElementById("tplCfg_name"); if(n) n.value=cfgTpl.name||""; setConfigMeta(cfgTpl); }
+      else { const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); }
+      setScopeValues("tplNew",{});
+      if(latest){ const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=latest.name; saveLastTemplateName(latest.name); setCreateMeta(latest); }
+      else { setCreateMeta(null); }
+      ensureCreateAutoFields();
       setScopeValues("tplUpd",{});
       await populateUpdateViews(); await loadCurrentViewForUpdate();
       for(const scope of ["tplCfg","tplNew","tplUpd"]) updateScopePreview(scope);
@@ -1358,7 +1431,7 @@
 
     // ===================== COLORES / VALORES UI =====================
     function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
-    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const wrap=document.getElementById("includeColorsWrap"); if(wrap) wrap.style.display=(on&&colorMode)?"flex":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
+    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const wrap=document.getElementById("includeColorsWrap"); if(wrap) wrap.style.display=(on&&colorMode)?"block":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
     function syncSelectPlaceholder(sel){ if(sel) sel.classList.toggle("placeholder",!sel.value); }
     async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>elige un valor…</option>'; syncSelectPlaceholder(vsel); setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); syncSelectPlaceholder(vsel); setProgress("Valores Name cargados: "+values.size+"."); }
 
@@ -1427,15 +1500,23 @@
       try{ await API.viewer.setSelection(mapSetToSelector(matchMap),"set"); }catch(e){ recordError("selectByParamValue.set",e); }
       log("Acciones rápidas: seleccionados "+matched+" objeto(s) con "+param+" = "+value+"."); setProgress("Seleccionados "+matched+" objeto(s).");
     }
-    async function refreshQuickRow(paramSelId,valueSelId,defaultParam){ await scanModelParameters(); populateQuickParamSelect(paramSelId,defaultParam); await buildQuickParamIndex(paramSelId,valueSelId); }
+    async function refreshQuickAll(){
+      await scanModelParameters();
+      populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
+      populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+      const p1=(document.getElementById("qsParam1")||{}).value||"";
+      const p2=(document.getElementById("qsParam2")||{}).value||"";
+      await buildQuickParamIndex("qsParam1","qsValue1");
+      if(p2 && quickIndexCacheKey(p2)!==quickIndexCacheKey(p1)) await buildQuickParamIndex("qsParam2","qsValue2");
+      else populateQuickValueFromCache("qsParam2","qsValue2");
+    }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
       const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
       const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueFromCache("qsParam2","qsValue2"));
       const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
       const s2=document.getElementById("qsSelect2"); if(s2) s2.onclick=()=>selectByParamValue("qsParam2","qsValue2");
-      const r1=document.getElementById("qsRefresh1"); if(r1) r1.onclick=()=>refreshQuickRow("qsParam1","qsValue1",QUICK_PARAM_DEFAULTS.qsParam1);
-      const r2=document.getElementById("qsRefresh2"); if(r2) r2.onclick=()=>refreshQuickRow("qsParam2","qsValue2",QUICK_PARAM_DEFAULTS.qsParam2);
+      const rAll=document.getElementById("qsRefreshAll"); if(rAll) rAll.onclick=()=>refreshQuickAll();
       populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
       setQuickValueOptions("qsValue1",[]); setQuickValueOptions("qsValue2",[]);
       const group=document.getElementById("quickActionsGroup"); let firstOpen=true;
