@@ -28,6 +28,10 @@
     /* Inspector de selección (v8.8.9): lectura rápida en panel de los datos del objeto seleccionado */
     .sel-inspector { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; margin: 8px 0; padding: 8px 10px; }
     .sel-inspector-head { font-weight: bold; padding: 0 0 4px; }
+    .sel-inspector-head-btn { display:block; width:100%; border:1px solid #cfd6df; border-radius:5px; background:#fff; color:#1f2937; text-align:left; font-weight:bold; padding:6px 8px; margin:0 0 6px; cursor:pointer; }
+    .sel-inspector-head-btn:hover, .sel-inspector-head-btn:focus-visible { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none; background:#f8fbff; }
+    .template-field input.tpl-autosize { width:auto; min-width:var(--tpl-min-width, 120px); max-width:100%; }
+    .template-field.tpl-autofit { align-items:flex-start; }
     .insp-type { display: inline-block; font-size: 11px; font-weight: bold; color: #1c7fd6; border: 1px solid #1c7fd6; border-radius: 10px; padding: 1px 8px; margin-bottom: 4px; }
     .insp-title { font-weight: bold; font-size: 13px; margin: 2px 0; }
     .insp-line { font-size: 12px; margin: 1px 0; }
@@ -92,6 +96,11 @@
     #excludeColors input, #includeColors input { position: absolute; opacity: 0; pointer-events: none; }
     .swatch { width: 20px; height: 20px; border: 1px solid rgba(0,0,0,.35); border-radius: 50%; display: inline-block; box-sizing: border-box; }
     #excludeColors input:checked + .swatch, #includeColors input:checked + .swatch { outline: 2px solid #1c7fd6; outline-offset: 2px; }
+    .model-exclude-list { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .model-exclude-row { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; }
+    .model-exclude-row input { margin: 0; }
+    .model-exclude-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .swatch.swatch-illegible { background: repeating-linear-gradient(45deg, #e5e7eb 0 4px, #b91c1c 4px 6px); }
 
     #cancelOp { background: #b91c1c; color: #fff; border: none; border-radius: 4px; }
     .status-box { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; min-height: 18px; margin: 4px 0; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
@@ -193,6 +202,11 @@
             <div id="excludeColors" class="color-list"></div>
             <button id="excludeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
           </div>
+          <div class="hint" style="margin-top:12px; margin-bottom:6px;">Excluye modelos/IFC completos (p. ej. ejes o modelos de referencia). Persiste entre sesiones. No oculta ni recolorea.</div>
+          <div class="color-list-row">
+            <div id="excludeModels" class="model-exclude-list"></div>
+            <button id="excludeModelsRefresh" class="icon-btn refresh-right" title="Actualizar modelos" aria-label="Actualizar modelos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+          </div>
         </div>
       </details>
 
@@ -221,6 +235,21 @@
               <span class="field-label">Name</span>
               <select id="includeValue" class="placeholder" disabled style="flex:1; min-width:160px;"><option value="" disabled selected hidden>elige un valor&#8230;</option></select>
             </div>
+            <div class="quick-select-head">
+              <div class="param-defaults-hint" style="margin:0;">Selecciona objetos por parámetro y valor (Assembly type, Bolt standard…).</div>
+              <button type="button" class="qs-refresh" id="qsRefreshAll" title="Actualizar valores" aria-label="Actualizar valores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            </div>
+            <div class="quick-select-grid">
+              <button type="button" class="quick-select-btn" id="qsSelect1" title="Seleccionar" aria-label="Seleccionar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></button>
+              <select id="qsParam1" class="qs-param"></select>
+              <select id="qsValue1" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
+            </div>
+            <div class="quick-select-grid">
+              <button type="button" class="quick-select-btn" id="qsSelect2" title="Seleccionar" aria-label="Seleccionar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></button>
+              <select id="qsParam2" class="qs-param"></select>
+              <select id="qsValue2" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
+            </div>
+            <div class="hint">Pulsa el botón de refrescar para leer parámetros y preparar los valores disponibles. El botón cuadrado selecciona el valor elegido.</div>
             <div class="toggle-line tool-spacer" id="colorModeLine" data-tip="Filtra la selección por color en lugar de por Name.">
               <label class="switch"><input type="checkbox" id="colorModeToggle"><span class="slider"></span></label>
               <label class="txt" for="colorModeToggle">Selección por color</label>
@@ -247,22 +276,19 @@
               <span class="summary-switch" id="namesSummarySwitch"><label class="switch"><input type="checkbox" id="namesToggle"><span class="slider"></span></label></span>
             </summary>
             <div class="tool-body">
-              <details class="cols-details">
-                <summary>Parámetros a mostrar</summary>
-                <div class="cols-inner">
-                  <div class="param-defaults-hint">Predefinidos: Name, Assembly/Cast unit Mark, Profile, Material.</div>
-                  <div id="namesParamList"></div>
-                  <div class="column-add-box">
-                    <div class="column-picker-row">
-                      <button id="namesParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
-                      <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
-                      <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
-                      <button id="namesParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
-                    </div>
-                    <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+              <div class="cols-inner">
+                <div class="param-defaults-hint">Predefinidos: Name, Assembly/Cast unit Mark, Profile, Material.</div>
+                <div id="namesParamList"></div>
+                <div class="column-add-box">
+                  <div class="column-picker-row">
+                    <button id="namesParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
+                    <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
+                    <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                    <button id="namesParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                   </div>
+                  <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                 </div>
-              </details>
+              </div>
             </div>
           </details>
 
@@ -272,22 +298,19 @@
               <span class="summary-switch" id="boltsSummarySwitch"><label class="switch"><input type="checkbox" id="boltsToggle"><span class="slider"></span></label></span>
             </summary>
             <div class="tool-body">
-              <details class="cols-details">
-                <summary>Parámetros a mostrar</summary>
-                <div class="cols-inner">
-                  <div class="param-defaults-hint">Filtra tornillos (Bolt assembly). Predefinidos: Assembly/Cast unit Mark, Bolt Name, Bolt size, Bolt length, Bolt standard, Material, Bolt hole diameter.</div>
-                  <div id="boltsParamList"></div>
-                  <div class="column-add-box">
-                    <div class="column-picker-row">
-                      <button id="boltsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
-                      <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
-                      <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
-                      <button id="boltsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
-                    </div>
-                    <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+              <div class="cols-inner">
+                <div class="param-defaults-hint">Filtra tornillos (Bolt assembly). Predefinidos: Assembly/Cast unit Mark, Bolt Name, Bolt size, Bolt length, Bolt standard, Material, Bolt hole diameter.</div>
+                <div id="boltsParamList"></div>
+                <div class="column-add-box">
+                  <div class="column-picker-row">
+                    <button id="boltsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
+                    <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
+                    <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                    <button id="boltsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                   </div>
+                  <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                 </div>
-              </details>
+              </div>
             </div>
           </details>
 
@@ -297,30 +320,27 @@
               <span class="summary-switch" id="weldsSummarySwitch"><label class="switch"><input type="checkbox" id="weldsToggle"><span class="slider"></span></label></span>
             </summary>
             <div class="tool-body">
-              <details class="cols-details">
-                <summary>Parámetros a mostrar</summary>
-                <div class="cols-inner">
-                  <div class="param-defaults-hint">Filtra soldaduras (Weld). Predefinidos: Assembly/Cast unit Mark, Type 1, Size 1, Actual length 1, Length, Assembly type.</div>
-                  <div id="weldsParamList"></div>
-                  <div class="column-add-box">
-                    <div class="column-picker-row">
-                      <button id="weldsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
-                      <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
-                      <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
-                      <button id="weldsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
-                    </div>
-                    <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+              <div class="cols-inner">
+                <div class="param-defaults-hint">Filtra soldaduras (Weld). Predefinidos: Assembly/Cast unit Mark, Type 1, Size 1, Actual length 1, Length, Assembly type.</div>
+                <div id="weldsParamList"></div>
+                <div class="column-add-box">
+                  <div class="column-picker-row">
+                    <button id="weldsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
+                    <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
+                    <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                    <button id="weldsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                   </div>
+                  <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                 </div>
-              </details>
+              </div>
             </div>
           </details>
 
-          <div class="sel-inspector" id="selInspector">
-            <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado sin abrir el panel de propiedades de Trimble.">Inspector de selección</div>
-            <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
+          <div class="sel-inspector" id="floatingLabels">
+            <div class="hint" style="margin-bottom:6px;">Guarda etiquetas 3D con los parámetros configurados. Disponible solo en modelo directo.</div>
+            <div class="hint" id="floatingLabelsNote" style="margin-bottom:6px; display:none;">En vistas guardadas utiliza el Inspector de selección.</div>
             <div class="insp-actions">
-              <button type="button" id="lblAdd" data-tip="Guarda una etiqueta 3D flotante con los datos del inspector. No se borra al deseleccionar.">Agregar</button>
+              <button type="button" id="lblAdd" data-tip="Guarda una etiqueta 3D flotante con los datos del objeto. No se borra al deseleccionar.">Agregar</button>
               <button type="button" id="lblRemove" data-tip="Elimina las etiquetas guardadas de los objetos seleccionados.">Eliminar</button>
               <button type="button" id="lblRemoveAll" data-tip="Elimina todas las etiquetas guardadas por esta herramienta.">Eliminar todos</button>
             </div>
@@ -330,7 +350,7 @@
         </div>
       </details>
 
-      <details class="param-group" id="quickActionsGroup">
+      <details class="param-group" id="quickActionsGroup" open>
         <summary>Acciones rápidas</summary>
         <div class="param-group-body">
           <div class="param-defaults-hint">Pinta al instante los objetos seleccionados.</div>
@@ -340,21 +360,16 @@
             <button type="button" class="quick-color-btn" id="qcRed" title="Rojo" aria-label="Rojo"><span class="qc-swatch" style="background:#fc0d1b;"></span></button>
           </div>
 
-          <div class="quick-select-head">
-            <div class="param-defaults-hint" style="margin:0;">Selecciona objetos por parámetro y valor.</div>
-            <button type="button" class="qs-refresh" id="qsRefreshAll" title="Actualizar valores" aria-label="Actualizar valores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+          <div class="sel-inspector" id="selInspector">
+            <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado. Funciona en modelos y en vistas guardadas.">Inspector de selección</div>
+            <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
           </div>
-          <div class="quick-select-grid">
-            <button type="button" class="quick-select-btn" id="qsSelect1" title="Seleccionar" aria-label="Seleccionar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></button>
-            <select id="qsParam1" class="qs-param"></select>
-            <select id="qsValue1" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
+
+          <div class="sel-inspector" id="quantifyBlock">
+            <button type="button" id="quantifyBtn" class="sel-inspector-head-btn" data-tip="Calcula el Quantity Surveyor sobre los objetos seleccionados.">Quantity Surveyor</button>
+            <div class="param-defaults-hint">Pulsa el título para calcular cantidades de la selección: tipologías, peso, volumen, área, longitud y parámetros fijos por tipo.</div>
+            <div id="quantifyResult"><div class="hint">Selecciona objetos y pulsa Quantity Surveyor para calcular.</div></div>
           </div>
-          <div class="quick-select-grid">
-            <button type="button" class="quick-select-btn" id="qsSelect2" title="Seleccionar" aria-label="Seleccionar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></button>
-            <select id="qsParam2" class="qs-param"></select>
-            <select id="qsValue2" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
-          </div>
-          <div class="hint">Pulsa el botón de refrescar para leer parámetros y preparar los valores disponibles. El botón cuadrado selecciona el valor elegido.</div>
         </div>
       </details>
 
@@ -366,70 +381,53 @@
     <div class="section">
 
       <details class="tool" id="viewTemplateTool">
-        <summary class="subtitle">Plantillas de vista</summary>
+        <summary class="subtitle">Configurar vista</summary>
         <div class="tool-body">
 
-          <details class="tpl-fold" id="tplFoldConfig">
-            <summary>1. Configurar plantilla</summary>
-            <div class="tpl-block">
-              <div class="tpl-row">
-                <select id="templateSelect"><option value="">(Nueva plantilla)</option></select>
-                <button id="templateDelete" title="Borrar plantilla seleccionada" style="padding:3px 8px;">&#128465;</button>
-              </div>
-              <div class="template-grid" data-template-scope="tplCfg">
-                <div class="template-field tpl-full"><label for="tplCfg_name">Nombre especial</label><input type="text" id="tplCfg_name" placeholder=""></div>
-                <div class="template-field tpl-full"><label for="tplCfg_folder">Grupo de vistas</label><div style="display:flex; gap:6px; align-items:center;"><select id="tplCfg_folder" style="flex:1;"><option value="">(Sin grupo)</option></select><button type="button" id="tplCfg_folderRefresh" class="icon-btn" title="Actualizar grupos de vistas" aria-label="Actualizar grupos de vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div>
-                <div class="template-field tpl-full"><label for="tplCfg_labels">Etiquetas</label><input type="text" id="tplCfg_labels" placeholder=""></div>
-                <div class="template-field tpl-full tpl-share-field"><label for="tplCfg_shareEntry" id="tplCfg_shareLabel">Compartido con (0)</label><div class="tpl-token-box" id="tplCfg_shareBox"><div id="tplCfg_shareTokens" class="tpl-tokens"></div><input type="text" id="tplCfg_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="tplCfg_share" value=""><div id="tplCfg_shareSuggest" class="tpl-suggest"></div></div>
-              </div>
-              <div class="row"><button id="templateSave">Guardar plantilla</button></div>
-              <div class="hint" id="templateSaveInfo">La plantilla guarda grupo de vistas, etiquetas y correos de compartición. El nombre de la vista se define al crear o actualizar la vista.</div>
-            </div>
-          </details>
-
           <details class="tpl-fold" id="tplFoldCreate">
-            <summary>2. Crear vista nueva</summary>
+            <summary>Crear nueva vista</summary>
             <div class="tpl-block">
-              <div class="tpl-row">
-                <select id="newTemplateSelect"><option value="">(Sin plantilla)</option></select>
+              <div class="template-grid">
+                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" class="tpl-autosize" data-min-ch="10" placeholder="RFI_"></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><input type="text" id="tplNew_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_element">Elemento</label><input type="text" id="tplNew_element" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_task">Actuación</label><input type="text" id="tplNew_task" class="tpl-autosize" data-min-ch="18" placeholder=""></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_date">Fecha</label><input type="text" id="tplNew_date" class="tpl-autosize" data-min-ch="12" placeholder="dd-mm-aaaa"></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-full tpl-share-field"><label for="cvNew_shareEntry" id="cvNew_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvNew_shareBox"><div id="cvNew_shareTokens" class="tpl-tokens"></div><input type="text" id="cvNew_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvNew_share" value=""><div id="cvNew_shareSuggest" class="tpl-suggest"></div></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="cvNew_labels">Etiquetas</label><input type="text" id="cvNew_labels" class="tpl-autosize" data-min-ch="18" placeholder="Etiquetas separadas por coma"></div>
               </div>
-              <div class="template-grid" data-template-scope="tplNew">
-                <div class="template-field tpl-short"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplNew_level">Nivel</label><input type="text" id="tplNew_level" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplNew_element">Elemento clave</label><input type="text" id="tplNew_element" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplNew_task">Tarea</label><input type="text" id="tplNew_task" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplNew_date">Fecha</label><input type="text" id="tplNew_date" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" placeholder=""></div>
-              </div>
-              <div class="template-preview"><strong>Nombre final</strong><span id="tplNew_preview"></span></div>
-              <div class="row"><button id="templateCreateView">Crear vista</button></div>
-              <div class="hint">Guarda una vista nueva con el estado actual del visor.</div>
+              <div class="template-preview"><strong>Nombre de vista</strong><span id="tplNew_preview">(sin nombre)</span></div>
+              <div class="row"><button id="cvCreateBtn">Crear nueva vista</button></div>
+              <div class="hint">Guarda una vista nueva con el estado actual del visor. El título de la vista se genera con los campos superiores.</div>
             </div>
           </details>
 
           <details class="tpl-fold" id="tplFoldUpdate">
-            <summary>3. Actualizar vista</summary>
+            <summary>Actualizar vista</summary>
             <div class="tpl-block">
               <div class="tpl-row">
                 <select id="updateViewSelect"><option value="">Cargando vistas...</option></select>
                 <button id="updateRefreshViews" class="icon-btn" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
               </div>
               <div class="hint" id="tplUpdateParseInfo"></div>
-              <div class="template-grid" data-template-scope="tplUpd">
-                <div class="template-field tpl-short"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplUpd_level">Nivel</label><input type="text" id="tplUpd_level" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplUpd_element">Elemento clave</label><input type="text" id="tplUpd_element" placeholder=""></div>
-                <div class="template-field tpl-wide"><label for="tplUpd_task">Tarea</label><input type="text" id="tplUpd_task" placeholder=""></div>
-                <div class="template-field tpl-short"><label for="tplUpd_date">Fecha</label><input type="text" id="tplUpd_date" placeholder=""></div>
-                <div class="template-field tpl-medium"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" placeholder=""></div>
+              <div class="template-grid">
+                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" class="tpl-autosize" data-min-ch="10" placeholder="RFI_"></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><input type="text" id="tplUpd_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_element">Elemento</label><input type="text" id="tplUpd_element" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_task">Actuación</label><input type="text" id="tplUpd_task" class="tpl-autosize" data-min-ch="18" placeholder=""></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_date">Fecha</label><input type="text" id="tplUpd_date" class="tpl-autosize" data-min-ch="12" placeholder="dd-mm-aaaa"></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-full tpl-share-field"><label for="cvUpd_shareEntry" id="cvUpd_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvUpd_shareBox"><div id="cvUpd_shareTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvUpd_share" value=""><div id="cvUpd_shareSuggest" class="tpl-suggest"></div></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="cvUpd_labels">Etiquetas</label><input type="text" id="cvUpd_labels" class="tpl-autosize" data-min-ch="18" placeholder="Etiquetas separadas por coma"></div>
               </div>
-              <div class="template-preview"><strong>Nombre final</strong><span id="tplUpd_preview"></span></div>
-              <div class="row"><button id="templateUpdateView">Actualizar vista</button></div>
-              <div class="hint">Actualiza el nombre y el estado actual del visor sobre la vista seleccionada.</div>
+              <div class="template-preview"><strong>Nombre de vista</strong><span id="tplUpd_preview">(sin nombre)</span></div>
+              <div class="row"><button id="cvUpdateBtn">Actualizar vista</button></div>
+              <div class="hint">Actualiza la vista seleccionada con el estado actual del visor. El título de la vista se genera con los campos superiores.</div>
             </div>
           </details>
 
@@ -468,10 +466,7 @@
             <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
             <label class="txt" for="extendedExport">Exportación masiva</label>
           </div>
-          <div class="row" data-tip="Grupos de vistas reales del proyecto. 'Todas las vistas' exporta sin filtrar por grupo.">
-            Grupo de vistas: <select id="folderSelect" disabled style="width:55%;"><option value="">Todas las vistas</option></select>
-            <button id="folderRefresh" class="icon-btn" title="Actualizar grupos de vistas" aria-label="Actualizar grupos de vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-          </div>
+          <div class="hint" id="extendedExportHint" style="margin:4px 0 8px; display:none;">La exportación masiva exporta todos los objetos coloreados del modelo/contexto actual. No usa grupos de vistas.</div>
           <div class="row"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar CSV</button></div>
         </div>
       </details>
@@ -500,32 +495,6 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
-      <!-- v8.9.1: tests del motor legacy de etiquetas (payload TEST DEO x1000 confirmado visible) -->
-      <div class="row">
-        <button type="button" id="legacyTestFixedBtn" data-tip="Reproduce el TEST DEO original (coordenadas puras x1000) sobre el objeto seleccionado.">Test etiqueta fija legacy</button>
-        <button type="button" id="legacyTestSelBtn" data-tip="Crea con el motor legacy una etiqueta con modelId/runtimeId del objeto seleccionado.">Test etiqueta selección legacy</button>
-      </div>
-      <div class="row">
-        <button type="button" id="legacyTestParamsBtn" data-tip="Detecta tipología (objeto/tornillo/soldadura) con la extracción actual y crea la etiqueta con el motor legacy.">Test parámetros legacy</button>
-        <button type="button" id="legacyTestClearBtn" data-tip="Borra solo las etiquetas creadas por estos tests.">Limpiar tests legacy</button>
-      </div>
-      <!-- v8.9.2: diagnóstico presentación/color vs visibilidad de markups -->
-      <div class="row">
-        <button type="button" id="snapPresentationBtn" data-tip="Guarda presentación, objetos coloreados, cámara, selección y total de markups actuales.">Snapshot presentación</button>
-        <button type="button" id="clearPresentationBtn" data-tip="Intenta neutralizar el estado visual (presentación/colores) para comprobar si los markups vuelven a verse.">Limpiar presentación vista</button>
-      </div>
-      <div class="row">
-        <button type="button" id="restorePresentationBtn" data-tip="Intenta restaurar el snapshot de presentación guardado.">Restaurar presentación snapshot</button>
-      </div>
-      <!-- v8.9.3: tests del motor de iconos 3D (API.viewer.addIcon) como alternativa visual a addTextMarkup -->
-      <div class="row">
-        <button type="button" id="iconTestFixedBtn" data-tip="Crea las 4 variantes de icono apiladas sobre la selección para ver cuál renderiza.">Test icono fijo</button>
-        <button type="button" id="iconTestSelBtn" data-tip="Crea un icono-etiqueta con modelId/runtimeId del objeto seleccionado.">Test icono selección</button>
-      </div>
-      <div class="row">
-        <button type="button" id="iconTestParamsBtn" data-tip="Detecta tipología (objeto/tornillo/soldadura) con la extracción actual y crea el icono-etiqueta con datos reales.">Test icono parámetros</button>
-        <button type="button" id="iconTestClearBtn" data-tip="Elimina solo los iconos creados por estos tests (no toca text markups ni etiquetas guardadas).">Limpiar iconos test</button>
-      </div>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
         <div class="tool-body"><pre id="log"></pre></div>
@@ -536,7 +505,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.9.3";
+    const SCRIPT_VERSION = "v8.10.1";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -567,6 +536,8 @@
     let toolAddedKeys=new Set();            // claves modelId:runtimeId añadidas por "Selección cercanos"
     const excludedColors=new Set();
     const includeColors=new Set();
+    const excludedModelIds=new Set();       // v8.10.0: modelId/IFC completos excluidos de la selección (persistente)
+    const EXCLUDE_MODELS_KEY="deo.excludedModelIds.v1";
     const logLines=[];
     const errorHistory=[];
     const propsCache=new Map();             // modelId -> Map(rid -> props)
@@ -581,6 +552,11 @@
     const setProgress=(t)=>{ const el=document.getElementById("progress"); if(el) el.textContent=t; };
     function showCancel(on){ const el=document.getElementById("cancelOp"); if(el) el.style.display=on?"inline-block":"none"; }
     function recordError(ctx,err){ errorHistory.push({ts:new Date().toISOString(),ctx,message:err&&err.message?err.message:String(err),stack:err&&err.stack?String(err.stack).slice(0,2000):""}); if(errorHistory.length>80) errorHistory.shift(); }
+    // v8.10.0: captura global de errores no controlados para que aparezcan en el debug (lista limitada por recordError).
+    if(typeof window!=="undefined"){
+      window.addEventListener("error",(ev)=>{ try{ recordError("window.onerror",(ev&&ev.error)||{message:(ev&&ev.message)||"error",stack:(ev&&ev.filename)?(ev.filename+":"+ev.lineno+":"+ev.colno):""}); }catch(e){} });
+      window.addEventListener("unhandledrejection",(ev)=>{ try{ const r=ev&&ev.reason; recordError("window.unhandledrejection",(r&&r.message)?r:{message:String(r)}); }catch(e){} });
+    }
     function safeJson(v,sp){ try{ return JSON.stringify(v,(k,val)=>(typeof val==="string"&&val.length>4000)?val.slice(0,4000)+"...[TRUNCADO]":val,sp||0); }catch(e){ return String(v); } }
     // Serializador robusto SOLO para el debug. safeJson/replacer fallaban porque JSON.stringify LANZA
     // con BigInt (TypeError) aunque haya guard de ciclos -> caía a String(v) = "[object Object]".
@@ -632,21 +608,29 @@
     // ===================== COLOR =====================
     function clampByte(n){ n=Number(n); if(!Number.isFinite(n)) return null; return Math.max(0,Math.min(255,Math.round(n))); }
     function hex2(n){ return clampByte(n).toString(16).padStart(2,"0").toUpperCase(); }
+    // v8.10.0: acepta cualquier color real de Trimble (objeto {r,g,b,a}, array [r,g,b(,a)], #RRGGBB(AA),
+    // rgb()/rgba(), escala 0-1 o 0-255). Si NO es interpretable: valid:false, legible:false y SIN cssColor
+    // blanco (el swatch se pinta como "no legible", nunca blanco falso).
+    const COLOR_ILLEGIBLE_TEXT="Color no legible";
+    function badColor(color){ return {valid:false,legible:false,text:(color==null||color==="")?"":(typeof color==="string"?color:safeJson(color)),normalizedColor:"",cssColor:""}; }
     function analyzeColor(color){
-      if(color==null||color==="") return {valid:false,text:"",normalizedColor:"",cssColor:"#FFFFFF"};
+      if(color==null||color==="") return badColor(color);
       let r,g,b,a=255;
-      if(typeof color==="object"){
+      if(Array.isArray(color)){
+        const arr=color.map(Number); if(arr.length<3||arr.slice(0,3).some((x)=>!Number.isFinite(x))) return badColor(color);
+        const rgb=arr.slice(0,3); const scale=Math.max(...rgb)<=1?255:1; r=rgb[0]*scale; g=rgb[1]*scale; b=rgb[2]*scale; a=arr[3]==null?255:Number(arr[3]); if(!Number.isFinite(a))a=255; if(a<=1&&a>0)a*=255; if(a===0&&arr.length<4)a=255;
+      } else if(typeof color==="object"){
         r=color.r??color.red??color.R; g=color.g??color.green??color.G; b=color.b??color.blue??color.B; a=color.a??color.alpha??color.A??255;
-        const rgb=[Number(r),Number(g),Number(b)]; if(rgb.some((x)=>!Number.isFinite(x))) return {valid:false,text:safeJson(color),normalizedColor:"",cssColor:"#FFFFFF"};
+        const rgb=[Number(r),Number(g),Number(b)]; if(rgb.some((x)=>!Number.isFinite(x))) return badColor(color);
         const scale=Math.max(...rgb)<=1?255:1; r=rgb[0]*scale; g=rgb[1]*scale; b=rgb[2]*scale; a=Number(a); if(!Number.isFinite(a))a=255; if(a<=1)a*=255;
       } else {
         let s=String(color).trim(); const hex=s.match(/^#?([0-9a-fA-F]{3,8})$/);
-        if(hex){ let h=hex[1]; if(h.length===3||h.length===4) h=h.split("").map((c)=>c+c).join(""); if(h.length===6) h+="FF"; if(h.length!==8) return {valid:false,text:s,normalizedColor:"",cssColor:"#FFFFFF"}; r=parseInt(h.slice(0,2),16); g=parseInt(h.slice(2,4),16); b=parseInt(h.slice(4,6),16); a=parseInt(h.slice(6,8),16); }
-        else { const rgba=s.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i); if(!rgba) return {valid:false,text:s,normalizedColor:"",cssColor:"#FFFFFF"}; r=Number(rgba[1]); g=Number(rgba[2]); b=Number(rgba[3]); a=rgba[4]==null?255:Number(rgba[4]); if(a<=1)a*=255; }
+        if(hex){ let h=hex[1]; if(h.length===3||h.length===4) h=h.split("").map((c)=>c+c).join(""); if(h.length===6) h+="FF"; if(h.length!==8) return badColor(color); r=parseInt(h.slice(0,2),16); g=parseInt(h.slice(2,4),16); b=parseInt(h.slice(4,6),16); a=parseInt(h.slice(6,8),16); }
+        else { const rgba=s.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i); if(!rgba) return badColor(color); r=Number(rgba[1]); g=Number(rgba[2]); b=Number(rgba[3]); a=rgba[4]==null?255:Number(rgba[4]); if(a<=1)a*=255; }
       }
       r=clampByte(r); g=clampByte(g); b=clampByte(b); a=clampByte(a);
-      if([r,g,b,a].some((x)=>x==null)) return {valid:false,text:safeJson(color),normalizedColor:"",cssColor:"#FFFFFF"};
-      return { valid:true, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", rgba:{r,g,b,a} };
+      if([r,g,b,a].some((x)=>x==null)) return badColor(color);
+      return { valid:true, legible:true, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", rgba:{r,g,b,a} };
     }
     function normalizeColor(c){ return analyzeColor(c).normalizedColor; }
     function looksRed(c){ const a=analyzeColor(c); return a.valid && a.rgba.r>140 && a.rgba.g<95 && a.rgba.b<95; }
@@ -816,7 +800,7 @@
     function viewFullName(v){ return v?(v.name||v.description||""):""; }
     const FOLDER_KEYS=["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection"];
     function detectFolder(view){ if(!view||typeof view!=="object") return ""; for(const k of Object.keys(view)){ if(FOLDER_KEYS.includes(k.toLowerCase())){ const val=view[k]; if(val==null||val==="") continue; if(typeof val!=="object") return String(val); if(Array.isArray(val)){ const first=val.find((x)=>x); if(first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); } else return String(val.name||val.title||val.groupName||val.id||""); } } return ""; }
-    // ----- Grupos de vistas: caché compartida (plantillas + exportación masiva) -----
+    // ----- Grupos de vistas: caché interna para metadatos heredados de vistas (no usada por exportación masiva) -----
     // 1) Intenta métodos nativos del API (no documentados de forma uniforme; detección de capacidades).
     // 2) Si no existen, deduce los grupos desde los campos disponibles de cada ViewSpec.
     // 3) Solo si la lista no aporta nada, pide detalles vista a vista con límite y lotes.
@@ -912,6 +896,25 @@
     function getParamValue(p,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; if(target==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
     async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
     async function safeGetSelection(){ let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
+    // v8.10.0: ¿hay una vista guardada activa? Heurística defensiva — getCurrentView devuelve un objeto con id
+    // cuando el usuario tiene cargada una vista guardada. INCERTIDUMBRE: si la API de Trimble no distinguiera
+    // navegación libre de vista guardada, las etiquetas 3D se deshabilitan de más, nunca de menos
+    // (el flujo principal en vistas es el Inspector de selección).
+    async function isSavedViewContext(){
+      try{
+        if(!(API&&API.view&&typeof API.view.getCurrentView==="function")) return false;
+        const v=await API.view.getCurrentView();
+        return !!(v&&v.id);
+      }catch(e){ return false; }
+    }
+    // Habilita/inhabilita Agregar/Eliminar/Eliminar todos y muestra el aviso según el contexto.
+    async function updateFloatingLabelsAvailability(){
+      let saved=false;
+      try{ saved=await isSavedViewContext(); }catch(e){}
+      for(const id of ["lblAdd","lblRemove","lblRemoveAll"]){ const b=document.getElementById(id); if(b) b.disabled=saved; }
+      const note=document.getElementById("floatingLabelsNote"); if(note) note.style.display=saved?"block":"none";
+      return saved;
+    }
 
     // ===================== BBOX HELPERS =====================
     function bboxOf(box){ const b=box&&box.boundingBox?box.boundingBox:box; if(!b) return null; const min=b.min||b.minPoint||b.start; const max=b.max||b.maxPoint||b.end; if(!min||!max) return null; return {min:{x:Number(min.x),y:Number(min.y),z:Number(min.z)},max:{x:Number(max.x),y:Number(max.y),z:Number(max.z)}}; }
@@ -969,34 +972,42 @@
       log("CSV generado. Filas: "+rows.length); setProgress("Exportación completada: "+rows.length+" filas.");
     }
     async function exportMassive(){
-      clearLog(); setProgress("Preparando exportación masiva..."); lastConvertError=""; cancelRequested=false; log(SCRIPT_VERSION+" - Exportación masiva");
-      if(!API.view||typeof API.view.selectView!=="function"){ log("La API no permite cargar vistas automáticamente."); setProgress("No disponible."); return; }
+      clearLog(); setProgress("Preparando exportación masiva del modelo..."); lastConvertError=""; cancelRequested=false; log(SCRIPT_VERSION+" - Exportación masiva del modelo");
       const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
-      let views=[]; try{ views=await API.view.getViews(); }catch(e){ recordError("exportMassive.getViews",e); log("ERROR getViews(): "+e.message); return; }
-      if(!views||views.length===0){ log("No hay vistas."); setProgress("Sin vistas."); return; }
-      const folder=document.getElementById("folderSelect").value;
-      let target=views.filter((v)=>viewMatchesFolder(v,folder));
-      if(!folder){ const withRfi=target.filter((v)=>extractRevisionCode(viewFullName(v))); if(withRfi.length>0) target=withRfi; }
-      const total=target.length; log("Vistas a recorrer: "+total+(folder?" (grupo de vistas)":"")); if(total===0){ log("Ninguna vista coincide."); setProgress("Sin coincidencias."); return; }
-      showCancel(true); setProgress("Vistas exportadas 0/"+total+" (ETA: calculando...)");
-      const allRows=[]; const exported=[]; const empty=[]; const errored=[]; const startTime=Date.now();
-      for(let i=0;i<total;i++){
-        if(cancelRequested){ log("Exportación cancelada."); break; }
-        const v=target[i]; const viewName=viewFullName(v);
-        try{ await API.view.selectView(v.id); await sleep(900); const entries=await getColoredObjectEntriesWithRetry();
-          if(entries.length===0) empty.push(viewName||v.id);
-          else { const revisionBase=computeRevisionBase(viewName); const rows=await buildRows(entries,revisionBase,viewName,wantGuid); allRows.push(...rows); exported.push({name:viewName||v.id,rows:rows.length}); }
-        }catch(e){ recordError("exportMassive.view",e); errored.push({name:viewName||v.id,error:(e&&e.message?e.message:String(e))}); }
-        const done=i+1; const elapsed=(Date.now()-startTime)/1000; const eta=done>0?(elapsed/done)*(total-done):Infinity;
-        setProgress("Vistas exportadas "+done+"/"+total+" (ETA: "+formatETA(eta)+")");
-      }
-      showCancel(false);
-      if(allRows.length>0){ const csv=rowsToCsv(allRows,cols); let name="DEO_extended_export"; const folderLabel=folder?folder.split("|").slice(1).join("|"):""; if(folderLabel) name+="_"+sanitizeFilename(folderLabel); downloadText(name+"_trimble_colores_guid_ifc.csv",csv); }
-      else log("No se ha generado ninguna fila.");
-      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Grupo de vistas: "+(folder?folder.split("|").slice(1).join("|"):"(todas las vistas)"),(cancelRequested?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),"Total vistas: "+total,"Exportadas: "+exported.length,"Sin objetos: "+empty.length,"Con error: "+errored.length,"Filas: "+allRows.length,"","== EXPORTADAS =="]; exported.forEach((e)=>report.push("- "+e.name+" (filas: "+e.rows+")")); report.push("","== SIN OBJETOS =="); empty.forEach((n)=>report.push("- "+n)); report.push("","== CON ERROR =="); errored.forEach((e)=>report.push("- "+e.name+" -> "+e.error));
-      let rname="DEO_extended_export"; { const folderLabel=folder?folder.split("|").slice(1).join("|"):""; if(folderLabel) rname+="_"+sanitizeFilename(folderLabel); } downloadText(rname+"_informe.txt",report.join("\n"),"text/plain");
-      setProgress("Hecho: "+exported.length+" exportadas, "+empty.length+" sin objetos, "+errored.length+" con error.");
+      showCancel(true);
+      let entries=[]; let activeView=null; let activeName="";
+      try{ activeView=await getCurrentViewSpecWithRetry(); activeName=viewFullName(activeView); }catch(e){ recordError("exportMassive.currentView",e); }
+      try{
+        setProgress("Leyendo objetos coloreados del modelo/contexto actual...");
+        entries=await getColoredObjectEntriesWithRetry();
+      }catch(e){ recordError("exportMassive.getColoredObjects",e); log("ERROR leyendo objetos coloreados: "+(e&&e.message?e.message:e)); setProgress("Error leyendo colores."); return; }
+      finally{ showCancel(false); }
+      if(cancelRequested){ log("Exportación cancelada."); setProgress("Cancelada."); return; }
+      if(!entries.length){ log("No hay objetos coloreados en el modelo/contexto actual."); setProgress("Sin objetos coloreados."); return; }
+      log("Objetos coloreados detectados: "+entries.length);
+      const exportScope=activeName||"MODELO_COMPLETO";
+      const revisionBase=computeRevisionBase(exportScope);
+      const rows=await buildRows(entries,revisionBase,exportScope,wantGuid);
+      logColorSummary(rows);
+      const csv=rowsToCsv(rows,cols);
+      const baseName="DEO_modelo_completo"+(activeName?"_"+sanitizeFilename(activeName):"");
+      downloadText(baseName+"_trimble_colores_guid_ifc.csv",csv);
+      const report=[
+        "DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva",
+        "Fecha: "+new Date().toLocaleString(),
+        "Ámbito: modelo/contexto actual completo",
+        "Vista activa: "+(activeName||"(sin vista guardada)"),
+        "Grupos de vistas: no se usan",
+        (cancelRequested?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),
+        "Objetos coloreados: "+entries.length,
+        "Filas exportadas: "+rows.length,
+        "Columnas: "+cols.map((c)=>c.header).join(", "),
+        "",
+        "Nota: la exportación masiva ya no filtra ni recorre grupos de vistas; usa los objetos coloreados disponibles en el modelo/contexto cargado."
+      ];
+      downloadText(baseName+"_informe.txt",report.join("\n"),"text/plain");
+      setProgress("Exportación masiva completada: "+rows.length+" filas.");
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
@@ -1160,10 +1171,12 @@
     // ===================== EXCLUIR / CONCENTRAR =====================
     async function computeExcludedRemovals(list){
       const removeMap=new Map();
-      if(!(document.getElementById("excludeToggle").checked && excludedColors.size>0)) return removeMap;
-      const colorMap=await getCurrentColorMap();
-      for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); }
-      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: marcados "+n+" objeto(s) por color.");
+      if(!document.getElementById("excludeToggle").checked) return removeMap;
+      // v8.10.0: exclusión por modelo/IFC completo (no oculta ni recolorea, solo saca de la selección).
+      if(excludedModelIds.size>0){ for(const o of list){ if(excludedModelIds.has(String(o.modelId))) addToMapSet(removeMap,o.modelId,[o.runtimeId]); } }
+      // Exclusión por color.
+      if(excludedColors.size>0){ const colorMap=await getCurrentColorMap(); for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); } }
+      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: marcados "+n+" objeto(s) (color/modelo).");
       return removeMap;
     }
     async function computeIncludeRemovals(list){
@@ -1793,6 +1806,7 @@
         if(mySeq!==inspectorSeq) return; // la selección cambió mientras se calculaba: no pisar el render más nuevo
         lastInspectorInfo=info; // para PARAM_INSPECTOR en el debug
         renderSelectionInspector(info);
+        updateFloatingLabelsAvailability(); // v8.10.0: en vista guardada se deshabilitan Agregar/Eliminar
       }catch(e){ recordError("selectionInspector",e); }
     }
     function scheduleSelectionInspector(){ clearTimeout(inspectorTimer); inspectorTimer=setTimeout(refreshSelectionInspector,250); }
@@ -1805,7 +1819,8 @@
       const sel=await safeGetSelection();
       if(!sel.length){ log("No hay selección para agregar etiqueta."); setProgress("No hay selección para agregar etiqueta."); return; }
       if(!markupApi()){ log("Etiquetas guardadas: la API de markups de texto no está disponible en este entorno."); return; }
-      if(PARAM_SAVED_LABEL_ENGINE==="legacy") log("Agregar etiqueta: usando motor legacy");
+      if(await isSavedViewContext()){ const msg="Las etiquetas 3D solo están disponibles en modelos. En vistas guardadas utiliza el Inspector de selección."; log(msg); setProgress(msg); return; }
+      log("Agregar etiqueta flotante…");
       const items=sel.slice(0,DEEP_LOOKUP_CAP); // coste acotado
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       let viewId=""; try{ const v=await API.view.getCurrentView(); viewId=(v&&v.id)||""; }catch(e){}
@@ -1872,18 +1887,14 @@
       log("Etiquetas eliminadas: "+n+".");
       updateSavedLabelsCount();
     }
-    // ===================== MOTOR LEGACY DE ETIQUETAS (v8.9.1) =====================
-    // Recuperado del historial: el payload del TEST DEO x1000 (commit 37a5271, v8.8.3) que SÍ se vio en el
-    // visor en la prueba real. Diferencias con el motor actual (markupPick):
+    // ===================== MOTOR DE ETIQUETAS FLOTANTES =====================
+    // Payload que SÍ se ve en el visor en modelo directo (origen: TEST DEO x1000, commit 37a5271):
     //   1) coordenadas PURAS en mm, SIN modelId/objectRuntimeId en los picks;
     //   2) anclaje 0,5 m por ENCIMA del TECHO del objeto (bb.max.z), no centro+offset;
     //   3) start y end idénticos (punto, no línea).
-    // Registro separado: NO se mezcla con savedParamLabels ni con los stores del pipeline automático.
-    let legacyTestLabelIds=[];
+    // Nota: en vistas guardadas Trimble puede no renderizar el markup aunque la API lo cree (ver v8.9.x);
+    // por eso "Agregar" solo se ofrece en modelo directo (ver isSavedViewContext / v8.10.0).
     let lastLegacyPayload=null, lastLegacyResponse=null, lastCurrentPayload=null;
-    // v8.9.2: diagnóstico presentación/color vs visibilidad de markups
-    let lastPresentationSnapshot=null;
-    const presentationDiagLog=[];
     function legacyLabelPayload(bb,text,color){
       const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
       const z=(bb.max.z+0.5)*1000; // techo + 0,5 m, escalado a mm (idéntico al TEST DEO x1000)
@@ -1897,7 +1908,7 @@
     // items: [{bb,text,color?}]. registry (opcional): array donde apuntar los IDs creados.
     async function legacyParamLabelEngine(items,registry){
       const mk=markupApi();
-      if(!mk){ log("Motor legacy: la API de markups de texto no está disponible."); return []; }
+      if(!mk){ log("Etiquetas 3D: la API de markups de texto no está disponible."); return []; }
       const created=[];
       for(const it of items){
         const payload=legacyLabelPayload(it.bb,it.text,it.color);
@@ -1910,293 +1921,6 @@
         }catch(e){ recordError("legacyEngine.add",e); lastLegacyResponse={error:e.message}; }
       }
       return created;
-    }
-    async function legacySelBbox(){
-      const sel=await safeGetSelection();
-      if(!sel.length){ log("No hay selección para test legacy"); return null; }
-      const o=sel[0];
-      let bb=null;
-      try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("legacyTest.bbox",e); }
-      if(!bb){ log("Test legacy: no se ha podido obtener el bounding box."); return null; }
-      return {sel,o,bb};
-    }
-    async function legacyTestFixed(){
-      const got=await legacySelBbox(); if(!got) return;
-      const ids=await legacyParamLabelEngine([{bb:got.bb,text:"TEST DEO LEGACY v8.9.1",color:{r:200,g:0,b:0,a:255}}],legacyTestLabelIds);
-      if(ids.length) log("Legacy fixed label: creada id "+ids[0]);
-      else log("Legacy fixed label: la API no ha devuelto ID. Revisa PARAM_LABEL_ENGINE_DIAG en el debug.");
-    }
-    async function legacyTestSelection(){
-      const got=await legacySelBbox(); if(!got) return;
-      const text="TEST SELECCIÓN LEGACY\nmodelId: "+got.o.modelId+"\nruntimeId: "+got.o.runtimeId;
-      const ids=await legacyParamLabelEngine([{bb:got.bb,text,color:{r:0,g:90,b:200,a:255}}],legacyTestLabelIds);
-      if(ids.length) log("Legacy selection label: creada id "+ids[0]);
-      else log("Legacy selection label: la API no ha devuelto ID. Revisa PARAM_LABEL_ENGINE_DIAG en el debug.");
-    }
-    async function legacyTestParams(){
-      const sel=await safeGetSelection();
-      if(!sel.length){ log("No hay selección para test legacy"); return; }
-      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
-      let created=0;
-      for(const o of sel.slice(0,5)){ // sirve para objeto/nombre, tornillo y soldadura
-        let bb=null;
-        try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("legacyTest.bbox",e); }
-        if(!bb) continue;
-        const propsMap=await getPropertiesCached(o.modelId,[o.runtimeId]);
-        const p=propsMap.get(o.runtimeId)||{};
-        const det=await detectTypeAndProps(o.modelId,o.runtimeId,p,allowDeep); // extracción actual validada
-        const title=(det.type==="object")
-          ?((await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep)).text||"")
-          :(resolveBestNameLocal(det.props).text||(det.type==="bolt"?"Bolt assembly":"Weld"));
-        let lines=buildTypedLines(det.type,det.props);
-        if(title) lines=lines.filter((l)=>l!==title);
-        const text=[title,...lines].filter(Boolean).join("\n");
-        if(!text) continue;
-        const ids=await legacyParamLabelEngine([{bb,text}],legacyTestLabelIds);
-        if(ids.length){ created++; log("Legacy param label: creada id "+ids[0]+" ("+(INSPECTOR_TYPE_LABEL[det.type]||det.type)+")"); }
-      }
-      if(!created) log("No hay datos de parámetros para test legacy");
-    }
-    async function legacyTestsClear(){
-      const n=legacyTestLabelIds.length;
-      if(n) await removeMarkupIds(legacyTestLabelIds); // solo IDs de los tests legacy
-      legacyTestLabelIds=[];
-      log("Limpiar tests legacy: "+n+" eliminadas");
-    }
-    // v8.9.2: snapshot de presentación — guarda estado antes de limpiar para poder comparar/restaurar
-    async function snapshotPresentation(){
-      const snap={};
-      try{ snap.presentation=await API.viewer.getPresentation(); }catch(e){ snap.presentationError=e.message; }
-      try{ snap.coloredObjects=await getColoredObjectEntries(); snap.coloredTotal=snap.coloredObjects.length; }catch(e){ snap.coloredError=e.message; snap.coloredObjects=[]; }
-      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") snap.camera=await API.viewer.getCamera(); }catch(e){ snap.cameraError=e.message; }
-      try{ snap.selection=await API.viewer.getSelection(); }catch(e){ snap.selectionError=e.message; }
-      try{ const mk=markupApi(); if(mk){ const tms=await mk.getTextMarkups(); snap.textMarkupsTotal=Array.isArray(tms)?tms.length:0; } }catch(e){ snap.textMarkupsError=e.message; }
-      snap.timestamp=new Date().toISOString();
-      lastPresentationSnapshot=snap;
-      presentationDiagLog.length=0;
-      presentationDiagLog.push({step:"snapshot",coloredTotal:snap.coloredTotal??0,textMarkupsTotal:snap.textMarkupsTotal??0,ts:snap.timestamp});
-      log("Snapshot presentación: guardado. Coloreados="+(snap.coloredTotal??"?")+" markups="+(snap.textMarkupsTotal??"?"));
-    }
-    // v8.9.2: intenta neutralizar el estado de presentación/color de forma segura y diagnóstica
-    async function clearPresentationView(){
-      presentationDiagLog.length=0;
-      const diag=(step,result)=>presentationDiagLog.push({step,result});
-      // Paso 1: intentar setPresentation(null) si la API existe
-      log("Limpiar presentación vista: intento setPresentation...");
-      if(API.viewer&&typeof API.viewer.setPresentation==="function"){
-        try{ await API.viewer.setPresentation(null); diag("setPresentation(null)","ok"); log("Limpiar presentación vista: setPresentation(null) ok"); }
-        catch(e){ diag("setPresentation(null)","error: "+e.message); log("Limpiar presentación vista: setPresentation(null) error: "+e.message); }
-      } else {
-        diag("setPresentation","API no existe");
-        log("Limpiar presentación vista: API.viewer.setPresentation no existe.");
-      }
-      // Paso 2: limpiar color de una muestra pequeña de objetos coloreados (max 50)
-      let coloredBefore=[];
-      try{ coloredBefore=await getColoredObjectEntries(); }catch(e){ diag("getColoredBefore","error: "+e.message); }
-      log("Limpiar presentación vista: objetos coloreados antes "+coloredBefore.length);
-      diag("coloredBefore",coloredBefore.length);
-      const SAMPLE_SIZE=50;
-      const sampleItems=coloredBefore.slice(0,SAMPLE_SIZE);
-      if(sampleItems.length){
-        const byModel=new Map();
-        for(const o of sampleItems){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.objectRuntimeId); }
-        for(const [modelId,ids] of byModel.entries()){
-          try{
-            await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:null});
-            diag("setObjectState color:null model="+modelId+" n="+ids.length,"ok");
-            log("Limpiar presentación vista: color:null muestra "+ids.length+" en "+modelId+" -> ok");
-          }catch(e){
-            diag("setObjectState color:null model="+modelId,"error: "+e.message);
-            log("Limpiar presentación vista: color:null error en "+modelId+": "+e.message);
-          }
-        }
-      }
-      let coloredAfter=[];
-      try{ coloredAfter=await getColoredObjectEntries(); }catch(e){ diag("getColoredAfter","error: "+e.message); }
-      diag("coloredAfter",coloredAfter.length);
-      log("Limpiar presentación vista: objetos coloreados antes "+coloredBefore.length+", después "+coloredAfter.length);
-      try{
-        const mk=markupApi();
-        if(mk){ const tms=await mk.getTextMarkups(); const n=Array.isArray(tms)?tms.length:0; diag("textMarkupsAfterClean",n); log("Limpiar presentación vista: textMarkups "+n); }
-      }catch(e){ diag("textMarkupsAfterClean","error: "+e.message); }
-    }
-    // v8.9.2: intenta restaurar el snapshot guardado (presentación y muestra de colores)
-    async function restorePresentationSnapshot(){
-      if(!lastPresentationSnapshot){ log("Restaurar presentación snapshot: no hay snapshot guardado."); return; }
-      const snap=lastPresentationSnapshot;
-      let restored=false;
-      // Intentar restaurar via setPresentation
-      if(API.viewer&&typeof API.viewer.setPresentation==="function"&&snap.presentation!==undefined){
-        try{
-          await API.viewer.setPresentation(snap.presentation);
-          presentationDiagLog.push({step:"restore.setPresentation",result:"ok"});
-          log("Restaurar presentación snapshot: setPresentation aplicado.");
-          restored=true;
-        }catch(e){
-          presentationDiagLog.push({step:"restore.setPresentation",result:"error: "+e.message});
-          log("Restaurar presentación snapshot: setPresentation error: "+e.message);
-        }
-      }
-      // Intentar restaurar colores de la muestra limpiada (primeros 50 del snapshot)
-      const SAMPLE_SIZE=50;
-      const sampleItems=(snap.coloredObjects||[]).slice(0,SAMPLE_SIZE);
-      if(sampleItems.length){
-        const byModelColor=new Map();
-        for(const o of sampleItems){
-          const key=o.modelId+"|"+(o.normalizedColor||"");
-          if(!byModelColor.has(key)) byModelColor.set(key,{modelId:o.modelId,normalizedColor:o.normalizedColor,ids:[]});
-          byModelColor.get(key).ids.push(o.objectRuntimeId);
-        }
-        for(const {modelId,normalizedColor,ids} of byModelColor.values()){
-          const ac=analyzeColor(normalizedColor);
-          if(!ac.valid||!ac.rgba) continue;
-          try{
-            await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:ac.rgba,opacity:100});
-            presentationDiagLog.push({step:"restore.colors.model="+modelId,result:"ok, n="+ids.length});
-            restored=true;
-          }catch(e){
-            presentationDiagLog.push({step:"restore.colors.model="+modelId,result:"error: "+e.message});
-          }
-        }
-        if(restored) log("Restaurar presentación snapshot: colores de muestra restaurados.");
-      }
-      if(!restored){
-        log("No se puede restaurar presentación automáticamente con la API disponible.");
-        presentationDiagLog.push({step:"restore",result:"sin método disponible, restaura manualmente la vista guardada"});
-      }
-    }
-    // ===== v8.9.3: motor diagnóstico de iconos (API.viewer.addIcon) =====
-    // Hipótesis: en vistas activas addTextMarkup crea markups sin renderizarlos; addIcon (canal de iconos 3D,
-    // ya usado por el pipeline de "Mostrar parámetros") podría sí renderizarse. Motor PARALELO: no sustituye
-    // a addTextMarkup, no toca savedParamLabels ni el motor legacy.
-    // Registro separado: NO se mezcla con paramTools[*].iconStore ni con legacyTestLabelIds.
-    let iconTestLabelIds=[];
-    let iconTestSeq=990000; // ids cliente; rango separado de paramIconSeq (880000) para no colisionar
-    const iconEngineDiag={attempts:[],errors:[],lastPayload:null,lastResponse:null,lastBbox:null,removed:null};
-    // SVG según especificación: fondo blanco semitransparente, borde negro, texto negro, compacto, multilínea.
-    // Mismo patrón de dimensionado que labelIconPath (helper existente), distinto estilo de borde/texto.
-    function iconLabelSvg(text){
-      const lines=String(text||"").split(/\n/).slice(0,8);
-      const max=Math.max(4,...lines.map((l)=>l.length));
-      const w=Math.min(520,Math.max(90,max*7+18)); const h=Math.max(28,lines.length*14+10);
-      const rows=lines.map((l,i)=>'<text x="8" y="'+(17+i*14)+'" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#000000">'+xmlEsc(l)+'</text>').join("");
-      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><rect x="1" y="1" width="'+(w-2)+'" height="'+(h-2)+'" rx="4" fill="white" fill-opacity="0.85" stroke="#000000" stroke-width="1.5"/>'+rows+'</svg>';
-    }
-    function svgToDataUri(svg){ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); }
-    function svgToBase64Uri(svg){ try{ return "data:image/svg+xml;base64,"+btoa(unescape(encodeURIComponent(svg))); }catch(e){ recordError("iconEngine.b64",e); return null; } }
-    // Fallback sin texto largo: marcador fijo simple por si el visor rechaza SVGs grandes con texto.
-    function fixedMarkerSvg(){ return '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#ffcc00" fill-opacity="0.9" stroke="#000000" stroke-width="2"/><text x="16" y="21" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#000000">i</text></svg>'; }
-    // Envía UN icono con try/catch y vuelca payload/respuesta en iconEngineDiag. Devuelve el id cliente o null.
-    async function iconAddOne(bb,variantName,iconPath,zOffset,registry){
-      const pos=centerIconFromBox(bb); pos.z+=(zOffset||0); // metros (mismo convenio que el pipeline de iconos existente)
-      const icon={id:iconTestSeq++, position:pos, size:42, iconPath};
-      iconEngineDiag.lastPayload={variant:variantName,id:icon.id,position:pos,size:icon.size,iconPathLength:String(iconPath).length,iconPathPreview:String(iconPath).slice(0,140)};
-      iconEngineDiag.lastBbox=bb;
-      try{
-        const resp=await API.viewer.addIcon([icon]);
-        iconEngineDiag.lastResponse=(resp===undefined)?"undefined (la API no devuelve nada)":resp;
-        iconEngineDiag.attempts.push({when:new Date().toISOString(),variant:variantName,id:icon.id,position:pos,result:"ok",response:(resp===undefined)?"undefined":String(safeJson(resp)).slice(0,200)});
-        if(registry) registry.push(icon.id);
-        return icon.id;
-      }catch(e){
-        recordError("iconEngine.add."+variantName,e);
-        iconEngineDiag.lastResponse={error:e.message};
-        iconEngineDiag.attempts.push({when:new Date().toISOString(),variant:variantName,id:icon.id,result:"error: "+e.message});
-        iconEngineDiag.errors.push(variantName+": "+e.message);
-        return null;
-      }
-    }
-    // Motor: por etiqueta prueba variantes en orden (data URI -> base64 -> texto corto -> marcador fijo)
-    // y se queda con la primera que la API acepta sin excepción.
-    async function iconLabelEngine(items,registry){
-      if(!API.viewer||typeof API.viewer.addIcon!=="function"){ log("Motor iconos: API.viewer.addIcon no está disponible en este entorno."); iconEngineDiag.attempts.push({variant:"none",result:"addIcon no existe"}); return []; }
-      const created=[];
-      for(const it of items){
-        const svg=iconLabelSvg(it.text);
-        const shortText=String(it.text||"").split(/\n/)[0].slice(0,24);
-        const variants=[
-          {name:"svg-datauri",iconPath:svgToDataUri(svg)},
-          {name:"svg-base64",iconPath:svgToBase64Uri(svg)},
-          {name:"svg-short-text",iconPath:svgToDataUri(iconLabelSvg(shortText))},
-          {name:"fixed-marker",iconPath:svgToDataUri(fixedMarkerSvg())}
-        ].filter((v)=>v.iconPath);
-        let id=null;
-        for(const v of variants){ id=await iconAddOne(it.bb,v.name,v.iconPath,0,registry); if(id!=null) break; }
-        if(id!=null) created.push(id);
-        else log("Motor iconos: ninguna variante aceptada. Revisa ICON_LABEL_ENGINE_DIAG en el debug.");
-      }
-      return created;
-    }
-    async function iconSelBbox(){
-      const sel=await safeGetSelection();
-      if(!sel.length){ log("No hay selección para test de iconos"); return null; }
-      const o=sel[0];
-      let bb=null;
-      try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("iconTest.bbox",e); }
-      if(!bb){ log("Test iconos: no se ha podido obtener el bounding box."); return null; }
-      return {sel,o,bb};
-    }
-    // Test fijo: crea las 4 variantes APILADAS en vertical (0 / 0,5 / 1,0 / 1,5 m) para ver de un vistazo
-    // cuál de ellas renderiza el visor en la vista activa.
-    async function iconTestFixed(){
-      const got=await iconSelBbox(); if(!got) return;
-      if(!API.viewer||typeof API.viewer.addIcon!=="function"){ log("Test icono fijo: API.viewer.addIcon no existe en este entorno."); iconEngineDiag.attempts.push({variant:"none",result:"addIcon no existe"}); return; }
-      const base="ICON TEST v8.9.3";
-      const variants=[
-        {name:"svg-datauri",iconPath:svgToDataUri(iconLabelSvg(base+"\nvariante: data URI")),dz:0},
-        {name:"svg-base64",iconPath:svgToBase64Uri(iconLabelSvg(base+"\nvariante: base64")),dz:0.5},
-        {name:"svg-short-text",iconPath:svgToDataUri(iconLabelSvg(base)),dz:1.0},
-        {name:"fixed-marker",iconPath:svgToDataUri(fixedMarkerSvg()),dz:1.5}
-      ].filter((v)=>v.iconPath);
-      let ok=0;
-      for(const v of variants){ const id=await iconAddOne(got.bb,v.name,v.iconPath,v.dz,iconTestLabelIds); if(id!=null) ok++; }
-      log("Test icono fijo: "+ok+"/"+variants.length+" variantes enviadas sin error (apiladas: dataURI / base64 / texto corto / marcador). Comprueba cuál se ve en el visor.");
-    }
-    async function iconTestSelection(){
-      const got=await iconSelBbox(); if(!got) return;
-      const text="ICON SELECCIÓN\nmodelId: "+got.o.modelId+"\nruntimeId: "+got.o.runtimeId;
-      const ids=await iconLabelEngine([{bb:got.bb,text}],iconTestLabelIds);
-      if(ids.length) log("Test icono selección: creado id "+ids[0]);
-    }
-    // Mismo pipeline de datos que el inspector y que el test legacy: detectTypeAndProps + buildTypedLines.
-    async function iconTestParams(){
-      const sel=await safeGetSelection();
-      if(!sel.length){ log("No hay selección para test de iconos"); return; }
-      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
-      let created=0;
-      for(const o of sel.slice(0,5)){
-        let bb=null;
-        try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("iconTest.bbox",e); }
-        if(!bb) continue;
-        const propsMap=await getPropertiesCached(o.modelId,[o.runtimeId]);
-        const p=propsMap.get(o.runtimeId)||{};
-        const det=await detectTypeAndProps(o.modelId,o.runtimeId,p,allowDeep);
-        const title=(det.type==="object")
-          ?((await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep)).text||"")
-          :(resolveBestNameLocal(det.props).text||(det.type==="bolt"?"Bolt assembly":"Weld"));
-        let lines=buildTypedLines(det.type,det.props);
-        if(title) lines=lines.filter((l)=>l!==title);
-        const text=[title,...lines].filter(Boolean).join("\n");
-        if(!text) continue;
-        const ids=await iconLabelEngine([{bb,text}],iconTestLabelIds);
-        if(ids.length){ created++; log("Test icono parámetros: creado id "+ids[0]+" ("+(INSPECTOR_TYPE_LABEL[det.type]||det.type)+")"); }
-      }
-      if(!created) log("No hay datos de parámetros para test de iconos");
-    }
-    async function iconTestsClear(){
-      const n=iconTestLabelIds.length;
-      if(!n){ log("Limpiar iconos test: no hay iconos de test."); iconEngineDiag.removed={requested:0,result:"nada que eliminar"}; return; }
-      if(!API.viewer||typeof API.viewer.removeIcon!=="function"){ log("Limpiar iconos test: API.viewer.removeIcon no existe."); iconEngineDiag.removed={requested:n,result:"removeIcon no existe"}; return; }
-      try{
-        await API.viewer.removeIcon(iconTestLabelIds.map(Number).filter(Number.isFinite)); // solo IDs de estos tests
-        iconEngineDiag.removed={requested:n,result:"ok"};
-        log("Limpiar iconos test: "+n+" eliminados");
-      }catch(e){
-        recordError("iconTests.clear",e);
-        iconEngineDiag.removed={requested:n,result:"error: "+e.message};
-        log("Limpiar iconos test: error "+e.message);
-      }
-      iconTestLabelIds=[];
     }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
@@ -2377,7 +2101,7 @@
       return v.toUpperCase();
     }
     function getScopeValues(scope){ const out={}; for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); out[f]=normalizeTplValue(f,el?el.value:""); } return out; }
-    function setScopeValues(scope,data){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(!el) continue; const v=data&&data[f]!=null?data[f]:""; el.value=normalizeTplValue(f,v); } updateScopePreview(scope); }
+    function setScopeValues(scope,data){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(!el) continue; const v=data&&data[f]!=null?data[f]:""; el.value=normalizeTplValue(f,v); tplAutosizeInput(el); } updateScopePreview(scope); }
     function getTemplateMetaFromConfig(){ const out={}; for(const f of TEMPLATE_META_FIELDS){ const el=tplEl("tplCfg",f); out[f]=String(el?el.value:"").trim(); } out.share=getShareTokens().join(", "); return out; }
     function setConfigMeta(tpl){
       const labels=tplEl("tplCfg","labels"); if(labels) labels.value=String(tpl&&tpl.labels||"");
@@ -2397,6 +2121,16 @@
       return name.replace(/\s+/g," ").replace(/\s+,/g,",").trim();
     }
     function updateScopePreview(scope){ const el=document.getElementById(scope+"_preview"); if(el) el.textContent=templateNameFromValues(getScopeValues(scope))||"(sin nombre)"; }
+    function tplAutosizeInput(el){
+      if(!el) return;
+      const min=Number(el.dataset&&el.dataset.minCh)||12;
+      const len=Math.max(min,String(el.value||el.placeholder||"").length+2);
+      el.style.width=Math.min(Math.max(len,min),42)+"ch";
+    }
+    function tplAutosizeAll(root){
+      const scope=root&&root.querySelectorAll?root:document;
+      scope.querySelectorAll("input.tpl-autosize").forEach(tplAutosizeInput);
+    }
     function currentTemplateFromConfig(){ const tpl={}; tpl.name=String((document.getElementById("tplCfg_name")||{}).value||"").trim(); Object.assign(tpl,getTemplateMetaFromConfig()); return tpl; }
     function populateTemplateSelects(selected){
       const list=loadTemplates().sort((a,b)=>String(a.name).localeCompare(String(b.name),"es"));
@@ -2537,6 +2271,53 @@
       window.addEventListener("resize",positionShareSuggest);
       renderShareTokens();
     }
+
+    // Compartir con en Configurar vista (Crear / Actualizar): reutiliza el patrón integrado de chips + autocompletado.
+    const cvShareTokenState={cvNew:[],cvUpd:[]};
+    function cvShareScopeOk(scope){ return scope==="cvNew"||scope==="cvUpd"; }
+    function cvShareHidden(scope){ return document.getElementById(scope+"_share"); }
+    function cvShareLabelEl(scope){ return document.getElementById(scope+"_shareLabel"); }
+    function cvShareTokensEl(scope){ return document.getElementById(scope+"_shareTokens"); }
+    function cvShareEntryEl(scope){ return document.getElementById(scope+"_shareEntry"); }
+    function cvShareSuggestEl(scope){ return document.getElementById(scope+"_shareSuggest"); }
+    function cvGetShareTokens(scope){ return (cvShareTokenState[scope]||[]).slice(); }
+    function cvSetShareTokens(scope,list){
+      if(!cvShareScopeOk(scope)) return;
+      const seen=new Set(), arr=[];
+      for(const raw of list||[]){ const v=String(raw||"").trim(); if(!v) continue; const key=v.toLowerCase(); if(seen.has(key)) continue; seen.add(key); arr.push(v); }
+      cvShareTokenState[scope]=arr; cvRenderShareTokens(scope);
+    }
+    function cvRenderShareTokens(scope){
+      const arr=cvShareTokenState[scope]||[];
+      const hidden=cvShareHidden(scope); if(hidden) hidden.value=arr.join(", ");
+      const label=cvShareLabelEl(scope); if(label) label.textContent="Compartir con ("+arr.length+")";
+      const box=cvShareTokensEl(scope); if(!box) return; box.innerHTML="";
+      arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; const txt=document.createElement("span"); txt.textContent=shareTokenLabel(v); const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvShareTokenState[scope]||[]).splice(idx,1); cvRenderShareTokens(scope); }; chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
+    }
+    function cvAddShareToken(scope,v){ const token=String(v||"").trim(); if(!token) return; cvSetShareTokens(scope,cvGetShareTokens(scope).concat([token])); const input=cvShareEntryEl(scope); if(input) input.value=""; cvHideShareSuggest(scope); }
+    function cvShareSuggestions(scope,q){
+      const term=String(q||"").trim().toLowerCase(); if(!term) return [];
+      const used=new Set(cvGetShareTokens(scope).map((x)=>x.toLowerCase()));
+      return templateProjectMembers.filter((m)=>!used.has((m.email||m.name||"").toLowerCase())&&((m.name||"").toLowerCase().includes(term)||(m.email||"").toLowerCase().includes(term))).slice(0,8);
+    }
+    function cvPositionShareSuggest(scope){ const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=(r.left+window.scrollX)+"px"; sug.style.top=(r.bottom+window.scrollY+2)+"px"; sug.style.width=Math.max(220,r.width)+"px"; }
+    function cvHideShareSuggest(scope){ const sug=cvShareSuggestEl(scope); if(sug) sug.style.display="none"; }
+    function cvShowShareSuggest(scope){
+      const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return;
+      const items=cvShareSuggestions(scope,input.value); sug.innerHTML="";
+      if(!items.length){ cvHideShareSuggest(scope); return; }
+      for(const m of items){ const row=document.createElement("div"); row.className="tpl-suggest-item"; row.innerHTML='<strong>'+xmlEsc(m.name||m.email)+'</strong>'+(m.email?' <span class="tpl-suggest-mail">| '+xmlEsc(m.email)+'</span>':''); row.onmousedown=(ev)=>{ ev.preventDefault(); cvAddShareToken(scope,m.email||m.name); }; sug.appendChild(row); }
+      cvPositionShareSuggest(scope); sug.style.display="block";
+    }
+    function cvWireShareAutocomplete(scope){
+      const input=cvShareEntryEl(scope); if(!input) return;
+      input.addEventListener("input",()=>cvShowShareSuggest(scope));
+      input.addEventListener("focus",()=>cvShowShareSuggest(scope));
+      input.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_shareSuggest .tpl-suggest-item"); const sug=cvShareSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddShareToken(scope,input.value); } else if(ev.key==="Escape") cvHideShareSuggest(scope); });
+      input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddShareToken(scope,input.value); cvHideShareSuggest(scope); },180); });
+      window.addEventListener("resize",()=>cvPositionShareSuggest(scope));
+      cvRenderShareTokens(scope);
+    }
     function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
     function selectedNewTemplate(){ const sel=document.getElementById("newTemplateSelect"); if(!sel||!sel.value) return null; return loadTemplates().find((t)=>t.name===sel.value)||null; }
     function buildViewSpec(name,tpl){
@@ -2604,33 +2385,138 @@
       }catch(e){ recordError("updateSelectedView",e); log("ERROR actualizando vista: "+(e&&e.message?e.message:e)); setProgress("Error al actualizar la vista."); }
       finally{ if(btn) btn.disabled=false; }
     }
+    // ===================== CONFIGURAR VISTA (v8.10.1): Crear / Actualizar simplificados =====================
+    // Cada flujo tiene Descripción/título + Autor + Compartir con + Etiquetas. Título = descripción al guardar.
+    function cvBuildSpec(desc,author,share,labels){
+      const spec={name:desc,description:desc};
+      if(author) spec.author=author;
+      if(labels&&labels.length){ spec.tags=labels; spec.labels=labels; }
+      if(share&&share.length){ spec.sharedWith=share; spec.shareWith=share; spec.assignees=share; spec.sharedUsers=share.map((e)=>({email:e})); }
+      return spec;
+    }
+    function cvViewPeople(view){
+      const cands=view&&(view.assignees||view.sharedWith||view.sharedUsers||view.shareWith||view.members);
+      if(!Array.isArray(cands)) return "";
+      return cands.map((x)=> typeof x==="string"?x:((x&&(x.email||x.name||x.displayName||x.id))||"") ).filter(Boolean).join(", ");
+    }
+    function cvViewTags(view){
+      const cands=view&&(view.tags||view.labels);
+      if(Array.isArray(cands)) return cands.map((x)=> typeof x==="string"?x:((x&&(x.name||x.label||x.value))||"") ).filter(Boolean).join(", ");
+      return String(cands||"");
+    }
+    function cvViewAuthor(view){ const a=view&&(view.author||view.createdBy||view.owner||view.creator); if(!a) return ""; return typeof a==="string"?a:String(a.name||a.displayName||a.email||""); }
+    function cvSet(id,val){ const el=document.getElementById(id); if(el) el.value=val||""; }
+    function cvLoadSelectedView(){
+      const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo");
+      if(!sel||!sel.value){ return; }
+      const view=(templateViewsCache||[]).find((v)=>String(v.id)===String(sel.value));
+      if(!view){ if(info) info.textContent="No se ha podido leer la vista seleccionada."; return; }
+      const name=readableViewName(view);
+      const parsed=parseViewName(name);
+      if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
+      else { setScopeValues("tplUpd",{task:name,author:cvViewAuthor(view)||autoAuthorValue(),date:todayDash()}); if(info) info.textContent="No se ha podido leer la estructura completa del nombre actual. Se mantiene el nombre como actuación."; }
+      const author=cvViewAuthor(view); if(author){ const a=tplEl("tplUpd","author"); if(a){ a.value=normalizeTplValue("author",author); tplAutosizeInput(a); updateScopePreview("tplUpd"); } }
+      const people=cvViewPeople(view); cvSetShareTokens("cvUpd",parseTemplateList(people));
+      const tags=cvViewTags(view); cvSet("cvUpd_labels",tags); tplAutosizeInput(document.getElementById("cvUpd_labels"));
+      log("Actualizar vista: leída '"+name+"' — compartidos:"+(people?people.split(",").length:0)+", etiquetas:"+(tags?tags.split(",").length:0)+".");
+    }
+    async function cvPreloadCurrentView(){
+      const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo");
+      if(!sel||!API||!API.view) return;
+      let current=null; try{ current=await getCurrentViewSpecWithRetry(); }catch(e){ recordError("cvPreloadCurrentView",e); }
+      if(!current){ if(info) info.textContent="No hay vista guardada activa cargada."; return; }
+      let id=current.id||current.viewId||""; const name=readableViewName(current);
+      if(!id && name){ const m=(templateViewsCache||[]).find((v)=>readableViewName(v)===name); if(m) id=m.id; }
+      if(id && (templateViewsCache||[]).some((v)=>String(v.id)===String(id))){ sel.value=id; cvLoadSelectedView(); }
+      else if(info) info.textContent=name?("La vista actual no aparece en la lista: "+name):"La vista actual no aparece en la lista.";
+    }
+    async function cvCreateView(){
+      if(!API||!API.view||!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
+      ensureCreateAutoFields(); tplAutosizeAll(document.getElementById("tplFoldCreate"));
+      const desc=templateNameFromValues(getScopeValues("tplNew"));
+      if(!desc){ setProgress("Completa al menos un campo para generar el título de la vista."); log("Crear vista: falta nombre generado."); return; }
+      const author=String((tplEl("tplNew","author")||{}).value||"").trim();
+      const share=cvGetShareTokens("cvNew");
+      const labels=parseTemplateList((document.getElementById("cvNew_labels")||{}).value);
+      const btn=document.getElementById("cvCreateBtn"); if(btn) btn.disabled=true;
+      try{
+        setProgress("Creando vista con el estado actual del visor...");
+        const spec=cvBuildSpec(desc,author,share,labels);
+        try{ await API.view.createView(spec); }
+        catch(metaErr){ recordError("cvCreateView.metaSpec",metaErr); log("Crear vista: la API no aceptó metadatos; se crea solo con título/descripción."); await API.view.createView({name:desc,description:desc}); }
+        log("Vista creada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."); setProgress("Vista creada: "+desc);
+        await populateUpdateViews();
+      }catch(e){ recordError("cvCreateView",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error creando vista."); }
+      finally{ if(btn) btn.disabled=false; }
+    }
+    async function cvUpdateView(){
+      const sel=document.getElementById("updateViewSelect"); if(!sel||!sel.value){ setProgress("Selecciona una vista para actualizar."); return; }
+      if(!API.view||!API.view.updateView){ log("La API no permite actualizar vistas en este entorno."); setProgress("No disponible."); return; }
+      ensureScopeAutoFields("tplUpd"); tplAutosizeAll(document.getElementById("tplFoldUpdate"));
+      const desc=templateNameFromValues(getScopeValues("tplUpd")); if(!desc){ setProgress("Falta nombre de vista generado."); return; }
+      const author=String((tplEl("tplUpd","author")||{}).value||"").trim();
+      const share=cvGetShareTokens("cvUpd");
+      const labels=parseTemplateList((document.getElementById("cvUpd_labels")||{}).value);
+      const btn=document.getElementById("cvUpdateBtn"); if(btn) btn.disabled=true;
+      try{
+        setProgress("Actualizando estado de la vista seleccionada...");
+        await API.view.updateView({id:sel.value}); // captura el estado actual del visor
+        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(sel.value); }catch(e){ recordError("cvUpdateView.getView",e); }
+        if(spec && typeof spec==="object"){ Object.assign(spec,cvBuildSpec(desc,author,share,labels)); spec.id=sel.value; await API.view.updateView(spec); }
+        else { await API.view.updateView(Object.assign({id:sel.value},cvBuildSpec(desc,author,share,labels))); }
+        log("Vista actualizada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."); setProgress("Vista actualizada: "+desc);
+        const keep=sel.value; await populateUpdateViews(); if([...sel.options].some((o)=>String(o.value)===String(keep))) sel.value=keep;
+      }catch(e){ recordError("cvUpdateView",e); log("ERROR actualizando vista: "+(e&&e.message?e.message:e)); setProgress("Error al actualizar la vista."); }
+      finally{ if(btn) btn.disabled=false; }
+    }
+    async function cvOnOpenConfigureView(){
+      try{ await loadProjectMembers(); }catch(e){}
+      try{ await loadTemplateUser(); }catch(e){}
+      const an=tplEl("tplNew","author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview("tplNew"); } }
+      cvRenderShareTokens("cvNew"); cvRenderShareTokens("cvUpd");
+      await populateUpdateViews();
+      await cvPreloadCurrentView();
+      await autoExpandViewFlow();
+    }
     function wireTemplateScope(scope){
       for(const f of TEMPLATE_FIELDS){
         const el=tplEl(scope,f); if(!el) continue;
         if(f==="code"){
           el.addEventListener("focus",()=>{ if(!String(el.value||"").trim()) el.value="RFI_"; });
-          el.addEventListener("input",()=>{ if(el.value && !/^RFI[_\s-]?/i.test(el.value)) el.value="RFI_"+el.value.replace(/^_+/,""); updateScopePreview(scope); });
+          el.addEventListener("input",()=>{ if(el.value && !/^RFI[_\s-]?/i.test(el.value)) el.value="RFI_"+el.value.replace(/^_+/,""); tplAutosizeInput(el); updateScopePreview(scope); });
         } else {
-          el.addEventListener("input",()=>{ updateScopePreview(scope); });
+          el.addEventListener("input",()=>{ tplAutosizeInput(el); updateScopePreview(scope); });
         }
-        el.addEventListener("blur",()=>{ el.value=normalizeTplValue(f,el.value); updateScopePreview(scope); });
+        el.addEventListener("blur",()=>{ el.value=normalizeTplValue(f,el.value); tplAutosizeInput(el); updateScopePreview(scope); });
+        tplAutosizeInput(el);
       }
     }
     function wireTemplateTool(){
       for(const scope of ["tplCfg","tplNew","tplUpd"]) wireTemplateScope(scope);
       populateTemplateFolderSelect();
       wireShareAutocomplete();
+      cvWireShareAutocomplete("cvNew"); cvWireShareAutocomplete("cvUpd");
+      ["cvNew_labels","cvUpd_labels"].forEach((id)=>{ const el=document.getElementById(id); if(el){ el.addEventListener("input",()=>tplAutosizeInput(el)); el.addEventListener("blur",()=>tplAutosizeInput(el)); tplAutosizeInput(el); } });
       const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; setConfigMeta(t); } else { saveLastTemplateName(""); const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); } });
       const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); setCreateMeta(t); } else { setCreateMeta(null); } ensureCreateAutoFields(); });
       const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
       const tplFolderRefresh=document.getElementById("tplCfg_folderRefresh"); if(tplFolderRefresh) tplFolderRefresh.onclick=async ()=>{ setProgress("Actualizando grupos de vistas..."); await populateTemplateFolderSelect(undefined,true); setProgress("Grupos de vistas actualizados: "+(viewGroupsCache.groups.length||0)+"."); };
       const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
-      const createBtn=document.getElementById("templateCreateView"); if(createBtn) createBtn.onclick=()=>createViewFromTemplate();
-      const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",loadSelectedViewForUpdate);
-      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await loadCurrentViewForUpdate(); };
-      const updBtn=document.getElementById("templateUpdateView"); if(updBtn) updBtn.onclick=()=>updateSelectedView();
-      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open){ await loadProjectMembers(); await loadTemplateUser(); await populateTemplateFolderSelect(); await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
-      const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open){ await populateUpdateViews(); await loadCurrentViewForUpdate(); } });
+      const createBtn=document.getElementById("cvCreateBtn"); if(createBtn) createBtn.onclick=()=>cvCreateView();
+      const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",cvLoadSelectedView);
+      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await cvPreloadCurrentView(); };
+      const updBtn=document.getElementById("cvUpdateBtn"); if(updBtn) updBtn.onclick=()=>cvUpdateView();
+      const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open) await cvOnOpenConfigureView(); });
+      const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open){ await populateUpdateViews(); await cvPreloadCurrentView(); } });
+    }
+    // v8.10.0: al abrir Configurar vista, expande Actualizar si hay vista guardada activa; si no, Crear vista nueva.
+    async function autoExpandViewFlow(){
+      try{
+        const saved=await isSavedViewContext();
+        const create=document.getElementById("tplFoldCreate"), update=document.getElementById("tplFoldUpdate");
+        if(saved){ if(update) update.open=true; if(create) create.open=false; }
+        else { if(create) create.open=true; if(update) update.open=false; }
+      }catch(e){ recordError("autoExpandViewFlow",e); }
     }
     async function initTemplateTool(){
       populateTemplateSelects(); await loadProjectMembers(); await loadTemplateUser(); await populateTemplateFolderSelect();
@@ -2642,8 +2528,9 @@
       else { setCreateMeta(null); }
       ensureCreateAutoFields();
       setScopeValues("tplUpd",{});
-      await populateUpdateViews(); await loadCurrentViewForUpdate();
-      for(const scope of ["tplCfg","tplNew","tplUpd"]) updateScopePreview(scope);
+      await populateUpdateViews();
+      const an=tplEl("tplNew","author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview("tplNew"); } } // v8.10.1
+      await cvPreloadCurrentView(); await autoExpandViewFlow();
     }
 
     // ===================== COLORES / VALORES UI =====================
@@ -2652,9 +2539,29 @@
     function syncSelectPlaceholder(sel){ if(sel) sel.classList.toggle("placeholder",!sel.value); }
     async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>elige un valor…</option>'; syncSelectPlaceholder(vsel); setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); syncSelectPlaceholder(vsel); setProgress("Valores Name cargados: "+values.size+"."); }
 
-    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); for(const c of colored){ if(!c.colorValid) continue; if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); row.title=col+" ("+byColor.get(col).count+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } }
+    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); let illegible=0; for(const c of colored){ if(!c.colorValid){ illegible++; continue; } if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0 && illegible===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); row.title=col+" ("+byColor.get(col).count+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } if(illegible>0){ const row=document.createElement("label"); row.title=COLOR_ILLEGIBLE_TEXT+" ("+illegible+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.disabled=true; const sw=document.createElement("span"); sw.className="swatch swatch-illegible"; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } }
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
+    // ===================== EXCLUSIÓN POR MODELO/IFC (v8.10.0) =====================
+    function loadExcludedModelIds(){ try{ const raw=localStorage.getItem(EXCLUDE_MODELS_KEY); if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)){ excludedModelIds.clear(); arr.forEach((id)=>{ if(id!=null&&id!=="") excludedModelIds.add(String(id)); }); } } }catch(e){ recordError("loadExcludedModelIds",e); } }
+    function saveExcludedModelIds(){ try{ localStorage.setItem(EXCLUDE_MODELS_KEY,JSON.stringify([...excludedModelIds])); }catch(e){ recordError("saveExcludedModelIds",e); } }
+    async function getLoadedModelsList(){
+      try{ if(API.viewer&&typeof API.viewer.getModels==="function"){ const ms=await API.viewer.getModels(); return (Array.isArray(ms)?ms:[]).map((m)=>({id:String((m&&(m.id??m.modelId))||""),name:String((m&&m.name)||"(sin nombre)")})).filter((m)=>m.id); } }
+      catch(e){ recordError("getLoadedModelsList",e); }
+      return [];
+    }
+    async function populateExcludeModels(){
+      const cont=document.getElementById("excludeModels"); if(!cont) return;
+      cont.innerHTML=""; const models=await getLoadedModelsList();
+      if(!models.length){ cont.textContent="No hay modelos cargados."; return; }
+      for(const m of models){
+        const row=document.createElement("label"); row.className="model-exclude-row"; row.title=m.id;
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedModelIds.has(m.id);
+        cb.addEventListener("change",()=>{ if(cb.checked) excludedModelIds.add(m.id); else excludedModelIds.delete(m.id); saveExcludedModelIds(); scheduleProcessSelection(); log("Excluir modelo "+(cb.checked?"activado":"desactivado")+": "+m.name+" ("+m.id+")."); });
+        const span=document.createElement("span"); span.className="model-exclude-name"; span.textContent=m.name;
+        row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
+      }
+    }
 
     // ===================== ACCIONES RÁPIDAS =====================
     const QUICK_COLORS={ qcGray:{r:154,g:160,b:166,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{r:252,g:13,b:27,a:255} };
@@ -2727,8 +2634,121 @@
       if(p2 && quickIndexCacheKey(p2)!==quickIndexCacheKey(p1)) await buildQuickParamIndex("qsParam2","qsValue2");
       else populateQuickValueFromCache("qsParam2","qsValue2");
     }
+    // ===================== CUANTIFICAR SELECCIÓN (v8.10.0) =====================
+    const QUANT_PARAM_ALIASES={
+      weight:["Weight","NetWeight","Net Weight","Net weight","Weight (net)","Tekla Quantity.Weight"],
+      volume:["Volume","NetVolume","Net Volume","Net volume","Tekla Quantity.Volume"],
+      area:["Area","Net surface area","Net area","Surface area","Net surface area (net)"],
+      length:["Length","Cut length","Part length","Tekla Quantity.Length"]
+    };
+    const QUANT_CAP=20000; // tope de objetos procesados para no bloquear la UI
+    let quantBusy=false, lastQuantification=null;
+    // Parser tolerante: acepta número, o string con unidades y separadores mixtos ("12,5 kg", "1.234,56", "1,234.5").
+    function parseQuantNumber(v){
+      if(typeof v==="number") return Number.isFinite(v)?v:null;
+      if(v==null) return null;
+      let s=String(v).trim(); if(!s) return null;
+      s=s.replace(/[^0-9.,\-]/g,""); if(!s||s==="-") return null;
+      const hasDot=s.includes("."), hasComma=s.includes(",");
+      if(hasDot&&hasComma){ if(s.lastIndexOf(",")>s.lastIndexOf(".")) s=s.replace(/\./g,"").replace(",","."); else s=s.replace(/,/g,""); }
+      else if(hasComma){ const parts=s.split(","); if(parts.length>2 || (parts[1]&&parts[1].length===3)) s=s.replace(/,/g,""); else s=s.replace(",","."); }
+      const n=Number(s); return Number.isFinite(n)?n:null;
+    }
+    function classifyQuantType(p){ if(matchBolt(p)) return "bolts"; if(matchWeld(p)) return "welds"; if(findPropByAliases(p,["Profile","Section","Cross section"])) return "beams"; return "others"; }
+    function quantBump(o,v){ v=String(v==null?"":v).trim(); if(!v) return; o[v]=(o[v]||0)+1; }
+    function quantTopCounts(obj,limit){ const e=Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]); const lim=limit||8; const top=e.slice(0,lim); let s=top.map(([k,n])=>inspEsc(k)+" ("+n+")").join(", "); if(e.length>top.length) s+=", …+"+(e.length-top.length); return s; }
+    function quantGroupLine(label,obj){ const e=Object.entries(obj||{}); if(!e.length) return '<div class="insp-line">'+inspEsc(label)+': No disponible</div>'; return '<div class="insp-line">'+inspEsc(label)+': '+quantTopCounts(obj)+'</div>'; }
+    function renderQuantResult(out,msg){
+      const box=document.getElementById("quantifyResult"); if(!box) return;
+      if(msg){ box.innerHTML='<div class="hint">'+inspEsc(msg)+'</div>'; return; }
+      const f=(x,d)=>Number(x||0).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});
+      const sumLine=(label,key,d)=> out.counts[key]>0 ? '<div class="insp-line">'+label+': '+f(out.sums[key],d)+' <span class="hint" style="display:inline;">('+out.counts[key]+' con dato)</span></div>' : '<div class="insp-line">'+label+': No disponible</div>';
+      let html='<div class="insp-title">'+out.objects+' elemento(s) seleccionado(s)</div>';
+      if(out.totalVisible!=null) html+='<div class="insp-line">Visibles en contexto: '+out.totalVisible.toLocaleString("es-ES")+(out.percent!=null?' ('+out.percent+'% de la selección)':'')+'</div>';
+      else html+='<div class="hint">% sobre total visible: No disponible.</div>';
+      html+='<div class="insp-line">Tipologías — soldaduras: '+out.byType.welds+', tornillos: '+out.byType.bolts+', vigas/perfiles: '+out.byType.beams+', otros: '+out.byType.others+'</div>';
+      html+=sumLine("Peso total","weight",2);
+      html+=sumLine("Volumen total","volume",3);
+      html+=sumLine("Área total","area",3);
+      html+=sumLine("Longitud total","length",2);
+      if(out.byType.welds>0){
+        html+='<div class="insp-type" style="margin-top:6px;">Soldaduras ('+out.byType.welds+')</div>';
+        html+= out.welds.lengthCount>0?'<div class="insp-line">Longitud total: '+f(out.welds.lengthTotal,2)+' <span class="hint" style="display:inline;">('+out.welds.lengthCount+' con dato)</span></div>':'<div class="insp-line">Longitud total: No disponible</div>';
+        html+=quantGroupLine("Garganta/tamaño",out.welds.size);
+        html+=quantGroupLine("Tipo de soldadura",out.welds.type);
+        html+=quantGroupLine("Assembly/Cast unit Mark",out.welds.mark);
+      }
+      if(out.byType.bolts>0){
+        html+='<div class="insp-type" style="margin-top:6px;">Tornillos ('+out.byType.bolts+')</div>';
+        html+= out.bolts.boltCountHas>0?'<div class="insp-line">Bolt count total: '+f(out.bolts.boltCountTotal,0)+' <span class="hint" style="display:inline;">('+out.bolts.boltCountHas+' con dato)</span></div>':'<div class="insp-line">Bolt count total: No disponible (objetos tornillo: '+out.byType.bolts+')</div>';
+        html+=quantGroupLine("Diámetro/tamaño",out.bolts.size);
+        html+=quantGroupLine("Longitud",out.bolts.length);
+        html+=quantGroupLine("Estándar",out.bolts.standard);
+        html+=quantGroupLine("Material/calidad",out.bolts.material);
+      }
+      if(out.byType.beams>0||out.byType.others>0){
+        html+='<div class="insp-type" style="margin-top:6px;">Vigas/perfiles y otros ('+(out.byType.beams+out.byType.others)+')</div>';
+        html+=quantGroupLine("Perfil/Nombre",out.profiles.profile);
+        html+=quantGroupLine("Material",out.profiles.material);
+      }
+      if(out.truncated) html+='<div class="insp-warn">Cálculo truncado a '+QUANT_CAP+' objetos. Reduce la selección para el total exacto.</div>';
+      html+='<div class="hint">Agrupado por parámetro (valor → conteo). Las unidades dependen del modelo (Tekla/IFC); se suman tal cual.</div>';
+      box.innerHTML=html;
+    }
+    async function quantifySelection(){
+      if(quantBusy) return; quantBusy=true;
+      const t0=(typeof performance!=="undefined"&&performance.now)?performance.now():Date.now();
+      const out={objects:0,sums:{weight:0,volume:0,area:0,length:0},counts:{weight:0,volume:0,area:0,length:0},byType:{welds:0,bolts:0,beams:0,others:0},
+        welds:{lengthTotal:0,lengthCount:0,size:{},type:{},mark:{}},
+        bolts:{boltCountTotal:0,boltCountHas:0,size:{},length:{},standard:{},material:{}},
+        profiles:{material:{},profile:{}},
+        truncated:false,totalVisible:null,percent:null,processed:0,errors:[]};
+      try{
+        const sel=await safeGetSelection();
+        out.objects=sel.length;
+        if(!sel.length){ renderQuantResult(out,"Sin selección. Selecciona objetos y vuelve a pulsar."); lastQuantification=out; return; }
+        let list=sel; if(sel.length>QUANT_CAP){ list=sel.slice(0,QUANT_CAP); out.truncated=true; }
+        cancelRequested=false; showCancel(true); setProgress("Quantity Surveyor: leyendo propiedades...");
+        const byModel=new Map(); for(const o of list){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
+        for(const [modelId,ids] of byModel.entries()){
+          for(let i=0;i<ids.length;i+=PROPS_BATCH){
+            if(cancelRequested){ log("Quantity Surveyor: cancelado."); break; }
+            const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk);
+            for(const id of chunk){ const p=pm.get(id)||{}; out.processed++;
+              const t=classifyQuantType(p); out.byType[t]++;
+              for(const key of ["weight","volume","area","length"]){ const num=parseQuantNumber(findPropByAliases(p,QUANT_PARAM_ALIASES[key])); if(num!=null){ out.sums[key]+=num; out.counts[key]++; } }
+              if(t==="welds"){
+                const wl=parseQuantNumber(findPropByAliases(p,["Actual length 1","Actual length1","Actual length","Length"])); if(wl!=null){ out.welds.lengthTotal+=wl; out.welds.lengthCount++; }
+                quantBump(out.welds.size,findPropByAliases(p,["Size 1","Size1","Size"]));
+                quantBump(out.welds.type,findPropByAliases(p,["Type 1","Type1","Type"]));
+                quantBump(out.welds.mark,findPropByAliases(p,["Assembly/Cast unit Mark","Cast unit Mark","Assembly mark","Part mark"]));
+              } else if(t==="bolts"){
+                const bc=parseQuantNumber(findPropByAliases(p,["Bolt count","Number of bolts","Bolt Quantity"])); if(bc!=null){ out.bolts.boltCountTotal+=bc; out.bolts.boltCountHas++; }
+                quantBump(out.bolts.size,findPropByAliases(p,["Bolt size","NominalDiameter","Bolt Name"]));
+                quantBump(out.bolts.length,findPropByAliases(p,["Bolt length","NominalLength"]));
+                quantBump(out.bolts.standard,findPropByAliases(p,["Bolt standard"]));
+                quantBump(out.bolts.material,findPropByAliases(p,["Material","Bolt material","Quality","Grade"]));
+              } else {
+                quantBump(out.profiles.profile,findPropByAliases(p,["Profile","Section","Cross section"]));
+                quantBump(out.profiles.material,findPropByAliases(p,["Material","Grade"]));
+              }
+            }
+            setProgress("Quantity Surveyor: "+out.processed+"/"+list.length+"...");
+            await sleep(0);
+          }
+          if(cancelRequested) break;
+        }
+        try{ const mm=await getModelObjectsMap(); let tv=0; for(const arr of mm.values()) tv+=arr.length; out.totalVisible=tv||null; if(tv>0) out.percent=Math.round((out.objects/tv)*1000)/10; }catch(e){ out.errors.push("totalVisible: "+e.message); }
+        out.elapsedMs=Math.round(((typeof performance!=="undefined"&&performance.now)?performance.now():Date.now())-t0);
+        lastQuantification=out; renderQuantResult(out,null);
+        log("Quantity Surveyor: "+out.objects+" elemento(s); peso "+out.sums.weight.toFixed(2)+", volumen "+out.sums.volume.toFixed(3)+", área "+out.sums.area.toFixed(3)+", longitud "+out.sums.length.toFixed(2)+" ("+out.elapsedMs+" ms).");
+        setProgress("Quantity Surveyor listo.");
+      }catch(e){ recordError("quantifySelection",e); out.errors.push(e.message); lastQuantification=out; renderQuantResult(out,"Error al cuantificar: "+e.message); }
+      finally{ quantBusy=false; showCancel(false); }
+    }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
+      const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=()=>quantifySelection();
       const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
       const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueFromCache("qsParam2","qsValue2"));
       const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
@@ -2736,7 +2756,9 @@
       const rAll=document.getElementById("qsRefreshAll"); if(rAll) rAll.onclick=()=>refreshQuickAll();
       populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
       setQuickValueOptions("qsValue1",[]); setQuickValueOptions("qsValue2",[]);
-      const group=document.getElementById("quickActionsGroup"); let firstOpen=true;
+      // v8.10.1: el quick-select (Assembly type / Bolt standard) vive ahora en "Selector de items".
+      // El escaneo de parámetros se dispara al abrir esa herramienta.
+      const group=document.getElementById("includeTool"); let firstOpen=true;
       if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await scanModelParameters(); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
     }
 
@@ -2766,9 +2788,8 @@
       const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
       custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if(!custom.checked) customText.value=""; });
 
-      const ext=document.getElementById("extendedExport"); const folderSel=document.getElementById("folderSelect");
-      ext.addEventListener("change",()=>{ folderSel.disabled=!ext.checked; if(ext.checked) populateFolders(); });
-      const folderRefresh=document.getElementById("folderRefresh"); if(folderRefresh) folderRefresh.onclick=async ()=>{ setProgress("Actualizando grupos de vistas..."); await populateFolders(true); setProgress("Grupos de vistas actualizados: "+(viewGroupsCache.groups.length||0)+"."); };
+      const ext=document.getElementById("extendedExport"); const extHint=document.getElementById("extendedExportHint");
+      if(ext) ext.addEventListener("change",()=>{ if(extHint) extHint.style.display=ext.checked?"block":"none"; });
 
       // Selección cercanos (#1): la sensibilidad es un radio absoluto; recalcula sin reiniciar el estado.
       const nearPercent=document.getElementById("nearPercent"); if(nearPercent){ nearPercent.addEventListener("input",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); nearPercent.addEventListener("change",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); }
@@ -2776,8 +2797,11 @@
       const nearToggle=document.getElementById("nearToggle"); nearToggle.addEventListener("change",async ()=>{ syncNearUiState(); if(nearToggle.checked) scheduleProcessSelection(); else await removeToolAddedFromSelection(); });
 
       const excludeToggle=document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change",()=>{ if(excludeToggle.checked) populateExcludeColors(); scheduleProcessSelection(); });
+      excludeToggle.addEventListener("change",()=>{ if(excludeToggle.checked){ populateExcludeColors(); populateExcludeModels(); } scheduleProcessSelection(); });
       const excludeRefresh=document.getElementById("excludeRefresh"); if(excludeRefresh) excludeRefresh.onclick=()=>populateExcludeColors();
+      loadExcludedModelIds(); // v8.10.0: exclusiones por modelo/IFC persistidas
+      populateExcludeModels();
+      const excludeModelsRefresh=document.getElementById("excludeModelsRefresh"); if(excludeModelsRefresh) excludeModelsRefresh.onclick=()=>populateExcludeModels();
 
       const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
       hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; syncHiddenUiState(); await clearHiddenWhite(); } });
@@ -2798,20 +2822,6 @@
       wireLblBtn("lblAdd",addSavedLabelsForSelection);
       wireLblBtn("lblRemove",removeSavedLabelsForSelection);
       wireLblBtn("lblRemoveAll",removeAllSavedLabels);
-      // v8.9.1: tests del motor legacy (Zona Desarrollador)
-      wireLblBtn("legacyTestFixedBtn",legacyTestFixed);
-      wireLblBtn("legacyTestSelBtn",legacyTestSelection);
-      wireLblBtn("legacyTestParamsBtn",legacyTestParams);
-      wireLblBtn("legacyTestClearBtn",legacyTestsClear);
-      // v8.9.2: diagnóstico presentación/color
-      wireLblBtn("snapPresentationBtn",snapshotPresentation);
-      wireLblBtn("clearPresentationBtn",clearPresentationView);
-      wireLblBtn("restorePresentationBtn",restorePresentationSnapshot);
-      // v8.9.3: tests del motor de iconos (addIcon)
-      wireLblBtn("iconTestFixedBtn",iconTestFixed);
-      wireLblBtn("iconTestSelBtn",iconTestSelection);
-      wireLblBtn("iconTestParamsBtn",iconTestParams);
-      wireLblBtn("iconTestClearBtn",iconTestsClear);
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -2895,30 +2905,42 @@
         labels:savedParamLabels.slice(0,50).map((s)=>({markupId:s.markupId,modelId:s.modelId,runtimeId:s.runtimeId,type:s.type,title:s.title,text:String(s.text||"").slice(0,120),createdAt:s.createdAt,viewId:s.viewId,position:s.position})) };
       if(dbgTextMarkups){ const slIds=new Set(savedParamLabels.map((s)=>Number(s.markupId))); sl.presentInGetTextMarkups=dbgTextMarkups.filter((x)=>slIds.has(Number(x&&(x.id??x)))).length; }
       add("PARAM_SAVED_LABELS",safeJsonDeep(sl,2));
-      // ===== PARAM_LABEL_ENGINE_DIAG (v8.9.1): comparar motor legacy (TEST DEO x1000) vs motor actual =====
+      // ===== FLOATING_LABEL_DIAG: estado del motor de etiquetas 3D (addTextMarkup) =====
       const eng={ PARAM_SAVED_LABEL_ENGINE,
-        legacyTestLabelIds:legacyTestLabelIds.slice(0,50),
         lastLegacyPayload, lastLegacyResponse, lastCurrentPayload,
-        legacyPayloadShape:"start/end coordenadas puras en mm, SIN modelId/objectRuntimeId, z=(bb.max.z+0.5)*1000 (techo+0,5m), start==end",
-        currentPayloadShape:"start/end via markupPick: posiciones mm + modelId + objectRuntimeId, z=centroZ*1000+offsetMm, start==end, cascada stripPickRefs",
-        diferenciasDetectadas:[
-          "legacy NO incluye referencias de objeto (modelId/objectRuntimeId) en los picks; current SÍ",
-          "legacy ancla al TECHO del objeto (bb.max.z+0,5m); current al CENTRO+offset",
-          "legacy llama addTextMarkup directo de 1 en 1; current usa cascada addTextMarkupsRobust"
-        ] };
+        payloadShape:"start/end coordenadas puras en mm, SIN modelId/objectRuntimeId, z=(bb.max.z+0.5)*1000 (techo+0,5m), start==end",
+        notaVistas:"En vistas guardadas Trimble puede crear el markup sin renderizarlo; por eso Agregar solo se ofrece en modelo directo (v8.10.0)." };
       eng.getTextMarkupsTotal=dbgTextMarkups?dbgTextMarkups.length:"n/a";
-      if(dbgTextMarkups){ const lIds=new Set(legacyTestLabelIds.map(Number)); eng.legacyIdsPresent=dbgTextMarkups.filter((x)=>lIds.has(Number(x&&(x.id??x)))).length; }
+      if(dbgTextMarkups){ const sIds=new Set(savedParamLabels.map((s)=>Number(s.markupId))); eng.savedIdsPresent=dbgTextMarkups.filter((x)=>sIds.has(Number(x&&(x.id??x)))).length; }
       eng.selection=selection.slice(0,10);
       if(selection[0]){
-        try{ const bxs=await API.viewer.getObjectBoundingBoxes(selection[0].modelId,[selection[0].runtimeId]); const b=bxs&&bxs[0]?bboxOf(bxs[0]):null; eng.firstBbox=b; if(b) eng.legacyPositionForFirst={x:((b.min.x+b.max.x)/2)*1000,y:((b.min.y+b.max.y)/2)*1000,z:(b.max.z+0.5)*1000}; }catch(e){ eng.firstBboxError=e.message; }
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(selection[0].modelId,[selection[0].runtimeId]); const b=bxs&&bxs[0]?bboxOf(bxs[0]):null; eng.firstBbox=b; if(b) eng.labelPositionForFirst={x:((b.min.x+b.max.x)/2)*1000,y:((b.min.y+b.max.y)/2)*1000,z:(b.max.z+0.5)*1000}; }catch(e){ eng.firstBboxError=e.message; }
       }
       try{ if(API.viewer&&typeof API.viewer.getCamera==="function") eng.camera=await API.viewer.getCamera(); }catch(e){ eng.cameraError=e.message; }
       try{ const v=await API.view.getCurrentView(); eng.activeView=v?{id:v.id,name:v.name}:null; }catch(e){ eng.activeViewError=e.message; }
       try{ if(API.viewer&&typeof API.viewer.getModels==="function"){ const ms=await API.viewer.getModels(); eng.loadedModels=(Array.isArray(ms)?ms:[]).slice(0,10).map((m)=>({id:m&&m.id,name:m&&m.name})); } }catch(e){ eng.loadedModelsError=e.message; }
-      add("PARAM_LABEL_ENGINE_DIAG",safeJsonDeep(eng,2));
+      add("FLOATING_LABEL_DIAG",safeJsonDeep(eng,2));
       let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ add("getColoredObjects ERROR",e.message); }
       const colorSummary={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; colorSummary[k]=(colorSummary[k]||0)+1; }
       add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
+      // ===== COLOR_DIAG (v8.10.0): normalización de color, detección de no legibles (Tekla/no estándar) =====
+      const cdiag={ total:colored.length };
+      const uniqueValid=new Set(), illegibleSamples=[]; let legibleCount=0, illegibleCount=0;
+      for(const c of colored){ if(c.colorValid){ legibleCount++; uniqueValid.add(c.normalizedColor); } else { illegibleCount++; if(illegibleSamples.length<20) illegibleSamples.push({modelId:c.modelId,objectRuntimeId:c.objectRuntimeId,rawText:String(c.color||c.normalizedColor||"").slice(0,80)}); } }
+      cdiag.legibleCount=legibleCount; cdiag.illegibleCount=illegibleCount;
+      cdiag.uniqueLegibleColors=[...uniqueValid].sort().slice(0,60);
+      cdiag.uniqueLegibleColorsCount=uniqueValid.size;
+      cdiag.illegibleSamples=illegibleSamples;
+      cdiag.normalizationExamples=[{in:"#1A2B3C",out:normalizeColor("#1A2B3C")},{in:"{r:1,g:0.5,b:0,a:1}",out:normalizeColor({r:1,g:0.5,b:0,a:1})},{in:"[12,34,56]",out:normalizeColor([12,34,56])},{in:"rgb(10,20,30)",out:normalizeColor("rgb(10,20,30)")},{in:"texto-no-color",out:analyzeColor("texto-no-color").legible}];
+      cdiag.rule="Todo color válido se normaliza a #RRGGBBAA; alfa ausente -> FF; no interpretable -> '"+COLOR_ILLEGIBLE_TEXT+"' (nunca blanco).";
+      add("COLOR_DIAG",safeJsonDeep(cdiag,2));
+      // ===== EXCLUDE_MODELS_DIAG (v8.10.0): exclusión por modelo/IFC =====
+      const exm={ excludeToggle:!!(document.getElementById("excludeToggle")&&document.getElementById("excludeToggle").checked), excludedModelIds:[...excludedModelIds], excludedModelCount:excludedModelIds.size };
+      try{ exm.loadedModels=await getLoadedModelsList(); }catch(e){ exm.loadedModelsError=e.message; }
+      try{ exm.persisted=localStorage.getItem(EXCLUDE_MODELS_KEY); }catch(e){ exm.persistedError=e.message; }
+      add("EXCLUDE_MODELS_DIAG",safeJsonDeep(exm,2));
+      // ===== QUANTIFICATION_DIAG (v8.10.0): última cuantificación de selección =====
+      add("QUANTIFICATION_DIAG",safeJsonDeep(lastQuantification||{info:"Aún no se ha pulsado Cuantificar selección en esta sesión."},2));
       // ===== VIEW_MODEL_CONTEXT_DIAG (v8.9.0): comparar IFC donde los markups se ven vs modelo/vista donde no =====
       const ctx={};
       try{ const v=await API.view.getCurrentView(); ctx.activeView=v?{id:v.id,name:v.name,description:v.description,createdOn:v.createdOn,modifiedOn:v.modifiedOn,models:Array.isArray(v.models)?v.models.slice(0,20):v.models,files:Array.isArray(v.files)?v.files.slice(0,20):v.files,modelsFilesMismatch:(Array.isArray(v.models)&&Array.isArray(v.files))?(v.models.length!==v.files.length):undefined}:null; }catch(e){ ctx.activeViewError=e.message; }
@@ -2965,43 +2987,6 @@
       add("VISTAS",{total:(views||[]).length,firstKeys:views&&views[0]?Object.keys(views[0]):[],first10:(views||[]).slice(0,10),realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))]});
       add("PLANTILLAS GUARDADAS",loadTemplates());
       try{ add("HIDDEN SAMPLE",(await getHiddenObjectEntries()).slice(0,20)); }catch(e){ add("HIDDEN ERROR",e.message); }
-      // ===== PRESENTATION_RENDER_DIAG (v8.9.2): diagnóstico presentación/color vs visibilidad de markups =====
-      const prd={};
-      prd.presentationDiagLog=presentationDiagLog.slice();
-      prd.hasSnapshot=!!lastPresentationSnapshot;
-      if(lastPresentationSnapshot){
-        prd.snapshotTimestamp=lastPresentationSnapshot.timestamp;
-        prd.snapshotColoredTotal=lastPresentationSnapshot.coloredTotal??0;
-        prd.snapshotTextMarkupsTotal=lastPresentationSnapshot.textMarkupsTotal??0;
-        prd.snapshotPresentation=lastPresentationSnapshot.presentation;
-        prd.snapshotPresentationError=lastPresentationSnapshot.presentationError;
-      }
-      try{ prd.currentPresentation=await API.viewer.getPresentation(); }catch(e){ prd.currentPresentationError=e.message; }
-      let prdColored=[]; try{ prdColored=await getColoredObjectEntries(); }catch(e){ prd.coloredError=e.message; }
-      prd.currentColoredTotal=prdColored.length;
-      try{ const mk=markupApi(); if(mk){ const tms=await mk.getTextMarkups(); prd.currentTextMarkupsTotal=Array.isArray(tms)?tms.length:0; prd.legacyIdsPresent=(()=>{ const lSet=new Set(legacyTestLabelIds.map(Number)); return Array.isArray(tms)?tms.filter((x)=>lSet.has(Number(x&&(x.id??x)))).length:0; })(); prd.savedLabelIdsPresent=(()=>{ const sSet=new Set(savedParamLabels.map((s)=>Number(s.markupId))); return Array.isArray(tms)?tms.filter((x)=>sSet.has(Number(x&&(x.id??x)))).length:0; })(); } }catch(e){ prd.textMarkupsError=e.message; }
-      prd.setObjectStateAvailable=typeof API.viewer.setObjectState==="function";
-      prd.setPresentationAvailable=typeof API.viewer.setPresentation==="function";
-      prd.legacyTestLabelIds=legacyTestLabelIds.slice(0,50);
-      prd.savedParamLabelIds=savedParamLabels.slice(0,10).map((s)=>({markupId:s.markupId,engine:s.engine,type:s.type}));
-      add("PRESENTATION_RENDER_DIAG",safeJsonDeep(prd,2));
-      // ===== ICON_LABEL_ENGINE_DIAG (v8.9.3): probar si addIcon renderiza en vistas donde addTextMarkup no se ve =====
-      const ico={};
-      ico.addIconAvailable=!!(API.viewer&&typeof API.viewer.addIcon==="function");
-      ico.removeIconAvailable=!!(API.viewer&&typeof API.viewer.removeIcon==="function");
-      ico.iconTestLabelIds=iconTestLabelIds.slice(0,50);
-      ico.attempts=iconEngineDiag.attempts.slice(-30);
-      ico.errors=iconEngineDiag.errors.slice(-20);
-      ico.lastPayload=iconEngineDiag.lastPayload;
-      ico.lastResponse=iconEngineDiag.lastResponse;
-      ico.lastBbox=iconEngineDiag.lastBbox;
-      ico.removed=iconEngineDiag.removed;
-      ico.positionUnits="metros (centerIconFromBox: z=bb.max.z+max(0.08, alto*0.35) + dz por variante); OJO: los text markups van en mm (x1000)";
-      ico.variantsOrder=["svg-datauri","svg-base64","svg-short-text","fixed-marker"];
-      ico.selection=selection.slice(0,10);
-      try{ const v=await API.view.getCurrentView(); ico.activeView=v?{id:v.id,name:v.name}:null; }catch(e){ ico.activeViewError=e.message; }
-      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") ico.camera=await API.viewer.getCamera(); }catch(e){ ico.cameraError=e.message; }
-      add("ICON_LABEL_ENGINE_DIAG",safeJsonDeep(ico,2));
       add("ERRORES",errorHistory);
       downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt",out.join("\n"),"text/plain");
       log("Debug descargado.");
