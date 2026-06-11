@@ -500,6 +500,15 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
+      <!-- v8.9.1: tests del motor legacy de etiquetas (payload TEST DEO x1000 confirmado visible) -->
+      <div class="row">
+        <button type="button" id="legacyTestFixedBtn" data-tip="Reproduce el TEST DEO original (coordenadas puras x1000) sobre el objeto seleccionado.">Test etiqueta fija legacy</button>
+        <button type="button" id="legacyTestSelBtn" data-tip="Crea con el motor legacy una etiqueta con modelId/runtimeId del objeto seleccionado.">Test etiqueta selección legacy</button>
+      </div>
+      <div class="row">
+        <button type="button" id="legacyTestParamsBtn" data-tip="Detecta tipología (objeto/tornillo/soldadura) con la extracción actual y crea la etiqueta con el motor legacy.">Test parámetros legacy</button>
+        <button type="button" id="legacyTestClearBtn" data-tip="Borra solo las etiquetas creadas por estos tests.">Limpiar tests legacy</button>
+      </div>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
         <div class="tool-body"><pre id="log"></pre></div>
@@ -510,7 +519,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.9.0";
+    const SCRIPT_VERSION = "v8.9.1";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -531,6 +540,10 @@
     // v8.8.9: los markups 3D pasan a ser secundarios (en algunos modelos/vistas no se ven aunque la API los confirme).
     // El dato principal se muestra en el "Inspector de selección" del panel. Cambiar a true para reactivar los markups 3D de v8.8.8.
     const PARAM_USE_3D_MARKUPS = false;
+    // v8.9.1: motor usado por el botón "Agregar" para crear la etiqueta guardada.
+    // "legacy" = payload histórico que SÍ se vio en el visor (TEST DEO x1000, v8.8.3): coordenadas puras sin
+    // referencias de objeto, ancladas 0,5 m por encima del techo del objeto. "current" = markupPick con referencias.
+    const PARAM_SAVED_LABEL_ENGINE = "legacy";
 
     let API=null, lastConvertError="", cancelRequested=false, opRunning=false;
     let selectionTimer=null, selBusy=false, suppressSelectionUntil=0;
@@ -1775,6 +1788,7 @@
       const sel=await safeGetSelection();
       if(!sel.length){ log("No hay selección para agregar etiqueta."); setProgress("No hay selección para agregar etiqueta."); return; }
       if(!markupApi()){ log("Etiquetas guardadas: la API de markups de texto no está disponible en este entorno."); return; }
+      if(PARAM_SAVED_LABEL_ENGINE==="legacy") log("Agregar etiqueta: usando motor legacy");
       const items=sel.slice(0,DEEP_LOOKUP_CAP); // coste acotado
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       let viewId=""; try{ const v=await API.view.getCurrentView(); viewId=(v&&v.id)||""; }catch(e){}
@@ -1794,13 +1808,24 @@
         if(title) lines=lines.filter((l)=>l!==title);
         const text=[title,...lines].filter(Boolean).join("\n");
         if(!text){ skipped++; continue; }
-        // Mismo sistema de coordenadas validado en v8.8.8: punto elevado, start=end, markupPick con *1000.
-        const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
-        const dzMm=Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5);
-        const labelPick=markupPick(o.modelId,o.runtimeId,bb,dzMm);
-        const ids=await addTextMarkupsRobust([{start:labelPick,end:labelPick,text,color:{r:0,g:0,b:0,a:255}}]);
+        // v8.9.1: motor seleccionable. "legacy" = coordenadas puras ancladas al techo (TEST DEO x1000, confirmado visible).
+        // "current" = punto elevado con markupPick y referencias de objeto (v8.8.8).
+        let ids=[], posSent=null;
+        if(PARAM_SAVED_LABEL_ENGINE==="legacy"){
+          const payload=legacyLabelPayload(bb,text);
+          posSent={x:payload.start.positionX,y:payload.start.positionY,z:payload.start.positionZ};
+          ids=await legacyParamLabelEngine([{bb,text}]);
+        } else {
+          const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
+          const dzMm=Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5);
+          const labelPick=markupPick(o.modelId,o.runtimeId,bb,dzMm);
+          posSent={x:labelPick.positionX,y:labelPick.positionY,z:labelPick.positionZ};
+          const payload={start:labelPick,end:labelPick,text,color:{r:0,g:0,b:0,a:255}};
+          lastCurrentPayload=payload;
+          ids=await addTextMarkupsRobust([payload]);
+        }
         if(ids.length){
-          savedParamLabels.push({markupId:ids[0],modelId:o.modelId,runtimeId:o.runtimeId,type:det.type,title,text,createdAt:new Date().toISOString(),viewId,position:{x:labelPick.positionX,y:labelPick.positionY,z:labelPick.positionZ}});
+          savedParamLabels.push({markupId:ids[0],modelId:o.modelId,runtimeId:o.runtimeId,type:det.type,title,text,createdAt:new Date().toISOString(),viewId,engine:PARAM_SAVED_LABEL_ENGINE,position:posSent});
           added++; log("Etiqueta guardada: "+(title||text.split("\n")[0])+" (id "+ids[0]+", "+(INSPECTOR_TYPE_LABEL[det.type]||det.type)+").");
         } else { failed++; }
       }
@@ -1829,6 +1854,94 @@
       savedParamLabels.length=0;
       log("Etiquetas eliminadas: "+n+".");
       updateSavedLabelsCount();
+    }
+    // ===================== MOTOR LEGACY DE ETIQUETAS (v8.9.1) =====================
+    // Recuperado del historial: el payload del TEST DEO x1000 (commit 37a5271, v8.8.3) que SÍ se vio en el
+    // visor en la prueba real. Diferencias con el motor actual (markupPick):
+    //   1) coordenadas PURAS en mm, SIN modelId/objectRuntimeId en los picks;
+    //   2) anclaje 0,5 m por ENCIMA del TECHO del objeto (bb.max.z), no centro+offset;
+    //   3) start y end idénticos (punto, no línea).
+    // Registro separado: NO se mezcla con savedParamLabels ni con los stores del pipeline automático.
+    let legacyTestLabelIds=[];
+    let lastLegacyPayload=null, lastLegacyResponse=null, lastCurrentPayload=null;
+    function legacyLabelPayload(bb,text,color){
+      const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
+      const z=(bb.max.z+0.5)*1000; // techo + 0,5 m, escalado a mm (idéntico al TEST DEO x1000)
+      return {
+        start:{positionX:cx*1000,positionY:cy*1000,positionZ:z},
+        end:{positionX:cx*1000,positionY:cy*1000,positionZ:z},
+        text:text,
+        color:color||{r:0,g:0,b:0,a:255}
+      };
+    }
+    // items: [{bb,text,color?}]. registry (opcional): array donde apuntar los IDs creados.
+    async function legacyParamLabelEngine(items,registry){
+      const mk=markupApi();
+      if(!mk){ log("Motor legacy: la API de markups de texto no está disponible."); return []; }
+      const created=[];
+      for(const it of items){
+        const payload=legacyLabelPayload(it.bb,it.text,it.color);
+        lastLegacyPayload=payload;
+        try{
+          const added=await mk.addTextMarkup([payload]);
+          lastLegacyResponse=added;
+          const ids=normalizeMarkupIds(added);
+          if(ids.length){ created.push(ids[0]); if(registry) registry.push(ids[0]); }
+        }catch(e){ recordError("legacyEngine.add",e); lastLegacyResponse={error:e.message}; }
+      }
+      return created;
+    }
+    async function legacySelBbox(){
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("No hay selección para test legacy"); return null; }
+      const o=sel[0];
+      let bb=null;
+      try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("legacyTest.bbox",e); }
+      if(!bb){ log("Test legacy: no se ha podido obtener el bounding box."); return null; }
+      return {sel,o,bb};
+    }
+    async function legacyTestFixed(){
+      const got=await legacySelBbox(); if(!got) return;
+      const ids=await legacyParamLabelEngine([{bb:got.bb,text:"TEST DEO LEGACY v8.9.1",color:{r:200,g:0,b:0,a:255}}],legacyTestLabelIds);
+      if(ids.length) log("Legacy fixed label: creada id "+ids[0]);
+      else log("Legacy fixed label: la API no ha devuelto ID. Revisa PARAM_LABEL_ENGINE_DIAG en el debug.");
+    }
+    async function legacyTestSelection(){
+      const got=await legacySelBbox(); if(!got) return;
+      const text="TEST SELECCIÓN LEGACY\nmodelId: "+got.o.modelId+"\nruntimeId: "+got.o.runtimeId;
+      const ids=await legacyParamLabelEngine([{bb:got.bb,text,color:{r:0,g:90,b:200,a:255}}],legacyTestLabelIds);
+      if(ids.length) log("Legacy selection label: creada id "+ids[0]);
+      else log("Legacy selection label: la API no ha devuelto ID. Revisa PARAM_LABEL_ENGINE_DIAG en el debug.");
+    }
+    async function legacyTestParams(){
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("No hay selección para test legacy"); return; }
+      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
+      let created=0;
+      for(const o of sel.slice(0,5)){ // sirve para objeto/nombre, tornillo y soldadura
+        let bb=null;
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("legacyTest.bbox",e); }
+        if(!bb) continue;
+        const propsMap=await getPropertiesCached(o.modelId,[o.runtimeId]);
+        const p=propsMap.get(o.runtimeId)||{};
+        const det=await detectTypeAndProps(o.modelId,o.runtimeId,p,allowDeep); // extracción actual validada
+        const title=(det.type==="object")
+          ?((await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep)).text||"")
+          :(resolveBestNameLocal(det.props).text||(det.type==="bolt"?"Bolt assembly":"Weld"));
+        let lines=buildTypedLines(det.type,det.props);
+        if(title) lines=lines.filter((l)=>l!==title);
+        const text=[title,...lines].filter(Boolean).join("\n");
+        if(!text) continue;
+        const ids=await legacyParamLabelEngine([{bb,text}],legacyTestLabelIds);
+        if(ids.length){ created++; log("Legacy param label: creada id "+ids[0]+" ("+(INSPECTOR_TYPE_LABEL[det.type]||det.type)+")"); }
+      }
+      if(!created) log("No hay datos de parámetros para test legacy");
+    }
+    async function legacyTestsClear(){
+      const n=legacyTestLabelIds.length;
+      if(n) await removeMarkupIds(legacyTestLabelIds); // solo IDs de los tests legacy
+      legacyTestLabelIds=[];
+      log("Limpiar tests legacy: "+n+" eliminadas");
     }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
@@ -2430,6 +2543,11 @@
       wireLblBtn("lblAdd",addSavedLabelsForSelection);
       wireLblBtn("lblRemove",removeSavedLabelsForSelection);
       wireLblBtn("lblRemoveAll",removeAllSavedLabels);
+      // v8.9.1: tests del motor legacy (Zona Desarrollador)
+      wireLblBtn("legacyTestFixedBtn",legacyTestFixed);
+      wireLblBtn("legacyTestSelBtn",legacyTestSelection);
+      wireLblBtn("legacyTestParamsBtn",legacyTestParams);
+      wireLblBtn("legacyTestClearBtn",legacyTestsClear);
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -2513,6 +2631,27 @@
         labels:savedParamLabels.slice(0,50).map((s)=>({markupId:s.markupId,modelId:s.modelId,runtimeId:s.runtimeId,type:s.type,title:s.title,text:String(s.text||"").slice(0,120),createdAt:s.createdAt,viewId:s.viewId,position:s.position})) };
       if(dbgTextMarkups){ const slIds=new Set(savedParamLabels.map((s)=>Number(s.markupId))); sl.presentInGetTextMarkups=dbgTextMarkups.filter((x)=>slIds.has(Number(x&&(x.id??x)))).length; }
       add("PARAM_SAVED_LABELS",safeJsonDeep(sl,2));
+      // ===== PARAM_LABEL_ENGINE_DIAG (v8.9.1): comparar motor legacy (TEST DEO x1000) vs motor actual =====
+      const eng={ PARAM_SAVED_LABEL_ENGINE,
+        legacyTestLabelIds:legacyTestLabelIds.slice(0,50),
+        lastLegacyPayload, lastLegacyResponse, lastCurrentPayload,
+        legacyPayloadShape:"start/end coordenadas puras en mm, SIN modelId/objectRuntimeId, z=(bb.max.z+0.5)*1000 (techo+0,5m), start==end",
+        currentPayloadShape:"start/end via markupPick: posiciones mm + modelId + objectRuntimeId, z=centroZ*1000+offsetMm, start==end, cascada stripPickRefs",
+        diferenciasDetectadas:[
+          "legacy NO incluye referencias de objeto (modelId/objectRuntimeId) en los picks; current SÍ",
+          "legacy ancla al TECHO del objeto (bb.max.z+0,5m); current al CENTRO+offset",
+          "legacy llama addTextMarkup directo de 1 en 1; current usa cascada addTextMarkupsRobust"
+        ] };
+      eng.getTextMarkupsTotal=dbgTextMarkups?dbgTextMarkups.length:"n/a";
+      if(dbgTextMarkups){ const lIds=new Set(legacyTestLabelIds.map(Number)); eng.legacyIdsPresent=dbgTextMarkups.filter((x)=>lIds.has(Number(x&&(x.id??x)))).length; }
+      eng.selection=selection.slice(0,10);
+      if(selection[0]){
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(selection[0].modelId,[selection[0].runtimeId]); const b=bxs&&bxs[0]?bboxOf(bxs[0]):null; eng.firstBbox=b; if(b) eng.legacyPositionForFirst={x:((b.min.x+b.max.x)/2)*1000,y:((b.min.y+b.max.y)/2)*1000,z:(b.max.z+0.5)*1000}; }catch(e){ eng.firstBboxError=e.message; }
+      }
+      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") eng.camera=await API.viewer.getCamera(); }catch(e){ eng.cameraError=e.message; }
+      try{ const v=await API.view.getCurrentView(); eng.activeView=v?{id:v.id,name:v.name}:null; }catch(e){ eng.activeViewError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getModels==="function"){ const ms=await API.viewer.getModels(); eng.loadedModels=(Array.isArray(ms)?ms:[]).slice(0,10).map((m)=>({id:m&&m.id,name:m&&m.name})); } }catch(e){ eng.loadedModelsError=e.message; }
+      add("PARAM_LABEL_ENGINE_DIAG",safeJsonDeep(eng,2));
       let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ add("getColoredObjects ERROR",e.message); }
       const colorSummary={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; colorSummary[k]=(colorSummary[k]||0)+1; }
       add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
