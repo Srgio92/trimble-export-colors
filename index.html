@@ -25,6 +25,13 @@
     details.param-group > summary { font-weight: bold; padding: 8px 10px; }
     .param-group-body { padding: 4px 10px 10px; }
     .param-defaults-hint { color: #666; font-size: 11px; margin: 4px 0 2px; }
+    /* Inspector de selección (v8.8.9): lectura rápida en panel de los datos del objeto seleccionado */
+    .sel-inspector { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; margin: 8px 0; padding: 8px 10px; }
+    .sel-inspector-head { font-weight: bold; padding: 0 0 4px; }
+    .insp-type { display: inline-block; font-size: 11px; font-weight: bold; color: #1c7fd6; border: 1px solid #1c7fd6; border-radius: 10px; padding: 1px 8px; margin-bottom: 4px; }
+    .insp-title { font-weight: bold; font-size: 13px; margin: 2px 0; }
+    .insp-line { font-size: 12px; margin: 1px 0; }
+    .insp-warn { color: #b45309; font-size: 11px; margin-top: 4px; }
     .quick-color-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0; align-items: center; justify-content: center; }
     .quick-color-btn { width: 26px; height: 26px; padding: 0; border: 1px solid #c9d1d9; border-radius: 50%; background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .quick-color-btn:hover, .quick-color-btn:focus-visible { outline: 2px solid #1c7fd6; outline-offset: 1px; }
@@ -307,6 +314,11 @@
         </div>
       </details>
 
+      <div class="sel-inspector" id="selInspector">
+        <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado sin abrir el panel de propiedades de Trimble.">Inspector de selección</div>
+        <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
+      </div>
+
       <details class="param-group" id="quickActionsGroup">
         <summary>Acciones rápidas</summary>
         <div class="param-group-body">
@@ -487,7 +499,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.8";
+    const SCRIPT_VERSION = "v8.8.10";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -505,6 +517,9 @@
     const PARAM_LABEL_OFFSET_MM = 500;
     // Offset adicional por herramienta para que names/bolts/welds activos a la vez no queden apilados en el mismo punto.
     const PARAM_TOOL_OFFSET_MM = { names: 0, bolts: 250, welds: 500 };
+    // v8.8.9: los markups 3D pasan a ser secundarios (en algunos modelos/vistas no se ven aunque la API los confirme).
+    // El dato principal se muestra en el "Inspector de selección" del panel. Cambiar a true para reactivar los markups 3D de v8.8.8.
+    const PARAM_USE_3D_MARKUPS = false;
 
     let API=null, lastConvertError="", cancelRequested=false, opRunning=false;
     let selectionTimer=null, selBusy=false, suppressSelectionUntil=0;
@@ -1422,12 +1437,18 @@
     // Diagnóstico de creación de markups por herramienta (último intento). Lo vuelca exportDebug en PARAM_MARKUPS.
     const paramMarkupDiag={};
     // Captura payloads enviados, IDs devueltos, store final y verifica con getTextMarkups si Trimble los conserva.
-    async function captureMarkupDiag(toolKey,markups,stored,cfg){
+    // diagItems (opcional): bbox/centro/posición por objeto para comparar IFC normal vs modelo problemático.
+    async function captureMarkupDiag(toolKey,markups,stored,cfg,diagItems){
       const diag={ when:new Date().toISOString(), toolKey, toolOffsetMm:(PARAM_TOOL_OFFSET_MM[toolKey]||0),
         payloadCount:markups.length, responseCount:stored.length,
-        payloads:markups.slice(0,5).map((m)=>({anchorMode:"same elevated start/end", text:String(m.text||"").slice(0,160), startZ:m.start&&m.start.positionZ, endZ:m.end&&m.end.positionZ, offsetZmm:(m.end&&m.start)?(m.end.positionZ-m.start.positionZ):null})),
+        payloads:markups.slice(0,5).map((m)=>({anchorMode:"same elevated start/end", text:String(m.text||"").slice(0,160), modelId:m.start&&m.start.modelId, objectRuntimeId:m.start&&m.start.objectRuntimeId, startX:m.start&&m.start.positionX, startY:m.start&&m.start.positionY, startZ:m.start&&m.start.positionZ, endZ:m.end&&m.end.positionZ, offsetZmm:(m.end&&m.start)?(m.end.positionZ-m.start.positionZ):null})),
+        items:(diagItems||[]).slice(0,5),
+        firstPayloadExact:markups[0]||null,
         responseIds:stored.slice(0,50),
         store:(cfg.store||[]).slice(0,50), iconStore:(cfg.iconStore||[]).slice(0,50) };
+      try{ const v=await API.view.getCurrentView(); diag.activeView=v?{id:v.id,name:v.name,modelsCount:Array.isArray(v.models)?v.models.length:undefined,filesCount:Array.isArray(v.files)?v.files.length:undefined,models:Array.isArray(v.models)?v.models.slice(0,10):undefined,files:Array.isArray(v.files)?v.files.slice(0,10):undefined}:null; }catch(e){ diag.activeViewError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") diag.camera=await API.viewer.getCamera(); }catch(e){ diag.cameraError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getClippingPlanes==="function"){ const cp=await API.viewer.getClippingPlanes(); diag.clippingPlanesCount=Array.isArray(cp)?cp.length:cp; } }catch(e){ diag.clippingPlanesError=e.message; }
       try{
         const mk=markupApi();
         if(mk&&typeof mk.getTextMarkups==="function"){
@@ -1604,8 +1625,94 @@
       if(mark) lines.push("Mark: "+mark);
       return lines.join("\n");
     }
+    // ===================== INSPECTOR DE SELECCIÓN (v8.8.9) =====================
+    // Lectura principal en panel: tipo + líneas útiles del primer objeto seleccionado.
+    // Reutiliza la extracción ya validada (matchBolt/matchWeld/findPropByAliases/resolveNameDeep). No toca markups 3D.
+    const INSPECTOR_TYPE_LABEL={weld:"Soldadura",bolt:"Tornillo",name:"Nombre",object:"Objeto",none:"Sin selección"};
+    let inspectorSeq=0, inspectorTimer=null;
+    function inspectorLinesBolt(p){
+      const g=(al)=>findPropByAliases(p,al); const lines=[];
+      const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]); if(mark) lines.push("Mark: "+mark);
+      const boltName=g(["Bolt Name"]); if(boltName) lines.push("Bolt: "+boltName);
+      const size=g(["Bolt size","NominalDiameter"]), len=g(["Bolt length","NominalLength"]);
+      if(size||len) lines.push("Ø"+(size||"?")+(len?" x "+len:""));
+      const std=g(["Bolt standard"]); if(std) lines.push("Standard: "+std);
+      const mat=g(["Material"]); if(mat) lines.push("Material: "+mat);
+      const hole=g(["Bolt hole diameter"]); if(hole) lines.push("Hole Ø"+hole);
+      const count=g(["Bolt count"]); if(count) lines.push("x"+count);
+      return lines;
+    }
+    function inspectorLinesWeld(p){
+      const g=(al)=>findPropByAliases(p,al); const lines=[];
+      const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]); if(mark) lines.push("Mark: "+mark);
+      const t1=g(["Type1","Type 1"]); if(t1) lines.push("Type: "+t1);
+      const s1=g(["Size1","Size 1"]); if(s1) lines.push("Size: a"+s1);
+      const len=g(["Actual length1","Actual length 1","Length"]); if(len) lines.push("Length: "+len);
+      const t2=g(["Type2","Type 2"]), s2=g(["Size2","Size 2"]);
+      if(t2||s2) lines.push("Lado 2: "+[t2,s2?("a"+s2):""].filter(Boolean).join(" "));
+      const atype=g(["Assembly type"]); if(atype) lines.push("Assembly: "+atype);
+      const ndt=g(["NDT inspection level"]); if(ndt) lines.push("NDT: "+ndt);
+      return lines;
+    }
+    async function buildSelectionInspector(sel){
+      if(!sel||!sel.length) return {type:"none",title:"",lines:[],source:"none",selectionCount:0,modelId:null,runtimeId:null,debugInfo:{}};
+      const o=sel[0];
+      const propsMap=await getPropertiesCached(o.modelId,[o.runtimeId]);
+      const p=propsMap.get(o.runtimeId)||{};
+      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
+      const res={type:"object",title:"",lines:[],source:"objeto",selectionCount:sel.length,modelId:o.modelId,runtimeId:o.runtimeId,debugInfo:{allowDeep}};
+      const mb=await matchDeep(matchBolt,o.modelId,o.runtimeId,p,allowDeep);
+      if(mb.ok){
+        const dp=mb.props||p;
+        res.type="bolt"; res.source=mb.source; res.lines=inspectorLinesBolt(dp);
+        res.title=resolveBestNameLocal(dp).text||"Bolt assembly";
+        return res;
+      }
+      const mw=await matchDeep(matchWeld,o.modelId,o.runtimeId,p,allowDeep);
+      if(mw.ok){
+        const dp=mw.props||p;
+        res.type="weld"; res.source=mw.source; res.lines=inspectorLinesWeld(dp);
+        res.title=resolveBestNameLocal(dp).text||"Weld";
+        return res;
+      }
+      // Ni tornillo ni soldadura: placa/perfil u otro objeto. Mostrar marca/perfil útiles, nunca solo BEAM/PLATE.
+      const rn=await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep);
+      res.title=rn.text||"(sin nombre)"; res.source=rn.source||"objeto";
+      const g=(al)=>findPropByAliases(p,al);
+      const mark=g(["Assembly/Cast unit Mark","Cast unit Mark","Part mark","Assembly mark"]); if(mark) lines_pushUnique(res.lines,"Mark: "+mark);
+      const prof=g(["Profile","Section","Cross section"]); if(prof) lines_pushUnique(res.lines,"Profile: "+prof);
+      const mat=g(["Material"]); if(mat) lines_pushUnique(res.lines,"Material: "+mat);
+      const boltsOn=document.getElementById("boltsToggle"), weldsOn=document.getElementById("weldsToggle");
+      if((boltsOn&&boltsOn.checked)||(weldsOn&&weldsOn.checked)) res.warning="No es un tornillo/soldadura IFC detectable. Selecciona el Bolt assembly o Weld real.";
+      return res;
+    }
+    function lines_pushUnique(arr,line){ if(line&&!arr.includes(line)) arr.push(line); }
+    function inspEsc(s){ return String(s).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]||c)); }
+    function renderSelectionInspector(info){
+      const box=document.getElementById("selInspectorBody"); if(!box) return;
+      if(!info||info.type==="none"){ box.innerHTML='<div class="hint">Sin selección</div>'; return; }
+      let html='<div class="insp-type">'+inspEsc(INSPECTOR_TYPE_LABEL[info.type]||"Objeto")+'</div>';
+      if(info.title) html+='<div class="insp-title">'+inspEsc(info.title)+'</div>';
+      for(const l of info.lines) html+='<div class="insp-line">'+inspEsc(l)+'</div>';
+      if(info.warning) html+='<div class="insp-warn">'+inspEsc(info.warning)+'</div>';
+      if(info.source&&info.source!=="objeto"&&info.source!=="none") html+='<div class="hint">Dato encontrado en: '+inspEsc(info.source)+'.</div>';
+      if(info.selectionCount>1) html+='<div class="hint">Selección: '+info.selectionCount+' objetos (se muestra el primero).</div>';
+      box.innerHTML=html;
+    }
+    async function refreshSelectionInspector(){
+      const mySeq=++inspectorSeq;
+      try{
+        const sel=await safeGetSelection();
+        const info=await buildSelectionInspector(sel);
+        if(mySeq!==inspectorSeq) return; // la selección cambió mientras se calculaba: no pisar el render más nuevo
+        renderSelectionInspector(info);
+      }catch(e){ recordError("selectionInspector",e); }
+    }
+    function scheduleSelectionInspector(){ clearTimeout(inspectorTimer); inspectorTimer=setTimeout(refreshSelectionInspector,250); }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
+      // Con markups 3D desactivados: solo limpiar residuos y salir. Inspector hace la lectura principal.
+      if(!PARAM_USE_3D_MARKUPS){ await removeParamVisuals(cfg); return; }
       const mySeq=++paramRefreshSeq;
       const toggle=document.getElementById(cfg.toggleId);
       if(!toggle||!toggle.checked){ await removeParamVisuals(cfg); return; } // apagado: borrar siempre
@@ -1619,7 +1726,7 @@
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       log("Mostrar parámetros ("+toolKey+"): selección recibida "+sel.length+" objeto(s), allowDeep="+allowDeep+".");
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
-      const markups=[]; const iconItems=[]; let truncated=false;
+      const markups=[]; const iconItems=[]; const diagItems=[]; let truncated=false;
       let noBox=0, noMatch=0, noText=0, presetCount=0, weakSubstCount=0; const srcTally={objeto:0,padre:0,hijo:0};
       for(const [modelId,ids] of byModel.entries()){
         if(markups.length>=MAX_PARAM_MARKUPS){ truncated=true; break; }
@@ -1666,6 +1773,8 @@
             color:{r:0,g:0,b:0,a:255}
           });
           iconItems.push({bb,text});
+          // Diagnóstico comparativo (IFC normal vs modelo problemático): bbox, centro y posición exacta enviada.
+          diagItems.push({modelId,runtimeId:ids[i],bbMin:bb.min,bbMax:bb.max,centerZmm:((bb.min.z+bb.max.z)/2)*1000,dzMm,sentZ:labelPick.positionZ,sentX:labelPick.positionX,sentY:labelPick.positionY});
         }
       }
       const srcLabel="objeto:"+srcTally.objeto+" padre:"+srcTally.padre+" hijo:"+srcTally.hijo;
@@ -1680,6 +1789,13 @@
           log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en "+sel.length+" seleccionado(s). Descartes -> sin bbox:"+noBox+", sin coincidencia:"+noMatch+", sin texto:"+noText+".");
         }
         setProgress("Mostrar parámetros: sin objetos válidos.");
+        return;
+      }
+      if(!PARAM_USE_3D_MARKUPS){
+        // Markups 3D desactivados: el dato principal vive en el Inspector de selección del panel.
+        await removeParamVisuals(cfg);
+        log("Mostrar parámetros ("+toolKey+"): "+markups.length+" coincidencia(s); markups 3D desactivados (PARAM_USE_3D_MARKUPS=false). Datos en el Inspector de selección.");
+        setProgress("Datos en el Inspector de selección.");
         return;
       }
       if(!markupApi() && (!API.viewer||typeof API.viewer.addIcon!=="function")){ log("Mostrar parámetros: ni la API de markups de texto ni la de iconos están disponibles en este entorno."); setProgress("Mostrar parámetros no disponible en este entorno."); return; }
@@ -1703,7 +1819,7 @@
       } finally { if(manyMarkups && !opRunning) showCancel(false); }
       cfg.store=stored;
       // Diagnóstico real: ¿Trimble devolvió IDs y los conserva en getTextMarkups? Detalle completo en debug TXT.
-      try{ const dg=await captureMarkupDiag(toolKey,markups,stored,cfg); log("Mostrar parámetros ("+toolKey+"): markups diag -> enviados:"+dg.payloadCount+", ids:"+dg.responseCount+", getTextMarkups total:"+(dg.getTextMarkupsTotal!=null?dg.getTextMarkupsTotal:"n/a")+", recién presentes:"+(dg.createdIdsPresent!=null?dg.createdIdsPresent:"n/a")+", offset herramienta:"+dg.toolOffsetMm+"mm."); }catch(e){ recordError("captureMarkupDiag",e); }
+      try{ const dg=await captureMarkupDiag(toolKey,markups,stored,cfg,diagItems); log("Mostrar parámetros ("+toolKey+"): markups diag -> enviados:"+dg.payloadCount+", ids:"+dg.responseCount+", getTextMarkups total:"+(dg.getTextMarkupsTotal!=null?dg.getTextMarkupsTotal:"n/a")+", recién presentes:"+(dg.createdIdsPresent!=null?dg.createdIdsPresent:"n/a")+", offset herramienta:"+dg.toolOffsetMm+"mm."); }catch(e){ recordError("captureMarkupDiag",e); }
       if(stored.length===0 && !cancelRequested){
         const iconIds=await addLabelIcons(iconItems.slice(0,markups.length)); cfg.iconStore=iconIds;
         if(iconIds.length){ log("Mostrar parámetros ("+toolKey+"): "+iconIds.length+" etiqueta(s) como iconos SVG 3D (fallback). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas (fallback iconos): "+iconIds.length+"."); }
@@ -2186,7 +2302,7 @@
       const includeRefresh=document.getElementById("includeRefresh"); if(includeRefresh) includeRefresh.onclick=()=>populateIncludeColors();
 
       // Mostrar parámetros (#4-7)
-      for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>scheduleParamMarkups(key)); }
+      for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>{ if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); else removeParamVisuals(cfg); scheduleSelectionInspector(); }); }
       namesPicker.wire(); boltsPicker.wire(); weldsPicker.wire();
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
@@ -2199,7 +2315,7 @@
       document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
     }
-    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ scheduleProcessSelection(); scheduleAllParamMarkups(); } }
+    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ scheduleProcessSelection(); if(PARAM_USE_3D_MARKUPS) scheduleAllParamMarkups(); scheduleSelectionInspector(); } }
 
     async function main(){
       buildColumnsUI(); wireUI(); initTooltips();
