@@ -517,6 +517,15 @@
       <div class="row">
         <button type="button" id="restorePresentationBtn" data-tip="Intenta restaurar el snapshot de presentación guardado.">Restaurar presentación snapshot</button>
       </div>
+      <!-- v8.9.3: tests del motor de iconos 3D (API.viewer.addIcon) como alternativa visual a addTextMarkup -->
+      <div class="row">
+        <button type="button" id="iconTestFixedBtn" data-tip="Crea las 4 variantes de icono apiladas sobre la selección para ver cuál renderiza.">Test icono fijo</button>
+        <button type="button" id="iconTestSelBtn" data-tip="Crea un icono-etiqueta con modelId/runtimeId del objeto seleccionado.">Test icono selección</button>
+      </div>
+      <div class="row">
+        <button type="button" id="iconTestParamsBtn" data-tip="Detecta tipología (objeto/tornillo/soldadura) con la extracción actual y crea el icono-etiqueta con datos reales.">Test icono parámetros</button>
+        <button type="button" id="iconTestClearBtn" data-tip="Elimina solo los iconos creados por estos tests (no toca text markups ni etiquetas guardadas).">Limpiar iconos test</button>
+      </div>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
         <div class="tool-body"><pre id="log"></pre></div>
@@ -527,7 +536,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.9.2";
+    const SCRIPT_VERSION = "v8.9.3";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -2056,6 +2065,139 @@
         presentationDiagLog.push({step:"restore",result:"sin método disponible, restaura manualmente la vista guardada"});
       }
     }
+    // ===== v8.9.3: motor diagnóstico de iconos (API.viewer.addIcon) =====
+    // Hipótesis: en vistas activas addTextMarkup crea markups sin renderizarlos; addIcon (canal de iconos 3D,
+    // ya usado por el pipeline de "Mostrar parámetros") podría sí renderizarse. Motor PARALELO: no sustituye
+    // a addTextMarkup, no toca savedParamLabels ni el motor legacy.
+    // Registro separado: NO se mezcla con paramTools[*].iconStore ni con legacyTestLabelIds.
+    let iconTestLabelIds=[];
+    let iconTestSeq=990000; // ids cliente; rango separado de paramIconSeq (880000) para no colisionar
+    const iconEngineDiag={attempts:[],errors:[],lastPayload:null,lastResponse:null,lastBbox:null,removed:null};
+    // SVG según especificación: fondo blanco semitransparente, borde negro, texto negro, compacto, multilínea.
+    // Mismo patrón de dimensionado que labelIconPath (helper existente), distinto estilo de borde/texto.
+    function iconLabelSvg(text){
+      const lines=String(text||"").split(/\n/).slice(0,8);
+      const max=Math.max(4,...lines.map((l)=>l.length));
+      const w=Math.min(520,Math.max(90,max*7+18)); const h=Math.max(28,lines.length*14+10);
+      const rows=lines.map((l,i)=>'<text x="8" y="'+(17+i*14)+'" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#000000">'+xmlEsc(l)+'</text>').join("");
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><rect x="1" y="1" width="'+(w-2)+'" height="'+(h-2)+'" rx="4" fill="white" fill-opacity="0.85" stroke="#000000" stroke-width="1.5"/>'+rows+'</svg>';
+    }
+    function svgToDataUri(svg){ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); }
+    function svgToBase64Uri(svg){ try{ return "data:image/svg+xml;base64,"+btoa(unescape(encodeURIComponent(svg))); }catch(e){ recordError("iconEngine.b64",e); return null; } }
+    // Fallback sin texto largo: marcador fijo simple por si el visor rechaza SVGs grandes con texto.
+    function fixedMarkerSvg(){ return '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#ffcc00" fill-opacity="0.9" stroke="#000000" stroke-width="2"/><text x="16" y="21" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#000000">i</text></svg>'; }
+    // Envía UN icono con try/catch y vuelca payload/respuesta en iconEngineDiag. Devuelve el id cliente o null.
+    async function iconAddOne(bb,variantName,iconPath,zOffset,registry){
+      const pos=centerIconFromBox(bb); pos.z+=(zOffset||0); // metros (mismo convenio que el pipeline de iconos existente)
+      const icon={id:iconTestSeq++, position:pos, size:42, iconPath};
+      iconEngineDiag.lastPayload={variant:variantName,id:icon.id,position:pos,size:icon.size,iconPathLength:String(iconPath).length,iconPathPreview:String(iconPath).slice(0,140)};
+      iconEngineDiag.lastBbox=bb;
+      try{
+        const resp=await API.viewer.addIcon([icon]);
+        iconEngineDiag.lastResponse=(resp===undefined)?"undefined (la API no devuelve nada)":resp;
+        iconEngineDiag.attempts.push({when:new Date().toISOString(),variant:variantName,id:icon.id,position:pos,result:"ok",response:(resp===undefined)?"undefined":String(safeJson(resp)).slice(0,200)});
+        if(registry) registry.push(icon.id);
+        return icon.id;
+      }catch(e){
+        recordError("iconEngine.add."+variantName,e);
+        iconEngineDiag.lastResponse={error:e.message};
+        iconEngineDiag.attempts.push({when:new Date().toISOString(),variant:variantName,id:icon.id,result:"error: "+e.message});
+        iconEngineDiag.errors.push(variantName+": "+e.message);
+        return null;
+      }
+    }
+    // Motor: por etiqueta prueba variantes en orden (data URI -> base64 -> texto corto -> marcador fijo)
+    // y se queda con la primera que la API acepta sin excepción.
+    async function iconLabelEngine(items,registry){
+      if(!API.viewer||typeof API.viewer.addIcon!=="function"){ log("Motor iconos: API.viewer.addIcon no está disponible en este entorno."); iconEngineDiag.attempts.push({variant:"none",result:"addIcon no existe"}); return []; }
+      const created=[];
+      for(const it of items){
+        const svg=iconLabelSvg(it.text);
+        const shortText=String(it.text||"").split(/\n/)[0].slice(0,24);
+        const variants=[
+          {name:"svg-datauri",iconPath:svgToDataUri(svg)},
+          {name:"svg-base64",iconPath:svgToBase64Uri(svg)},
+          {name:"svg-short-text",iconPath:svgToDataUri(iconLabelSvg(shortText))},
+          {name:"fixed-marker",iconPath:svgToDataUri(fixedMarkerSvg())}
+        ].filter((v)=>v.iconPath);
+        let id=null;
+        for(const v of variants){ id=await iconAddOne(it.bb,v.name,v.iconPath,0,registry); if(id!=null) break; }
+        if(id!=null) created.push(id);
+        else log("Motor iconos: ninguna variante aceptada. Revisa ICON_LABEL_ENGINE_DIAG en el debug.");
+      }
+      return created;
+    }
+    async function iconSelBbox(){
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("No hay selección para test de iconos"); return null; }
+      const o=sel[0];
+      let bb=null;
+      try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("iconTest.bbox",e); }
+      if(!bb){ log("Test iconos: no se ha podido obtener el bounding box."); return null; }
+      return {sel,o,bb};
+    }
+    // Test fijo: crea las 4 variantes APILADAS en vertical (0 / 0,5 / 1,0 / 1,5 m) para ver de un vistazo
+    // cuál de ellas renderiza el visor en la vista activa.
+    async function iconTestFixed(){
+      const got=await iconSelBbox(); if(!got) return;
+      if(!API.viewer||typeof API.viewer.addIcon!=="function"){ log("Test icono fijo: API.viewer.addIcon no existe en este entorno."); iconEngineDiag.attempts.push({variant:"none",result:"addIcon no existe"}); return; }
+      const base="ICON TEST v8.9.3";
+      const variants=[
+        {name:"svg-datauri",iconPath:svgToDataUri(iconLabelSvg(base+"\nvariante: data URI")),dz:0},
+        {name:"svg-base64",iconPath:svgToBase64Uri(iconLabelSvg(base+"\nvariante: base64")),dz:0.5},
+        {name:"svg-short-text",iconPath:svgToDataUri(iconLabelSvg(base)),dz:1.0},
+        {name:"fixed-marker",iconPath:svgToDataUri(fixedMarkerSvg()),dz:1.5}
+      ].filter((v)=>v.iconPath);
+      let ok=0;
+      for(const v of variants){ const id=await iconAddOne(got.bb,v.name,v.iconPath,v.dz,iconTestLabelIds); if(id!=null) ok++; }
+      log("Test icono fijo: "+ok+"/"+variants.length+" variantes enviadas sin error (apiladas: dataURI / base64 / texto corto / marcador). Comprueba cuál se ve en el visor.");
+    }
+    async function iconTestSelection(){
+      const got=await iconSelBbox(); if(!got) return;
+      const text="ICON SELECCIÓN\nmodelId: "+got.o.modelId+"\nruntimeId: "+got.o.runtimeId;
+      const ids=await iconLabelEngine([{bb:got.bb,text}],iconTestLabelIds);
+      if(ids.length) log("Test icono selección: creado id "+ids[0]);
+    }
+    // Mismo pipeline de datos que el inspector y que el test legacy: detectTypeAndProps + buildTypedLines.
+    async function iconTestParams(){
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("No hay selección para test de iconos"); return; }
+      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
+      let created=0;
+      for(const o of sel.slice(0,5)){
+        let bb=null;
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("iconTest.bbox",e); }
+        if(!bb) continue;
+        const propsMap=await getPropertiesCached(o.modelId,[o.runtimeId]);
+        const p=propsMap.get(o.runtimeId)||{};
+        const det=await detectTypeAndProps(o.modelId,o.runtimeId,p,allowDeep);
+        const title=(det.type==="object")
+          ?((await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep)).text||"")
+          :(resolveBestNameLocal(det.props).text||(det.type==="bolt"?"Bolt assembly":"Weld"));
+        let lines=buildTypedLines(det.type,det.props);
+        if(title) lines=lines.filter((l)=>l!==title);
+        const text=[title,...lines].filter(Boolean).join("\n");
+        if(!text) continue;
+        const ids=await iconLabelEngine([{bb,text}],iconTestLabelIds);
+        if(ids.length){ created++; log("Test icono parámetros: creado id "+ids[0]+" ("+(INSPECTOR_TYPE_LABEL[det.type]||det.type)+")"); }
+      }
+      if(!created) log("No hay datos de parámetros para test de iconos");
+    }
+    async function iconTestsClear(){
+      const n=iconTestLabelIds.length;
+      if(!n){ log("Limpiar iconos test: no hay iconos de test."); iconEngineDiag.removed={requested:0,result:"nada que eliminar"}; return; }
+      if(!API.viewer||typeof API.viewer.removeIcon!=="function"){ log("Limpiar iconos test: API.viewer.removeIcon no existe."); iconEngineDiag.removed={requested:n,result:"removeIcon no existe"}; return; }
+      try{
+        await API.viewer.removeIcon(iconTestLabelIds.map(Number).filter(Number.isFinite)); // solo IDs de estos tests
+        iconEngineDiag.removed={requested:n,result:"ok"};
+        log("Limpiar iconos test: "+n+" eliminados");
+      }catch(e){
+        recordError("iconTests.clear",e);
+        iconEngineDiag.removed={requested:n,result:"error: "+e.message};
+        log("Limpiar iconos test: error "+e.message);
+      }
+      iconTestLabelIds=[];
+    }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
       // Con markups 3D desactivados: solo limpiar residuos y salir. Inspector hace la lectura principal.
@@ -2665,6 +2807,11 @@
       wireLblBtn("snapPresentationBtn",snapshotPresentation);
       wireLblBtn("clearPresentationBtn",clearPresentationView);
       wireLblBtn("restorePresentationBtn",restorePresentationSnapshot);
+      // v8.9.3: tests del motor de iconos (addIcon)
+      wireLblBtn("iconTestFixedBtn",iconTestFixed);
+      wireLblBtn("iconTestSelBtn",iconTestSelection);
+      wireLblBtn("iconTestParamsBtn",iconTestParams);
+      wireLblBtn("iconTestClearBtn",iconTestsClear);
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -2838,6 +2985,23 @@
       prd.legacyTestLabelIds=legacyTestLabelIds.slice(0,50);
       prd.savedParamLabelIds=savedParamLabels.slice(0,10).map((s)=>({markupId:s.markupId,engine:s.engine,type:s.type}));
       add("PRESENTATION_RENDER_DIAG",safeJsonDeep(prd,2));
+      // ===== ICON_LABEL_ENGINE_DIAG (v8.9.3): probar si addIcon renderiza en vistas donde addTextMarkup no se ve =====
+      const ico={};
+      ico.addIconAvailable=!!(API.viewer&&typeof API.viewer.addIcon==="function");
+      ico.removeIconAvailable=!!(API.viewer&&typeof API.viewer.removeIcon==="function");
+      ico.iconTestLabelIds=iconTestLabelIds.slice(0,50);
+      ico.attempts=iconEngineDiag.attempts.slice(-30);
+      ico.errors=iconEngineDiag.errors.slice(-20);
+      ico.lastPayload=iconEngineDiag.lastPayload;
+      ico.lastResponse=iconEngineDiag.lastResponse;
+      ico.lastBbox=iconEngineDiag.lastBbox;
+      ico.removed=iconEngineDiag.removed;
+      ico.positionUnits="metros (centerIconFromBox: z=bb.max.z+max(0.08, alto*0.35) + dz por variante); OJO: los text markups van en mm (x1000)";
+      ico.variantsOrder=["svg-datauri","svg-base64","svg-short-text","fixed-marker"];
+      ico.selection=selection.slice(0,10);
+      try{ const v=await API.view.getCurrentView(); ico.activeView=v?{id:v.id,name:v.name}:null; }catch(e){ ico.activeViewError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") ico.camera=await API.viewer.getCamera(); }catch(e){ ico.cameraError=e.message; }
+      add("ICON_LABEL_ENGINE_DIAG",safeJsonDeep(ico,2));
       add("ERRORES",errorHistory);
       downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt",out.join("\n"),"text/plain");
       log("Debug descargado.");
