@@ -509,6 +509,14 @@
         <button type="button" id="legacyTestParamsBtn" data-tip="Detecta tipología (objeto/tornillo/soldadura) con la extracción actual y crea la etiqueta con el motor legacy.">Test parámetros legacy</button>
         <button type="button" id="legacyTestClearBtn" data-tip="Borra solo las etiquetas creadas por estos tests.">Limpiar tests legacy</button>
       </div>
+      <!-- v8.9.2: diagnóstico presentación/color vs visibilidad de markups -->
+      <div class="row">
+        <button type="button" id="snapPresentationBtn" data-tip="Guarda presentación, objetos coloreados, cámara, selección y total de markups actuales.">Snapshot presentación</button>
+        <button type="button" id="clearPresentationBtn" data-tip="Intenta neutralizar el estado visual (presentación/colores) para comprobar si los markups vuelven a verse.">Limpiar presentación vista</button>
+      </div>
+      <div class="row">
+        <button type="button" id="restorePresentationBtn" data-tip="Intenta restaurar el snapshot de presentación guardado.">Restaurar presentación snapshot</button>
+      </div>
       <details class="tool">
         <summary class="subtitle">Registro de trabajo</summary>
         <div class="tool-body"><pre id="log"></pre></div>
@@ -519,7 +527,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.9.1";
+    const SCRIPT_VERSION = "v8.9.2";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1864,6 +1872,9 @@
     // Registro separado: NO se mezcla con savedParamLabels ni con los stores del pipeline automático.
     let legacyTestLabelIds=[];
     let lastLegacyPayload=null, lastLegacyResponse=null, lastCurrentPayload=null;
+    // v8.9.2: diagnóstico presentación/color vs visibilidad de markups
+    let lastPresentationSnapshot=null;
+    const presentationDiagLog=[];
     function legacyLabelPayload(bb,text,color){
       const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
       const z=(bb.max.z+0.5)*1000; // techo + 0,5 m, escalado a mm (idéntico al TEST DEO x1000)
@@ -1942,6 +1953,108 @@
       if(n) await removeMarkupIds(legacyTestLabelIds); // solo IDs de los tests legacy
       legacyTestLabelIds=[];
       log("Limpiar tests legacy: "+n+" eliminadas");
+    }
+    // v8.9.2: snapshot de presentación — guarda estado antes de limpiar para poder comparar/restaurar
+    async function snapshotPresentation(){
+      const snap={};
+      try{ snap.presentation=await API.viewer.getPresentation(); }catch(e){ snap.presentationError=e.message; }
+      try{ snap.coloredObjects=await getColoredObjectEntries(); snap.coloredTotal=snap.coloredObjects.length; }catch(e){ snap.coloredError=e.message; snap.coloredObjects=[]; }
+      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") snap.camera=await API.viewer.getCamera(); }catch(e){ snap.cameraError=e.message; }
+      try{ snap.selection=await API.viewer.getSelection(); }catch(e){ snap.selectionError=e.message; }
+      try{ const mk=markupApi(); if(mk){ const tms=await mk.getTextMarkups(); snap.textMarkupsTotal=Array.isArray(tms)?tms.length:0; } }catch(e){ snap.textMarkupsError=e.message; }
+      snap.timestamp=new Date().toISOString();
+      lastPresentationSnapshot=snap;
+      presentationDiagLog.length=0;
+      presentationDiagLog.push({step:"snapshot",coloredTotal:snap.coloredTotal??0,textMarkupsTotal:snap.textMarkupsTotal??0,ts:snap.timestamp});
+      log("Snapshot presentación: guardado. Coloreados="+(snap.coloredTotal??"?")+" markups="+(snap.textMarkupsTotal??"?"));
+    }
+    // v8.9.2: intenta neutralizar el estado de presentación/color de forma segura y diagnóstica
+    async function clearPresentationView(){
+      presentationDiagLog.length=0;
+      const diag=(step,result)=>presentationDiagLog.push({step,result});
+      // Paso 1: intentar setPresentation(null) si la API existe
+      log("Limpiar presentación vista: intento setPresentation...");
+      if(API.viewer&&typeof API.viewer.setPresentation==="function"){
+        try{ await API.viewer.setPresentation(null); diag("setPresentation(null)","ok"); log("Limpiar presentación vista: setPresentation(null) ok"); }
+        catch(e){ diag("setPresentation(null)","error: "+e.message); log("Limpiar presentación vista: setPresentation(null) error: "+e.message); }
+      } else {
+        diag("setPresentation","API no existe");
+        log("Limpiar presentación vista: API.viewer.setPresentation no existe.");
+      }
+      // Paso 2: limpiar color de una muestra pequeña de objetos coloreados (max 50)
+      let coloredBefore=[];
+      try{ coloredBefore=await getColoredObjectEntries(); }catch(e){ diag("getColoredBefore","error: "+e.message); }
+      log("Limpiar presentación vista: objetos coloreados antes "+coloredBefore.length);
+      diag("coloredBefore",coloredBefore.length);
+      const SAMPLE_SIZE=50;
+      const sampleItems=coloredBefore.slice(0,SAMPLE_SIZE);
+      if(sampleItems.length){
+        const byModel=new Map();
+        for(const o of sampleItems){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.objectRuntimeId); }
+        for(const [modelId,ids] of byModel.entries()){
+          try{
+            await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:null});
+            diag("setObjectState color:null model="+modelId+" n="+ids.length,"ok");
+            log("Limpiar presentación vista: color:null muestra "+ids.length+" en "+modelId+" -> ok");
+          }catch(e){
+            diag("setObjectState color:null model="+modelId,"error: "+e.message);
+            log("Limpiar presentación vista: color:null error en "+modelId+": "+e.message);
+          }
+        }
+      }
+      let coloredAfter=[];
+      try{ coloredAfter=await getColoredObjectEntries(); }catch(e){ diag("getColoredAfter","error: "+e.message); }
+      diag("coloredAfter",coloredAfter.length);
+      log("Limpiar presentación vista: objetos coloreados antes "+coloredBefore.length+", después "+coloredAfter.length);
+      try{
+        const mk=markupApi();
+        if(mk){ const tms=await mk.getTextMarkups(); const n=Array.isArray(tms)?tms.length:0; diag("textMarkupsAfterClean",n); log("Limpiar presentación vista: textMarkups "+n); }
+      }catch(e){ diag("textMarkupsAfterClean","error: "+e.message); }
+    }
+    // v8.9.2: intenta restaurar el snapshot guardado (presentación y muestra de colores)
+    async function restorePresentationSnapshot(){
+      if(!lastPresentationSnapshot){ log("Restaurar presentación snapshot: no hay snapshot guardado."); return; }
+      const snap=lastPresentationSnapshot;
+      let restored=false;
+      // Intentar restaurar via setPresentation
+      if(API.viewer&&typeof API.viewer.setPresentation==="function"&&snap.presentation!==undefined){
+        try{
+          await API.viewer.setPresentation(snap.presentation);
+          presentationDiagLog.push({step:"restore.setPresentation",result:"ok"});
+          log("Restaurar presentación snapshot: setPresentation aplicado.");
+          restored=true;
+        }catch(e){
+          presentationDiagLog.push({step:"restore.setPresentation",result:"error: "+e.message});
+          log("Restaurar presentación snapshot: setPresentation error: "+e.message);
+        }
+      }
+      // Intentar restaurar colores de la muestra limpiada (primeros 50 del snapshot)
+      const SAMPLE_SIZE=50;
+      const sampleItems=(snap.coloredObjects||[]).slice(0,SAMPLE_SIZE);
+      if(sampleItems.length){
+        const byModelColor=new Map();
+        for(const o of sampleItems){
+          const key=o.modelId+"|"+(o.normalizedColor||"");
+          if(!byModelColor.has(key)) byModelColor.set(key,{modelId:o.modelId,normalizedColor:o.normalizedColor,ids:[]});
+          byModelColor.get(key).ids.push(o.objectRuntimeId);
+        }
+        for(const {modelId,normalizedColor,ids} of byModelColor.values()){
+          const ac=analyzeColor(normalizedColor);
+          if(!ac.valid||!ac.rgba) continue;
+          try{
+            await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:ac.rgba,opacity:100});
+            presentationDiagLog.push({step:"restore.colors.model="+modelId,result:"ok, n="+ids.length});
+            restored=true;
+          }catch(e){
+            presentationDiagLog.push({step:"restore.colors.model="+modelId,result:"error: "+e.message});
+          }
+        }
+        if(restored) log("Restaurar presentación snapshot: colores de muestra restaurados.");
+      }
+      if(!restored){
+        log("No se puede restaurar presentación automáticamente con la API disponible.");
+        presentationDiagLog.push({step:"restore",result:"sin método disponible, restaura manualmente la vista guardada"});
+      }
     }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
@@ -2548,6 +2661,10 @@
       wireLblBtn("legacyTestSelBtn",legacyTestSelection);
       wireLblBtn("legacyTestParamsBtn",legacyTestParams);
       wireLblBtn("legacyTestClearBtn",legacyTestsClear);
+      // v8.9.2: diagnóstico presentación/color
+      wireLblBtn("snapPresentationBtn",snapshotPresentation);
+      wireLblBtn("clearPresentationBtn",clearPresentationView);
+      wireLblBtn("restorePresentationBtn",restorePresentationSnapshot);
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -2701,6 +2818,26 @@
       add("VISTAS",{total:(views||[]).length,firstKeys:views&&views[0]?Object.keys(views[0]):[],first10:(views||[]).slice(0,10),realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))]});
       add("PLANTILLAS GUARDADAS",loadTemplates());
       try{ add("HIDDEN SAMPLE",(await getHiddenObjectEntries()).slice(0,20)); }catch(e){ add("HIDDEN ERROR",e.message); }
+      // ===== PRESENTATION_RENDER_DIAG (v8.9.2): diagnóstico presentación/color vs visibilidad de markups =====
+      const prd={};
+      prd.presentationDiagLog=presentationDiagLog.slice();
+      prd.hasSnapshot=!!lastPresentationSnapshot;
+      if(lastPresentationSnapshot){
+        prd.snapshotTimestamp=lastPresentationSnapshot.timestamp;
+        prd.snapshotColoredTotal=lastPresentationSnapshot.coloredTotal??0;
+        prd.snapshotTextMarkupsTotal=lastPresentationSnapshot.textMarkupsTotal??0;
+        prd.snapshotPresentation=lastPresentationSnapshot.presentation;
+        prd.snapshotPresentationError=lastPresentationSnapshot.presentationError;
+      }
+      try{ prd.currentPresentation=await API.viewer.getPresentation(); }catch(e){ prd.currentPresentationError=e.message; }
+      let prdColored=[]; try{ prdColored=await getColoredObjectEntries(); }catch(e){ prd.coloredError=e.message; }
+      prd.currentColoredTotal=prdColored.length;
+      try{ const mk=markupApi(); if(mk){ const tms=await mk.getTextMarkups(); prd.currentTextMarkupsTotal=Array.isArray(tms)?tms.length:0; prd.legacyIdsPresent=(()=>{ const lSet=new Set(legacyTestLabelIds.map(Number)); return Array.isArray(tms)?tms.filter((x)=>lSet.has(Number(x&&(x.id??x)))).length:0; })(); prd.savedLabelIdsPresent=(()=>{ const sSet=new Set(savedParamLabels.map((s)=>Number(s.markupId))); return Array.isArray(tms)?tms.filter((x)=>sSet.has(Number(x&&(x.id??x)))).length:0; })(); } }catch(e){ prd.textMarkupsError=e.message; }
+      prd.setObjectStateAvailable=typeof API.viewer.setObjectState==="function";
+      prd.setPresentationAvailable=typeof API.viewer.setPresentation==="function";
+      prd.legacyTestLabelIds=legacyTestLabelIds.slice(0,50);
+      prd.savedParamLabelIds=savedParamLabels.slice(0,10).map((s)=>({markupId:s.markupId,engine:s.engine,type:s.type}));
+      add("PRESENTATION_RENDER_DIAG",safeJsonDeep(prd,2));
       add("ERRORES",errorHistory);
       downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt",out.join("\n"),"text/plain");
       log("Debug descargado.");
