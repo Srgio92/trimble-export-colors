@@ -487,7 +487,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.5";
+    const SCRIPT_VERSION = "v8.8.6";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1353,18 +1353,60 @@
     }
     async function removeParamIcons(ids){ const clean=[...(ids||[])].map(Number).filter(Number.isFinite); if(clean.length&&API.viewer&&typeof API.viewer.removeIcon==="function"){ try{ await API.viewer.removeIcon(clean); }catch(e){ recordError("removeParamIcons",e); } } }
     async function removeParamVisuals(cfg){ await removeMarkupIds(cfg.store); cfg.store=[]; await removeParamIcons(cfg.iconStore); cfg.iconStore=[]; }
-    // Identificación de tornillería y soldaduras: Name del objeto + clase/propiedades IFC como respaldo.
-    function matchBolt(p){
-      const names=getNameValues(p).map((v)=>v.toLowerCase());
-      if(names.some((n)=>n.includes("bolt"))) return true;
-      const t=propsSearchText(p);
-      return t.includes("bolt assembly")||t.includes("mechanicalfastener")||t.includes("ifcmechanicalfastener")||t.includes("tornillo")||t.includes("perno");
+    // --- Extracción tolerante (v8.8.6) para names/bolts/welds. NO toca flattenProps/getParamValue (los usa CSV). ---
+    // Normaliza una clave: minúsculas y sin espacios/guiones/barras/underscore. "Type 1"->"type1", "Assembly/Cast unit Mark"->"assemblycastunitmark".
+    function normKey(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,""); }
+    // Como flattenProps pero además captura nodos contenedores con nombre (property sets: "Tekla Weld Common"),
+    // la class y product.name. Con guard de ciclos.
+    function flattenNamed(p){
+      const flat=[]; const seen=new WeakSet();
+      const walk=(obj)=>{ if(!obj||typeof obj!=="object"||seen.has(obj)) return; seen.add(obj);
+        if(Array.isArray(obj)){ obj.forEach(walk); return; }
+        const name=obj.name??obj.Name??obj.key??obj.propertyName;
+        const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue;
+        if(name!==undefined){
+          if(value!==undefined && typeof value!=="object") flat.push({name:String(name),value:String(value)});
+          else flat.push({name:String(name),value:""}); // contenedor/property set con nombre
+        }
+        for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]);
+      };
+      walk(p);
+      try{ if(p&&p.class!=null) flat.push({name:"class",value:String(p.class)}); }catch(e){}
+      try{ if(p&&p.product&&p.product.name!=null) flat.push({name:"product.name",value:String(p.product.name)}); }catch(e){}
+      return flat;
     }
+    function findProductName(p){ try{ if(p&&p.product&&p.product.name!=null) return String(p.product.name); }catch(e){} return ""; }
+    // Valor de la primera clave (por alias, comparación normalizada) cuyo valor no esté vacío.
+    function findPropByAliases(p,aliases){
+      const flat=flattenNamed(p); const wants=aliases.map(normKey);
+      for(const w of wants){ const hit=flat.find((x)=>normKey(x.name)===w && String(x.value||"").trim()); if(hit) return String(hit.value).trim(); }
+      return "";
+    }
+    // ¿Existe alguna clave (por nombre) que coincida con los alias? (presencia, ignora valor).
+    function hasAnyName(p,aliases){ const flat=flattenNamed(p); const wants=aliases.map(normKey); return flat.some((x)=>{ const nk=normKey(x.name); return wants.some((w)=>nk===w); }); }
+    // Texto de búsqueda que incluye nombres de property set, class y product.name.
+    function searchTextNamed(p){ return flattenNamed(p).map((x)=>x.name+" "+x.value).join(" ").toLowerCase(); }
+    // Tornillo si: class IFCMECHANICALFASTENER, product.name contiene "bolt", property set "Tekla Bolt",
+    // o claves Bolt*/Nominal*. No confunde con soldadura (que es IFCFASTENER, sin "mechanical").
+    function matchBolt(p){
+      const t=searchTextNamed(p);
+      if(t.includes("ifcmechanicalfastener")||t.includes("mechanicalfastener")) return true;
+      if(findProductName(p).toLowerCase().includes("bolt")) return true;
+      if(t.includes("tekla bolt")) return true;
+      if(hasAnyName(p,["Bolt Name","Bolt size","Bolt length","Bolt standard","NominalDiameter","NominalLength","Bolt count","Bolt hole diameter"])) return true;
+      if(t.includes("bolt assembly")||t.includes("tornillo")||t.includes("perno")) return true;
+      return false;
+    }
+    // Soldadura si: product.name contiene "weld", property set "Tekla Weld *", o claves Type/Size/Actual length 1/2.
+    // No confunde con tornillo (IFCMECHANICALFASTENER no contiene la subcadena "ifcfastener").
     function matchWeld(p){
-      const names=getNameValues(p).map((v)=>v.toLowerCase());
-      if(names.some((n)=>n.includes("weld"))) return true;
-      const t=propsSearchText(p);
-      return t.includes("weld")||t.includes("soldadura");
+      const t=searchTextNamed(p);
+      if(findProductName(p).toLowerCase().includes("weld")) return true;
+      if(t.includes("tekla weld common")||t.includes("tekla weld above line")||t.includes("tekla weld below line")) return true;
+      if(hasAnyName(p,["Type1","Size1","Actual length1","Type2","Size2","Actual length2"])) return true;
+      if(t.includes("soldadura")) return true;
+      if(t.includes("ifcfastener")) return true;
+      return false;
     }
     const paramTools={
       names:{toggleId:"namesToggle", picker:namesPicker, match:null, store:[], iconStore:[]},
@@ -1375,21 +1417,24 @@
     let paramRefreshSeq=0; // cancela refrescos solapados (cambios rápidos de selección)
     function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const val=getParamValue(p,name); if(val===""||val==null) continue; if(String(name).trim().toLowerCase()==="name") lines.push(val); else lines.push(name+": "+val); } return lines.join("\n"); }
     // --- Resolución robusta de nombres (v8.8.4): evita nombres genéricos tipo BEAM/PLATE/... ---
-    const GENERIC_NAME_SET=new Set(["beam","plate","bolt","object","part","assembly","item","element","member","nut","washer","screw","weld","profile","column","brace","slab","wall","unknown","no name"]);
+    const GENERIC_NAME_SET=new Set(["beam","plate","bolt","bolt assembly","object","part","assembly","item","element","member","nut","washer","screw","weld","profile","column","brace","slab","wall","unknown","no name"]);
     function isGenericName(s){ const t=String(s||"").trim().toLowerCase(); if(!t) return true; return GENERIC_NAME_SET.has(t); }
-    const NAME_PROFILE_PROPS=["profile","section","cross section","crosssection","cross-section"];
-    const NAME_MARK_PROPS=["part mark","assembly mark","cast unit mark","part position","assembly position","piece mark","piecemark","mark","position","reference","tag"];
-    function pickNamedProp(p,wanted){ const flat=flattenProps(p); for(const want of wanted){ const w=want.toLowerCase(); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===w && String(x.value||"").trim()); if(hit) return String(hit.value).trim(); } return ""; }
+    // Prioridad de nombre (v8.8.6): marca de conjunto/pieza > perfil > Name no genérico > product.name no genérico.
+    const NAME_PRIORITY=[
+      {prop:"Assembly/Cast unit Mark", al:["Assembly/Cast unit Mark","Cast unit Mark"]},
+      {prop:"Part mark", al:["Part mark","Part position","Piece mark","Piecemark"]},
+      {prop:"Assembly mark", al:["Assembly mark","Assembly position"]},
+      {prop:"Profile", al:["Profile","Section","Cross section","Crosssection"]}
+    ];
     // Mejor nombre a partir SOLO de las propiedades propias del objeto.
     function resolveBestNameLocal(p){
+      for(const item of NAME_PRIORITY){ const v=findPropByAliases(p,item.al); if(v && !isGenericName(v)) return {text:v,source:"objeto",prop:item.prop}; }
       const direct=(getNameValues(p)[0]||"").trim();
       if(direct && !isGenericName(direct)) return {text:direct,source:"objeto",prop:"Name"};
-      const profile=pickNamedProp(p,NAME_PROFILE_PROPS);
-      const mark=pickNamedProp(p,NAME_MARK_PROPS);
-      if(profile && mark) return {text:profile+" "+mark,source:"objeto",prop:"Profile+Mark"};
-      if(profile) return {text:profile,source:"objeto",prop:"Profile"};
-      if(mark) return {text:mark,source:"objeto",prop:"Mark"};
+      const prod=findProductName(p).trim();
+      if(prod && !isGenericName(prod)) return {text:prod,source:"objeto",prop:"product.name"};
       if(direct) return {text:direct,source:"objeto",prop:"Name(genérico)"};
+      if(prod) return {text:prod,source:"objeto",prop:"product.name(genérico)"};
       return {text:"",source:"",prop:""};
     }
     // Propiedades de padres jerárquicos de UN objeto (defensivo, una llamada por objeto).
@@ -1453,20 +1498,82 @@
     }
     // Coincidencia tornillo/soldadura: objeto -> padre -> hijo. SOLO añade; nunca quita lo que ya casaba.
     async function matchDeep(matchFn,modelId,id,p,allowDeep){
-      if(matchFn(p)) return {ok:true,source:"objeto"};
-      if(!allowDeep) return {ok:false,source:""};
-      for(const pp of await fetchParentProps(modelId,id)) if(matchFn(pp)) return {ok:true,source:"padre"};
-      for(const kp of await fetchChildProps(modelId,id,20)) if(matchFn(kp)) return {ok:true,source:"hijo"};
-      return {ok:false,source:""};
+      if(matchFn(p)) return {ok:true,source:"objeto",props:p};
+      if(!allowDeep) return {ok:false,source:"",props:null};
+      for(const pp of await fetchParentProps(modelId,id)) if(matchFn(pp)) return {ok:true,source:"padre",props:pp};
+      for(const kp of await fetchChildProps(modelId,id,20)) if(matchFn(kp)) return {ok:true,source:"hijo",props:kp};
+      return {ok:false,source:"",props:null};
     }
-    // Etiqueta de la herramienta "names": el parámetro Name usa el nombre resuelto; el resto, valor directo.
+    // Etiqueta de la herramienta "names": el parámetro Name usa el nombre resuelto; el resto, valor por alias.
     function buildNamesLabel(p,params,resolvedName){
       const lines=[];
       for(const name of params){
-        const key=String(name).trim().toLowerCase();
-        if(key==="name"){ if(resolvedName) lines.push(resolvedName); }
-        else { const val=getParamValue(p,name); if(val!==""&&val!=null) lines.push(name+": "+val); }
+        const key=String(name).trim();
+        if(key.toLowerCase()==="name"){ if(resolvedName) lines.push(resolvedName); }
+        else { const val=findPropByAliases(p,[key]); if(val) lines.push(key+": "+val); }
       }
+      return lines.join("\n");
+    }
+    // Etiqueta por parámetros de la UI pero con búsqueda por alias (tolerante a Type1 vs "Type 1", etc.).
+    function buildParamLabelAlias(p,params){
+      const lines=[];
+      for(const name of params){
+        const key=String(name).trim();
+        if(key.toLowerCase()==="name"){ const nv=resolveBestNameLocal(p); if(nv.text) lines.push(nv.text); continue; }
+        const val=findPropByAliases(p,[key]); if(val) lines.push(key+": "+val);
+      }
+      return lines.join("\n");
+    }
+    // Detecta etiquetas genéricas/inútiles que deben reemplazarse por el preset.
+    function isWeakParamLabel(toolKey, text){
+      if(!text) return false;
+      const t=text.trim().toLowerCase();
+      if(toolKey==="bolts"){
+        const BOLT_WEAK=/^(bolt assembly|name:\s*bolt assembly|name:\s*bolt|bolt object|object:\s*bolt|bolt)$/;
+        if(BOLT_WEAK.test(t)) return true;
+        // Fuerte si contiene diámetro explícito, dimensiones, identificador de norma, material, hole o mark real
+        if(/Ø|M\d{2}|\d+\s*x\s*\d+|standard|mat:|material|hole|mark:|HV_|EN-/i.test(text)) return false;
+        return true; // cualquier otro texto sin datos reales → débil
+      }
+      if(toolKey==="welds"){
+        const WELD_WEAK=/^(weld|name:\s*weld)$/;
+        if(WELD_WEAK.test(t)) return true;
+        // Débil si no hay ningún indicador de dato real
+        if(!/w\d|a\d|size|length|actual|workshop|ndt|mark:/i.test(text)) return true;
+        return false;
+      }
+      return false;
+    }
+    // Preset útil de tornillo a partir de las propiedades reales detectadas.
+    function buildBoltLabel(p){
+      const g=(al)=>findPropByAliases(p,al); const lines=[];
+      const boltName=g(["Bolt Name"]);
+      const size=g(["Bolt size","NominalDiameter"]), len=g(["Bolt length","NominalLength"]);
+      const std=g(["Bolt standard"]), mat=g(["Material"]), hole=g(["Bolt hole diameter"]), count=g(["Bolt count"]);
+      const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]);
+      if(boltName) lines.push(boltName);
+      if(size||len) lines.push("Ø"+(size||"?")+(len?" x "+len:""));
+      if(std) lines.push(std);
+      if(mat) lines.push("Mat: "+mat);
+      if(hole) lines.push("Hole Ø"+hole);
+      if(count) lines.push("x"+count);
+      if(mark) lines.push("Mark: "+mark);
+      return lines.join("\n");
+    }
+    // Preset útil de soldadura. Si hay datos arriba y abajo: "W10 a6 L=315 / W10 a6 L=315".
+    function buildWeldLabel(p){
+      const g=(al)=>findPropByAliases(p,al); const lines=[];
+      const len=g(["Length"]);
+      const t1=g(["Type1","Type 1"]), s1=g(["Size1","Size 1"]), l1=g(["Actual length1","Actual length 1"]);
+      const t2=g(["Type2","Type 2"]), s2=g(["Size2","Size 2"]), l2=g(["Actual length2","Actual length 2"]);
+      const atype=g(["Assembly type"]), ndt=g(["NDT inspection level"]);
+      const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]);
+      const side=(t,s,l)=>{ const parts=[]; if(t) parts.push(t); if(s) parts.push("a"+s); const L=l||len; if(L) parts.push("L="+L); return parts.join(" "); };
+      const a=side(t1,s1,l1), b=side(t2,s2,l2);
+      if(a&&b) lines.push(a+" / "+b); else if(a) lines.push(a); else if(b) lines.push(b); else if(len) lines.push("L="+len);
+      if(atype) lines.push(atype);
+      if(ndt) lines.push("NDT: "+ndt);
+      if(mark) lines.push("Mark: "+mark);
       return lines.join("\n");
     }
     async function refreshParamMarkups(toolKey){
@@ -1485,7 +1592,7 @@
       log("Mostrar parámetros ("+toolKey+"): selección recibida "+sel.length+" objeto(s), allowDeep="+allowDeep+".");
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
       const markups=[]; const iconItems=[]; let truncated=false;
-      let noBox=0, noMatch=0, noText=0; const srcTally={objeto:0,padre:0,hijo:0};
+      let noBox=0, noMatch=0, noText=0, presetCount=0, weakSubstCount=0; const srcTally={objeto:0,padre:0,hijo:0};
       for(const [modelId,ids] of byModel.entries()){
         if(markups.length>=MAX_PARAM_MARKUPS){ truncated=true; break; }
         let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,ids); }catch(e){ recordError("paramMarkups.bbox",e); continue; }
@@ -1506,7 +1613,17 @@
             if(mySeq!==paramRefreshSeq) return;
             if(!m.ok){ noMatch++; continue; }
             if(m.source) srcTally[m.source]=(srcTally[m.source]||0)+1;
-            text=buildParamLabel(p,params);
+            // La etiqueta se construye desde los props donde casó (objeto/padre/hijo), no necesariamente el seleccionado.
+            const dataProps=m.props||p;
+            const uiText=buildParamLabelAlias(dataProps,params);
+            const presetText=(toolKey==="bolts")?buildBoltLabel(dataProps):buildWeldLabel(dataProps);
+            if(!uiText){
+              text=presetText||""; if(text) presetCount++;
+            } else if(isWeakParamLabel(toolKey,uiText)&&presetText){
+              text=presetText; presetCount++; weakSubstCount++; // etiqueta débil sustituida por preset
+            } else {
+              text=uiText;
+            }
           }
           if(!text){ noText++; continue; }
           const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
@@ -1525,7 +1642,12 @@
       if(!allowDeep && toolKey!=="names") log("Mostrar parámetros ("+toolKey+"): selección grande ("+sel.length+"); no se amplía la búsqueda a padres/hijos.");
       if(markups.length===0){
         await removeParamVisuals(cfg); // selección válida pero sin candidatos: limpiar y explicar el motivo
-        log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en "+sel.length+" seleccionado(s). Descartes -> sin bbox:"+noBox+", sin coincidencia:"+noMatch+", sin texto:"+noText+".");
+        if((toolKey==="bolts"||toolKey==="welds") && noMatch>0){
+          const tipo=toolKey==="bolts"?"tornillo":"soldadura";
+          log("Mostrar parámetros ("+toolKey+"): sin coincidencia: la selección no contiene objeto "+tipo+" ni hijos jerárquicos detectables ("+sel.length+" seleccionado(s), sin coincidencia:"+noMatch+").");
+        } else {
+          log("Mostrar parámetros ("+toolKey+"): sin objetos válidos en "+sel.length+" seleccionado(s). Descartes -> sin bbox:"+noBox+", sin coincidencia:"+noMatch+", sin texto:"+noText+".");
+        }
         setProgress("Mostrar parámetros: sin objetos válidos.");
         return;
       }
@@ -1554,7 +1676,7 @@
         if(iconIds.length){ log("Mostrar parámetros ("+toolKey+"): "+iconIds.length+" etiqueta(s) como iconos SVG 3D (fallback). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas (fallback iconos): "+iconIds.length+"."); }
         else { log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas y el fallback de iconos no está disponible. Revisa permisos del visor."); setProgress("No se han podido crear etiquetas."); }
       }
-      else if(stored.length){ log("Mostrar parámetros ("+toolKey+"): "+stored.length+"/"+markups.length+" etiqueta(s) creada(s) sobre "+sel.length+" seleccionado(s). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas: "+stored.length+"."); }
+      else if(stored.length){ let modo; if(toolKey==="names") modo="nombre"; else if(!presetCount) modo="params UI"; else if(weakSubstCount&&weakSubstCount===presetCount) modo="preset por etiqueta débil:"+presetCount+"/"+markups.length; else if(weakSubstCount) modo="preset:"+presetCount+"/"+markups.length+"("+weakSubstCount+" débil→preset)"; else modo="preset:"+presetCount+"/"+markups.length; log("Mostrar parámetros ("+toolKey+"): "+stored.length+"/"+markups.length+" etiqueta(s) creada(s) sobre "+sel.length+" seleccionado(s). Tipo "+toolKey+", "+modo+". Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas: "+stored.length+"."); }
     }
     function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeParamVisuals(cfg); return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
