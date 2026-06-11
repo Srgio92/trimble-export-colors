@@ -32,6 +32,8 @@
     .insp-title { font-weight: bold; font-size: 13px; margin: 2px 0; }
     .insp-line { font-size: 12px; margin: 1px 0; }
     .insp-warn { color: #b45309; font-size: 11px; margin-top: 4px; }
+    .insp-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .insp-actions button { flex: 1; padding: 4px 6px; font-size: 11px; }
     .quick-color-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0; align-items: center; justify-content: center; }
     .quick-color-btn { width: 26px; height: 26px; padding: 0; border: 1px solid #c9d1d9; border-radius: 50%; background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .quick-color-btn:hover, .quick-color-btn:focus-visible { outline: 2px solid #1c7fd6; outline-offset: 1px; }
@@ -237,7 +239,7 @@
       <details class="param-group" id="paramGroup">
         <summary data-tip="Muestra etiquetas con parámetros de los objetos seleccionados.">Mostrar parámetros</summary>
         <div class="param-group-body">
-          <div class="hint" style="margin-bottom:6px;">Cada opción etiqueta únicamente los objetos que tengas seleccionados.</div>
+          <div class="hint" style="margin-bottom:6px;">El inspector muestra los datos del objeto seleccionado. Configura los parámetros por tipología en cada sección y usa Agregar para guardar etiquetas 3D.</div>
 
           <details class="tool model-tool" id="namesTool">
             <summary class="subtitle" data-tip="Etiqueta los objetos seleccionados con su Name (y los parámetros que añadas).">
@@ -248,13 +250,14 @@
               <details class="cols-details">
                 <summary>Parámetros a mostrar</summary>
                 <div class="cols-inner">
-                  <div class="param-defaults-hint">Valor predefinido: Name.</div>
+                  <div class="param-defaults-hint">Predefinidos: Name, Assembly/Cast unit Mark, Profile, Material.</div>
                   <div id="namesParamList"></div>
                   <div class="column-add-box">
                     <div class="column-picker-row">
                       <button id="namesParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
                       <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                       <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                      <button id="namesParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                     </div>
                     <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                   </div>
@@ -272,13 +275,14 @@
               <details class="cols-details">
                 <summary>Parámetros a mostrar</summary>
                 <div class="cols-inner">
-                  <div class="param-defaults-hint">Filtra Name = "Bolt assembly". Predefinidos: Bolt standard, Bolt size, Bolt length, Slotted hole X, Slotted hole Y, Material.</div>
+                  <div class="param-defaults-hint">Filtra tornillos (Bolt assembly). Predefinidos: Assembly/Cast unit Mark, Bolt Name, Bolt size, Bolt length, Bolt standard, Material, Bolt hole diameter.</div>
                   <div id="boltsParamList"></div>
                   <div class="column-add-box">
                     <div class="column-picker-row">
                       <button id="boltsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
                       <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                       <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                      <button id="boltsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                     </div>
                     <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                   </div>
@@ -296,13 +300,14 @@
               <details class="cols-details">
                 <summary>Parámetros a mostrar</summary>
                 <div class="cols-inner">
-                  <div class="param-defaults-hint">Filtra Name = "Weld". Predefinidos: Assembly type, Length, Size 1, Type 1.</div>
+                  <div class="param-defaults-hint">Filtra soldaduras (Weld). Predefinidos: Assembly/Cast unit Mark, Type 1, Size 1, Actual length 1, Length, Assembly type.</div>
                   <div id="weldsParamList"></div>
                   <div class="column-add-box">
                     <div class="column-picker-row">
                       <button id="weldsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
                       <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                       <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
+                      <button id="weldsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                     </div>
                     <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                   </div>
@@ -311,13 +316,19 @@
             </div>
           </details>
 
+          <div class="sel-inspector" id="selInspector">
+            <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado sin abrir el panel de propiedades de Trimble.">Inspector de selección</div>
+            <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
+            <div class="insp-actions">
+              <button type="button" id="lblAdd" data-tip="Guarda una etiqueta 3D flotante con los datos del inspector. No se borra al deseleccionar.">Agregar</button>
+              <button type="button" id="lblRemove" data-tip="Elimina las etiquetas guardadas de los objetos seleccionados.">Eliminar</button>
+              <button type="button" id="lblRemoveAll" data-tip="Elimina todas las etiquetas guardadas por esta herramienta.">Eliminar todos</button>
+            </div>
+            <div class="hint" id="lblCount"></div>
+          </div>
+
         </div>
       </details>
-
-      <div class="sel-inspector" id="selInspector">
-        <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado sin abrir el panel de propiedades de Trimble.">Inspector de selección</div>
-        <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
-      </div>
 
       <details class="param-group" id="quickActionsGroup">
         <summary>Acciones rápidas</summary>
@@ -499,7 +510,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.8.10";
+    const SCRIPT_VERSION = "v8.9.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -697,7 +708,10 @@
     function makeParamPicker(opts){
       let params = opts.defaults.slice();
       let draggedParamIndex = null;
+      let localAvailable = null; // parámetros leídos del objeto seleccionado (v8.9.0); null -> usar caché del modelo
       function getParams(){ return params.slice(); }
+      function setParams(arr){ if(!Array.isArray(arr)) return; params=arr.filter((x)=>typeof x==="string"&&x.trim()).slice(0,40); buildList(); updateSelect(); }
+      function resetDefaults(){ params=opts.defaults.slice(); buildList(); updateSelect(); if(opts.onChange) opts.onChange(); }
       function buildList(){
         const list=document.getElementById(opts.listId); if(!list) return; list.innerHTML="";
         params.forEach((name,index)=>{
@@ -721,21 +735,51 @@
       function updateSelect(){
         const sel=document.getElementById(opts.selectId); if(!sel) return; const keep=sel.value; sel.innerHTML="";
         const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="Añadir parámetro..."; sel.appendChild(ph);
-        const available=(csvAvailableParametersCache||[]).filter((p)=>p && !params.some((x)=>x.toLowerCase()===p.toLowerCase()));
-        const grp=document.createElement("optgroup"); grp.label="Parámetros del modelo";
+        const source=localAvailable||csvAvailableParametersCache||[];
+        const available=source.filter((p)=>p && !params.some((x)=>x.toLowerCase()===p.toLowerCase()));
+        const grp=document.createElement("optgroup"); grp.label=localAvailable?"Parámetros del objeto seleccionado":"Parámetros del modelo";
         if(available.length){ for(const p of available){ const o=document.createElement("option"); o.value=p; o.textContent=p; grp.appendChild(o); } }
         else { const o=document.createElement("option"); o.disabled=true; o.value=""; o.textContent=(csvAvailableParametersCache&&csvAvailableParametersCache.length)?"No quedan parámetros":"Pulsa \u21BB para leer parámetros"; grp.appendChild(o); }
         sel.appendChild(grp);
         if(keep && [...sel.options].some((o)=>o.value===keep)) sel.value=keep;
       }
       function add(){ const sel=document.getElementById(opts.selectId); if(!sel||!sel.value) return; const v=sel.value; if(!params.some((x)=>x.toLowerCase()===v.toLowerCase())) params.push(v); sel.value=""; buildList(); updateSelect(); if(opts.onChange) opts.onChange(); }
-      async function refresh(){ await scanModelParameters(); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+"."); }
-      function wire(){ const a=document.getElementById(opts.addId); if(a) a.onclick=add; const r=document.getElementById(opts.refreshId); if(r) r.onclick=()=>refresh(); buildList(); updateSelect(); }
-      return { getParams, buildList, updateSelect, refresh, wire };
+      async function refresh(){
+        // v8.9.0: con selección, ofrecer las propiedades reales del objeto seleccionado (flattenNamed); sin selección, las del modelo.
+        localAvailable=null;
+        try{
+          const sel=await safeGetSelection();
+          if(sel.length){
+            const propsMap=await getPropertiesCached(sel[0].modelId,[sel[0].runtimeId]);
+            const p=propsMap.get(sel[0].runtimeId)||{};
+            const names=[...new Set(flattenNamed(p).map((x)=>String(x.name||"").trim()).filter((n)=>n&&n!=="class"&&n!=="product.name"))];
+            if(names.length){ localAvailable=names.sort((a,b)=>a.localeCompare(b)); updateSelect(); log("Parámetros del objeto seleccionado: "+names.length+"."); return; }
+          }
+        }catch(e){ recordError("paramPicker.refresh",e); }
+        await scanModelParameters(); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+".");
+      }
+      function wire(){ const a=document.getElementById(opts.addId); if(a) a.onclick=add; const r=document.getElementById(opts.refreshId); if(r) r.onclick=()=>refresh(); const rs=opts.resetId?document.getElementById(opts.resetId):null; if(rs) rs.onclick=()=>{ resetDefaults(); log("Parámetros restaurados por defecto."); }; buildList(); updateSelect(); }
+      return { getParams, setParams, resetDefaults, buildList, updateSelect, refresh, wire };
     }
-    const namesPicker=makeParamPicker({listId:"namesParamList",addId:"namesParamAdd",selectId:"namesParamSelect",refreshId:"namesParamRefresh",defaults:["Name"],onChange:()=>scheduleParamMarkups("names")});
-    const boltsPicker=makeParamPicker({listId:"boltsParamList",addId:"boltsParamAdd",selectId:"boltsParamSelect",refreshId:"boltsParamRefresh",defaults:["Bolt standard","Bolt size","Bolt length","Slotted hole X","Slotted hole Y","Material"],onChange:()=>scheduleParamMarkups("bolts")});
-    const weldsPicker=makeParamPicker({listId:"weldsParamList",addId:"weldsParamAdd",selectId:"weldsParamSelect",refreshId:"weldsParamRefresh",defaults:["Assembly type","Length","Size 1","Type 1"],onChange:()=>scheduleParamMarkups("welds")});
+    // v8.9.0: defaults por tipología = campos útiles del inspector. El cambio se guarda en localStorage y refresca inspector (y markups solo si están activos).
+    function paramProfileChanged(key){ saveParamProfiles(); if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); scheduleSelectionInspector(); }
+    const namesPicker=makeParamPicker({listId:"namesParamList",addId:"namesParamAdd",selectId:"namesParamSelect",refreshId:"namesParamRefresh",resetId:"namesParamReset",defaults:["Name","Assembly/Cast unit Mark","Profile","Material"],onChange:()=>paramProfileChanged("names")});
+    const boltsPicker=makeParamPicker({listId:"boltsParamList",addId:"boltsParamAdd",selectId:"boltsParamSelect",refreshId:"boltsParamRefresh",resetId:"boltsParamReset",defaults:["Assembly/Cast unit Mark","Bolt Name","Bolt size","Bolt length","Bolt standard","Material","Bolt hole diameter"],onChange:()=>paramProfileChanged("bolts")});
+    const weldsPicker=makeParamPicker({listId:"weldsParamList",addId:"weldsParamAdd",selectId:"weldsParamSelect",refreshId:"weldsParamRefresh",resetId:"weldsParamReset",defaults:["Assembly/Cast unit Mark","Type 1","Size 1","Actual length 1","Length","Assembly type"],onChange:()=>paramProfileChanged("welds")});
+    // Persistencia de perfiles de parámetros por tipología (v8.9.0). Corrupto -> se ignora y quedan defaults.
+    const PARAM_PROFILES_KEY="deo.paramInspectorProfiles.v1";
+    function saveParamProfiles(){ try{ localStorage.setItem(PARAM_PROFILES_KEY,JSON.stringify({names:namesPicker.getParams(),bolts:boltsPicker.getParams(),welds:weldsPicker.getParams()})); }catch(e){ recordError("saveParamProfiles",e); } }
+    function applyStoredParamProfiles(){
+      try{
+        const raw=localStorage.getItem(PARAM_PROFILES_KEY); if(!raw) return;
+        const data=JSON.parse(raw); if(!data||typeof data!=="object") return;
+        const clean=(a)=>Array.isArray(a)?a.filter((x)=>typeof x==="string"&&x.trim()).slice(0,40):null;
+        const n=clean(data.names), b=clean(data.bolts), w=clean(data.welds);
+        if(n&&n.length) namesPicker.setParams(n);
+        if(b&&b.length) boltsPicker.setParams(b);
+        if(w&&w.length) weldsPicker.setParams(w);
+      }catch(e){ recordError("applyStoredParamProfiles",e); }
+    }
 
     // ===================== VISTA / CARPETAS =====================
     async function getCurrentViewSpecWithRetry(){ let cv=null; for(let a=1;a<=6;a++){ try{ cv=await API.view.getCurrentView(); if(cv&&(cv.name||cv.description||cv.id)){ if(cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } return cv; } }catch(e){ recordError("getCurrentView",e); } if(a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} } return cv; }
@@ -1629,30 +1673,52 @@
     // Lectura principal en panel: tipo + líneas útiles del primer objeto seleccionado.
     // Reutiliza la extracción ya validada (matchBolt/matchWeld/findPropByAliases/resolveNameDeep). No toca markups 3D.
     const INSPECTOR_TYPE_LABEL={weld:"Soldadura",bolt:"Tornillo",name:"Nombre",object:"Objeto",none:"Sin selección"};
-    let inspectorSeq=0, inspectorTimer=null;
-    function inspectorLinesBolt(p){
-      const g=(al)=>findPropByAliases(p,al); const lines=[];
-      const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]); if(mark) lines.push("Mark: "+mark);
-      const boltName=g(["Bolt Name"]); if(boltName) lines.push("Bolt: "+boltName);
-      const size=g(["Bolt size","NominalDiameter"]), len=g(["Bolt length","NominalLength"]);
-      if(size||len) lines.push("Ø"+(size||"?")+(len?" x "+len:""));
-      const std=g(["Bolt standard"]); if(std) lines.push("Standard: "+std);
-      const mat=g(["Material"]); if(mat) lines.push("Material: "+mat);
-      const hole=g(["Bolt hole diameter"]); if(hole) lines.push("Hole Ø"+hole);
-      const count=g(["Bolt count"]); if(count) lines.push("x"+count);
+    let inspectorSeq=0, inspectorTimer=null, lastInspectorInfo=null;
+    // Motor ÚNICO de líneas (v8.9.0): inspector y etiquetas guardadas usan exactamente el mismo render.
+    // Clave: normKey(nombre de parámetro). Cada formatter devuelve la línea completa o "" (se omite).
+    const PARAM_LINE_FORMATTERS={
+      name:(p)=>{ const nv=resolveBestNameLocal(p); return nv.text||""; },
+      assemblycastunitmark:(p)=>{ const v=findPropByAliases(p,["Assembly/Cast unit Mark","Cast unit Mark","Assembly mark","Part mark"]); return v?"Mark: "+v:""; },
+      boltname:(p)=>{ const v=findPropByAliases(p,["Bolt Name"]); return v?"Bolt: "+v:""; },
+      boltsize:(p)=>{ const s=findPropByAliases(p,["Bolt size","NominalDiameter"]); const l=findPropByAliases(p,["Bolt length","NominalLength"]); if(!s&&!l) return ""; return "Ø"+(s||"?")+(l?" x "+l:""); },
+      boltlength:(p,ctx)=>{ if(ctx&&ctx.hasNorm("boltsize")) return ""; const l=findPropByAliases(p,["Bolt length","NominalLength"]); return l?"L: "+l:""; },
+      boltstandard:(p)=>{ const v=findPropByAliases(p,["Bolt standard"]); return v?"Standard: "+v:""; },
+      material:(p)=>{ const v=findPropByAliases(p,["Material"]); return v?"Material: "+v:""; },
+      boltholediameter:(p)=>{ const v=findPropByAliases(p,["Bolt hole diameter"]); return v?"Hole Ø"+v:""; },
+      boltcount:(p)=>{ const v=findPropByAliases(p,["Bolt count"]); return v?"x"+v:""; },
+      type1:(p)=>{ const v=findPropByAliases(p,["Type1","Type 1"]); return v?"Type: "+v:""; },
+      size1:(p)=>{ const v=findPropByAliases(p,["Size1","Size 1"]); return v?"Size: a"+v:""; },
+      actuallength1:(p)=>{ const v=findPropByAliases(p,["Actual length1","Actual length 1","Length"]); return v?"Length: "+v:""; },
+      length:(p,ctx)=>{ if(ctx&&ctx.hasNorm("actuallength1")) return ""; const v=findPropByAliases(p,["Length"]); return v?"Length: "+v:""; },
+      type2:(p)=>{ const v=findPropByAliases(p,["Type2","Type 2"]); return v?"Type 2: "+v:""; },
+      size2:(p)=>{ const v=findPropByAliases(p,["Size2","Size 2"]); return v?"Size 2: a"+v:""; },
+      actuallength2:(p)=>{ const v=findPropByAliases(p,["Actual length2","Actual length 2"]); return v?"Length 2: "+v:""; },
+      assemblytype:(p)=>{ const v=findPropByAliases(p,["Assembly type"]); return v?"Assembly: "+v:""; },
+      profile:(p)=>{ const v=findPropByAliases(p,["Profile","Section","Cross section"]); return v?"Profile: "+v:""; }
+    };
+    // Líneas según los parámetros configurados para la tipología (picker correspondiente).
+    function buildTypedLines(typeKey,p){
+      const picker=typeKey==="bolt"?boltsPicker:(typeKey==="weld"?weldsPicker:namesPicker);
+      const params=picker.getParams();
+      const normSet=new Set(params.map(normKey));
+      const ctx={hasNorm:(k)=>normSet.has(k)};
+      const lines=[];
+      for(const name of params){
+        const fmt=PARAM_LINE_FORMATTERS[normKey(name)];
+        let line="";
+        if(fmt) line=fmt(p,ctx);
+        else { const v=findPropByAliases(p,[name]); line=v?(name+": "+v):""; }
+        if(line) lines_pushUnique(lines,line);
+      }
       return lines;
     }
-    function inspectorLinesWeld(p){
-      const g=(al)=>findPropByAliases(p,al); const lines=[];
-      const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]); if(mark) lines.push("Mark: "+mark);
-      const t1=g(["Type1","Type 1"]); if(t1) lines.push("Type: "+t1);
-      const s1=g(["Size1","Size 1"]); if(s1) lines.push("Size: a"+s1);
-      const len=g(["Actual length1","Actual length 1","Length"]); if(len) lines.push("Length: "+len);
-      const t2=g(["Type2","Type 2"]), s2=g(["Size2","Size 2"]);
-      if(t2||s2) lines.push("Lado 2: "+[t2,s2?("a"+s2):""].filter(Boolean).join(" "));
-      const atype=g(["Assembly type"]); if(atype) lines.push("Assembly: "+atype);
-      const ndt=g(["NDT inspection level"]); if(ndt) lines.push("NDT: "+ndt);
-      return lines;
+    // Detección de tipología compartida por inspector y etiquetas guardadas.
+    async function detectTypeAndProps(modelId,runtimeId,p,allowDeep){
+      const mb=await matchDeep(matchBolt,modelId,runtimeId,p,allowDeep);
+      if(mb.ok) return {type:"bolt",props:mb.props||p,source:mb.source};
+      const mw=await matchDeep(matchWeld,modelId,runtimeId,p,allowDeep);
+      if(mw.ok) return {type:"weld",props:mw.props||p,source:mw.source};
+      return {type:"object",props:p,source:"objeto"};
     }
     async function buildSelectionInspector(sel){
       if(!sel||!sel.length) return {type:"none",title:"",lines:[],source:"none",selectionCount:0,modelId:null,runtimeId:null,debugInfo:{}};
@@ -1661,27 +1727,17 @@
       const p=propsMap.get(o.runtimeId)||{};
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       const res={type:"object",title:"",lines:[],source:"objeto",selectionCount:sel.length,modelId:o.modelId,runtimeId:o.runtimeId,debugInfo:{allowDeep}};
-      const mb=await matchDeep(matchBolt,o.modelId,o.runtimeId,p,allowDeep);
-      if(mb.ok){
-        const dp=mb.props||p;
-        res.type="bolt"; res.source=mb.source; res.lines=inspectorLinesBolt(dp);
-        res.title=resolveBestNameLocal(dp).text||"Bolt assembly";
-        return res;
-      }
-      const mw=await matchDeep(matchWeld,o.modelId,o.runtimeId,p,allowDeep);
-      if(mw.ok){
-        const dp=mw.props||p;
-        res.type="weld"; res.source=mw.source; res.lines=inspectorLinesWeld(dp);
-        res.title=resolveBestNameLocal(dp).text||"Weld";
+      const det=await detectTypeAndProps(o.modelId,o.runtimeId,p,allowDeep);
+      if(det.type==="bolt"||det.type==="weld"){
+        res.type=det.type; res.source=det.source;
+        res.title=resolveBestNameLocal(det.props).text||(det.type==="bolt"?"Bolt assembly":"Weld");
+        res.lines=buildTypedLines(det.type,det.props).filter((l)=>l!==res.title);
         return res;
       }
       // Ni tornillo ni soldadura: placa/perfil u otro objeto. Mostrar marca/perfil útiles, nunca solo BEAM/PLATE.
       const rn=await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep);
       res.title=rn.text||"(sin nombre)"; res.source=rn.source||"objeto";
-      const g=(al)=>findPropByAliases(p,al);
-      const mark=g(["Assembly/Cast unit Mark","Cast unit Mark","Part mark","Assembly mark"]); if(mark) lines_pushUnique(res.lines,"Mark: "+mark);
-      const prof=g(["Profile","Section","Cross section"]); if(prof) lines_pushUnique(res.lines,"Profile: "+prof);
-      const mat=g(["Material"]); if(mat) lines_pushUnique(res.lines,"Material: "+mat);
+      res.lines=buildTypedLines("object",p).filter((l)=>l!==res.title);
       const boltsOn=document.getElementById("boltsToggle"), weldsOn=document.getElementById("weldsToggle");
       if((boltsOn&&boltsOn.checked)||(weldsOn&&weldsOn.checked)) res.warning="No es un tornillo/soldadura IFC detectable. Selecciona el Bolt assembly o Weld real.";
       return res;
@@ -1705,10 +1761,75 @@
         const sel=await safeGetSelection();
         const info=await buildSelectionInspector(sel);
         if(mySeq!==inspectorSeq) return; // la selección cambió mientras se calculaba: no pisar el render más nuevo
+        lastInspectorInfo=info; // para PARAM_INSPECTOR en el debug
         renderSelectionInspector(info);
       }catch(e){ recordError("selectionInspector",e); }
     }
     function scheduleSelectionInspector(){ clearTimeout(inspectorTimer); inspectorTimer=setTimeout(refreshSelectionInspector,250); }
+    // ===================== ETIQUETAS GUARDADAS (v8.9.0) =====================
+    // Persistentes en la sesión del visor hasta que el usuario las elimine. Registro separado del pipeline
+    // automático: removeParamVisuals() y los cambios de selección NUNCA tocan savedParamLabels.
+    const savedParamLabels=[]; // {markupId,modelId,runtimeId,type,title,text,createdAt,viewId,position}
+    function updateSavedLabelsCount(){ const el=document.getElementById("lblCount"); if(el) el.textContent=savedParamLabels.length?("Etiquetas guardadas: "+savedParamLabels.length+"."):""; }
+    async function addSavedLabelsForSelection(){
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("No hay selección para agregar etiqueta."); setProgress("No hay selección para agregar etiqueta."); return; }
+      if(!markupApi()){ log("Etiquetas guardadas: la API de markups de texto no está disponible en este entorno."); return; }
+      const items=sel.slice(0,DEEP_LOOKUP_CAP); // coste acotado
+      const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
+      let viewId=""; try{ const v=await API.view.getCurrentView(); viewId=(v&&v.id)||""; }catch(e){}
+      let added=0, skipped=0, failed=0;
+      for(const o of items){
+        if(savedParamLabels.some((s)=>s.modelId===o.modelId&&s.runtimeId===o.runtimeId)){ skipped++; continue; } // ya etiquetado
+        let bb=null;
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(o.modelId,[o.runtimeId]); bb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ recordError("savedLabels.bbox",e); }
+        if(!bb){ skipped++; continue; }
+        const propsMap=await getPropertiesCached(o.modelId,[o.runtimeId]);
+        const p=propsMap.get(o.runtimeId)||{};
+        const det=await detectTypeAndProps(o.modelId,o.runtimeId,p,allowDeep);
+        const title=(det.type==="object")
+          ?((await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep)).text||"")
+          :(resolveBestNameLocal(det.props).text||(det.type==="bolt"?"Bolt assembly":"Weld"));
+        let lines=buildTypedLines(det.type,det.props);
+        if(title) lines=lines.filter((l)=>l!==title);
+        const text=[title,...lines].filter(Boolean).join("\n");
+        if(!text){ skipped++; continue; }
+        // Mismo sistema de coordenadas validado en v8.8.8: punto elevado, start=end, markupPick con *1000.
+        const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
+        const dzMm=Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5);
+        const labelPick=markupPick(o.modelId,o.runtimeId,bb,dzMm);
+        const ids=await addTextMarkupsRobust([{start:labelPick,end:labelPick,text,color:{r:0,g:0,b:0,a:255}}]);
+        if(ids.length){
+          savedParamLabels.push({markupId:ids[0],modelId:o.modelId,runtimeId:o.runtimeId,type:det.type,title,text,createdAt:new Date().toISOString(),viewId,position:{x:labelPick.positionX,y:labelPick.positionY,z:labelPick.positionZ}});
+          added++; log("Etiqueta guardada: "+(title||text.split("\n")[0])+" (id "+ids[0]+", "+(INSPECTOR_TYPE_LABEL[det.type]||det.type)+").");
+        } else { failed++; }
+      }
+      if(sel.length>items.length) log("Etiquetas guardadas: selección grande; se procesan "+items.length+" de "+sel.length+" objetos.");
+      if(failed) log("Etiquetas guardadas: "+failed+" etiqueta(s) rechazada(s) por la API.");
+      if(!added&&!failed&&skipped) log("Etiquetas guardadas: nada que agregar (sin texto útil o ya etiquetados).");
+      updateSavedLabelsCount();
+      if(added) setProgress("Etiqueta(s) guardada(s): "+added+".");
+    }
+    async function removeSavedLabelsForSelection(){
+      const sel=await safeGetSelection();
+      if(!sel.length){ log("No hay selección para eliminar etiqueta."); return; }
+      const keys=new Set(sel.map((o)=>o.modelId+"#"+o.runtimeId));
+      const matched=savedParamLabels.filter((s)=>keys.has(s.modelId+"#"+s.runtimeId));
+      if(!matched.length){ log("No hay etiqueta guardada asociada a la selección actual."); return; }
+      await removeMarkupIds(matched.map((s)=>s.markupId));
+      for(const m of matched){ const i=savedParamLabels.indexOf(m); if(i>=0) savedParamLabels.splice(i,1); }
+      if(matched.length===1) log("Etiqueta eliminada: "+(matched[0].title||String(matched[0].text||"").split("\n")[0])+".");
+      else log("Etiquetas eliminadas: "+matched.length+".");
+      updateSavedLabelsCount();
+    }
+    async function removeAllSavedLabels(){
+      if(!savedParamLabels.length){ log("No hay etiquetas guardadas."); return; }
+      const n=savedParamLabels.length;
+      await removeMarkupIds(savedParamLabels.map((s)=>s.markupId)); // solo IDs registrados por esta herramienta
+      savedParamLabels.length=0;
+      log("Etiquetas eliminadas: "+n+".");
+      updateSavedLabelsCount();
+    }
     async function refreshParamMarkups(toolKey){
       const cfg=paramTools[toolKey]; if(!cfg) return;
       // Con markups 3D desactivados: solo limpiar residuos y salir. Inspector hace la lectura principal.
@@ -2304,6 +2425,11 @@
       // Mostrar parámetros (#4-7)
       for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>{ if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); else removeParamVisuals(cfg); scheduleSelectionInspector(); }); }
       namesPicker.wire(); boltsPicker.wire(); weldsPicker.wire();
+      applyStoredParamProfiles(); // perfiles por tipología guardados (v8.9.0); corrupto -> defaults
+      const wireLblBtn=(id,fn)=>{ const b=document.getElementById(id); if(!b) return; b.onclick=async ()=>{ b.disabled=true; try{ await fn(); }catch(e){ recordError(id,e); log("ERROR etiquetas guardadas: "+e.message); } finally{ b.disabled=false; } }; };
+      wireLblBtn("lblAdd",addSavedLabelsForSelection);
+      wireLblBtn("lblRemove",removeSavedLabelsForSelection);
+      wireLblBtn("lblRemoveAll",removeAllSavedLabels);
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -2371,13 +2497,67 @@
         add("PARAM_DIAG "+s.modelId+":"+s.runtimeId,safeJsonDeep(diag,2));
       }
       // ===== PARAM_MARKUPS (v8.8.7): ¿Trimble guarda realmente los text markups de "Mostrar parámetros"? =====
+      // getTextMarkups UNA sola vez para PARAM_MARKUPS / PARAM_SAVED_LABELS / firma comparativa
+      let dbgTextMarkups=null, dbgTextMarkupsErr="";
+      try{ const mk=markupApi(); if(mk&&typeof mk.getTextMarkups==="function"){ const all=await mk.getTextMarkups(); dbgTextMarkups=Array.isArray(all)?all:(all?[all]:[]); } }catch(e){ dbgTextMarkupsErr=e.message; }
       const pm={ stores:{}, lastDiag:paramMarkupDiag };
       for(const k of Object.keys(paramTools)){ const c=paramTools[k]; pm.stores[k]={store:c.store,iconStore:c.iconStore}; }
-      try{ const mk=markupApi(); if(mk&&typeof mk.getTextMarkups==="function"){ const all=await mk.getTextMarkups(); const arr=Array.isArray(all)?all:(all?[all]:[]); pm.getTextMarkupsNow={total:arr.length, sample:arr.slice(0,5)}; } else pm.getTextMarkupsNow="no disponible"; }catch(e){ pm.getTextMarkupsNow="ERROR: "+e.message; }
+      pm.getTextMarkupsNow=dbgTextMarkups?{total:dbgTextMarkups.length, sample:dbgTextMarkups.slice(0,5)}:(dbgTextMarkupsErr?("ERROR: "+dbgTextMarkupsErr):"no disponible");
       add("PARAM_MARKUPS",safeJsonDeep(pm,2));
+      // ===== PARAM_INSPECTOR (v8.9.0): estado del inspector y perfiles de parámetros por tipología =====
+      const pi={ PARAM_USE_3D_MARKUPS, lastInspectorInfo, profiles:{names:namesPicker.getParams(),bolts:boltsPicker.getParams(),welds:weldsPicker.getParams()} };
+      try{ pi.storedProfilesRaw=localStorage.getItem(PARAM_PROFILES_KEY); }catch(e){ pi.storedProfilesRaw="ERROR: "+e.message; }
+      add("PARAM_INSPECTOR",safeJsonDeep(pi,2));
+      // ===== PARAM_SAVED_LABELS (v8.9.0): etiquetas guardadas manualmente =====
+      const sl={ total:savedParamLabels.length, ids:savedParamLabels.map((s)=>s.markupId),
+        labels:savedParamLabels.slice(0,50).map((s)=>({markupId:s.markupId,modelId:s.modelId,runtimeId:s.runtimeId,type:s.type,title:s.title,text:String(s.text||"").slice(0,120),createdAt:s.createdAt,viewId:s.viewId,position:s.position})) };
+      if(dbgTextMarkups){ const slIds=new Set(savedParamLabels.map((s)=>Number(s.markupId))); sl.presentInGetTextMarkups=dbgTextMarkups.filter((x)=>slIds.has(Number(x&&(x.id??x)))).length; }
+      add("PARAM_SAVED_LABELS",safeJsonDeep(sl,2));
       let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ add("getColoredObjects ERROR",e.message); }
       const colorSummary={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; colorSummary[k]=(colorSummary[k]||0)+1; }
       add("COLORES",{total:colored.length,colorSummary,first30:colored.slice(0,30)});
+      // ===== VIEW_MODEL_CONTEXT_DIAG (v8.9.0): comparar IFC donde los markups se ven vs modelo/vista donde no =====
+      const ctx={};
+      try{ const v=await API.view.getCurrentView(); ctx.activeView=v?{id:v.id,name:v.name,description:v.description,createdOn:v.createdOn,modifiedOn:v.modifiedOn,models:Array.isArray(v.models)?v.models.slice(0,20):v.models,files:Array.isArray(v.files)?v.files.slice(0,20):v.files,modelsFilesMismatch:(Array.isArray(v.models)&&Array.isArray(v.files))?(v.models.length!==v.files.length):undefined}:null; }catch(e){ ctx.activeViewError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getModels==="function"){ const ms=await API.viewer.getModels(); ctx.modelsTotal=Array.isArray(ms)?ms.length:0; ctx.models=(Array.isArray(ms)?ms:[]).slice(0,20).map((m)=>({id:m&&m.id,modelId:m&&m.modelId,fileId:m&&m.fileId,name:m&&m.name,loaded:m&&m.loaded,visible:m&&m.visible})); } else ctx.models="getModels no disponible"; }catch(e){ ctx.modelsError=e.message; }
+      ctx.selection={count:selection.length, first50:selection.slice(0,50)};
+      let ctxFirstProps=null, ctxFirstBb=null;
+      const ctxFirst=selection[0]||null;
+      if(ctxFirst){
+        try{ const bxs=await API.viewer.getObjectBoundingBoxes(ctxFirst.modelId,[ctxFirst.runtimeId]); ctxFirstBb=bxs&&bxs[0]?bboxOf(bxs[0]):null; }catch(e){ ctx.firstBboxError=e.message; }
+        try{ const pr=await API.viewer.getObjectProperties(ctxFirst.modelId,[ctxFirst.runtimeId]); ctxFirstProps=pr&&pr[0]?pr[0]:null; }catch(e){ ctx.firstPropsError=e.message; }
+        const center=ctxFirstBb?{x:(ctxFirstBb.min.x+ctxFirstBb.max.x)/2,y:(ctxFirstBb.min.y+ctxFirstBb.max.y)/2,z:(ctxFirstBb.min.z+ctxFirstBb.max.z)/2}:null;
+        const mag=ctxFirstBb?Math.max(Math.abs(ctxFirstBb.min.x),Math.abs(ctxFirstBb.max.x),Math.abs(ctxFirstBb.min.y),Math.abs(ctxFirstBb.max.y),Math.abs(ctxFirstBb.min.z),Math.abs(ctxFirstBb.max.z)):null;
+        const psets=ctxFirstProps?[...new Set(flattenNamed(ctxFirstProps).filter((x)=>!String(x.value||"").trim()).map((x)=>x.name))].slice(0,30):[];
+        const cand=[]; try{ for(const f of flattenProps(ctxFirstProps||{})){ if(PARAM_DIAG_KEYS.test(f.name)) cand.push(f.name+" = "+f.value); } }catch(e){}
+        ctx.firstSelected={modelId:ctxFirst.modelId,runtimeId:ctxFirst.runtimeId,bbox:ctxFirstBb,center,coordMagnitude:mag,class:ctxFirstProps&&ctxFirstProps.class,productName:findProductName(ctxFirstProps||{}),propertySetNames:psets,candidateNameProps:cand.slice(0,40)};
+      }
+      try{ if(API.viewer&&typeof API.viewer.getCamera==="function") ctx.camera=await API.viewer.getCamera(); }catch(e){ ctx.cameraError=e.message; }
+      try{
+        if(API.viewer&&typeof API.viewer.getSectionPlanes==="function"){ const sp=await API.viewer.getSectionPlanes(); ctx.sectionPlanes=Array.isArray(sp)?sp.length:sp; }
+        else if(API.viewer&&typeof API.viewer.getClippingPlanes==="function"){ const sp=await API.viewer.getClippingPlanes(); ctx.sectionPlanes=Array.isArray(sp)?sp.length:sp; }
+        else ctx.sectionPlanes="API no disponible";
+      }catch(e){ ctx.sectionPlanesError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getSettings==="function") ctx.settings=await API.viewer.getSettings(); }catch(e){ ctx.settingsError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getLayers==="function"){ const ly=await API.viewer.getLayers(); ctx.layersCount=Array.isArray(ly)?ly.length:undefined; ctx.layersSample=Array.isArray(ly)?ly.slice(0,10):ly; } }catch(e){ ctx.layersError=e.message; }
+      try{ if(API.viewer&&typeof API.viewer.getPresentation==="function") ctx.presentation=await API.viewer.getPresentation(); }catch(e){ ctx.presentationError=e.message; }
+      { const uniq=Object.keys(colorSummary); ctx.colors={total:colored.length,uniqueColorsCount:uniq.length,uniqueColors:uniq.slice(0,40),weirdAlpha:uniq.filter((c)=>c!=="INVALID"&&c.length===9&&!/FF$/i.test(c)).slice(0,20)}; }
+      try{ ctx.hiddenManagedCount=mapSetCount(hiddenWhiteRegistry); }catch(e){ ctx.hiddenManagedCount="n/a"; }
+      ctx.textMarkups={total:dbgTextMarkups?dbgTextMarkups.length:"n/a",sample:dbgTextMarkups?dbgTextMarkups.slice(0,3):undefined,savedLabelIds:savedParamLabels.map((s)=>s.markupId)};
+      if(dbgTextMarkups){ const slIds2=new Set(savedParamLabels.map((s)=>Number(s.markupId))); ctx.textMarkups.savedPresent=dbgTextMarkups.filter((x)=>slIds2.has(Number(x&&(x.id??x)))).length; }
+      ctx.contextSignature={
+        activeViewId:ctx.activeView&&ctx.activeView.id, activeViewName:ctx.activeView&&ctx.activeView.name,
+        selectionModelId:ctxFirst&&ctxFirst.modelId, selectedRuntimeId:ctxFirst&&ctxFirst.runtimeId,
+        selectedClass:ctx.firstSelected&&ctx.firstSelected.class, selectedProductName:ctx.firstSelected&&ctx.firstSelected.productName,
+        modelIdsInView:(ctx.activeView&&Array.isArray(ctx.activeView.models))?ctx.activeView.models:undefined,
+        fileIdsInView:(ctx.activeView&&Array.isArray(ctx.activeView.files))?ctx.activeView.files:undefined,
+        loadedModelIds:Array.isArray(ctx.models)?ctx.models.map((m)=>m.id||m.modelId).filter(Boolean):undefined,
+        hasSectionPlanes:typeof ctx.sectionPlanes==="number"?ctx.sectionPlanes>0:undefined,
+        cameraMode:ctx.camera&&(ctx.camera.projectionType||ctx.camera.projection||ctx.camera.cameraType||ctx.camera.mode),
+        coloredObjectsTotal:colored.length,
+        textMarkupsTotal:dbgTextMarkups?dbgTextMarkups.length:undefined
+      };
+      add("VIEW_MODEL_CONTEXT_DIAG",safeJsonDeep(ctx,2));
       let views=[]; try{ views=await API.view.getViews(); }catch(e){ add("getViews ERROR",e.message); }
       add("VISTAS",{total:(views||[]).length,firstKeys:views&&views[0]?Object.keys(views[0]):[],first10:(views||[]).slice(0,10),realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))]});
       add("PLANTILLAS GUARDADAS",loadTemplates());
