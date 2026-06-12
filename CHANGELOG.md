@@ -3,6 +3,31 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.10.2] — 2026-06-12
+
+Versión de estabilización que consolida los ciclos internos v8.9.x (diagnóstico de etiquetas 3D) y v8.10.0/v8.10.1 (reorganización de la interfaz) en una versión funcional.
+
+### Corregido
+
+* **Excluir de selección / colores**: si `getColoredObjects` devuelve 0 pero hay objetos accesibles en el visor, ya no se afirma "No hay colores aplicados en el modelo"; se informa de que los colores nativos del IFC/Tekla pueden no estar expuestos por la API. Diagnóstico ampliado en `COLOR_DIAG` (motivo del fallback, sonda de presentación, totales).
+* **Lista de IFC/modelos en Excluir de selección**: solo muestra los modelos realmente abiertos en el visor (fuente: `getObjects`, con `getModels` solo para nombres). Antes listaba todo el proyecto.
+* **Selección ocultos en modelo IFC directo**: validación de la detección — si los "ocultos" cubren ~todo lo accesible (el visor ignora el filtro `{visible:false}`), se aborta sin tocar visibilidad en lugar de ocultar/blanquear el modelo entero. Diagnóstico en `HIDDEN_DIAG`.
+* **Etiquetas 3D en modelo directo**: restauradas. El bloqueo por contexto (falso positivo de vista guardada) dejaba inoperativos Agregar/Eliminar/Eliminar todos; los botones ya no se deshabilitan y el motor de coordenadas puras (`addTextMarkup`, anclaje techo+0,5 m, mm) vuelve a ejecutarse. Warning fijo: "Sobre vistas existentes guardadas esta función puede no estar disponible".
+* **Mostrar parámetros**: los switches de Ver nombres / Ver tornillos / Ver soldaduras ya no abren/cierran el desplegable; el nombre sí.
+
+### Añadido
+
+* **Quantity Surveyor**: box con scroll interno, botón copiar (texto limpio) superpuesto y botón Limpiar. Resumen con formato español y unidades (kg, m³, m², mm). Agrupaciones: soldaduras por Assembly type → tipo (unidades, longitud total, gargantas); tornillos por estándar + calidad usando `Bolt count` (M/L con unidades reales); perfiles/chapas por material con peso total y grupo Undefined. Colores sobrios por tipología.
+* **Excluir de selección**: botón embudo que alterna orden aparición/alfabético de la lista de modelos; box con scroll (~8 filas).
+* **Inspector de soldadura**: unidades (mm/kg/m²/m³) y redondeo a 3 decimales en valores dimensionales; los textos (W10, Site, marcas…) no se alteran.
+* Secciones de debug: `HIDDEN_DIAG`, `CONFIG_VIEW_DIAG`; ampliadas `COLOR_DIAG`, `EXCLUDE_MODELS_DIAG`, `FLOATING_LABEL_DIAG` (contexto activo, estado de botones, ids reales vs locales, último error de markup).
+
+### Cambiado
+
+* **Configurar vista**: recuperada la disposición anterior (Código, Ubicación, Nivel, Ejes, Elemento, Actuación, Fecha, Autor) en ambos flujos, con "Compartir con" mediante chips + autocompletado por flujo y campo "Etiquetas". Autoajuste fluido de los campos. Sin bloque de plantillas/"Datos comunes". Al abrir, expande Actualizar vista si hay vista guardada activa (precargando descripción, autor, compartidos y etiquetas) o Crear nueva vista en caso contrario.
+* "Eliminar todos" de etiquetas 3D con fondo rojo suave (acción destructiva moderada).
+* Iconos copiados a `assets/` y `manifest.json` apuntando a ellos (las copias en raíz se conservan por compatibilidad con manifests cacheados).
+
 ## [v8.8.0] — 2026-06-10
 
 ### Añadido

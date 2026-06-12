@@ -19,7 +19,7 @@ Para probar tus cambios:
 - JavaScript claro, con funciones separadas y `try/catch` por bloques.
 - No rompas las funciones existentes (exportación de vista activa, etc.).
 - CSV: separador `;`, codificación UTF‑8 y celdas entre comillas.
-- Actualiza `SCRIPT_VERSION` y `LAST_UPDATED` y añade una entrada en `CHANGELOG.md`.
+- **Incrementa `SCRIPT_VERSION` en CADA cambio de código**, por pequeño que sea: es el único modo fiable de verificar en GitHub Pages que el visor carga la versión nueva (el código aparece en "Código de versión" al conectar). Añade la entrada correspondiente en `CHANGELOG.md`.
 
 ## Reportar errores
 

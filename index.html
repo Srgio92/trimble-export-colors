@@ -96,10 +96,29 @@
     #excludeColors input, #includeColors input { position: absolute; opacity: 0; pointer-events: none; }
     .swatch { width: 20px; height: 20px; border: 1px solid rgba(0,0,0,.35); border-radius: 50%; display: inline-block; box-sizing: border-box; }
     #excludeColors input:checked + .swatch, #includeColors input:checked + .swatch { outline: 2px solid #1c7fd6; outline-offset: 2px; }
-    .model-exclude-list { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-    .model-exclude-row { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; }
+    /* v8.10.2: box con scroll interno (~8 filas) para no alargar la barra lateral. */
+    .model-exclude-list { display: flex; flex-direction: column; gap: 4px; flex: 1; max-height: 178px; overflow-y: auto; border: 1px solid #cfd6df; background: #fff; padding: 4px 6px; box-sizing: border-box; }
+    .model-exclude-row { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; flex: 0 0 auto; }
     .model-exclude-row input { margin: 0; }
     .model-exclude-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* v8.10.2: botón embudo (orden de la lista de modelos); fondo transparente, icono negro. */
+    .funnel-btn { background: transparent; border: none; padding: 2px; cursor: pointer; border-radius: 4px; }
+    .funnel-btn.funnel-active { outline: 2px solid #1c7fd6; outline-offset: 1px; }
+    /* v8.10.2: "Eliminar todos" de etiquetas 3D como acción destructiva moderada. */
+    #lblRemoveAll { background: #fde8e8; border-color: #f3b4b4; color: #7f1d1d; }
+    #lblRemoveAll:hover { background: #fbd5d5; }
+    /* v8.10.2: Quantity Surveyor — box con scroll interno y botón copiar superpuesto. */
+    .quant-wrap { position: relative; }
+    .quant-box { max-height: 340px; overflow-y: auto; border: 1px solid #cfd6df; background: #fff; padding: 6px 8px; box-sizing: border-box; font-size: 11px; }
+    .quant-copy-btn { position: absolute; top: 4px; right: 4px; z-index: 5; background: rgba(255,255,255,.92); border: 1px solid #cfd6df; border-radius: 5px; padding: 3px 5px; cursor: pointer; line-height: 0; }
+    .quant-copy-btn:hover { background: #eef2f7; }
+    .quant-h { font-weight: bold; margin-top: 6px; }
+    .quant-cat { font-weight: bold; margin-top: 6px; }
+    .quant-cat-welds { color: #1d4ed8; }
+    .quant-cat-bolts { color: #c2570b; }
+    .quant-cat-profiles { color: #15803d; }
+    .quant-sub { margin-left: 8px; }
+    .quant-sub2 { margin-left: 16px; }
     .swatch.swatch-illegible { background: repeating-linear-gradient(45deg, #e5e7eb 0 4px, #b91c1c 4px 6px); }
 
     #cancelOp { background: #b91c1c; color: #fff; border: none; border-radius: 4px; }
@@ -202,10 +221,13 @@
             <div id="excludeColors" class="color-list"></div>
             <button id="excludeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
           </div>
-          <div class="hint" style="margin-top:12px; margin-bottom:6px;">Excluye modelos/IFC completos (p. ej. ejes o modelos de referencia). Persiste entre sesiones. No oculta ni recolorea.</div>
+          <div class="hint" style="margin-top:12px; margin-bottom:6px;">Excluye modelos/IFC completos abiertos en el visor (p. ej. ejes o modelos de referencia). Persiste entre sesiones. No oculta ni recolorea.</div>
           <div class="color-list-row">
             <div id="excludeModels" class="model-exclude-list"></div>
-            <button id="excludeModelsRefresh" class="icon-btn refresh-right" title="Actualizar modelos" aria-label="Actualizar modelos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <button id="excludeModelsRefresh" class="icon-btn refresh-right" title="Actualizar modelos" aria-label="Actualizar modelos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+              <button id="excludeModelsSort" class="funnel-btn" type="button" title="Orden: aparición" aria-label="Alternar orden de la lista"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
+            </div>
           </div>
         </div>
       </details>
@@ -337,8 +359,8 @@
           </details>
 
           <div class="sel-inspector" id="floatingLabels">
-            <div class="hint" style="margin-bottom:6px;">Guarda etiquetas 3D con los parámetros configurados. Disponible solo en modelo directo.</div>
-            <div class="hint" id="floatingLabelsNote" style="margin-bottom:6px; display:none;">En vistas guardadas utiliza el Inspector de selección.</div>
+            <div class="hint" style="margin-bottom:6px;">Guarda etiquetas 3D con los parámetros configurados.</div>
+            <div class="hint" id="floatingLabelsNote" style="margin-bottom:6px;">Warning: Sobre vistas existentes guardadas esta función puede no estar disponible.</div>
             <div class="insp-actions">
               <button type="button" id="lblAdd" data-tip="Guarda una etiqueta 3D flotante con los datos del objeto. No se borra al deseleccionar.">Agregar</button>
               <button type="button" id="lblRemove" data-tip="Elimina las etiquetas guardadas de los objetos seleccionados.">Eliminar</button>
@@ -367,8 +389,11 @@
 
           <div class="sel-inspector" id="quantifyBlock">
             <button type="button" id="quantifyBtn" class="sel-inspector-head-btn" data-tip="Calcula el Quantity Surveyor sobre los objetos seleccionados.">Quantity Surveyor</button>
-            <div class="param-defaults-hint">Pulsa el título para calcular cantidades de la selección: tipologías, peso, volumen, área, longitud y parámetros fijos por tipo.</div>
-            <div id="quantifyResult"><div class="hint">Selecciona objetos y pulsa Quantity Surveyor para calcular.</div></div>
+            <div class="quant-wrap" id="quantifyWrap" style="display:none;">
+              <button type="button" id="quantifyCopy" class="quant-copy-btn" title="Copiar resultado" aria-label="Copiar resultado"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <div id="quantifyResult" class="quant-box"></div>
+              <div class="row" style="margin-top:6px;"><button type="button" id="quantifyClear">Limpiar</button></div>
+            </div>
           </div>
         </div>
       </details>
@@ -401,7 +426,6 @@
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplNew_preview">(sin nombre)</span></div>
               <div class="row"><button id="cvCreateBtn">Crear nueva vista</button></div>
-              <div class="hint">Guarda una vista nueva con el estado actual del visor. El título de la vista se genera con los campos superiores.</div>
             </div>
           </details>
 
@@ -427,7 +451,6 @@
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplUpd_preview">(sin nombre)</span></div>
               <div class="row"><button id="cvUpdateBtn">Actualizar vista</button></div>
-              <div class="hint">Actualiza la vista seleccionada con el estado actual del visor. El título de la vista se genera con los campos superiores.</div>
             </div>
           </details>
 
@@ -505,7 +528,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.10.1";
+    const SCRIPT_VERSION = "v8.10.2";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -907,12 +930,17 @@
         return !!(v&&v.id);
       }catch(e){ return false; }
     }
-    // Habilita/inhabilita Agregar/Eliminar/Eliminar todos y muestra el aviso según el contexto.
+    // v8.10.2: los botones de etiquetas 3D NUNCA se deshabilitan (un falso positivo de isSavedViewContext
+    // bloqueaba Agregar también en modelo directo). El contexto solo regula el texto del warning fijo.
+    let lastLabelContext={saved:null,checkedAt:null};
     async function updateFloatingLabelsAvailability(){
       let saved=false;
       try{ saved=await isSavedViewContext(); }catch(e){}
-      for(const id of ["lblAdd","lblRemove","lblRemoveAll"]){ const b=document.getElementById(id); if(b) b.disabled=saved; }
-      const note=document.getElementById("floatingLabelsNote"); if(note) note.style.display=saved?"block":"none";
+      lastLabelContext={saved,checkedAt:new Date().toISOString()};
+      const note=document.getElementById("floatingLabelsNote");
+      if(note) note.textContent=saved
+        ?"Warning: Sobre vistas existentes guardadas esta función puede no estar disponible. Usa el Inspector de selección como vía principal."
+        :"Warning: Sobre vistas existentes guardadas esta función puede no estar disponible.";
       return saved;
     }
 
@@ -1263,11 +1291,41 @@
     // Reglas: blanco 50% transparencia al mostrar; al ocultar, los que siguen blancos se ocultan
     // y los recoloreados manualmente se "rescatan" (permanecen visibles con su color).
     const HIDDEN_STATE_BATCH = 1000;
+    // v8.10.2: diagnóstico de la detección de ocultos (modo, fuente, validación). Se vuelca en HIDDEN_DIAG.
+    let lastHiddenDiag=null;
     async function getHiddenObjectEntries(){
-      const attempts=[ ()=>API.viewer.getObjects(undefined,{visible:false}), ()=>API.viewer.getObjects(undefined,{hidden:true}), ()=>API.viewer.getObjects({visible:false}) ];
-      let entries=[];
-      for(const fn of attempts){ try{ const groups=await fn(); const out=[]; for(const g of groups||[]){ const modelId=g.modelId||g.id||""; for(const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])){ const rid=Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o); if(modelId&&Number.isFinite(rid)) out.push({modelId,objectRuntimeId:rid}); } } if(out.length){ entries=out; break; } }catch(e){ recordError("getHiddenObjects",e); } }
-      const seen=new Set(); return entries.filter((e)=>{ const k=e.modelId+":"+e.objectRuntimeId; if(seen.has(k)) return false; seen.add(k); return true; });
+      const attempts=[ {name:"getObjects(undefined,{visible:false})",fn:()=>API.viewer.getObjects(undefined,{visible:false})}, {name:"getObjects(undefined,{hidden:true})",fn:()=>API.viewer.getObjects(undefined,{hidden:true})}, {name:"getObjects({visible:false})",fn:()=>API.viewer.getObjects({visible:false})} ];
+      let entries=[]; let source="";
+      for(const a of attempts){ try{ const groups=await a.fn(); const out=[]; for(const g of groups||[]){ const modelId=g.modelId||g.id||""; for(const o of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])){ const rid=Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o); if(modelId&&Number.isFinite(rid)) out.push({modelId,objectRuntimeId:rid}); } } if(out.length){ entries=out; source=a.name; break; } }catch(e){ recordError("getHiddenObjects",e); } }
+      const seen=new Set(); const clean=entries.filter((e)=>{ const k=e.modelId+":"+e.objectRuntimeId; if(seen.has(k)) return false; seen.add(k); return true; });
+      if(lastHiddenDiag) lastHiddenDiag.detectionSource=source;
+      return clean;
+    }
+    // v8.10.2: en modelo IFC directo el visor puede IGNORAR el filtro {visible:false} y devolver todos los
+    // objetos: la herramienta concluía que TODO estaba oculto y ocultaba/blanqueaba el modelo entero.
+    // Validación: si los "ocultos" cubren casi todos los objetos accesibles del visor, la detección no es
+    // fiable y se aborta sin tocar visibilidad. Devuelve {ok, entries, reason}.
+    async function getValidatedHiddenEntries(){
+      let savedView=false; try{ savedView=await isSavedViewContext(); }catch(e){}
+      const diag={mode:savedView?"vista guardada":"modelo directo",detectionSource:"",totalAccessible:null,hiddenDetected:null,ratio:null,validated:false,reason:"",actions:[]};
+      lastHiddenDiag=diag;
+      const entries=await getHiddenObjectEntries();
+      diag.hiddenDetected=entries.length;
+      if(!entries.length){ diag.validated=true; diag.reason="Sin objetos ocultos detectados."; return {ok:true,entries:[],reason:diag.reason}; }
+      let totalAccessible=0;
+      try{ const mm=await getModelObjectsMap(); for(const ids of mm.values()) totalAccessible+=ids.length; }catch(e){ recordError("hiddenValidation.getObjects",e); }
+      diag.totalAccessible=totalAccessible;
+      if(totalAccessible>0){
+        diag.ratio=Math.round((entries.length/totalAccessible)*1000)/10;
+        // Si "ocultos" >= 95% de lo accesible, el filtro de visibilidad no está funcionando (típico en modelo directo).
+        if(entries.length>=totalAccessible*0.95){
+          diag.validated=false;
+          diag.reason="Detección no fiable: los supuestos ocultos ("+entries.length+") cubren ~todo lo accesible ("+totalAccessible+"). El visor no distingue ocultos en este contexto.";
+          return {ok:false,entries:[],reason:diag.reason};
+        }
+      }
+      diag.validated=true; diag.reason="Detección válida ("+entries.length+" ocultos de "+(totalAccessible||"?")+" accesibles).";
+      return {ok:true,entries,reason:diag.reason};
     }
     async function setStateInBatches(modelId,ids,state,ctx){
       let n=0;
@@ -1305,7 +1363,14 @@
     }
     async function markHiddenObjectsWhite(){
       setProgress("Selección ocultos: detectando objetos ocultos...");
-      const entries=await getHiddenObjectEntries(); hiddenWhiteRegistry.clear();
+      // v8.10.2: detección validada — nunca tratar todo el modelo como oculto (fallo típico en modelo directo).
+      const v=await getValidatedHiddenEntries(); hiddenWhiteRegistry.clear();
+      if(!v.ok){
+        log("Selección ocultos: "+v.reason+" No se modifica la visibilidad. En este contexto usa vistas guardadas para gestionar ocultos.");
+        setProgress("Selección ocultos: detección no fiable en este contexto.");
+        return 0;
+      }
+      const entries=v.entries;
       if(!entries.length){ log("Selección ocultos: no se han detectado objetos ocultos."); setProgress("Selección ocultos: sin objetos ocultos."); return 0; }
       const byModel=new Map(); for(const e of entries) addToMapSet(byModel,e.modelId,[e.objectRuntimeId]);
       let marked=0;
@@ -1314,6 +1379,7 @@
         const ids=[...set];
         const n=await setStateInBatches(modelId,ids,{color:{...HIDDEN_MARK_COLOR},visible:false},"markHiddenWhite");
         if(n){ hiddenWhiteRegistry.set(modelId,new Set(ids)); marked+=n; }
+        if(lastHiddenDiag) lastHiddenDiag.actions.push("markWhite+hide: "+n+" en "+modelId);
       }
       log("Selección ocultos: "+marked+" objeto(s) ocultos registrados y marcados en blanco.");
       setProgress("Selección ocultos: "+marked+" objeto(s) registrados.");
@@ -1719,6 +1785,14 @@
     let inspectorSeq=0, inspectorTimer=null, lastInspectorInfo=null;
     // Motor ÚNICO de líneas (v8.9.0): inspector y etiquetas guardadas usan exactamente el mismo render.
     // Clave: normKey(nombre de parámetro). Cada formatter devuelve la línea completa o "" (se omite).
+    // v8.10.2: valores dimensionales con unidad y 3 decimales (redondeo correcto, formato es-ES).
+    // Si el valor NO es numérico (W10, Site, Workshop, marcas, standards...) se devuelve tal cual, sin unidad.
+    function fmtDim(v,unit){
+      const n=parseQuantNumber(v);
+      if(n==null) return String(v);
+      const r=Math.round(n*1000)/1000;
+      return r.toLocaleString("es-ES",{maximumFractionDigits:3})+(unit?" "+unit:"");
+    }
     const PARAM_LINE_FORMATTERS={
       name:(p)=>{ const nv=resolveBestNameLocal(p); return nv.text||""; },
       assemblycastunitmark:(p)=>{ const v=findPropByAliases(p,["Assembly/Cast unit Mark","Cast unit Mark","Assembly mark","Part mark"]); return v?"Mark: "+v:""; },
@@ -1730,12 +1804,15 @@
       boltholediameter:(p)=>{ const v=findPropByAliases(p,["Bolt hole diameter"]); return v?"Hole Ø"+v:""; },
       boltcount:(p)=>{ const v=findPropByAliases(p,["Bolt count"]); return v?"x"+v:""; },
       type1:(p)=>{ const v=findPropByAliases(p,["Type1","Type 1"]); return v?"Type: "+v:""; },
-      size1:(p)=>{ const v=findPropByAliases(p,["Size1","Size 1"]); return v?"Size: a"+v:""; },
-      actuallength1:(p)=>{ const v=findPropByAliases(p,["Actual length1","Actual length 1","Length"]); return v?"Length: "+v:""; },
-      length:(p,ctx)=>{ if(ctx&&ctx.hasNorm("actuallength1")) return ""; const v=findPropByAliases(p,["Length"]); return v?"Length: "+v:""; },
+      size1:(p)=>{ const v=findPropByAliases(p,["Size1","Size 1"]); return v?"Size: a"+fmtDim(v,"mm"):""; },
+      actuallength1:(p)=>{ const v=findPropByAliases(p,["Actual length1","Actual length 1","Length"]); return v?"Length: "+fmtDim(v,"mm"):""; },
+      length:(p,ctx)=>{ if(ctx&&ctx.hasNorm("actuallength1")) return ""; const v=findPropByAliases(p,["Length"]); return v?"Length: "+fmtDim(v,"mm"):""; },
       type2:(p)=>{ const v=findPropByAliases(p,["Type2","Type 2"]); return v?"Type 2: "+v:""; },
-      size2:(p)=>{ const v=findPropByAliases(p,["Size2","Size 2"]); return v?"Size 2: a"+v:""; },
-      actuallength2:(p)=>{ const v=findPropByAliases(p,["Actual length2","Actual length 2"]); return v?"Length 2: "+v:""; },
+      size2:(p)=>{ const v=findPropByAliases(p,["Size2","Size 2"]); return v?"Size 2: a"+fmtDim(v,"mm"):""; },
+      actuallength2:(p)=>{ const v=findPropByAliases(p,["Actual length2","Actual length 2"]); return v?"Length 2: "+fmtDim(v,"mm"):""; },
+      weight:(p)=>{ const v=findPropByAliases(p,["Weight","NetWeight","Net Weight","Tekla Quantity.Weight"]); return v?"Weight: "+fmtDim(v,"kg"):""; },
+      area:(p)=>{ const v=findPropByAliases(p,["Area","Net surface area","Surface area"]); return v?"Area: "+fmtDim(v,"m²"):""; },
+      volume:(p)=>{ const v=findPropByAliases(p,["Volume","NetVolume","Net Volume"]); return v?"Volume: "+fmtDim(v,"m³"):""; },
       assemblytype:(p)=>{ const v=findPropByAliases(p,["Assembly type"]); return v?"Assembly: "+v:""; },
       profile:(p)=>{ const v=findPropByAliases(p,["Profile","Section","Cross section"]); return v?"Profile: "+v:""; }
     };
@@ -1819,8 +1896,10 @@
       const sel=await safeGetSelection();
       if(!sel.length){ log("No hay selección para agregar etiqueta."); setProgress("No hay selección para agregar etiqueta."); return; }
       if(!markupApi()){ log("Etiquetas guardadas: la API de markups de texto no está disponible en este entorno."); return; }
-      if(await isSavedViewContext()){ const msg="Las etiquetas 3D solo están disponibles en modelos. En vistas guardadas utiliza el Inspector de selección."; log(msg); setProgress(msg); return; }
-      log("Agregar etiqueta flotante…");
+      // v8.10.2: no se bloquea por contexto (un falso positivo dejaba inoperativo el modelo directo).
+      // En vista guardada se advierte: la API crea el markup pero el visor puede no renderizarlo.
+      if(await isSavedViewContext()) log("Aviso: hay una vista guardada activa. La etiqueta se creará pero puede no renderizarse; usa el Inspector de selección como vía principal.");
+      log("Agregar etiqueta 3D…");
       const items=sel.slice(0,DEEP_LOOKUP_CAP); // coste acotado
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       let viewId=""; try{ const v=await API.view.getCurrentView(); viewId=(v&&v.id)||""; }catch(e){}
@@ -1893,7 +1972,7 @@
     //   2) anclaje 0,5 m por ENCIMA del TECHO del objeto (bb.max.z), no centro+offset;
     //   3) start y end idénticos (punto, no línea).
     // Nota: en vistas guardadas Trimble puede no renderizar el markup aunque la API lo cree (ver v8.9.x);
-    // por eso "Agregar" solo se ofrece en modelo directo (ver isSavedViewContext / v8.10.0).
+    // por eso el bloque muestra un warning fijo y el Inspector de selección es la vía principal en vistas.
     let lastLegacyPayload=null, lastLegacyResponse=null, lastCurrentPayload=null;
     function legacyLabelPayload(bb,text,color){
       const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
@@ -2492,16 +2571,11 @@
       }
     }
     function wireTemplateTool(){
-      for(const scope of ["tplCfg","tplNew","tplUpd"]) wireTemplateScope(scope);
-      populateTemplateFolderSelect();
-      wireShareAutocomplete();
+      // v8.10.2: solo los dos flujos vigentes (tplNew/tplUpd). El antiguo scope tplCfg ("Datos comunes")
+      // ya no existe en la UI; su wiring se elimina para no hacer llamadas API innecesarias.
+      for(const scope of ["tplNew","tplUpd"]) wireTemplateScope(scope);
       cvWireShareAutocomplete("cvNew"); cvWireShareAutocomplete("cvUpd");
       ["cvNew_labels","cvUpd_labels"].forEach((id)=>{ const el=document.getElementById(id); if(el){ el.addEventListener("input",()=>tplAutosizeInput(el)); el.addEventListener("blur",()=>tplAutosizeInput(el)); tplAutosizeInput(el); } });
-      const tplSel=document.getElementById("templateSelect"); if(tplSel) tplSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===tplSel.value); if(t){ saveLastTemplateName(t.name); const n=document.getElementById("tplCfg_name"); if(n) n.value=t.name||""; setConfigMeta(t); } else { saveLastTemplateName(""); const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); } });
-      const newSel=document.getElementById("newTemplateSelect"); if(newSel) newSel.addEventListener("change",()=>{ const t=loadTemplates().find((x)=>x.name===newSel.value); if(t){ saveLastTemplateName(t.name); setCreateMeta(t); } else { setCreateMeta(null); } ensureCreateAutoFields(); });
-      const saveBtn=document.getElementById("templateSave"); if(saveBtn) saveBtn.onclick=saveTemplateFromForm;
-      const tplFolderRefresh=document.getElementById("tplCfg_folderRefresh"); if(tplFolderRefresh) tplFolderRefresh.onclick=async ()=>{ setProgress("Actualizando grupos de vistas..."); await populateTemplateFolderSelect(undefined,true); setProgress("Grupos de vistas actualizados: "+(viewGroupsCache.groups.length||0)+"."); };
-      const delBtn=document.getElementById("templateDelete"); if(delBtn) delBtn.onclick=deleteSelectedTemplate;
       const createBtn=document.getElementById("cvCreateBtn"); if(createBtn) createBtn.onclick=()=>cvCreateView();
       const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",cvLoadSelectedView);
       const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await cvPreloadCurrentView(); };
@@ -2519,17 +2593,13 @@
       }catch(e){ recordError("autoExpandViewFlow",e); }
     }
     async function initTemplateTool(){
-      populateTemplateSelects(); await loadProjectMembers(); await loadTemplateUser(); await populateTemplateFolderSelect();
-      const list=loadTemplates(); const latest=newestTemplate(list); const last=loadLastTemplateName(); const cfgTpl=list.find((x)=>x.name===last)||latest;
-      if(cfgTpl){ const n=document.getElementById("tplCfg_name"); if(n) n.value=cfgTpl.name||""; setConfigMeta(cfgTpl); }
-      else { const n=document.getElementById("tplCfg_name"); if(n) n.value=""; setConfigMeta(null); }
+      // v8.10.2: sin plantillas/"Datos comunes". Solo prepara los dos flujos.
+      await loadProjectMembers(); await loadTemplateUser();
       setScopeValues("tplNew",{});
-      if(latest){ const ns=document.getElementById("newTemplateSelect"); if(ns) ns.value=latest.name; saveLastTemplateName(latest.name); setCreateMeta(latest); }
-      else { setCreateMeta(null); }
       ensureCreateAutoFields();
       setScopeValues("tplUpd",{});
       await populateUpdateViews();
-      const an=tplEl("tplNew","author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview("tplNew"); } } // v8.10.1
+      const an=tplEl("tplNew","author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview("tplNew"); } }
       await cvPreloadCurrentView(); await autoExpandViewFlow();
     }
 
@@ -2539,28 +2609,84 @@
     function syncSelectPlaceholder(sel){ if(sel) sel.classList.toggle("placeholder",!sel.value); }
     async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>elige un valor…</option>'; syncSelectPlaceholder(vsel); setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); syncSelectPlaceholder(vsel); setProgress("Valores Name cargados: "+values.size+"."); }
 
-    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("populateColors."+containerId,e); } const byColor=new Map(); let illegible=0; for(const c of colored){ if(!c.colorValid){ illegible++; continue; } if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort(); if(colors.length===0 && illegible===0){ cont.textContent=emptyText||"No hay colores aplicados en el modelo."; return; } for(const col of colors){ const row=document.createElement("label"); row.title=col+" ("+byColor.get(col).count+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } if(illegible>0){ const row=document.createElement("label"); row.title=COLOR_ILLEGIBLE_TEXT+" ("+illegible+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.disabled=true; const sw=document.createElement("span"); sw.className="swatch swatch-illegible"; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } }
+    // v8.10.2: getColoredObjects() solo devuelve colores APLICADOS por presentación/herramientas.
+    // Los colores nativos del IFC/Tekla pueden no estar expuestos: si hay objetos en el visor pero 0 colores,
+    // NO se concluye "no hay colores"; se informa del límite de la API y se registra en COLOR_DIAG.
+    let lastColorFallbackDiag=null;
+    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; let coloredError=null; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ coloredError=e.message; recordError("populateColors."+containerId,e); } const byColor=new Map(); let illegible=0; for(const c of colored){ if(!c.colorValid){ illegible++; continue; } if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort();
+      if(colors.length===0 && illegible===0){
+        // Fallback diagnóstico: ¿hay objetos accesibles en el visor? Entonces el 0 es un límite de la API, no ausencia real.
+        const fb={containerId,getColoredObjectsTotal:colored.length,getColoredObjectsError:coloredError,visibleObjectsTotal:null,presentationProbe:null,reason:""};
+        let visibleTotal=0;
+        try{ const mm=await getModelObjectsMap(); for(const ids of mm.values()) visibleTotal+=ids.length; fb.visibleObjectsTotal=visibleTotal; }catch(e){ fb.visibleObjectsError=e.message; }
+        try{ if(API.viewer&&typeof API.viewer.getPresentation==="function"){ const pres=await API.viewer.getPresentation(); fb.presentationProbe=pres?String(safeJson(pres)).slice(0,300):null; } }catch(e){ fb.presentationProbeError=e.message; }
+        if(visibleTotal>0){
+          fb.reason="Objetos accesibles ("+visibleTotal+") pero getColoredObjects=0: colores nativos IFC/Tekla no expuestos por la API.";
+          cont.textContent="No se han detectado colores modificados por presentación. Los colores nativos del IFC pueden no estar expuestos por getColoredObjects.";
+        } else {
+          fb.reason="Sin objetos accesibles y sin colores: visor vacío o modelo sin cargar.";
+          cont.textContent=emptyText||"No hay colores aplicados en el modelo.";
+        }
+        lastColorFallbackDiag=fb;
+        return;
+      }
+      for(const col of colors){ const row=document.createElement("label"); row.title=col+" ("+byColor.get(col).count+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } if(illegible>0){ const row=document.createElement("label"); row.title=COLOR_ILLEGIBLE_TEXT+" ("+illegible+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.disabled=true; const sw=document.createElement("span"); sw.className="swatch swatch-illegible"; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } }
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
     // ===================== EXCLUSIÓN POR MODELO/IFC (v8.10.0) =====================
     function loadExcludedModelIds(){ try{ const raw=localStorage.getItem(EXCLUDE_MODELS_KEY); if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)){ excludedModelIds.clear(); arr.forEach((id)=>{ if(id!=null&&id!=="") excludedModelIds.add(String(id)); }); } } }catch(e){ recordError("loadExcludedModelIds",e); } }
     function saveExcludedModelIds(){ try{ localStorage.setItem(EXCLUDE_MODELS_KEY,JSON.stringify([...excludedModelIds])); }catch(e){ recordError("saveExcludedModelIds",e); } }
+    // v8.10.2: getModels() puede devolver TODOS los modelos del proyecto, no solo los abiertos.
+    // Fuente de verdad de "abierto en el visor": getObjects() — solo los modelos con objetos accesibles.
+    // getModels() se usa únicamente para resolver nombres. Diagnóstico en EXCLUDE_MODELS_DIAG.
+    let lastModelsListDiag=null;
     async function getLoadedModelsList(){
-      try{ if(API.viewer&&typeof API.viewer.getModels==="function"){ const ms=await API.viewer.getModels(); return (Array.isArray(ms)?ms:[]).map((m)=>({id:String((m&&(m.id??m.modelId))||""),name:String((m&&m.name)||"(sin nombre)")})).filter((m)=>m.id); } }
-      catch(e){ recordError("getLoadedModelsList",e); }
-      return [];
+      const diag={getModelsTotal:null,openByObjectsTotal:null,source:"",notes:[]};
+      let nameById=new Map(); let getModelsOrder=[];
+      try{
+        if(API.viewer&&typeof API.viewer.getModels==="function"){
+          const ms=await API.viewer.getModels();
+          for(const m of (Array.isArray(ms)?ms:[])){ const id=String((m&&(m.id??m.modelId))||""); if(!id) continue; nameById.set(id,String((m&&m.name)||"(sin nombre)")); getModelsOrder.push(id); }
+          diag.getModelsTotal=nameById.size;
+        }
+      }catch(e){ recordError("getLoadedModelsList.getModels",e); diag.notes.push("getModels error: "+e.message); }
+      let openIds=[];
+      try{
+        const byModel=await getModelObjectsMap(); // getObjects(): solo modelos con objetos accesibles en el visor
+        openIds=[...byModel.keys()];
+        diag.openByObjectsTotal=openIds.length;
+        diag.source="getObjects (objetos accesibles)";
+      }catch(e){ recordError("getLoadedModelsList.getObjects",e); diag.notes.push("getObjects error: "+e.message); }
+      let models=[];
+      if(openIds.length){
+        models=openIds.map((id)=>({id,name:nameById.get(id)||("(modelo "+id+")")}));
+      } else if(nameById.size){
+        // Degradación: si getObjects no devuelve nada (visor vacío o API limitada), se listan los de getModels con aviso.
+        diag.source="getModels (fallback: getObjects sin resultados; puede incluir modelos no abiertos)";
+        models=getModelsOrder.map((id)=>({id,name:nameById.get(id)}));
+      }
+      lastModelsListDiag=diag;
+      return models;
     }
+    // Orden de la lista: aparición (orden del visor) o alfabético. Alternable con el botón embudo.
+    let excludeModelsSortAlpha=false;
     async function populateExcludeModels(){
       const cont=document.getElementById("excludeModels"); if(!cont) return;
-      cont.innerHTML=""; const models=await getLoadedModelsList();
-      if(!models.length){ cont.textContent="No hay modelos cargados."; return; }
-      for(const m of models){
-        const row=document.createElement("label"); row.className="model-exclude-row"; row.title=m.id;
+      cont.innerHTML="Leyendo modelos abiertos...";
+      const models=await getLoadedModelsList();
+      cont.innerHTML="";
+      if(!models.length){ cont.textContent="No hay modelos abiertos en el visor."; return; }
+      const list=models.slice();
+      if(excludeModelsSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+      for(const m of list){
+        const row=document.createElement("label"); row.className="model-exclude-row"; row.title=m.name+" ("+m.id+")";
         const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedModelIds.has(m.id);
         cb.addEventListener("change",()=>{ if(cb.checked) excludedModelIds.add(m.id); else excludedModelIds.delete(m.id); saveExcludedModelIds(); scheduleProcessSelection(); log("Excluir modelo "+(cb.checked?"activado":"desactivado")+": "+m.name+" ("+m.id+")."); });
         const span=document.createElement("span"); span.className="model-exclude-name"; span.textContent=m.name;
         row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
       }
+      const sortBtn=document.getElementById("excludeModelsSort");
+      if(sortBtn){ sortBtn.classList.toggle("funnel-active",excludeModelsSortAlpha); sortBtn.title="Orden: "+(excludeModelsSortAlpha?"alfabético":"aparición"); }
     }
 
     // ===================== ACCIONES RÁPIDAS =====================
@@ -2654,54 +2780,99 @@
       else if(hasComma){ const parts=s.split(","); if(parts.length>2 || (parts[1]&&parts[1].length===3)) s=s.replace(/,/g,""); else s=s.replace(",","."); }
       const n=Number(s); return Number.isFinite(n)?n:null;
     }
-    function classifyQuantType(p){ if(matchBolt(p)) return "bolts"; if(matchWeld(p)) return "welds"; if(findPropByAliases(p,["Profile","Section","Cross section"])) return "beams"; return "others"; }
-    function quantBump(o,v){ v=String(v==null?"":v).trim(); if(!v) return; o[v]=(o[v]||0)+1; }
-    function quantTopCounts(obj,limit){ const e=Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]); const lim=limit||8; const top=e.slice(0,lim); let s=top.map(([k,n])=>inspEsc(k)+" ("+n+")").join(", "); if(e.length>top.length) s+=", …+"+(e.length-top.length); return s; }
-    function quantGroupLine(label,obj){ const e=Object.entries(obj||{}); if(!e.length) return '<div class="insp-line">'+inspEsc(label)+': No disponible</div>'; return '<div class="insp-line">'+inspEsc(label)+': '+quantTopCounts(obj)+'</div>'; }
+    // v8.10.2: sin grupo "otros" como tipología principal; lo no clasificable se integra en Perfiles/chapas.
+    function classifyQuantType(p){ if(matchBolt(p)) return "bolts"; if(matchWeld(p)) return "welds"; return "profiles"; }
+    // Número en formato español: miles con punto, decimales con coma. Peso/longitud: 2 dec salvo entero claro.
+    function quantNum(x,dec){ const n=Number(x||0); const isInt=Math.abs(n-Math.round(n))<1e-9; const d=(dec<=2&&isInt)?0:dec; return n.toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+    // Detección de calidad de tornillo (8.8, 10.9, A2-70, A4, stainless...) en varias propiedades.
+    function detectBoltQuality(p){
+      const cands=[findPropByAliases(p,["Material"]),findPropByAliases(p,["Bolt material"]),findPropByAliases(p,["Bolt standard"]),findPropByAliases(p,["Bolt Name"])];
+      for(const c of cands){ if(!c) continue; const m=String(c).match(/\b(\d{1,2}[.,]\d)\b|A[24]-?\d{0,3}\b|stainless\s*steel|inox/i); if(m) return m[0].replace(",","."); }
+      return "";
+    }
+    function quantWeldSeam(group,type,size,len){
+      const t=String(type||"").trim()||"(sin tipo)";
+      if(!group.types[t]) group.types[t]={units:0,lengthTotal:0,lengthCount:0,sizes:{}};
+      const g=group.types[t]; g.units++;
+      const ln=parseQuantNumber(len); if(ln!=null){ g.lengthTotal+=ln; g.lengthCount++; }
+      const s=String(size||"").trim(); if(s){ const key="a"+fmtDim(s,"mm"); g.sizes[key]=(g.sizes[key]||0)+1; }
+    }
     function renderQuantResult(out,msg){
-      const box=document.getElementById("quantifyResult"); if(!box) return;
+      const box=document.getElementById("quantifyResult"); const wrap=document.getElementById("quantifyWrap");
+      if(!box) return;
+      if(wrap) wrap.style.display="block";
       if(msg){ box.innerHTML='<div class="hint">'+inspEsc(msg)+'</div>'; return; }
-      const f=(x,d)=>Number(x||0).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});
-      const sumLine=(label,key,d)=> out.counts[key]>0 ? '<div class="insp-line">'+label+': '+f(out.sums[key],d)+' <span class="hint" style="display:inline;">('+out.counts[key]+' con dato)</span></div>' : '<div class="insp-line">'+label+': No disponible</div>';
-      let html='<div class="insp-title">'+out.objects+' elemento(s) seleccionado(s)</div>';
-      if(out.totalVisible!=null) html+='<div class="insp-line">Visibles en contexto: '+out.totalVisible.toLocaleString("es-ES")+(out.percent!=null?' ('+out.percent+'% de la selección)':'')+'</div>';
-      else html+='<div class="hint">% sobre total visible: No disponible.</div>';
-      html+='<div class="insp-line">Tipologías — soldaduras: '+out.byType.welds+', tornillos: '+out.byType.bolts+', vigas/perfiles: '+out.byType.beams+', otros: '+out.byType.others+'</div>';
-      html+=sumLine("Peso total","weight",2);
-      html+=sumLine("Volumen total","volume",3);
-      html+=sumLine("Área total","area",3);
-      html+=sumLine("Longitud total","length",2);
+      let html="";
+      // Resumen superior (cambio 8)
+      html+= out.totalVisible!=null
+        ? '<div class="insp-line">Items visibles: '+quantNum(out.totalVisible,0)+' ud.</div>'
+        : '<div class="insp-line">Items visibles: No disponible</div>';
+      const pct=(out.totalVisible>0)?(out.objects/out.totalVisible*100):null;
+      html+='<div class="insp-line">Items seleccionados: '+quantNum(out.objects,0)+' ud.'+(pct!=null?' ('+pct.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+'%)':'')+'</div>';
+      html+='<div class="quant-h">Quantities</div>';
+      const sumLine=(label,key,dec,unit)=> out.counts[key]>0
+        ? '<div class="insp-line">'+label+': '+quantNum(out.sums[key],dec)+' '+unit+'</div>'
+        : '<div class="insp-line">'+label+': No disponible</div>';
+      html+=sumLine("Peso total","weight",2,"kg");
+      html+=sumLine("Volumen total","volume",3,"m³");
+      html+=sumLine("Área total","area",3,"m²");
+      html+=sumLine("Longitud total","length",2,"mm");
+      html+='<div class="quant-h">Tipologías</div>';
+      // Soldaduras (azul): Assembly type -> tipo -> unidades, longitud, gargantas (cambio 10)
       if(out.byType.welds>0){
-        html+='<div class="insp-type" style="margin-top:6px;">Soldaduras ('+out.byType.welds+')</div>';
-        html+= out.welds.lengthCount>0?'<div class="insp-line">Longitud total: '+f(out.welds.lengthTotal,2)+' <span class="hint" style="display:inline;">('+out.welds.lengthCount+' con dato)</span></div>':'<div class="insp-line">Longitud total: No disponible</div>';
-        html+=quantGroupLine("Garganta/tamaño",out.welds.size);
-        html+=quantGroupLine("Tipo de soldadura",out.welds.type);
-        html+=quantGroupLine("Assembly/Cast unit Mark",out.welds.mark);
+        html+='<div class="quant-cat quant-cat-welds">Soldaduras ('+out.byType.welds+')</div>';
+        const order=["Site","Workshop"];
+        const keys=Object.keys(out.welds.byAssembly).sort((a,b)=>{ const ia=order.indexOf(a),ib=order.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b,"es"); });
+        for(const ak of keys){
+          const grp=out.welds.byAssembly[ak];
+          html+='<div class="quant-sub">Assembly type: '+inspEsc(ak)+'</div>';
+          for(const t of Object.keys(grp.types).sort((a,b)=>a.localeCompare(b,"es"))){
+            const g=grp.types[t];
+            let line=inspEsc(t)+': '+g.units+' ud.';
+            line+= g.lengthCount>0 ? ' · Longitud '+quantNum(g.lengthTotal,2)+' mm' : ' · Longitud No disponible';
+            const sizes=Object.entries(g.sizes).sort((a,b)=>b[1]-a[1]).map(([k,n])=>inspEsc(k)+' ('+n+')').join(', ');
+            if(sizes) line+=' · '+sizes;
+            html+='<div class="quant-sub2">'+line+'</div>';
+          }
+        }
       }
+      // Tornillos (naranja): standard + calidad, métricas con Bolt count (cambio 11)
       if(out.byType.bolts>0){
-        html+='<div class="insp-type" style="margin-top:6px;">Tornillos ('+out.byType.bolts+')</div>';
-        html+= out.bolts.boltCountHas>0?'<div class="insp-line">Bolt count total: '+f(out.bolts.boltCountTotal,0)+' <span class="hint" style="display:inline;">('+out.bolts.boltCountHas+' con dato)</span></div>':'<div class="insp-line">Bolt count total: No disponible (objetos tornillo: '+out.byType.bolts+')</div>';
-        html+=quantGroupLine("Diámetro/tamaño",out.bolts.size);
-        html+=quantGroupLine("Longitud",out.bolts.length);
-        html+=quantGroupLine("Estándar",out.bolts.standard);
-        html+=quantGroupLine("Material/calidad",out.bolts.material);
+        html+='<div class="quant-cat quant-cat-bolts">Tornillos ('+out.byType.bolts+')</div>';
+        for(const gk of Object.keys(out.bolts.byGroup).sort((a,b)=>a.localeCompare(b,"es"))){
+          const g=out.bolts.byGroup[gk];
+          html+='<div class="quant-sub">'+inspEsc(gk)+' ('+quantNum(g.units,0)+' ud.)</div>';
+          for(const [k,n] of Object.entries(g.sizes).sort((a,b)=>b[1]-a[1])) html+='<div class="quant-sub2">'+inspEsc(k)+' ('+quantNum(n,0)+' ud.)</div>';
+          for(const [k,n] of Object.entries(g.lengths).sort((a,b)=>b[1]-a[1])) html+='<div class="quant-sub2">'+inspEsc(k)+' ('+quantNum(n,0)+' ud.)</div>';
+        }
       }
-      if(out.byType.beams>0||out.byType.others>0){
-        html+='<div class="insp-type" style="margin-top:6px;">Vigas/perfiles y otros ('+(out.byType.beams+out.byType.others)+')</div>';
-        html+=quantGroupLine("Perfil/Nombre",out.profiles.profile);
-        html+=quantGroupLine("Material",out.profiles.material);
+      // Perfiles/chapas (verde), último grupo: por material con peso total (cambio 12)
+      if(out.byType.profiles>0){
+        html+='<div class="quant-cat quant-cat-profiles">Perfiles/chapas ('+out.byType.profiles+')</div>';
+        const keys=Object.keys(out.profiles.byMaterial).sort((a,b)=>{ if(a==="Undefined") return 1; if(b==="Undefined") return -1; return a.localeCompare(b,"es"); });
+        for(const mk of keys){
+          const g=out.profiles.byMaterial[mk];
+          let line=inspEsc(mk)+': ';
+          line+= g.weightCount>0 ? 'Total weight '+quantNum(g.weightTotal,2)+' kg ('+g.units+' ud.)' : g.units+' ud. (sin peso)';
+          html+='<div class="quant-sub">'+line+'</div>';
+        }
       }
       if(out.truncated) html+='<div class="insp-warn">Cálculo truncado a '+QUANT_CAP+' objetos. Reduce la selección para el total exacto.</div>';
-      html+='<div class="hint">Agrupado por parámetro (valor → conteo). Las unidades dependen del modelo (Tekla/IFC); se suman tal cual.</div>';
       box.innerHTML=html;
+    }
+    // Texto plano (sin HTML) para el botón copiar.
+    function quantPlainText(){
+      const box=document.getElementById("quantifyResult"); if(!box) return "";
+      const parts=[]; box.querySelectorAll("div").forEach((d)=>{ const t=d.textContent.trim(); if(t) parts.push(t); });
+      return parts.join("\n");
     }
     async function quantifySelection(){
       if(quantBusy) return; quantBusy=true;
       const t0=(typeof performance!=="undefined"&&performance.now)?performance.now():Date.now();
-      const out={objects:0,sums:{weight:0,volume:0,area:0,length:0},counts:{weight:0,volume:0,area:0,length:0},byType:{welds:0,bolts:0,beams:0,others:0},
-        welds:{lengthTotal:0,lengthCount:0,size:{},type:{},mark:{}},
-        bolts:{boltCountTotal:0,boltCountHas:0,size:{},length:{},standard:{},material:{}},
-        profiles:{material:{},profile:{}},
+      const out={objects:0,sums:{weight:0,volume:0,area:0,length:0},counts:{weight:0,volume:0,area:0,length:0},byType:{welds:0,bolts:0,profiles:0},
+        welds:{byAssembly:{}},
+        bolts:{byGroup:{},boltCountFallbackItems:0},
+        profiles:{byMaterial:{}},
         truncated:false,totalVisible:null,percent:null,processed:0,errors:[]};
       try{
         const sel=await safeGetSelection();
@@ -2718,19 +2889,32 @@
               const t=classifyQuantType(p); out.byType[t]++;
               for(const key of ["weight","volume","area","length"]){ const num=parseQuantNumber(findPropByAliases(p,QUANT_PARAM_ALIASES[key])); if(num!=null){ out.sums[key]+=num; out.counts[key]++; } }
               if(t==="welds"){
-                const wl=parseQuantNumber(findPropByAliases(p,["Actual length 1","Actual length1","Actual length","Length"])); if(wl!=null){ out.welds.lengthTotal+=wl; out.welds.lengthCount++; }
-                quantBump(out.welds.size,findPropByAliases(p,["Size 1","Size1","Size"]));
-                quantBump(out.welds.type,findPropByAliases(p,["Type 1","Type1","Type"]));
-                quantBump(out.welds.mark,findPropByAliases(p,["Assembly/Cast unit Mark","Cast unit Mark","Assembly mark","Part mark"]));
+                const asm=String(findPropByAliases(p,["Assembly type"])||"").trim()||"Undefined";
+                if(!out.welds.byAssembly[asm]) out.welds.byAssembly[asm]={types:{}};
+                const grp=out.welds.byAssembly[asm];
+                // Costura 1; costura 2 solo si trae datos propios.
+                quantWeldSeam(grp,findPropByAliases(p,["Type 1","Type1","Type"]),findPropByAliases(p,["Size 1","Size1","Size"]),findPropByAliases(p,["Actual length 1","Actual length1","Actual length","Length"]));
+                const t2=findPropByAliases(p,["Type 2","Type2"]), s2=findPropByAliases(p,["Size 2","Size2"]), l2=findPropByAliases(p,["Actual length 2","Actual length2"]);
+                if(t2||s2||l2) quantWeldSeam(grp,t2,s2,l2);
               } else if(t==="bolts"){
-                const bc=parseQuantNumber(findPropByAliases(p,["Bolt count","Number of bolts","Bolt Quantity"])); if(bc!=null){ out.bolts.boltCountTotal+=bc; out.bolts.boltCountHas++; }
-                quantBump(out.bolts.size,findPropByAliases(p,["Bolt size","NominalDiameter","Bolt Name"]));
-                quantBump(out.bolts.length,findPropByAliases(p,["Bolt length","NominalLength"]));
-                quantBump(out.bolts.standard,findPropByAliases(p,["Bolt standard"]));
-                quantBump(out.bolts.material,findPropByAliases(p,["Material","Bolt material","Quality","Grade"]));
+                const std=String(findPropByAliases(p,["Bolt standard"])||"").trim()||"Sin estándar";
+                const quality=detectBoltQuality(p);
+                const gk=quality?(std+" - "+quality):std;
+                if(!out.bolts.byGroup[gk]) out.bolts.byGroup[gk]={units:0,sizes:{},lengths:{}};
+                const g=out.bolts.byGroup[gk];
+                // Bolt count = tornillos reales que representa el item de Tekla. Sin dato: 1 ud. (fallback al diag).
+                let bc=parseQuantNumber(findPropByAliases(p,["Bolt count","Number of bolts","Bolt Quantity"]));
+                if(bc==null||bc<=0){ bc=1; out.bolts.boltCountFallbackItems++; }
+                g.units+=bc;
+                let size=String(findPropByAliases(p,["Bolt size","NominalDiameter"])||"").trim();
+                if(size){ const sn=parseQuantNumber(size); const key=(sn!=null&&!/m/i.test(size))?("M"+quantNum(sn,0)):size; g.sizes[key]=(g.sizes[key]||0)+bc; }
+                const lenRaw=findPropByAliases(p,["Bolt length","NominalLength"]);
+                const ln=parseQuantNumber(lenRaw); if(ln!=null){ const key="L="+quantNum(ln,0)+" mm"; g.lengths[key]=(g.lengths[key]||0)+bc; }
               } else {
-                quantBump(out.profiles.profile,findPropByAliases(p,["Profile","Section","Cross section"]));
-                quantBump(out.profiles.material,findPropByAliases(p,["Material","Grade"]));
+                const mat=String(findPropByAliases(p,["Material","IfcMaterial.Material","Grade"])||"").trim()||"Undefined";
+                if(!out.profiles.byMaterial[mat]) out.profiles.byMaterial[mat]={units:0,weightTotal:0,weightCount:0};
+                const g=out.profiles.byMaterial[mat]; g.units++;
+                const w=parseQuantNumber(findPropByAliases(p,QUANT_PARAM_ALIASES.weight)); if(w!=null){ g.weightTotal+=w; g.weightCount++; }
               }
             }
             setProgress("Quantity Surveyor: "+out.processed+"/"+list.length+"...");
@@ -2738,17 +2922,33 @@
           }
           if(cancelRequested) break;
         }
-        try{ const mm=await getModelObjectsMap(); let tv=0; for(const arr of mm.values()) tv+=arr.length; out.totalVisible=tv||null; if(tv>0) out.percent=Math.round((out.objects/tv)*1000)/10; }catch(e){ out.errors.push("totalVisible: "+e.message); }
+        try{ const mm=await getModelObjectsMap(); let tv=0; for(const arr of mm.values()) tv+=arr.length; out.totalVisible=tv||null; if(tv>0) out.percent=Math.round((out.objects/tv)*10000)/100; }catch(e){ out.errors.push("totalVisible: "+e.message); }
         out.elapsedMs=Math.round(((typeof performance!=="undefined"&&performance.now)?performance.now():Date.now())-t0);
         lastQuantification=out; renderQuantResult(out,null);
-        log("Quantity Surveyor: "+out.objects+" elemento(s); peso "+out.sums.weight.toFixed(2)+", volumen "+out.sums.volume.toFixed(3)+", área "+out.sums.area.toFixed(3)+", longitud "+out.sums.length.toFixed(2)+" ("+out.elapsedMs+" ms).");
+        log("Quantity Surveyor: "+out.objects+" item(s); peso "+out.sums.weight.toFixed(2)+" kg, volumen "+out.sums.volume.toFixed(3)+" m³, área "+out.sums.area.toFixed(3)+" m², longitud "+out.sums.length.toFixed(2)+" mm ("+out.elapsedMs+" ms).");
         setProgress("Quantity Surveyor listo.");
       }catch(e){ recordError("quantifySelection",e); out.errors.push(e.message); lastQuantification=out; renderQuantResult(out,"Error al cuantificar: "+e.message); }
       finally{ quantBusy=false; showCancel(false); }
     }
+    // v8.10.2: copiar (texto limpio) y limpiar (estado inicial) del Quantity Surveyor.
+    async function quantCopyToClipboard(){
+      const text=quantPlainText(); if(!text){ setProgress("Quantity Surveyor: nada que copiar."); return; }
+      try{ await navigator.clipboard.writeText(text); setProgress("Quantity Surveyor: resultado copiado."); }
+      catch(e){
+        try{ const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); setProgress("Quantity Surveyor: resultado copiado."); }
+        catch(e2){ recordError("quantCopy",e2); setProgress("No se ha podido copiar al portapapeles."); }
+      }
+    }
+    function quantClear(){
+      const box=document.getElementById("quantifyResult"); if(box) box.innerHTML="";
+      const wrap=document.getElementById("quantifyWrap"); if(wrap) wrap.style.display="none";
+      setProgress("Quantity Surveyor: limpiado.");
+    }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
       const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=()=>quantifySelection();
+      const quantCopy=document.getElementById("quantifyCopy"); if(quantCopy) quantCopy.onclick=()=>quantCopyToClipboard();
+      const quantClearBtn=document.getElementById("quantifyClear"); if(quantClearBtn) quantClearBtn.onclick=()=>quantClear();
       const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
       const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueFromCache("qsParam2","qsValue2"));
       const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
@@ -2775,15 +2975,28 @@
       if(wrap) wrap.addEventListener("click",(ev)=>{ ev.stopPropagation(); setTimeout(()=>{ if(details&&toggle) details.open=!!toggle.checked; },0); });
       if(toggle){ toggle.addEventListener("click",(ev)=>ev.stopPropagation()); toggle.addEventListener("change",()=>{ if(details) details.open=!!toggle.checked; }); }
     }
+    // v8.10.2: SOLO para Ver nombres / Ver tornillos / Ver soldaduras (Mostrar parámetros).
+    // El nombre abre/cierra el desplegable (nativo); el switch activa/desactiva SIN abrir/cerrar.
+    function wireParamSummarySwitch(switchWrapId,toggleId){
+      const wrap=document.getElementById(switchWrapId); const toggle=document.getElementById(toggleId);
+      if(!wrap||!toggle) return;
+      wrap.addEventListener("click",(ev)=>{
+        ev.stopPropagation();
+        ev.preventDefault(); // cancela el toggle nativo del details y el click sintético del label
+        toggle.checked=!toggle.checked;
+        toggle.dispatchEvent(new Event("change",{bubbles:true}));
+      });
+    }
     function wireUI(){
       const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
       wireSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
       wireSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");
       wireSummarySwitch("includeSummarySwitch","includeToggle","includeTool");
-      wireSummarySwitch("namesSummarySwitch","namesToggle","namesTool");
-      wireSummarySwitch("boltsSummarySwitch","boltsToggle","boltsTool");
-      wireSummarySwitch("weldsSummarySwitch","weldsToggle","weldsTool");
+      // v8.10.2: en Mostrar parámetros el switch ya no abre/cierra el desplegable (cambio 4).
+      wireParamSummarySwitch("namesSummarySwitch","namesToggle");
+      wireParamSummarySwitch("boltsSummarySwitch","boltsToggle");
+      wireParamSummarySwitch("weldsSummarySwitch","weldsToggle");
 
       const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
       custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if(!custom.checked) customText.value=""; });
@@ -2802,6 +3015,8 @@
       loadExcludedModelIds(); // v8.10.0: exclusiones por modelo/IFC persistidas
       populateExcludeModels();
       const excludeModelsRefresh=document.getElementById("excludeModelsRefresh"); if(excludeModelsRefresh) excludeModelsRefresh.onclick=()=>populateExcludeModels();
+      // v8.10.2: embudo alterna orden aparición/alfabético de la lista de modelos.
+      const excludeModelsSort=document.getElementById("excludeModelsSort"); if(excludeModelsSort) excludeModelsSort.onclick=()=>{ excludeModelsSortAlpha=!excludeModelsSortAlpha; populateExcludeModels(); };
 
       const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
       hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; syncHiddenUiState(); await clearHiddenWhite(); } });
@@ -2909,9 +3124,17 @@
       const eng={ PARAM_SAVED_LABEL_ENGINE,
         lastLegacyPayload, lastLegacyResponse, lastCurrentPayload,
         payloadShape:"start/end coordenadas puras en mm, SIN modelId/objectRuntimeId, z=(bb.max.z+0.5)*1000 (techo+0,5m), start==end",
-        notaVistas:"En vistas guardadas Trimble puede crear el markup sin renderizarlo; por eso Agregar solo se ofrece en modelo directo (v8.10.0)." };
+        notaVistas:"En vistas guardadas Trimble puede crear el markup sin renderizarlo; warning fijo en el bloque, Inspector como vía principal (v8.10.2)." };
+      // v8.10.2: contexto activo y estado de los botones (la regresión venía de botones deshabilitados por falso positivo).
+      try{ eng.savedViewContextNow=await isSavedViewContext(); }catch(e){ eng.savedViewContextError=e.message; }
+      eng.contextoActivo=(eng.savedViewContextNow===true)?"vista guardada":"modelo directo";
+      eng.lastLabelContext=lastLabelContext;
+      eng.buttonsState={};
+      for(const id of ["lblAdd","lblRemove","lblRemoveAll"]){ const b=document.getElementById(id); eng.buttonsState[id]=b?{exists:true,disabled:b.disabled,hasHandler:typeof b.onclick==="function"}:{exists:false}; }
+      eng.savedLabelIdsLocal=savedParamLabels.map((s)=>s.markupId).slice(0,50);
       eng.getTextMarkupsTotal=dbgTextMarkups?dbgTextMarkups.length:"n/a";
       if(dbgTextMarkups){ const sIds=new Set(savedParamLabels.map((s)=>Number(s.markupId))); eng.savedIdsPresent=dbgTextMarkups.filter((x)=>sIds.has(Number(x&&(x.id??x)))).length; }
+      eng.lastMarkupError=(errorHistory.slice().reverse().find((e)=>/markup|legacy|savedLabels/i.test(String(e&&e.ctx||"")))||null);
       eng.selection=selection.slice(0,10);
       if(selection[0]){
         try{ const bxs=await API.viewer.getObjectBoundingBoxes(selection[0].modelId,[selection[0].runtimeId]); const b=bxs&&bxs[0]?bboxOf(bxs[0]):null; eng.firstBbox=b; if(b) eng.labelPositionForFirst={x:((b.min.x+b.max.x)/2)*1000,y:((b.min.y+b.max.y)/2)*1000,z:(b.max.z+0.5)*1000}; }catch(e){ eng.firstBboxError=e.message; }
@@ -2933,9 +3156,16 @@
       cdiag.illegibleSamples=illegibleSamples;
       cdiag.normalizationExamples=[{in:"#1A2B3C",out:normalizeColor("#1A2B3C")},{in:"{r:1,g:0.5,b:0,a:1}",out:normalizeColor({r:1,g:0.5,b:0,a:1})},{in:"[12,34,56]",out:normalizeColor([12,34,56])},{in:"rgb(10,20,30)",out:normalizeColor("rgb(10,20,30)")},{in:"texto-no-color",out:analyzeColor("texto-no-color").legible}];
       cdiag.rule="Todo color válido se normaliza a #RRGGBBAA; alfa ausente -> FF; no interpretable -> '"+COLOR_ILLEGIBLE_TEXT+"' (nunca blanco).";
+      // v8.10.2: distinción presentación vs colores nativos IFC/Tekla (no expuestos por getColoredObjects).
+      cdiag.getColoredObjectsTotal=colored.length;
+      cdiag.nativeColorsNote="getColoredObjects solo expone colores aplicados por presentación/herramientas; los colores nativos del IFC/Tekla no son accesibles por esta API.";
+      cdiag.lastColorFallback=lastColorFallbackDiag;
+      try{ if(API.viewer&&typeof API.viewer.getPresentation==="function"){ const pres=await API.viewer.getPresentation(); cdiag.presentationCurrent=pres?String(safeJson(pres)).slice(0,500):null; } }catch(e){ cdiag.presentationError=e.message; }
       add("COLOR_DIAG",safeJsonDeep(cdiag,2));
       // ===== EXCLUDE_MODELS_DIAG (v8.10.0): exclusión por modelo/IFC =====
       const exm={ excludeToggle:!!(document.getElementById("excludeToggle")&&document.getElementById("excludeToggle").checked), excludedModelIds:[...excludedModelIds], excludedModelCount:excludedModelIds.size };
+      exm.modelsListDiag=lastModelsListDiag; // v8.10.2: getModels vs modelos abiertos por getObjects
+      exm.sortMode=excludeModelsSortAlpha?"alfabético":"aparición";
       try{ exm.loadedModels=await getLoadedModelsList(); }catch(e){ exm.loadedModelsError=e.message; }
       try{ exm.persisted=localStorage.getItem(EXCLUDE_MODELS_KEY); }catch(e){ exm.persistedError=e.message; }
       add("EXCLUDE_MODELS_DIAG",safeJsonDeep(exm,2));
@@ -2985,8 +3215,29 @@
       add("VIEW_MODEL_CONTEXT_DIAG",safeJsonDeep(ctx,2));
       let views=[]; try{ views=await API.view.getViews(); }catch(e){ add("getViews ERROR",e.message); }
       add("VISTAS",{total:(views||[]).length,firstKeys:views&&views[0]?Object.keys(views[0]):[],first10:(views||[]).slice(0,10),realFolders:[...new Set((views||[]).map(detectFolder).filter(Boolean))]});
+      // ===== CONFIG_VIEW_DIAG (v8.10.2): estado de Crear/Actualizar vista, compartidos y etiquetas leídos =====
+      {
+        const cvd={ flows:["Crear nueva vista","Actualizar vista"],
+          shareTokens:{cvNew:cvGetShareTokens("cvNew"),cvUpd:cvGetShareTokens("cvUpd")},
+          labels:{cvNew:String((document.getElementById("cvNew_labels")||{}).value||""),cvUpd:String((document.getElementById("cvUpd_labels")||{}).value||"")},
+          authors:{tplNew:String((tplEl("tplNew","author")||{}).value||""),tplUpd:String((tplEl("tplUpd","author")||{}).value||"")},
+          namePreview:{tplNew:templateNameFromValues(getScopeValues("tplNew")),tplUpd:templateNameFromValues(getScopeValues("tplUpd"))},
+          projectMembersLoaded:templateProjectMembers.length };
+        try{ const cur=await API.view.getCurrentView(); if(cur){ cvd.currentView={id:cur.id,name:cur.name,assigneesRead:cvViewPeople(cur)||"(sin compartidos legibles)",tagsRead:cvViewTags(cur)||"(sin etiquetas legibles)",authorRead:cvViewAuthor(cur)||"(sin autor legible)",keys:Object.keys(cur).slice(0,30)}; } else cvd.currentView=null; }catch(e){ cvd.currentViewError=e.message; }
+        add("CONFIG_VIEW_DIAG",safeJsonDeep(cvd,2));
+      }
       add("PLANTILLAS GUARDADAS",loadTemplates());
       try{ add("HIDDEN SAMPLE",(await getHiddenObjectEntries()).slice(0,20)); }catch(e){ add("HIDDEN ERROR",e.message); }
+      // ===== HIDDEN_DIAG (v8.10.2): modo, fuente y validación de la detección de ocultos =====
+      {
+        const hd={ lastDetection:lastHiddenDiag,
+          registryManagedCount:mapSetCount(hiddenWhiteRegistry),
+          registryByModel:[...hiddenWhiteRegistry.entries()].map(([m,s])=>({modelId:m,count:s.size})).slice(0,20),
+          toggles:{ hiddenSelection:!!(document.getElementById("hiddenSelectionToggle")&&document.getElementById("hiddenSelectionToggle").checked), viewHidden:!!(document.getElementById("viewHiddenToggle")&&document.getElementById("viewHiddenToggle").checked) },
+          rule:"Si los 'ocultos' detectados cubren >=95% de los objetos accesibles, la detección se considera no fiable y NO se toca la visibilidad (degradación segura en modelo directo)." };
+        try{ hd.savedViewContext=await isSavedViewContext(); }catch(e){ hd.savedViewContextError=e.message; }
+        add("HIDDEN_DIAG",safeJsonDeep(hd,2));
+      }
       add("ERRORES",errorHistory);
       downloadText("DEO_debug_"+SCRIPT_VERSION+"_"+new Date().toISOString().replace(/[:.]/g,"-")+".txt",out.join("\n"),"text/plain");
       log("Debug descargado.");

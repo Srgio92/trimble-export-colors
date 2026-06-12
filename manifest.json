@@ -1,6 +1,6 @@
 {
   "title": "DEO Tools",
-  "icon": "https://srgio92.github.io/trimble-export-colors/icon.svg",
+  "icon": "https://srgio92.github.io/trimble-export-colors/assets/icon.svg",
   "url": "https://srgio92.github.io/trimble-export-colors/",
   "description": "Herramientas DEO para Trimble Connect: exportar/importar colores a CSV por GUID IFC y selección por proximidad. by Sergi Artigas",
   "enabled": true

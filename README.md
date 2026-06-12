@@ -17,6 +17,13 @@ Está pensada para flujos de revisión basados en IFC, donde los objetos se colo
 - **Extended export**: recorre automáticamente varias vistas del proyecto y genera un único CSV combinado.
 - **Importar CSV**: aplica colores a los objetos del modelo cargado a partir de un CSV con GUID + color. Los GUID que no estén en el modelo se omiten.
 - **Selección cercanos**: añade a la selección los objetos en contacto (aproximado por *bounding box*) con el objeto seleccionado que cumplan una condición numérica (p. ej. *Net volume < 0.1*).
+- **Excluir de selección**: quita de la selección los objetos por color o modelos/IFC completos abiertos en el visor (p. ej. ejes de referencia); la exclusión por modelo persiste entre sesiones.
+- **Selección ocultos / Ver ocultos**: gestiona los objetos ocultos marcándolos en blanco translúcido, con rescate de los recoloreados manualmente.
+- **Selector de items**: limita la selección por valor de `Name`, por parámetro/valor (p. ej. *Assembly type*, *Bolt standard*) o por color.
+- **Mostrar parámetros**: configura parámetros por tipología (nombres, tornillos, soldaduras) y guarda **etiquetas 3D** con esos datos. *En vistas existentes guardadas las etiquetas pueden no renderizarse (limitación del visor); usa el Inspector de selección.*
+- **Inspector de selección**: lectura rápida de los datos del objeto seleccionado (tipología, marca, dimensiones con unidades) sin abrir el panel de propiedades.
+- **Quantity Surveyor**: resumen de cantidades de la selección (peso, volumen, área, longitud, % sobre items visibles) agrupado por soldaduras, tornillos (con `Bolt count`) y perfiles/chapas por material, con botón de copiar.
+- **Configurar vista**: crea o actualiza vistas con nombre generado por campos (código RFI, ubicación, nivel, ejes…), autor automático, compartición con chips/autocompletado de miembros del proyecto y etiquetas.
 - **Zona de Desarrollador** con descarga de un informe de diagnóstico (`DEO_debug.txt`).
 - Interfaz organizada en menús desplegables, con interruptores estilo Trimble y descripciones flotantes al pasar el ratón.
 
@@ -28,8 +35,11 @@ Está pensada para flujos de revisión basados en IFC, donde los objetos se colo
 .
 ├── index.html        # La extensión completa (HTML + CSS + JS en un solo archivo)
 ├── manifest.json     # Manifiesto que Trimble Connect lee para cargar la extensión
-├── icon.svg          # Icono de la extensión (vectorial)
-├── icon.png          # Icono alternativo en PNG (más robusto en algunos entornos)
+├── assets/
+│   ├── icon.svg      # Icono de la extensión (vectorial, referenciado por manifest.json)
+│   └── icon.png      # Icono alternativo en PNG (más robusto en algunos entornos)
+├── icon.svg          # Copia en raíz (compatibilidad con manifests cacheados)
+├── icon.png          # Copia en raíz (compatibilidad)
 ├── README.md
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
