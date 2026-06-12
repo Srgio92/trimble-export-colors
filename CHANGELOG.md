@@ -3,6 +3,34 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.10.7] — 2026-06-12
+
+Corrección de interfaz y E/S por lotes. Lote de 19 ajustes sobre v8.10.6.
+
+### Corregido
+
+* **Excluir de selección**: la primera fila de la lista de IFC queda alineada con los botones de filtro y actualizar.
+* **Colores Tekla/no estándar**: el swatch del color personalizado con alfa < 255 se muestra sobre damero (transparencia legible, nunca blanco falso). La normalización (`#RRGGBBAA`), la comparación por color y `analyzeColor` (objeto `{r,g,b,a}`/`{red,green,blue,alpha}`, array, `#RGB(A)`/`#RRGGBB(AA)`, `rgb()/rgba()`, escalas 0–1 y 0–255) se mantienen.
+* **Barras de Tamaño/Distancia de etiqueta**: imán al 100 % (±8) y refresco del porcentaje; los valores afectan a las etiquetas 3D creadas con Agregar (escala y offset).
+* **Inspector de selección**: separación respecto al título, primera línea sin negrita y parámetros con sangría. Se retiran los textos "No es un tornillo/soldadura…" y "Dato encontrado en: padre" (el Inspector detecta cualquier objeto). Nota fija: "El Inspector muestra los parámetros configurados en Mostrar parámetros".
+* **Acciones rápidas**: nuevo icono de edición tipo lápiz que escribe (animación `pencilWrite`). El botón de añadir color ya no se corta (queda en el flujo responsive, alineado con los círculos). Se elimina el botón "Aceptar" del menú de color: al elegir un color en el selector se añade con la transparencia seleccionada (alfa real aplicado al pintar).
+* **Quantity Surveyor**: la longitud (total y por tipo de soldadura) se muestra en metros con formato español (1 m = 1000 mm; punto de miles, coma decimal).
+* **Configurar vista / Actualizar vista**: parser de título tolerante que separa código, ubicación, nivel, ejes, elemento, tarea, fecha y autor (ya no vuelca todo en Actuación). Prefijo `RFI_` bloqueado en el campo Código (solo se edita el número).
+* **Exportar CSV**: Error codes y Custom codes alineados (misma estructura de fila).
+* **Hover azul** coherente en todos los botones pulsables (anillo interior, sin salto de layout, salvo deshabilitados).
+
+### Añadido
+
+* **Exportación masiva con selección de vistas**: lista con scroll de todas las vistas, casillas por vista, orden alfabético, "Seleccionar/Deseleccionar todas" y contador `X/total` junto al interruptor. Exporta solo las vistas marcadas; si no hay ninguna, no inicia y avisa.
+* **Exportación masiva a ZIP único**: genera un CSV por vista dentro de un único ZIP (un solo guardado), con informe `_informe.txt`. Implementación de ZIP **propia sin dependencias externas** (método STORE + CRC32). Botón Cancelar junto a Exportar.
+* **Importación CSV/ZIP**: acepta un CSV, varios CSV o un ZIP con CSV dentro (lectura STORE directa y DEFLATE vía `DecompressionStream`; ignora lo que no sea CSV). Botón Cancelar junto a Importar.
+* **Estado con ETA**: exportación e importación muestran "X/Y · ETA mm:ss" con media móvil del tiempo por vista/archivo y cancelación limpia.
+
+### Notas
+
+* El cambio de vista en la exportación masiva usa el primer método disponible del Workspace API (`setView`/`selectView`/`setCurrentView`/…); si la API no lo expone, se informa y cada vista puede leer el contexto actual.
+* El botón Cancelar de la sección Estado se conserva para Quantity Surveyor e indexado de parámetros; export e import usan su Cancelar propio en línea.
+
 ## [v8.10.6] — 2026-06-12
 
 Auditoría completa del proyecto y reparación de colores/UI. Esta entrada consolida también los refinamientos de interfaz internos v8.10.3–v8.10.5 (paleta de colores rápidos personalizables, filtro por Name en Excluir de selección, panel pulsable de Quantity Surveyor, barras de tamaño/distancia de etiquetas), que no llegaron a publicarse por separado.

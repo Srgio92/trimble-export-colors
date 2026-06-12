@@ -240,9 +240,8 @@
     .quick-add-color { border:1.5px dashed #16a34a; color:#16a34a; background:#fff; }
     .quick-add-color .qc-add-plus { opacity:0; color:#16a34a; font-size:23px; line-height:20px; font-weight:bold; transform:translateY(-1px); }
     .quick-add-color:hover .qc-add-plus, .quick-add-color:focus-visible .qc-add-plus { opacity:1; }
-    .quick-edit-btn svg { transition: transform .18s ease; transform-origin: 50% 50%; }
-    .quick-edit-btn.is-editing svg { animation: pencilWrite .55s ease-in-out infinite; }
-    @keyframes pencilWrite { 0% { transform:rotate(-88deg) translateX(0); } 50% { transform:rotate(-88deg) translateX(2px); } 100% { transform:rotate(-88deg) translateX(0); } }
+    /* v8.10.7 (#6): animación de lápiz que escribe. La rotación se aplica al grupo .writing-pencil. */
+    @keyframes pencilWrite { from { transform:rotate(0deg); } to { transform:rotate(-25deg); } }
     .quant-panel { background:#f3f4f6; border-radius:10px; cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease, background .15s ease; }
     .quant-panel:hover, .quant-panel:focus-within { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; background:#f8fbff; }
     .quant-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -276,6 +275,59 @@
     #viewTemplateTool .tpl-medium { grid-column: span 6; }
     #viewTemplateTool #tplNew_element, #viewTemplateTool #tplUpd_element { min-width:28ch; }
     #viewTemplateTool #tplNew_task, #viewTemplateTool #tplUpd_task { min-width:42ch; }
+
+    /* ===================== v8.10.7 ===================== */
+    /* #19 Hover azul en cualquier botón pulsable (ring interior, sin salto de layout; nunca en deshabilitados) */
+    button:hover:not(:disabled), .icon-btn:hover:not(:disabled), .quick-select-btn:hover:not(:disabled),
+    .name-add-btn:hover:not(:disabled), .name-remove-btn:hover:not(:disabled),
+    .csv-add-button:hover:not(:disabled), .csv-remove-button:hover:not(:disabled),
+    .column-refresh:hover:not(:disabled), .qs-refresh:hover:not(:disabled),
+    .quant-copy-btn:hover:not(:disabled), .quant-clear-text:hover:not(:disabled) {
+      border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none;
+    }
+    /* #1 Excluir de selección: alinear la PRIMERA fila de la lista IFC con los botones filtro/refrescar.
+       La fila usa align-items:flex-start; subiendo el padding superior de la lista, el centro vertical de su
+       primera fila (~13px) coincide con el centro de los botones de 26px. */
+    #excludeModels { padding-top:6px; }
+    .color-list-row .model-list-actions { align-self:flex-start; }
+    /* #5 Inspector: separación respecto al título, primera línea sin negrita, sangría de parámetros */
+    #selInspectorBody { border-top:1px solid #e5e7eb; margin-top:6px; padding-top:6px; }
+    #selInspector .insp-type { margin-top:0; }
+    #selInspector .insp-title { font-weight:normal; }
+    #selInspector .insp-line { margin-left:14px; }
+    .insp-config-note { color:#6b7280; font-size:11px; margin:0 0 2px; }
+    /* #6 Icono de edición tipo lápiz que escribe */
+    .writing-icon { width:20px; height:20px; overflow:visible; }
+    .writing-trace, .writing-pencil-outline { fill:none; stroke:#9ca3ad; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+    .writing-trace { stroke-width:2.15; }
+    .writing-pencil-outline { stroke-width:1.55; }
+    .writing-pencil { transform-box:view-box; transform-origin:7.2px 16.2px; transform:rotate(0deg); }
+    .quick-edit-btn.is-editing .writing-pencil { animation:pencilWrite 0.7s ease-in-out infinite alternate; }
+    /* #7 Botón añadir color: dentro del flujo responsive, sin cortarse, alineado con los círculos por defecto */
+    .quick-color-btn { flex:0 0 auto; }
+    .quick-color-row { flex-wrap:wrap; }
+    /* #8 Swatch de color personalizado con transparencia legible (color real sobre damero, nunca blanco falso) */
+    .qc-swatch.qc-alpha { background-image:
+      linear-gradient(var(--qc-rgba), var(--qc-rgba)),
+      repeating-conic-gradient(#cbd2da 0% 25%, #fff 0% 50%); background-size:auto, 8px 8px; }
+    /* #12 Prefijo RFI_ bloqueado: el campo Código se ve como un único input coherente */
+    #viewTemplateTool input.tpl-code-locked { letter-spacing:.2px; }
+    /* #13 Error codes / Custom codes alineados: misma estructura de fila */
+    #csvCodesRows .toggle-line { margin:6px 0; }
+    /* #14/#15 Exportación masiva: lista de vistas seleccionables (mismo estilo que la lista IFC) */
+    .mass-views-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0 4px; }
+    .mass-views-count { font-size:11px; color:#374151; font-weight:bold; }
+    .mass-views-actions { display:flex; align-items:center; gap:6px; }
+    .mass-views-list { display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto; border:1px solid #cfd6df; background:#fff; padding:4px 6px; box-sizing:border-box; }
+    .mass-view-row { display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer; }
+    .mass-view-row input { margin:0; }
+    .mass-view-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .link-btn { background:transparent; border:none; color:#1c7fd6; text-decoration:underline; font-size:11px; padding:2px 4px; cursor:pointer; }
+    .link-btn:hover:not(:disabled) { color:#0f5fa6; box-shadow:none; }
+    /* #15/#16 Cancelar junto a Exportar/Importar */
+    .io-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .btn-cancel-inline { background:#b91c1c; color:#fff; border:none; border-radius:7px; }
+    .btn-cancel-inline:hover:not(:disabled) { background:#a11717; box-shadow:none; }
 
   </style>
 </head>
@@ -489,7 +541,7 @@
         <div class="param-group-body">
           <div class="quick-color-head">
             <div class="param-defaults-hint" style="margin:0;">Herramienta de coloreado rápido.</div>
-            <button type="button" id="quickColorEdit" class="quick-edit-btn" title="Editar colores personalizados" aria-label="Editar colores personalizados"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button type="button" id="quickColorEdit" class="quick-edit-btn" title="Editar colores personalizados" aria-label="Editar colores personalizados"><svg class="writing-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="writing-trace" d="M10.9 17.25 H17.7"/><g class="writing-pencil"><path class="writing-pencil-outline" d="M7.2 16.2 L7.52 14.96 L14.66 7.82 Q15.12 7.36 15.58 7.82 Q16.04 8.28 15.58 8.74 L8.44 15.88 Z"/></g></svg></button>
           </div>
           <div class="quick-color-row" id="quickColorRow">
             <button type="button" class="quick-color-btn quick-default" id="qcGray" title="Gris neutro" aria-label="Gris neutro"><span class="qc-swatch" style="background:#a8abb4;"></span></button>
@@ -502,13 +554,14 @@
             <div class="quick-pop-title">Color</div>
             <div id="quickColorPalette" class="quick-color-palette"></div>
             <div class="quick-pop-title" style="margin-top:12px;">Personalizado</div>
-            <div class="quick-custom-line"><input type="color" id="quickColorInput" value="#1c7fd6"><button type="button" id="quickColorAccept">Aceptar</button></div>
+            <div class="quick-custom-line"><input type="color" id="quickColorInput" value="#1c7fd6"><span class="quick-pop-title" style="margin:0;">Elige un color para añadirlo</span></div>
             <div class="quick-pop-title" style="margin-top:14px;">Transparencia</div>
             <input type="range" id="quickAlphaInput" min="0" max="255" value="255">
           </div>
 
           <div class="sel-inspector" id="selInspector">
             <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado. Funciona en modelos y en vistas guardadas.">Inspector de selección</div>
+            <div class="insp-config-note">El Inspector muestra los parámetros configurados en Mostrar parámetros.</div>
             <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
           </div>
 
@@ -540,7 +593,7 @@
             <summary>Crear nueva vista</summary>
             <div class="tpl-block">
               <div class="template-grid">
-                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" class="tpl-autosize" data-min-ch="10" placeholder="RFI_"></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" class="tpl-autosize tpl-code-locked" data-min-ch="10" placeholder="RFI_"></div>
                 <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><input type="text" id="tplNew_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
@@ -565,7 +618,7 @@
               </div>
               <div class="hint" id="tplUpdateParseInfo"></div>
               <div class="template-grid">
-                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" class="tpl-autosize" data-min-ch="10" placeholder="RFI_"></div>
+                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" class="tpl-autosize tpl-code-locked" data-min-ch="10" placeholder="RFI_"></div>
                 <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><input type="text" id="tplUpd_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
@@ -603,31 +656,45 @@
               </div>
             </div>
           </details>
-          <div class="toggle-line" data-tip="Escribe un aviso en codigo_revision cuando no se encuentre el código RFI en el nombre de la vista.">
-            <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
-            <label class="txt" for="errorCodes">Error codes</label>
-          </div>
-          <div class="toggle-line" data-tip="Usa el texto introducido como código de revisión manual.">
-            <label class="switch"><input type="checkbox" id="customCodes"><span class="slider"></span></label>
-            <label class="txt" for="customCodes">Custom codes</label>
+          <div id="csvCodesRows">
+            <div class="toggle-line" data-tip="Escribe un aviso en codigo_revision cuando no se encuentre el código RFI en el nombre de la vista.">
+              <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
+              <label class="txt" for="errorCodes">Error codes</label>
+            </div>
+            <div class="toggle-line" data-tip="Usa el texto introducido como código de revisión manual.">
+              <label class="switch"><input type="checkbox" id="customCodes"><span class="slider"></span></label>
+              <label class="txt" for="customCodes">Custom codes</label>
+            </div>
           </div>
           <div class="row"><input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;"></div>
-          <div class="toggle-line" data-tip="Recorre varias vistas y genera un CSV combinado con un informe TXT.">
+          <div class="toggle-line" data-tip="Selecciona vistas y genera un ZIP con un CSV por vista.">
             <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
             <label class="txt" for="extendedExport">Exportación masiva</label>
+            <span id="massViewsCount" class="mass-views-count" style="display:none;">0/0 vistas</span>
           </div>
-          <div class="hint" id="extendedExportHint" style="margin:4px 0 8px; display:none;">La exportación masiva exporta todos los objetos coloreados del modelo/contexto actual. No usa grupos de vistas.</div>
-          <div class="row"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar CSV</button></div>
+          <div id="massViewsPanel" style="display:none;">
+            <div class="hint" id="extendedExportHint" style="margin:4px 0 6px;">Marca las vistas a exportar. Se genera un único ZIP con un CSV por vista seleccionada.</div>
+            <div class="mass-views-head">
+              <button type="button" id="massViewsToggleAll" class="link-btn">Seleccionar todas</button>
+              <div class="mass-views-actions">
+                <button type="button" id="massViewsSort" class="funnel-btn" title="Orden alfabético" aria-label="Orden alfabético"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
+                <button type="button" id="massViewsRefresh" class="icon-btn" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+              </div>
+            </div>
+            <div id="massViewsList" class="mass-views-list">Pulsa actualizar para leer las vistas del proyecto...</div>
+          </div>
+          <div class="row io-actions"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar CSV</button><button id="exportCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button></div>
         </div>
       </details>
 
       <details class="tool">
         <summary class="subtitle">Importar colores desde CSV</summary>
         <div class="tool-body">
-          <div class="hint">Importa uno o varios CSV. Solo procesa las filas con <code>revisado_deo = TRUE</code>, selecciona esos GUID y los pinta en rojo. El resto de filas se omite.</div>
-          <div class="row">
-            <button id="importBtn" data-tip="Selecciona uno o varios CSV.">Importar CSV</button>
-            <input type="file" id="importFile" accept=".csv,text/csv" multiple style="display:none;">
+          <div class="hint">Importa uno o varios CSV, o un ZIP con CSV dentro. Solo procesa las filas con <code>revisado_deo = TRUE</code>, selecciona esos GUID y los pinta en rojo. El resto de filas se omite.</div>
+          <div class="row io-actions">
+            <button id="importBtn" data-tip="Selecciona uno o varios CSV, o un ZIP con CSV dentro.">Importar CSV/ZIP</button>
+            <button id="importCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button>
+            <input type="file" id="importFile" accept=".csv,.zip,text/csv,application/zip" multiple style="display:none;">
           </div>
         </div>
       </details>
@@ -655,7 +722,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.10.6";
+    const SCRIPT_VERSION = "v8.10.7";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1111,6 +1178,92 @@
     function logColorSummary(rows){ const counts={}; for(const r of rows){ const c=normalizeColor(r.color)||String(r.color); counts[c]=(counts[c]||0)+1;} log("Colores detectados ("+Object.keys(counts).length+"):"); Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,15).forEach(([c,n])=>log("   "+c+" -> "+n)); }
     function parseCsvLine(line){ const out=[]; let cur=""; let inQ=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(inQ){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=ch; } else { if(ch==='"') inQ=true; else if(ch===';'){ out.push(cur); cur=""; } else cur+=ch; } } out.push(cur); return out; }
 
+    // ===================== ZIP (sin dependencias externas) — v8.10.7 =====================
+    // Escritura: método STORE (sin compresión), flag UTF-8. Lectura: STORE directo y DEFLATE vía
+    // DecompressionStream('deflate-raw') (Chromium, que es el motor del visor de Trimble for Browser).
+    const CRC32_TABLE=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+    function crc32(bytes){ let c=0xFFFFFFFF; for(let i=0;i<bytes.length;i++) c=CRC32_TABLE[(c^bytes[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+    function dosDateTime(d){ d=d||new Date(); const time=((d.getHours()&31)<<11)|((d.getMinutes()&63)<<5)|((Math.floor(d.getSeconds()/2))&31); const date=(((Math.max(0,d.getFullYear()-1980))&127)<<9)|(((d.getMonth()+1)&15)<<5)|(d.getDate()&31); return {time,date}; }
+    function zipStore(files){
+      const enc=new TextEncoder(); const {time,date}=dosDateTime();
+      const parts=[]; const central=[]; let offset=0;
+      for(const f of files){
+        const nameBytes=enc.encode(f.name); const data=f.data; const crc=crc32(data);
+        const lh=new Uint8Array(30+nameBytes.length); const dv=new DataView(lh.buffer);
+        dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true); dv.setUint16(8,0,true);
+        dv.setUint16(10,time,true); dv.setUint16(12,date,true); dv.setUint32(14,crc,true); dv.setUint32(18,data.length,true); dv.setUint32(22,data.length,true); dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+        lh.set(nameBytes,30); parts.push(lh,data);
+        const ch=new Uint8Array(46+nameBytes.length); const cv=new DataView(ch.buffer);
+        cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true); cv.setUint16(8,0x0800,true); cv.setUint16(10,0,true); cv.setUint16(12,time,true); cv.setUint16(14,date,true); cv.setUint32(16,crc,true); cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true); cv.setUint16(28,nameBytes.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true); cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true); cv.setUint32(42,offset,true);
+        ch.set(nameBytes,46); central.push(ch); offset+=lh.length+data.length;
+      }
+      let centralSize=0; for(const c of central) centralSize+=c.length;
+      const eocd=new Uint8Array(22); const ev=new DataView(eocd.buffer);
+      ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true); ev.setUint32(12,centralSize,true); ev.setUint32(16,offset,true);
+      return new Blob([...parts,...central,eocd],{type:"application/zip"});
+    }
+    async function unzipCsvEntries(arrayBuffer){
+      const bytes=new Uint8Array(arrayBuffer); const dv=new DataView(arrayBuffer);
+      let eocd=-1; for(let i=bytes.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+      if(eocd<0) throw new Error("ZIP no válido (sin fin de directorio central).");
+      const count=dv.getUint16(eocd+10,true); let p=dv.getUint32(eocd+16,true);
+      const out=[];
+      for(let n=0;n<count && p+46<=bytes.length;n++){
+        if(dv.getUint32(p,true)!==0x02014b50) break;
+        const method=dv.getUint16(p+10,true); const compSize=dv.getUint32(p+20,true);
+        const nameLen=dv.getUint16(p+28,true), extraLen=dv.getUint16(p+30,true), commentLen=dv.getUint16(p+32,true), lhOff=dv.getUint32(p+42,true);
+        const name=new TextDecoder("utf-8").decode(bytes.slice(p+46,p+46+nameLen));
+        p+=46+nameLen+extraLen+commentLen;
+        if(!/\.csv$/i.test(name)) continue;
+        const lhNameLen=dv.getUint16(lhOff+26,true), lhExtraLen=dv.getUint16(lhOff+28,true);
+        const dataStart=lhOff+30+lhNameLen+lhExtraLen; const comp=bytes.slice(dataStart,dataStart+compSize);
+        let text="";
+        if(method===0){ text=new TextDecoder("utf-8").decode(comp); }
+        else if(method===8){ if(typeof DecompressionStream==="function"){ const buf=await new Response(new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer(); text=new TextDecoder("utf-8").decode(new Uint8Array(buf)); } else throw new Error("CSV comprimido (deflate) dentro del ZIP no soportado en este navegador."); }
+        else continue;
+        out.push({name,text:text.replace(/^﻿/,"")});
+      }
+      return out;
+    }
+    function downloadBlob(filename,blob){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
+    // ETA por media móvil del tiempo por elemento (vista/archivo).
+    function makeEta(total){ let done=0,sum=0,last=(typeof performance!=="undefined"&&performance.now)?performance.now():Date.now(); return { tick(){ const now=(typeof performance!=="undefined"&&performance.now)?performance.now():Date.now(); sum+=now-last; last=now; done++; const avg=sum/Math.max(1,done); return {done,total,etaSec:Math.max(0,total-done)*avg/1000}; } }; }
+    function fmtClock(sec){ if(!isFinite(sec)||sec<0) return "--:--"; sec=Math.round(sec); const m=Math.floor(sec/60),s=sec%60; return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
+    function showExportCancel(on){ const el=document.getElementById("exportCancel"); if(el) el.style.display=on?"inline-block":"none"; }
+    function showImportCancel(on){ const el=document.getElementById("importCancel"); if(el) el.style.display=on?"inline-block":"none"; }
+    // Cambio de vista activa: la API no documenta un único método; se prueban los candidatos conocidos.
+    async function activateViewById(viewId){
+      const cands=["setView","selectView","setCurrentView","activateView","applyView","goToView"];
+      for(const m of cands){ const fn=API&&API.view&&API.view[m]; if(typeof fn==="function"){ try{ await fn.call(API.view,viewId); return m; }catch(e){ recordError("activateView."+m,e); } } }
+      return null;
+    }
+    // ===================== EXPORTACIÓN MASIVA: SELECCIÓN DE VISTAS (v8.10.7) =====================
+    let massViews=[]; const massViewsSelected=new Set(); let massViewsSortAlpha=false; let massExportCancel=false;
+    function updateMassViewsCount(){ const el=document.getElementById("massViewsCount"); if(el) el.textContent=massViewsSelected.size+"/"+massViews.length+" vistas"; }
+    function updateMassToggleAllLabel(){ const b=document.getElementById("massViewsToggleAll"); if(b) b.textContent=(massViews.length&&massViewsSelected.size===massViews.length)?"Deseleccionar todas":"Seleccionar todas"; }
+    function renderMassViewsList(){
+      const cont=document.getElementById("massViewsList"); if(!cont) return; cont.innerHTML="";
+      if(!massViews.length){ cont.textContent="No hay vistas disponibles. Pulsa actualizar."; updateMassViewsCount(); updateMassToggleAllLabel(); return; }
+      const list=massViews.slice(); if(massViewsSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+      for(const v of list){
+        const row=document.createElement("label"); row.className="mass-view-row"; row.title=v.name;
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=massViewsSelected.has(v.id);
+        cb.addEventListener("change",()=>{ if(cb.checked) massViewsSelected.add(v.id); else massViewsSelected.delete(v.id); updateMassViewsCount(); updateMassToggleAllLabel(); });
+        const span=document.createElement("span"); span.className="mass-view-name"; span.textContent=v.name;
+        row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
+      }
+      const sortBtn=document.getElementById("massViewsSort"); if(sortBtn) sortBtn.classList.toggle("funnel-active",massViewsSortAlpha);
+      updateMassViewsCount(); updateMassToggleAllLabel();
+    }
+    async function populateMassViews(){
+      const cont=document.getElementById("massViewsList"); if(cont) cont.textContent="Leyendo vistas del proyecto...";
+      let views=[]; try{ views=await API.view.getViews()||[]; }catch(e){ recordError("populateMassViews",e); }
+      massViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre"})).filter((v)=>v.id);
+      massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); // por defecto todas
+      renderMassViewsList();
+      log("Exportación masiva: "+massViews.length+" vista(s) disponibles.");
+    }
+
     // ===================== EXPORTAR =====================
     async function exportActiveView(){
       clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log(SCRIPT_VERSION);
@@ -1128,43 +1281,47 @@
       downloadText(prefix+"_trimble_colores_guid_ifc.csv",csv);
       log("CSV generado. Filas: "+rows.length); setProgress("Exportación completada: "+rows.length+" filas.");
     }
+    // v8.10.7 (#14/#15): recorre SOLO las vistas seleccionadas, genera un CSV por vista y descarga UN único ZIP.
+    // Botón Cancelar inline junto a Exportar; ETA por media móvil; el visor solo pide ruta una vez (un ZIP).
     async function exportMassive(){
-      clearLog(); setProgress("Preparando exportación masiva del modelo..."); lastConvertError=""; cancelRequested=false; log(SCRIPT_VERSION+" - Exportación masiva del modelo");
+      clearLog(); lastConvertError=""; massExportCancel=false; log(SCRIPT_VERSION+" - Exportación masiva (ZIP, un CSV por vista)");
       const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
-      showCancel(true);
-      let entries=[]; let activeView=null; let activeName="";
-      try{ activeView=await getCurrentViewSpecWithRetry(); activeName=viewFullName(activeView); }catch(e){ recordError("exportMassive.currentView",e); }
+      const chosen=massViews.filter((v)=>massViewsSelected.has(v.id));
+      if(!chosen.length){ log("Exportación masiva: no hay vistas seleccionadas. No se inicia la exportación."); setProgress("Selecciona al menos una vista para exportar."); return; }
+      const switcher=await activateViewById(chosen[0].id);
+      if(!switcher) log("Aviso: la API no expone método para cambiar de vista; cada vista puede leer el mismo contexto actual.");
+      showExportCancel(true);
+      const enc=new TextEncoder(); const eta=makeEta(chosen.length); let lastEta=NaN;
+      const zipFiles=[]; const usedNames=new Set();
+      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Vistas seleccionadas: "+chosen.length,""];
+      let okViews=0, emptyViews=0, totalRows=0;
       try{
-        setProgress("Leyendo objetos coloreados del modelo/contexto actual...");
-        entries=await getColoredObjectEntriesWithRetry();
-      }catch(e){ recordError("exportMassive.getColoredObjects",e); log("ERROR leyendo objetos coloreados: "+(e&&e.message?e.message:e)); setProgress("Error leyendo colores."); return; }
-      finally{ showCancel(false); }
-      if(cancelRequested){ log("Exportación cancelada."); setProgress("Cancelada."); return; }
-      if(!entries.length){ log("No hay objetos coloreados en el modelo/contexto actual."); setProgress("Sin objetos coloreados."); return; }
-      log("Objetos coloreados detectados: "+entries.length);
-      const exportScope=activeName||"MODELO_COMPLETO";
-      const revisionBase=computeRevisionBase(exportScope);
-      const rows=await buildRows(entries,revisionBase,exportScope,wantGuid);
-      logColorSummary(rows);
-      const csv=rowsToCsv(rows,cols);
-      const baseName="DEO_modelo_completo"+(activeName?"_"+sanitizeFilename(activeName):"");
-      downloadText(baseName+"_trimble_colores_guid_ifc.csv",csv);
-      const report=[
-        "DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva",
-        "Fecha: "+new Date().toLocaleString(),
-        "Ámbito: modelo/contexto actual completo",
-        "Vista activa: "+(activeName||"(sin vista guardada)"),
-        "Grupos de vistas: no se usan",
-        (cancelRequested?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),
-        "Objetos coloreados: "+entries.length,
-        "Filas exportadas: "+rows.length,
-        "Columnas: "+cols.map((c)=>c.header).join(", "),
-        "",
-        "Nota: la exportación masiva ya no filtra ni recorre grupos de vistas; usa los objetos coloreados disponibles en el modelo/contexto cargado."
-      ];
-      downloadText(baseName+"_informe.txt",report.join("\n"),"text/plain");
-      setProgress("Exportación masiva completada: "+rows.length+" filas.");
+        for(let i=0;i<chosen.length;i++){
+          if(massExportCancel){ log("Exportación masiva cancelada por el usuario."); break; }
+          const v=chosen[i];
+          setProgress("Exportando "+(i+1)+"/"+chosen.length+" vistas · ETA "+fmtClock(lastEta));
+          if(switcher){ try{ await API.view[switcher](v.id); }catch(e){ recordError("exportMassive.switch",e); } await sleep(250); }
+          let entries=[]; try{ entries=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("exportMassive.colors",e); }
+          if(!entries.length){ emptyViews++; report.push("- "+v.name+": sin objetos coloreados (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          const revisionBase=computeRevisionBase(v.name);
+          const rows=await buildRows(entries,revisionBase,v.name,wantGuid);
+          const csv=rowsToCsv(rows,cols);
+          let base=sanitizeFilename(v.name)||("vista_"+(i+1)); let nm=base+".csv"; let k=2; while(usedNames.has(nm.toLowerCase())){ nm=base+"_"+(k++)+".csv"; } usedNames.add(nm.toLowerCase());
+          zipFiles.push({name:nm,data:enc.encode("﻿"+csv)});
+          okViews++; totalRows+=rows.length; report.push("- "+v.name+": "+rows.length+" fila(s) -> "+nm);
+          const t=eta.tick(); lastEta=t.etaSec;
+          await sleep(0);
+        }
+      }catch(e){ recordError("exportMassive",e); log("ERROR exportación masiva: "+(e&&e.message?e.message:e)); }
+      finally{ showExportCancel(false); }
+      if(!zipFiles.length){ log("Exportación masiva: ninguna vista seleccionada tenía objetos coloreados."); setProgress("Sin datos para exportar."); return; }
+      report.push("",(massExportCancel?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),"Vistas con datos: "+okViews,"Vistas vacías: "+emptyViews,"Filas totales: "+totalRows,"Columnas: "+cols.map((c)=>c.header).join(", "),"Método cambio de vista: "+(switcher||"no disponible"));
+      zipFiles.push({name:"_informe.txt",data:enc.encode("﻿"+report.join("\n"))});
+      const zipName="DEO_export_masiva_"+new Date().toISOString().slice(0,10)+".zip";
+      downloadBlob(zipName,zipStore(zipFiles));
+      log("Exportación masiva: "+okViews+" CSV en un ZIP ("+totalRows+" filas). Vistas vacías: "+emptyViews+".");
+      setProgress("Exportación masiva "+(massExportCancel?"cancelada":"completada")+": "+okViews+" vista(s) en ZIP.");
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
@@ -1196,14 +1353,35 @@
       }
       return result;
     }
+    // v8.10.7 (#16): expande la selección del usuario a una lista uniforme de "archivos" {name,text()}.
+    // Acepta CSV sueltos, varios CSV y ZIP (extrae los CSV internos, ignora lo demás).
+    async function expandImportInputs(files){
+      const out=[];
+      for(const f of files){
+        if(/\.zip$/i.test(f.name)||f.type==="application/zip"){
+          try{
+            const ab=await f.arrayBuffer(); const csvs=await unzipCsvEntries(ab);
+            for(const c of csvs){ const txt=c.text; out.push({name:c.name,text:()=>Promise.resolve(txt)}); }
+            log("ZIP "+f.name+": "+csvs.length+" CSV interno(s).");
+            if(!csvs.length) log("ZIP "+f.name+": no contiene CSV.");
+          }catch(e){ recordError("expandImportInputs.zip",e); log("No se pudo abrir el ZIP "+f.name+": "+(e&&e.message?e.message:e)); }
+        } else if(/\.csv$/i.test(f.name)||f.type==="text/csv"||!/\.[a-z0-9]+$/i.test(f.name)){ out.push(f); }
+        else log("Ignorado (no es CSV ni ZIP): "+f.name);
+      }
+      return out;
+    }
     async function importCsvFiles(files){
       clearLog(); setProgress("Importando revisados DEO: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV solo revisado_deo TRUE ("+files.length+" archivo/s)");
       const directMap=new Map();
       const guidItems=new Map();
       let rowsRead=0, trueRows=0, directRows=0, guidRows=0, skippedRows=0;
 
-      for(const file of files){
-        let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); continue; }
+      // v8.10.7 (#16/#17): contador de archivos + ETA media móvil + cancelación limpia durante la lectura.
+      const readEta=makeEta(files.length); let lastReadEta=NaN;
+      for(let fIdx=0;fIdx<files.length;fIdx++){ const file=files[fIdx];
+        if(cancelRequested){ log("Importación cancelada durante la lectura."); break; }
+        setProgress("Importando "+(fIdx+1)+"/"+files.length+" archivos · ETA "+fmtClock(lastReadEta));
+        let text=""; try{ text=await file.text(); }catch(e){ recordError("importCsv.read",e); log("No se pudo leer "+file.name); const tErr=readEta.tick(); lastReadEta=tErr.etaSec; continue; }
         text=text.replace(/^\uFEFF/,""); const lines=text.split(/\r?\n/).filter((l)=>l.trim()!=="");
         if(lines.length<2){ log(file.name+": vacío."); continue; }
         const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
@@ -1226,15 +1404,16 @@
           else skippedRows++;
         }
         log(file.name+": "+fileTrue+" fila(s) revisado_deo TRUE.");
+        const tEnd=readEta.tick(); lastReadEta=tEnd.etaSec;
       }
 
       if(trueRows===0){ log("No hay filas con revisado_deo = TRUE. No se importa ningún color."); setProgress("Sin revisados DEO TRUE."); return; }
-      showCancel(true); setProgress("Importando revisados DEO: resolviendo modelos...");
+      showImportCancel(true); setProgress("Importando revisados DEO: resolviendo modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
       try{ const colored=await API.viewer.getColoredObjects(); for(const g of colored||[]) if(g.modelId) modelIds.push(g.modelId); }catch(e){}
       for(const modelId of directMap.keys()) modelIds.push(modelId);
       modelIds=[...new Set(modelIds)];
-      if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showCancel(false); return; }
+      if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showImportCancel(false); return; }
 
       const resolvedGuids=new Set(); let resolvedRuntimeObjects=0;
       const guidEntries=[...guidItems.entries()];
@@ -1273,7 +1452,7 @@
       }
       // Además se deja seleccionados los GUID revisados para control visual inmediato.
       if(paintedRed>0){ try{ suppressSelectionUntil=Date.now()+900; await API.viewer.setSelection(mapSetToSelector(directMap),"set"); }catch(e){ recordError("import.selectReviewed",e); } }
-      showCancel(false);
+      showImportCancel(false);
       log("Filas leídas: "+rowsRead+". Filas revisado_deo TRUE: "+trueRows+". Directas modelId/runtimeId: "+directRows+". Por GUID: "+guidRows+". Omitidas/no TRUE: "+skippedRows+".");
       const unresolved=[...guidItems.keys()].filter((g)=>!resolvedGuids.has(g));
       log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+unresolved.length+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
@@ -2014,8 +2193,7 @@
       const rn=await resolveNameDeep(o.modelId,o.runtimeId,p,allowDeep);
       res.title=rn.text||"(sin nombre)"; res.source=rn.source||"objeto";
       res.lines=buildTypedLines("object",p).filter((l)=>l!==res.title);
-      const boltsOn=document.getElementById("boltsToggle"), weldsOn=document.getElementById("weldsToggle");
-      if((boltsOn&&boltsOn.checked)||(weldsOn&&weldsOn.checked)) res.warning="No es un tornillo/soldadura IFC detectable. Selecciona el Bolt assembly o Weld real.";
+      // v8.10.7 (#5): el Inspector detecta todos los objetos; sin avisos de "no es tornillo/soldadura".
       return res;
     }
     function lines_pushUnique(arr,line){ if(line&&!arr.includes(line)) arr.push(line); }
@@ -2026,8 +2204,6 @@
       let html='<div class="insp-type">'+inspEsc(INSPECTOR_TYPE_LABEL[info.type]||"Objeto")+'</div>';
       if(info.title) html+='<div class="insp-title">'+inspEsc(info.title)+'</div>';
       for(const l of info.lines) html+='<div class="insp-line">'+inspEsc(l)+'</div>';
-      if(info.warning) html+='<div class="insp-warn">'+inspEsc(info.warning)+'</div>';
-      if(info.source&&info.source!=="objeto"&&info.source!=="none") html+='<div class="hint">Dato encontrado en: '+inspEsc(info.source)+'.</div>';
       if(info.selectionCount>1) html+='<div class="hint">Selección: '+info.selectionCount+' objetos (se muestra el primero).</div>';
       box.innerHTML=html;
     }
@@ -2430,7 +2606,29 @@
       const info=document.getElementById("templateSaveInfo"); if(info) info.textContent="Plantilla guardada: "+tpl.name;
     }
     function deleteSelectedTemplate(){ const sel=document.getElementById("templateSelect"); if(!sel||!sel.value){ setProgress("Selecciona una plantilla guardada para borrar."); return; } const name=sel.value; saveTemplates(loadTemplates().filter((t)=>t.name!==name)); if(loadLastTemplateName()===name) saveLastTemplateName(""); populateTemplateSelects(""); setCreateMeta(null); log("Plantilla borrada: "+name); setProgress("Plantilla borrada: "+name); }
-    function parseViewName(name){ const m=String(name||"").match(VIEW_NAME_RE); if(!m) return null; return {code:m[1],location:m[2],level:m[3],axes:m[4],element:m[5],task:m[6],date:m[7],author:m[8]}; }
+    // v8.10.7 (#11): parser tolerante. Primero intenta el formato canónico exacto; si no, descompone por
+    // bloques (código entre paréntesis al inicio, "(fecha, autor)" al final, " - " separa elemento/tarea,
+    // comas separan ubicación/nivel/ejes/elemento). Evita meter todo el título en Actuación.
+    function parseViewName(name){
+      let s=String(name||"").trim(); if(!s) return null;
+      const m=s.match(VIEW_NAME_RE);
+      if(m) return {code:m[1].trim(),location:m[2].trim(),level:m[3].trim(),axes:m[4].trim(),element:m[5].trim(),task:m[6].trim(),date:m[7].trim(),author:m[8].trim()};
+      const hasStructure=/^\(/.test(s)||s.includes(" - ")||s.includes(",");
+      if(!hasStructure) return null;
+      const out={code:"",location:"",level:"",axes:"",element:"",task:"",date:"",author:""};
+      const tail=s.match(/\(\s*(\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4})\s*,\s*([^)]*)\)\s*$/);
+      if(tail){ out.date=tail[1].trim(); out.author=tail[2].trim(); s=s.slice(0,tail.index).trim(); }
+      const code=s.match(/^\(\s*([^)]*)\)\s*/);
+      if(code){ out.code=code[1].trim(); s=s.slice(code[0].length).trim(); }
+      let mainPart=s; const dash=s.indexOf(" - ");
+      if(dash>=0){ mainPart=s.slice(0,dash).trim(); out.task=s.slice(dash+3).trim(); }
+      const segs=mainPart.split(",").map((x)=>x.trim()).filter(Boolean);
+      if(segs.length>=4){ out.location=segs[0]; out.level=segs[1]; out.axes=segs[2]; out.element=segs.slice(3).join(", "); }
+      else if(segs.length===3){ out.location=segs[0]; out.level=segs[1]; out.axes=segs[2]; }
+      else if(segs.length===2){ out.location=segs[0]; out.element=segs[1]; }
+      else if(segs.length===1){ if(out.task) out.element=segs[0]; else out.location=segs[0]; }
+      return out;
+    }
     function memberEmail(u){ return String(u.email||u.mail||u.userEmail||u.login||u.upn||"").trim(); }
     function memberName(u){ return String(u.name||u.fullName||u.displayName||[u.firstName,u.lastName].filter(Boolean).join(" ")||u.username||u.id||"").trim(); }
     function normalizeMember(u){ const email=memberEmail(u); const name=memberName(u)||email; const key=(email||name).toLowerCase(); return {raw:u,email,name,key,label:name||email}; }
@@ -2722,8 +2920,11 @@
       for(const f of TEMPLATE_FIELDS){
         const el=tplEl(scope,f); if(!el) continue;
         if(f==="code"){
-          el.addEventListener("focus",()=>{ if(!String(el.value||"").trim()) el.value="RFI_"; });
-          el.addEventListener("input",()=>{ if(el.value && !/^RFI[_\s-]?/i.test(el.value)) el.value="RFI_"+el.value.replace(/^_+/,""); tplAutosizeInput(el); updateScopePreview(scope); });
+          // v8.10.7 (#12): prefijo RFI_ bloqueado. El usuario solo edita el número/código posterior.
+          const ensurePrefix=()=>{ const rest=String(el.value||"").replace(/^\s*RFI[_\s-]*/i,"").replace(/^_+/,""); el.value="RFI_"+rest; };
+          el.addEventListener("focus",()=>{ if(!/^RFI_/i.test(el.value||"")) ensurePrefix(); tplAutosizeInput(el); });
+          el.addEventListener("input",()=>{ ensurePrefix(); tplAutosizeInput(el); updateScopePreview(scope); });
+          el.addEventListener("keydown",(ev)=>{ if(ev.key==="Backspace"||ev.key==="Delete"){ const a=el.selectionStart,b=el.selectionEnd; if(a===b&&a<=4) ev.preventDefault(); else if(a<4) ev.preventDefault(); } });
         } else {
           el.addEventListener("input",()=>{ tplAutosizeInput(el); updateScopePreview(scope); });
         }
@@ -2915,7 +3116,10 @@
       if(row) row.classList.toggle("quick-color-editing",quickColorEditMode);
       const editBtn=document.getElementById("quickColorEdit"); if(editBtn) editBtn.classList.toggle("is-editing",quickColorEditMode);
       cont.innerHTML="";
-      quickCustomColors.forEach((hex,idx)=>{ const a=analyzeColor(hex); const btn=document.createElement("button"); btn.type="button"; btn.className="quick-color-btn custom-color-btn"; btn.title=hex; btn.setAttribute("aria-label","Color personalizado "+hex); const sw=document.createElement("span"); sw.className="qc-swatch"; sw.style.background=a.swatchCss||a.cssColor||hex; const del=document.createElement("span"); del.className="color-delete-drop"; del.innerHTML="<span>×</span>"; del.addEventListener("click",(ev)=>{ ev.stopPropagation(); quickCustomColors.splice(idx,1); saveQuickCustomColors(); renderQuickCustomColors(); }); btn.appendChild(sw); btn.appendChild(del); btn.onclick=()=>{ if(quickColorEditMode) return; applyQuickColor(a.rgba||hexToColorObj(hex)); }; cont.appendChild(btn); });
+      quickCustomColors.forEach((hex,idx)=>{ const a=analyzeColor(hex); const btn=document.createElement("button"); btn.type="button"; btn.className="quick-color-btn custom-color-btn"; btn.title=hex; btn.setAttribute("aria-label","Color personalizado "+hex); const sw=document.createElement("span"); sw.className="qc-swatch";
+        // v8.10.7 (#8): si el color tiene alfa < 255, se muestra sobre damero (transparencia legible, sin blanco falso).
+        if(a.rgba && a.rgba.a<255){ sw.classList.add("qc-alpha"); sw.style.setProperty("--qc-rgba",a.cssColor); } else { sw.style.background=a.swatchCss||a.cssColor||hex; }
+        const del=document.createElement("span"); del.className="color-delete-drop"; del.innerHTML="<span>×</span>"; del.addEventListener("click",(ev)=>{ ev.stopPropagation(); quickCustomColors.splice(idx,1); saveQuickCustomColors(); renderQuickCustomColors(); }); btn.appendChild(sw); btn.appendChild(del); btn.onclick=()=>{ if(quickColorEditMode) return; applyQuickColor(a.rgba||hexToColorObj(hex)); }; cont.appendChild(btn); });
     }
     function buildQuickPalette(){
       const pal=document.getElementById("quickColorPalette"); if(!pal||pal.childElementCount) return;
@@ -3052,7 +3256,10 @@
       html+=sumLine("Peso total","weight",2,"kg");
       html+=sumLine("Volumen total","volume",3,"m³");
       html+=sumLine("Área total","area",3,"m²");
-      html+=sumLine("Longitud total","length",2,"mm");
+      // v8.10.7 (#10): longitud en metros (el dato base de Tekla está en mm). 1 m = 1000 mm.
+      html+= out.counts.length>0
+        ? '<div class="insp-line">Longitud total: '+quantNum(out.sums.length/1000,3)+' m</div>'
+        : '<div class="insp-line">Longitud total: No disponible</div>';
       html+='<div class="quant-h">Tipologías</div>';
       // Soldaduras (azul): Assembly type -> tipo -> unidades, longitud, gargantas (cambio 10)
       if(out.byType.welds>0){
@@ -3065,7 +3272,7 @@
           for(const t of Object.keys(grp.types).sort((a,b)=>a.localeCompare(b,"es"))){
             const g=grp.types[t];
             let line=inspEsc(t)+': '+g.units+' ud.';
-            line+= g.lengthCount>0 ? ' · Longitud '+quantNum(g.lengthTotal,2)+' mm' : ' · Longitud No disponible';
+            line+= g.lengthCount>0 ? ' · Longitud '+quantNum(g.lengthTotal/1000,3)+' m' : ' · Longitud No disponible';
             const sizes=Object.entries(g.sizes).sort((a,b)=>b[1]-a[1]).map(([k,n])=>inspEsc(k)+' ('+n+')').join(', ');
             if(sizes) line+=' · '+sizes;
             html+='<div class="quant-sub2">'+line+'</div>';
@@ -3183,7 +3390,8 @@
       loadQuickCustomColors(); renderQuickCustomColors(); buildQuickPalette();
       const addColor=document.getElementById("qcAddColor"); if(addColor) addColor.onclick=(ev)=>{ ev.stopPropagation(); showQuickColorPopover(); };
       const editColor=document.getElementById("quickColorEdit"); if(editColor) editColor.onclick=()=>{ quickColorEditMode=!quickColorEditMode; renderQuickCustomColors(); };
-      const colorAccept=document.getElementById("quickColorAccept"); if(colorAccept) colorAccept.onclick=()=>{ const inp=document.getElementById("quickColorInput"); const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(inp?inp.value:"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); };
+      // v8.10.7 (#9): sin botón Aceptar. Al elegir un color en el selector nativo se añade directamente (con la transparencia seleccionada).
+      const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
       document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")) hideQuickColorPopover(); });
       const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=(ev)=>{ ev.stopPropagation(); quantifySelection(); };
       const quantBlock=document.getElementById("quantifyBlock"); if(quantBlock) quantBlock.addEventListener("click",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear,#quantifyResult")) return; quantifySelection(); });
@@ -3241,8 +3449,15 @@
       const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
       custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if(!custom.checked) customText.value=""; });
 
-      const ext=document.getElementById("extendedExport"); const extHint=document.getElementById("extendedExportHint");
-      if(ext) ext.addEventListener("change",()=>{ if(extHint) extHint.style.display=ext.checked?"block":"none"; });
+      // Exportación masiva (#14/#15): panel con lista de vistas seleccionables + contador + cancelar inline.
+      const ext=document.getElementById("extendedExport"); const massPanel=document.getElementById("massViewsPanel"); const massCount=document.getElementById("massViewsCount");
+      let massLoaded=false;
+      if(ext) ext.addEventListener("change",async ()=>{ const on=ext.checked; if(massPanel) massPanel.style.display=on?"block":"none"; if(massCount) massCount.style.display=on?"inline-block":"none"; if(on&&!massLoaded){ massLoaded=true; await populateMassViews(); } });
+      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=()=>{ massLoaded=true; populateMassViews(); };
+      const massSort=document.getElementById("massViewsSort"); if(massSort) massSort.onclick=()=>{ massViewsSortAlpha=!massViewsSortAlpha; renderMassViewsList(); };
+      const massToggleAll=document.getElementById("massViewsToggleAll"); if(massToggleAll) massToggleAll.onclick=()=>{ if(massViews.length&&massViewsSelected.size===massViews.length){ massViewsSelected.clear(); } else { massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); } renderMassViewsList(); };
+      const exportCancelBtn=document.getElementById("exportCancel"); if(exportCancelBtn) exportCancelBtn.onclick=()=>{ massExportCancel=true; setProgress("Cancelando exportación..."); };
+      const importCancelBtn=document.getElementById("importCancel"); if(importCancelBtn) importCancelBtn.onclick=()=>{ cancelRequested=true; setProgress("Cancelando importación..."); };
 
       // Selección cercanos (#1): la sensibilidad es un radio absoluto; recalcula sin reiniciar el estado.
       const nearPercent=document.getElementById("nearPercent"); if(nearPercent){ nearPercent.addEventListener("input",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); nearPercent.addEventListener("change",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); }
@@ -3280,7 +3495,8 @@
       wireLblBtn("lblAdd",addSavedLabelsForSelection);
       wireLblBtn("lblRemove",removeSavedLabelsForSelection);
       wireLblBtn("lblRemoveAll",removeAllSavedLabels);
-      ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.addEventListener("input",updateLabelControlLabels); }); updateLabelControlLabels();
+      // v8.10.7 (#3): imán al 100% (±8) y refresco del % al mover. Los valores afectan a las etiquetas creadas con Agregar.
+      ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.addEventListener("input",()=>{ const v=parseFloat(el.value); if(Number.isFinite(v)&&v!==100&&Math.abs(v-100)<=8) el.value="100"; updateLabelControlLabels(); }); }); updateLabelControlLabels();
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -3310,7 +3526,7 @@
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
       document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.stopPropagation(); } try{ await exportDebug(); }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
-      document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; try{ await importCsvFiles(files); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showCancel(false); } };
+      document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; cancelRequested=false; showImportCancel(true); try{ const expanded=await expandImportInputs(files); if(!expanded.length){ log("No se han encontrado CSV para importar (revisa el ZIP o los archivos)."); setProgress("Sin CSV que importar."); return; } await importCsvFiles(expanded); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showImportCancel(false); showCancel(false); } };
     }
 
     // ===================== DEBUG =====================

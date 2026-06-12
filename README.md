@@ -5,6 +5,7 @@ DEO Tools es una extensión web para el **visor 3D de Trimble Connect** (Trimble
 Está pensada para flujos de revisión basados en IFC, donde los objetos se colorean por estado y se necesita volcar esa información a CSV (por ejemplo, para cruzarla con códigos de RFI), o a la inversa, recuperar un coloreado a partir de un CSV.
 
 > Herramienta creada por **Sergi Artigas (DEO)**. Software libre bajo licencia MIT.
+> Versión actual: **v8.10.7**
 
 ---
 
@@ -14,15 +15,15 @@ Está pensada para flujos de revisión basados en IFC, donde los objetos se colo
 - **Selección de columnas** marcables y **reordenables** (el orden de las flechas es el orden del CSV).
 - **Detección automática del código de revisión (RFI)** a partir del título de la vista, con modos *Error codes* y *Custom codes*.
 - **Columna `revisado_deo`** (TRUE/FALSE) y **columna condicionada `codigo_revision`** según el color del objeto.
-- **Extended export**: recorre automáticamente varias vistas del proyecto y genera un único CSV combinado.
-- **Importar CSV**: aplica colores a los objetos del modelo cargado a partir de un CSV con GUID + color. Los GUID que no estén en el modelo se omiten.
+- **Exportación masiva (ZIP)**: muestra una lista con casillas de todas las vistas (con orden alfabético, seleccionar/deseleccionar todas y contador `X/total`), y genera **un único ZIP con un CSV por vista seleccionada** más un informe. El ZIP se construye con una implementación propia, sin dependencias externas. Botón Cancelar junto a Exportar y ETA en el Estado.
+- **Importar CSV/ZIP**: aplica colores (rojo a los `revisado_deo = TRUE`) a partir de uno o varios CSV, o de un **ZIP con CSV dentro**. Los GUID que no estén en el modelo se omiten. Botón Cancelar junto a Importar y ETA en el Estado.
 - **Selección cercanos**: añade a la selección los objetos en contacto (aproximado por *bounding box*) con el objeto seleccionado que cumplan una condición numérica (p. ej. *Net volume < 0.1*).
-- **Excluir de selección**: quita de la selección los objetos por color o modelos/IFC completos abiertos en el visor (p. ej. ejes de referencia); la exclusión por modelo persiste entre sesiones.
+- **Excluir de selección**: quita de la selección los objetos por `Name`, por color o por modelo/IFC completo abiertos en el visor (p. ej. ejes de referencia); la exclusión por modelo persiste entre sesiones. Incluye embudo para ordenar por aparición o alfabéticamente.
 - **Selección ocultos / Ver ocultos**: gestiona los objetos ocultos marcándolos en blanco translúcido, con rescate de los recoloreados manualmente.
 - **Selector de items**: limita la selección por valor de `Name`, por parámetro/valor (p. ej. *Assembly type*, *Bolt standard*) o por color.
-- **Mostrar parámetros**: configura parámetros por tipología (nombres, tornillos, soldaduras) y guarda **etiquetas 3D** con esos datos. *En vistas existentes guardadas las etiquetas pueden no renderizarse (limitación del visor); usa el Inspector de selección.*
+- **Mostrar parámetros**: configura parámetros por tipología (nombres, tornillos, soldaduras) y guarda **etiquetas 3D flotantes** con esos datos (tamaño y distancia ajustables con sliders). *En vistas existentes guardadas las etiquetas pueden no renderizarse (limitación del visor Trimble); usa el Inspector de selección como vía principal en ese caso.*
 - **Inspector de selección**: lectura rápida de los datos del objeto seleccionado (tipología, marca, dimensiones con unidades) sin abrir el panel de propiedades.
-- **Quantity Surveyor**: resumen de cantidades de la selección (peso, volumen, área, longitud, % sobre items visibles) agrupado por soldaduras, tornillos (con `Bolt count`) y perfiles/chapas por material, con botón de copiar.
+- **Quantity Surveyor**: resumen de cantidades de la selección (peso, volumen, área, longitud, % sobre items visibles) agrupado por soldaduras (por Assembly type → tipo, unidades y longitud), tornillos (por estándar + calidad usando `Bolt count` real) y perfiles/chapas por material. Formato español con unidades (kg, m³, m², mm), scroll interno y botón de copiar.
 - **Configurar vista**: crea o actualiza vistas con nombre generado por campos (código RFI, ubicación, nivel, ejes…), autor automático, compartición con chips/autocompletado de miembros del proyecto y etiquetas.
 - **Zona de Desarrollador** con descarga de un informe de diagnóstico (`DEO_debug.txt`).
 - Interfaz organizada en menús desplegables, con interruptores estilo Trimble y descripciones flotantes al pasar el ratón.
@@ -126,22 +127,27 @@ Estos colores están configurados como constantes al inicio de `index.html` y pu
 
 > La comparación es exacta sobre el valor `#RRGGBBAA` en mayúsculas. Si tu modelo aplica los colores con un canal alfa distinto a `FF`, ajusta las constantes o modifica la comparación para que ignore el alfa.
 
-### Extended export (varias vistas)
+### Exportación masiva (varias vistas, ZIP)
 
-Activa **Extended export** y elige el alcance:
+Activa **Exportación masiva**. Aparece una lista con casillas de todas las vistas del proyecto, con:
 
-- **Todo el modelo**: recorre todas las vistas del proyecto.
-- **Carpeta** (si la API expone carpetas de vistas): solo las de esa carpeta.
+- botón **Seleccionar/Deseleccionar todas**,
+- botón de **orden alfabético**,
+- contador **`X/total` vistas** junto al interruptor.
 
-La extensión carga cada vista, lee sus objetos coloreados y acumula todo en **un único CSV** (`DEO_extended_export_..._trimble_colores_guid_ifc.csv`). Se permiten GUID duplicados (cada fila indica su `View_name`).
+Marca las vistas que quieras y pulsa **Exportar CSV**. La extensión recorre cada vista seleccionada, lee sus objetos coloreados y genera **un CSV por vista dentro de un único ZIP** (`DEO_export_masiva_AAAA-MM-DD.zip`) junto con un `_informe.txt`. El **Estado** muestra el progreso y una ETA, y hay un botón **Cancelar** junto a Exportar. Si no hay ninguna vista seleccionada, la exportación no se inicia.
 
-### Importar CSV
+> El ZIP se construye con una implementación propia (método STORE), sin librerías externas, para no depender de un CDN ni romper GitHub Pages.
 
-En **Herramientas del archivo → Importar colores desde CSV**, pulsa **Importar CSV** y elige un archivo con al menos una columna de **GUID** y otra **`color`**. La extensión:
+### Importar CSV/ZIP
+
+En **Herramientas del archivo → Importar colores desde CSV**, pulsa **Importar CSV/ZIP** y elige uno o varios CSV, o un **ZIP con CSV dentro** (los CSV internos se extraen automáticamente; lo que no sea CSV se ignora). La extensión:
 
 1. Convierte cada GUID (comprimido o UUID) a runtime id en los modelos cargados.
-2. Aplica el color a cada objeto encontrado.
+2. Aplica el color a cada objeto encontrado (rojo a las filas con `revisado_deo = TRUE`).
 3. **Omite** los GUID que no estén presentes en el modelo activo.
+
+El **Estado** muestra el progreso por archivo y una ETA, con un botón **Cancelar** junto a Importar.
 
 ### Selección cercanos
 
@@ -163,6 +169,8 @@ Añade a la selección los objetos en contacto con el seleccionado que cumplan l
 - La **detección de carpetas de vistas** depende de que la API las exponga; si no, solo se ofrece "Todo el modelo".
 - **Extended export** se ejecuta en el navegador: para volúmenes muy grandes (miles de vistas) el proceso puede ser largo y el CSV resultante muy pesado.
 - La comparación de colores es **exacta** (incluyendo el canal alfa).
+- Los **colores nativos IFC/Tekla** no son accesibles vía `getColoredObjects`; esta API solo expone colores aplicados mediante herramientas de presentación. Si el modelo usa colores nativos exclusivamente, los paneles de color mostrarán un aviso técnico.
+- Las **etiquetas 3D flotantes** funcionan correctamente en modelo directo. Sobre vistas existentes guardadas, la API crea el markup internamente pero el visor puede no renderizarlo (limitación del visor Trimble). Usa el **Inspector de selección** como vía principal en ese caso.
 
 ---
 
