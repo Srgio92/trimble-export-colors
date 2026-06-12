@@ -3,6 +3,25 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.10.6] — 2026-06-12
+
+Auditoría completa del proyecto y reparación de colores/UI. Esta entrada consolida también los refinamientos de interfaz internos v8.10.3–v8.10.5 (paleta de colores rápidos personalizables, filtro por Name en Excluir de selección, panel pulsable de Quantity Surveyor, barras de tamaño/distancia de etiquetas), que no llegaron a publicarse por separado.
+
+### Corregido
+
+* **Alineación de las barras de etiquetas flotantes**: el thumb de las barras *Tamaño texto* y *Distancia* queda centrado verticalmente sobre el track (Chrome/Edge/Firefox) mediante `appearance:none` + estilos de thumb. La muesca del 100% coincide con el punto real (47,368 % = (100−10)/(200−10)). No se toca la barra de Sensibilidad de Selección cercanos.
+* **Detección y visualización de colores Tekla/no estándar**: los swatches usan un color sólido (`swatchCss`, RGB sin alfa), de modo que un color válido con alfa bajo (típico de Tekla) ya **no se ve lavado ni en blanco**. La comparación/exclusión sigue usando el color normalizado `#RRGGBBAA`. `analyzeColor` acepta objeto `{r,g,b,a}` / `{red,green,blue,alpha}` / `{R,G,B,A}`, array `[r,g,b(,a)]`, `#RRGGBB(AA)`, `rgb()/rgba()` y escalas 0–1 y 0–255; lo no interpretable se muestra como "Color no legible" con patrón, nunca en blanco.
+* **Falsos círculos blancos** eliminados en Excluir por color, Selector por color y colores personalizados.
+
+### Cambiado
+
+* **Colores rápidos por defecto**: el gris pasa a `#a8abb4` (gris nativo de la paleta Trimble). El magenta (`#ec00b6`) y el rojo (`#fc0d1b`) se conservan a propósito: son los marcadores exactos que el CSV usa para `codigo_revision` y `revisado_deo`; cambiarlos rompería la exportación.
+* `COLOR_DIAG` ampliado: batería de formatos de entrada con su normalización y `swatchCss`, muestras de colores que antes se habrían visto lavados, y regla de swatch sólido.
+
+### Auditoría
+
+* Sin ids HTML duplicados, sin funciones declaradas dos veces, sin listeners duplicados en la inicialización, sin `console.log`, sin botones test/legacy visibles. Todas las herramientas principales (CSV export/import, exportación masiva, selección cercanos, ocultos, selector/exclusión por Name y color, exclusión por IFC, Mostrar parámetros, etiquetas 3D, Inspector, Quantity Surveyor, Configurar vista con chips) verificadas como cableadas. `git diff --check` limpio.
+
 ## [v8.10.2] — 2026-06-12
 
 Versión de estabilización que consolida los ciclos internos v8.9.x (diagnóstico de etiquetas 3D) y v8.10.0/v8.10.1 (reorganización de la interfaz) en una versión funcional.

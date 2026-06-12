@@ -18,7 +18,7 @@
     .tool-body { padding: 4px 10px 10px; }
     .tool-status { border-top: 1px solid #ececec; padding-top: 4px; margin-top: 8px; }
     .row { margin: 6px 0; }
-    button { padding: 6px 12px; margin: 2px 0; cursor: pointer; }
+    button { padding: 6px 12px; margin: 2px 0; cursor: pointer; border-radius: 7px; border: 1px solid #cfd6df; background: #fff; }
 
     /* Grupo desplegable de segundo nivel (Mostrar parámetros) con flecha estándar, sin interruptor */
     details.param-group { border: 1px solid #e5e7eb; border-radius: 6px; background: #fafafa; margin: 8px 0; }
@@ -42,6 +42,25 @@
     .quick-color-btn { width: 26px; height: 26px; padding: 0; border: 1px solid #c9d1d9; border-radius: 50%; background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .quick-color-btn:hover, .quick-color-btn:focus-visible { outline: 2px solid #1c7fd6; outline-offset: 1px; }
     .qc-swatch { width: 20px; height: 20px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.35); }
+    .quick-color-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin: 0 0 6px; }
+    .quick-edit-btn { width:26px; height:24px; padding:2px; background:transparent; border:none; display:inline-flex; align-items:center; justify-content:center; }
+    .quick-custom-colors { display:inline-flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:center; }
+    .quick-add-color { border-color:#d1d5db; background:#fff; position:relative; color:#111827; border-radius:50%; }
+    .quick-add-color .qc-add-plus { opacity:0; font-size:19px; line-height:1; font-weight:bold; }
+    .quick-add-color:hover .qc-add-plus { opacity:1; }
+    .quick-color-popover { position:fixed; z-index:10001; width:228px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:12px 14px; }
+    .quick-pop-title { font-size:12px; color:#6b7280; margin-bottom:8px; }
+    .quick-color-palette { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px 13px; }
+    .quick-palette-swatch { width:23px; height:23px; border-radius:50%; border:1px solid rgba(0,0,0,.12); cursor:pointer; padding:0; }
+    .quick-custom-line { display:flex; align-items:center; gap:8px; }
+    .quick-custom-line input[type="color"] { width:30px; height:30px; padding:0; border:1px solid #d1d5db; border-radius:50%; overflow:hidden; }
+    #quickAlphaInput { width:100%; }
+    .quick-color-editing .custom-color-btn { animation: quickWiggle .28s ease-in-out infinite alternate; }
+    @keyframes quickWiggle { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+    .custom-color-btn { position:relative; }
+    .custom-color-btn .color-delete-drop { display:none; position:absolute; top:-10px; right:-7px; width:18px; height:18px; background:#333; color:#fff; border-radius:10px 10px 10px 2px; align-items:center; justify-content:center; font-size:15px; line-height:16px; transform:rotate(-12deg); }
+    .custom-color-btn .color-delete-drop span { transform:rotate(12deg); margin-top:-1px; }
+    .quick-color-editing .custom-color-btn .color-delete-drop { display:flex; }
     .quick-select-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 4px; }
     .quick-select-grid { display: grid; grid-template-columns: 28px minmax(92px, 1fr) minmax(92px, 1fr); gap: 6px; align-items: center; margin: 6px 0; }
     .quick-select-grid select { min-width: 0; width: 100%; }
@@ -101,6 +120,38 @@
     .model-exclude-row { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; flex: 0 0 auto; }
     .model-exclude-row input { margin: 0; }
     .model-exclude-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .model-list-actions { display:flex; flex-direction:row; align-items:flex-start; gap:6px; flex:0 0 auto; }
+    .name-filter-stack { display:flex; flex-direction:column; gap:5px; margin:6px 0; }
+    .name-filter-row { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; margin:0; }
+    .name-filter-row .name-filter-select { flex:1; min-width:0; width:auto; }
+    .name-add-btn, .name-remove-btn { width:24px; min-width:24px; height:24px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:17px; font-weight:bold; border:none; background:transparent; }
+    .name-add-btn { color:#111827; }
+    .name-remove-btn { color:#b91c1c; }
+    #namesTool > summary.subtitle, #boltsTool > summary.subtitle, #weldsTool > summary.subtitle { display:list-item; list-style-position:inside; padding:7px 8px; }
+    #namesTool > summary.subtitle .tool-title-text, #boltsTool > summary.subtitle .tool-title-text, #weldsTool > summary.subtitle .tool-title-text { font-weight:bold; }
+    #namesTool > summary.subtitle .summary-switch, #boltsTool > summary.subtitle .summary-switch, #weldsTool > summary.subtitle .summary-switch { float:right; margin-top:-2px; }
+    #namesTool .tool-body, #boltsTool .tool-body, #weldsTool .tool-body { padding: 3px 4px 8px 8px; }
+    #namesTool .cols-inner, #boltsTool .cols-inner, #weldsTool .cols-inner { padding: 4px 2px 4px 0; }
+    .param-warning { margin: 0 0 8px; }
+    .param-warning span { color:#b91c1c; font-weight:bold; }
+    #selInspector { background:#f3f4f6; border-radius:10px; }
+    .quant-copy-btn { right:22px; transition:transform .08s ease; }
+    .quant-copy-btn:active, .quant-clear-btn:active, .quick-color-btn:active, .quick-edit-btn:active { transform:scale(.92); }
+    .quant-clear-row { display:flex; justify-content:flex-end; margin-top:6px; }
+    .quant-clear-btn { width:30px; height:24px; padding:2px 5px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:none; }
+    #tplUpdateParseInfo { display:none !important; }
+    #viewTemplateTool .template-grid { gap: 9px 10px; align-items:end; }
+    #viewTemplateTool .tpl-short { grid-column: span 4; }
+    #viewTemplateTool .tpl-medium { grid-column: span 6; }
+    #viewTemplateTool #tplNew_task, #viewTemplateTool #tplUpd_task { min-width: 28ch; }
+    #viewTemplateTool #tplNew_location, #viewTemplateTool #tplUpd_location,
+    #viewTemplateTool #tplNew_element, #viewTemplateTool #tplUpd_element { min-width: 22ch; }
+    #viewTemplateTool .template-field input.tpl-autosize { min-width: var(--tpl-min-width, 140px); }
+    #viewTemplateTool .tpl-token-box { border-radius:8px; min-height:38px; }
+    .tpl-suggest { position: fixed; border-radius:8px; }
+    .label-control-row { display:grid; grid-template-columns:72px 1fr 48px; gap:6px; align-items:center; font-size:11px; color:#4b5563; margin:4px 0; }
+    .label-control-row input[type="range"] { width:100%; }
+    .label-control-row span { text-align:right; font-weight:bold; color:#374151; }
     /* v8.10.2: botón embudo (orden de la lista de modelos); fondo transparente, icono negro. */
     .funnel-btn { background: transparent; border: none; padding: 2px; cursor: pointer; border-radius: 4px; }
     .funnel-btn.funnel-active { outline: 2px solid #1c7fd6; outline-offset: 1px; }
@@ -126,11 +177,10 @@
 
     .dev-meta { font-size: 12px; color: #555; margin: 4px 0; }
     #debug { background: transparent; border: 1px solid #d1d5db; border-radius: 4px; padding: 3px 6px; cursor: pointer; line-height: 0; }
-    summary.dev-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; list-style: none; }
-    summary.dev-summary::-webkit-details-marker { display: none; }
-    summary.dev-summary::before { content: ""; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #374151; flex: 0 0 auto; transition: transform .15s ease; }
-    #devPanel[open] > summary.dev-summary::before { transform: rotate(90deg); }
-    summary.dev-summary .dev-summary-text { flex: 1; }
+    /* v8.10.3: el panel Desarrollador usa el triángulo nativo de <details>, igual que el resto de herramientas. */
+    summary.dev-summary { display: list-item; list-style-position: inside; padding: 8px 10px; }
+    summary.dev-summary .dev-summary-text { font-weight: bold; }
+    summary.dev-summary #debug { float: right; margin-top: -3px; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
@@ -142,8 +192,8 @@
     .range-row input[type="range"] { flex: 1; min-width: 130px; }
     #nearPercentLabel { min-width: 46px; text-align: right; font-weight: bold; }
     .range-row { position: relative; }
-    .range-row input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333% - 1px), #1c7fd6 calc(33.333% - 1px), #1c7fd6 calc(33.333% + 1px), #c4c9d1 calc(33.333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
-    .range-row input[type="range"]::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333% - 1px), #1c7fd6 calc(33.333% - 1px), #1c7fd6 calc(33.333% + 1px), #c4c9d1 calc(33.333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
+    .range-row input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
+    .range-row input[type="range"]::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
     .range-row input[type="range"]::-webkit-slider-thumb { margin-top: -5px; }
     .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
 
@@ -179,6 +229,54 @@
     .tpl-suggest-item:last-child { border-bottom: none; }
     .tpl-suggest-item:hover, .tpl-suggest-item.is-active { background: #eef6ff; }
     .tpl-suggest-mail { color: #4b5563; }
+
+
+    /* v8.10.5 UI refinements */
+    .funnel-btn { width: 28px; min-width: 28px; height: 26px; padding: 0; display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid #cfd6df; border-radius:7px; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease; }
+    .funnel-btn:hover, .funnel-btn:focus-visible { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none; }
+    .funnel-btn:active { transform:scale(.92); }
+    .funnel-btn.funnel-active { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none; }
+    .quick-custom-colors { display: contents; }
+    .quick-add-color { border:1.5px dashed #16a34a; color:#16a34a; background:#fff; }
+    .quick-add-color .qc-add-plus { opacity:0; color:#16a34a; font-size:23px; line-height:20px; font-weight:bold; transform:translateY(-1px); }
+    .quick-add-color:hover .qc-add-plus, .quick-add-color:focus-visible .qc-add-plus { opacity:1; }
+    .quick-edit-btn svg { transition: transform .18s ease; transform-origin: 50% 50%; }
+    .quick-edit-btn.is-editing svg { animation: pencilWrite .55s ease-in-out infinite; }
+    @keyframes pencilWrite { 0% { transform:rotate(-88deg) translateX(0); } 50% { transform:rotate(-88deg) translateX(2px); } 100% { transform:rotate(-88deg) translateX(0); } }
+    .quant-panel { background:#f3f4f6; border-radius:10px; cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .quant-panel:hover, .quant-panel:focus-within { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; background:#f8fbff; }
+    .quant-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .quant-title-btn { border:none; background:transparent; padding:0; margin:0; font-weight:bold; color:#1f2937; cursor:pointer; text-align:left; }
+    .quant-wrap { margin-top:6px; }
+    .quant-box { max-height:340px; overflow-y:auto; border:none; background:transparent; padding:3px 2px 2px 0; box-sizing:border-box; font-size:11px; }
+    .quant-copy-btn { position:static; width:24px; height:22px; padding:3px; background:rgba(255,255,255,.75); border:1px solid #cfd6df; border-radius:6px; line-height:0; transition:transform .08s ease, background .15s ease; }
+    .quant-copy-btn:active { transform:scale(.88); }
+    .quant-clear-text { display:inline-block; margin:6px 0 0 0; padding:0; border:none; background:transparent; color:#6b7280; font-size:11px; text-decoration:underline; cursor:pointer; transition:transform .08s ease, color .15s ease; }
+    .quant-clear-text:hover { color:#1f2937; }
+    .quant-clear-text:active { transform:scale(.92); }
+    /* v8.10.6: thumb centrado verticalmente sobre el track de 4px (Chrome/Edge/Firefox). El track lleva la
+       muesca del 100% en 47.368% = (100-10)/(200-10). appearance:none es imprescindible para que el track
+       custom y el thumb se rendericen y alineen igual en webkit. Solo afecta a estas dos barras. */
+    .label-control-row input[type="range"] { -webkit-appearance:none; appearance:none; background:transparent; height:16px; margin:0; cursor:pointer; }
+    .label-control-row input[type="range"]:focus { outline:none; }
+    .label-control-row input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(47.368421% - 1px), #1c7fd6 calc(47.368421% - 1px), #1c7fd6 calc(47.368421% + 1px), #c4c9d1 calc(47.368421% + 1px), #c4c9d1 100%); height:4px; border-radius:2px; }
+    .label-control-row input[type="range"]::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(47.368421% - 1px), #1c7fd6 calc(47.368421% - 1px), #1c7fd6 calc(47.368421% + 1px), #c4c9d1 calc(47.368421% + 1px), #c4c9d1 100%); height:4px; border-radius:2px; }
+    .label-control-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:13px; height:13px; margin-top:-5px; border-radius:50%; background:#1c7fd6; border:2px solid #fff; box-shadow:0 0 0 1px #1c7fd6; cursor:pointer; }
+    .label-control-row input[type="range"]::-moz-range-thumb { width:11px; height:11px; border-radius:50%; background:#1c7fd6; border:2px solid #fff; box-shadow:0 0 0 1px #1c7fd6; cursor:pointer; }
+    #viewTemplateTool .template-field input.tpl-autosize,
+    #viewTemplateTool .template-field select,
+    #customCodesText { border:1px solid #cfd6df; background:#fff; border-radius:8px; height:30px; padding:4px 7px; box-shadow:none; }
+    #viewTemplateTool .template-field input.tpl-autosize:focus,
+    #viewTemplateTool .template-field select:focus,
+    #customCodesText:focus { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none; }
+    #viewTemplateTool .tpl-token-box { min-height:30px; border-radius:8px; padding:3px 5px; }
+    #viewTemplateTool .tpl-token-box input { height:20px; }
+    #viewTemplateTool .template-grid { gap:10px 12px; }
+    #viewTemplateTool .tpl-short { grid-column: span 4; }
+    #viewTemplateTool .tpl-medium { grid-column: span 6; }
+    #viewTemplateTool #tplNew_element, #viewTemplateTool #tplUpd_element { min-width:28ch; }
+    #viewTemplateTool #tplNew_task, #viewTemplateTool #tplUpd_task { min-width:42ch; }
+
   </style>
 </head>
 <body>
@@ -205,7 +303,6 @@
               <datalist id="nearTicks"><option value="100" label="100%"></option></datalist>
               <span id="nearPercentLabel">100%</span>
             </div>
-            <div class="hint" id="nearCalibInfo">0%: solo el objeto pulsado, sin añadir cercanos. 100% (marca con efecto imán): comportamiento base, contacto dentro del mismo ensamblaje. Hasta 300%: amplía progresivamente el radio de búsqueda y el tamaño máximo de pieza admitido. El radio es absoluto: depende solo del objeto original, no se acumula.</div>
           </div>
         </div>
       </details>
@@ -221,12 +318,20 @@
             <div id="excludeColors" class="color-list"></div>
             <button id="excludeRefresh" class="icon-btn refresh-right" title="Actualizar colores" aria-label="Actualizar colores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
           </div>
-          <div class="hint" style="margin-top:12px; margin-bottom:6px;">Excluye modelos/IFC completos abiertos en el visor (p. ej. ejes o modelos de referencia). Persiste entre sesiones. No oculta ni recolorea.</div>
+          <div class="hint" style="margin:8px 0 4px;">Marca los objetos que no deben entrar en la selección.</div>
+          <div class="name-filter-stack" id="excludeNameRows">
+            <div class="config-row name-filter-row" data-row-scope="exclude">
+              <span class="field-label">Name</span>
+              <select id="excludeNameValue" class="placeholder name-filter-select" disabled><option value="" disabled selected hidden>elige un valor…</option></select>
+              <button type="button" id="excludeNameAdd" class="name-add-btn" title="Añadir otro Name" aria-label="Añadir otro Name">+</button>
+            </div>
+          </div>
+          <div class="hint" style="margin-top:12px; margin-bottom:6px;">Excluye archivos IFC cargados en la vista activa.</div>
           <div class="color-list-row">
             <div id="excludeModels" class="model-exclude-list"></div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
+            <div class="model-list-actions">
+              <button id="excludeModelsSort" class="funnel-btn" type="button" title="Orden: establecido en Trimble" aria-label="Alternar orden alfabético"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
               <button id="excludeModelsRefresh" class="icon-btn refresh-right" title="Actualizar modelos" aria-label="Actualizar modelos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-              <button id="excludeModelsSort" class="funnel-btn" type="button" title="Orden: aparición" aria-label="Alternar orden de la lista"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
             </div>
           </div>
         </div>
@@ -242,7 +347,7 @@
             <label class="switch"><input type="checkbox" id="viewHiddenToggle" disabled><span class="slider"></span></label>
             <label class="txt" for="viewHiddenToggle">Ver ocultos</label>
           </div>
-          <div class="hint">Recolorea un objeto mostrado para "rescatarlo": al apagar Ver ocultos o Selección ocultos no se volverá a ocultar.</div>
+          <div class="hint">Aplicar filtro de color a objetos para desocultarlos de forma permanente.</div>
         </div>
       </details>
 
@@ -253,12 +358,15 @@
         </summary>
         <div class="tool-body">
           <div id="includeConfig">
-            <div class="config-row">
-              <span class="field-label">Name</span>
-              <select id="includeValue" class="placeholder" disabled style="flex:1; min-width:160px;"><option value="" disabled selected hidden>elige un valor&#8230;</option></select>
+            <div class="name-filter-stack" id="includeNameRows">
+              <div class="config-row name-filter-row" data-row-scope="include">
+                <span class="field-label">Name</span>
+                <select id="includeValue" class="placeholder name-filter-select" disabled><option value="" disabled selected hidden>elige un valor&#8230;</option></select>
+                <button type="button" id="includeNameAdd" class="name-add-btn" title="Añadir otro Name" aria-label="Añadir otro Name">+</button>
+              </div>
             </div>
             <div class="quick-select-head">
-              <div class="param-defaults-hint" style="margin:0;">Selecciona objetos por parámetro y valor (Assembly type, Bolt standard…).</div>
+              <div class="param-defaults-hint" style="margin:0;">Selecciona objetos por parámetro y valor.</div>
               <button type="button" class="qs-refresh" id="qsRefreshAll" title="Actualizar valores" aria-label="Actualizar valores"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
             </div>
             <div class="quick-select-grid">
@@ -291,6 +399,7 @@
         <summary data-tip="Muestra etiquetas con parámetros de los objetos seleccionados.">Mostrar parámetros</summary>
         <div class="param-group-body">
           <div class="hint" style="margin-bottom:6px;">El inspector muestra los datos del objeto seleccionado. Configura los parámetros por tipología en cada sección y usa Agregar para guardar etiquetas 3D.</div>
+          <div class="hint param-warning"><span>Warning:</span> Sobre vistas existentes guardadas esta función puede no estar disponible.</div>
 
           <details class="tool model-tool" id="namesTool">
             <summary class="subtitle" data-tip="Etiqueta los objetos seleccionados con su Name (y los parámetros que añadas).">
@@ -299,14 +408,12 @@
             </summary>
             <div class="tool-body">
               <div class="cols-inner">
-                <div class="param-defaults-hint">Predefinidos: Name, Assembly/Cast unit Mark, Profile, Material.</div>
                 <div id="namesParamList"></div>
                 <div class="column-add-box">
                   <div class="column-picker-row">
                     <button id="namesParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
                     <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
-                    <button id="namesParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                   </div>
                   <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                 </div>
@@ -321,14 +428,12 @@
             </summary>
             <div class="tool-body">
               <div class="cols-inner">
-                <div class="param-defaults-hint">Filtra tornillos (Bolt assembly). Predefinidos: Assembly/Cast unit Mark, Bolt Name, Bolt size, Bolt length, Bolt standard, Material, Bolt hole diameter.</div>
                 <div id="boltsParamList"></div>
                 <div class="column-add-box">
                   <div class="column-picker-row">
                     <button id="boltsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
                     <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
-                    <button id="boltsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                   </div>
                   <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                 </div>
@@ -343,14 +448,12 @@
             </summary>
             <div class="tool-body">
               <div class="cols-inner">
-                <div class="param-defaults-hint">Filtra soldaduras (Weld). Predefinidos: Assembly/Cast unit Mark, Type 1, Size 1, Actual length 1, Length, Assembly type.</div>
                 <div id="weldsParamList"></div>
                 <div class="column-add-box">
                   <div class="column-picker-row">
                     <button id="weldsParamAdd" class="csv-add-button" title="Añadir parámetro">+</button>
                     <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
-                    <button id="weldsParamReset" class="column-refresh" title="Restaurar parámetros por defecto">&#8634;</button>
                   </div>
                   <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
                 </div>
@@ -359,8 +462,17 @@
           </details>
 
           <div class="sel-inspector" id="floatingLabels">
+            <div class="label-control-row">
+              <label for="labelSizeRange">Tamaño texto</label>
+              <input type="range" id="labelSizeRange" min="10" max="200" step="5" value="100">
+              <span id="labelSizeValue">100%</span>
+            </div>
+            <div class="label-control-row">
+              <label for="labelOffsetRange">Distancia</label>
+              <input type="range" id="labelOffsetRange" min="10" max="200" step="5" value="100">
+              <span id="labelOffsetValue">100%</span>
+            </div>
             <div class="hint" style="margin-bottom:6px;">Guarda etiquetas 3D con los parámetros configurados.</div>
-            <div class="hint" id="floatingLabelsNote" style="margin-bottom:6px;">Warning: Sobre vistas existentes guardadas esta función puede no estar disponible.</div>
             <div class="insp-actions">
               <button type="button" id="lblAdd" data-tip="Guarda una etiqueta 3D flotante con los datos del objeto. No se borra al deseleccionar.">Agregar</button>
               <button type="button" id="lblRemove" data-tip="Elimina las etiquetas guardadas de los objetos seleccionados.">Eliminar</button>
@@ -375,11 +487,24 @@
       <details class="param-group" id="quickActionsGroup" open>
         <summary>Acciones rápidas</summary>
         <div class="param-group-body">
-          <div class="param-defaults-hint">Pinta al instante los objetos seleccionados.</div>
-          <div class="quick-color-row">
-            <button type="button" class="quick-color-btn" id="qcGray" title="Gris neutro" aria-label="Gris neutro"><span class="qc-swatch" style="background:#9aa0a6;"></span></button>
-            <button type="button" class="quick-color-btn" id="qcMagenta" title="Magenta" aria-label="Magenta"><span class="qc-swatch" style="background:#ec00b6;"></span></button>
-            <button type="button" class="quick-color-btn" id="qcRed" title="Rojo" aria-label="Rojo"><span class="qc-swatch" style="background:#fc0d1b;"></span></button>
+          <div class="quick-color-head">
+            <div class="param-defaults-hint" style="margin:0;">Herramienta de coloreado rápido.</div>
+            <button type="button" id="quickColorEdit" class="quick-edit-btn" title="Editar colores personalizados" aria-label="Editar colores personalizados"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          </div>
+          <div class="quick-color-row" id="quickColorRow">
+            <button type="button" class="quick-color-btn quick-default" id="qcGray" title="Gris neutro" aria-label="Gris neutro"><span class="qc-swatch" style="background:#a8abb4;"></span></button>
+            <button type="button" class="quick-color-btn quick-default" id="qcMagenta" title="Magenta" aria-label="Magenta"><span class="qc-swatch" style="background:#ec00b6;"></span></button>
+            <button type="button" class="quick-color-btn quick-default" id="qcRed" title="Rojo" aria-label="Rojo"><span class="qc-swatch" style="background:#fc0d1b;"></span></button>
+            <span id="quickCustomColors" class="quick-custom-colors"></span>
+            <button type="button" class="quick-color-btn quick-add-color" id="qcAddColor" title="Añadir color" aria-label="Añadir color"><span class="qc-add-plus">+</span></button>
+          </div>
+          <div id="quickColorPopover" class="quick-color-popover" style="display:none;">
+            <div class="quick-pop-title">Color</div>
+            <div id="quickColorPalette" class="quick-color-palette"></div>
+            <div class="quick-pop-title" style="margin-top:12px;">Personalizado</div>
+            <div class="quick-custom-line"><input type="color" id="quickColorInput" value="#1c7fd6"><button type="button" id="quickColorAccept">Aceptar</button></div>
+            <div class="quick-pop-title" style="margin-top:14px;">Transparencia</div>
+            <input type="range" id="quickAlphaInput" min="0" max="255" value="255">
           </div>
 
           <div class="sel-inspector" id="selInspector">
@@ -387,12 +512,14 @@
             <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
           </div>
 
-          <div class="sel-inspector" id="quantifyBlock">
-            <button type="button" id="quantifyBtn" class="sel-inspector-head-btn" data-tip="Calcula el Quantity Surveyor sobre los objetos seleccionados.">Quantity Surveyor</button>
+          <div class="sel-inspector quant-panel" id="quantifyBlock" data-tip="Calcula el Quantity Surveyor sobre los objetos seleccionados.">
+            <div class="quant-title-row">
+              <button type="button" id="quantifyBtn" class="quant-title-btn">Quantity Surveyor</button>
+              <button type="button" id="quantifyCopy" class="quant-copy-btn" title="Copiar resultado" aria-label="Copiar resultado" style="display:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            </div>
             <div class="quant-wrap" id="quantifyWrap" style="display:none;">
-              <button type="button" id="quantifyCopy" class="quant-copy-btn" title="Copiar resultado" aria-label="Copiar resultado"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
               <div id="quantifyResult" class="quant-box"></div>
-              <div class="row" style="margin-top:6px;"><button type="button" id="quantifyClear">Limpiar</button></div>
+              <button type="button" id="quantifyClear" class="quant-clear-text" style="display:none;">Clear</button>
             </div>
           </div>
         </div>
@@ -414,15 +541,15 @@
             <div class="tpl-block">
               <div class="template-grid">
                 <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" class="tpl-autosize" data-min-ch="10" placeholder="RFI_"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><input type="text" id="tplNew_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_element">Elemento</label><input type="text" id="tplNew_element" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_task">Actuación</label><input type="text" id="tplNew_task" class="tpl-autosize" data-min-ch="18" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_element">Elemento</label><input type="text" id="tplNew_element" class="tpl-autosize" data-min-ch="28" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_task">Actuación</label><input type="text" id="tplNew_task" class="tpl-autosize" data-min-ch="42" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplNew_date">Fecha</label><input type="text" id="tplNew_date" class="tpl-autosize" data-min-ch="12" placeholder="dd-mm-aaaa"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
                 <div class="template-field tpl-full tpl-share-field"><label for="cvNew_shareEntry" id="cvNew_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvNew_shareBox"><div id="cvNew_shareTokens" class="tpl-tokens"></div><input type="text" id="cvNew_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvNew_share" value=""><div id="cvNew_shareSuggest" class="tpl-suggest"></div></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="cvNew_labels">Etiquetas</label><input type="text" id="cvNew_labels" class="tpl-autosize" data-min-ch="18" placeholder="Etiquetas separadas por coma"></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="cvNew_labels">Etiquetas</label><input type="text" id="cvNew_labels" class="tpl-autosize" data-min-ch="24" placeholder="Etiquetas separadas por coma"></div>
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplNew_preview">(sin nombre)</span></div>
               <div class="row"><button id="cvCreateBtn">Crear nueva vista</button></div>
@@ -439,15 +566,15 @@
               <div class="hint" id="tplUpdateParseInfo"></div>
               <div class="template-grid">
                 <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" class="tpl-autosize" data-min-ch="10" placeholder="RFI_"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><input type="text" id="tplUpd_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_element">Elemento</label><input type="text" id="tplUpd_element" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_task">Actuación</label><input type="text" id="tplUpd_task" class="tpl-autosize" data-min-ch="18" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_element">Elemento</label><input type="text" id="tplUpd_element" class="tpl-autosize" data-min-ch="28" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_task">Actuación</label><input type="text" id="tplUpd_task" class="tpl-autosize" data-min-ch="42" placeholder=""></div>
                 <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_date">Fecha</label><input type="text" id="tplUpd_date" class="tpl-autosize" data-min-ch="12" placeholder="dd-mm-aaaa"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="16" placeholder=""></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
                 <div class="template-field tpl-full tpl-share-field"><label for="cvUpd_shareEntry" id="cvUpd_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvUpd_shareBox"><div id="cvUpd_shareTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvUpd_share" value=""><div id="cvUpd_shareSuggest" class="tpl-suggest"></div></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="cvUpd_labels">Etiquetas</label><input type="text" id="cvUpd_labels" class="tpl-autosize" data-min-ch="18" placeholder="Etiquetas separadas por coma"></div>
+                <div class="template-field tpl-medium tpl-autofit"><label for="cvUpd_labels">Etiquetas</label><input type="text" id="cvUpd_labels" class="tpl-autosize" data-min-ch="24" placeholder="Etiquetas separadas por coma"></div>
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplUpd_preview">(sin nombre)</span></div>
               <div class="row"><button id="cvUpdateBtn">Actualizar vista</button></div>
@@ -528,7 +655,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.10.2";
+    const SCRIPT_VERSION = "v8.10.6";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -653,7 +780,9 @@
       }
       r=clampByte(r); g=clampByte(g); b=clampByte(b); a=clampByte(a);
       if([r,g,b,a].some((x)=>x==null)) return badColor(color);
-      return { valid:true, legible:true, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", rgba:{r,g,b,a} };
+      // v8.10.6: swatchCss = color SÓLIDO (sin alfa) para el círculo del swatch. Evita que un color válido
+      // con alfa bajo (típico en Tekla) se vea lavado/blanco. La normalización (con alfa) no cambia.
+      return { valid:true, legible:true, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", swatchCss:"rgb("+r+","+g+","+b+")", rgba:{r,g,b,a} };
     }
     function normalizeColor(c){ return analyzeColor(c).normalizedColor; }
     function looksRed(c){ const a=analyzeColor(c); return a.valid && a.rgba.r>140 && a.rgba.g<95 && a.rgba.b<95; }
@@ -908,7 +1037,7 @@
     function computeRevisionBase(viewName){ const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked; if(customOn&&customText) return customText.toUpperCase(); const auto=extractRevisionCode(viewName); if(auto) return auto; if(errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")"; return ""; }
 
     // ===================== OBJETOS COLOREADOS =====================
-    async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,colorValid:an.valid}); } } return entries; }
+    async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,swatchCss:an.swatchCss,colorValid:an.valid}); } } return entries; }
     async function getColoredObjectEntriesWithRetry(){ for(let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if(e.length>0) return e; await sleep(600);} return []; }
     async function getCurrentColorMap(){ const map=new Map(); let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ colored=[]; } for(const c of colored) map.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor); return map; }
 
@@ -1204,7 +1333,13 @@
       if(excludedModelIds.size>0){ for(const o of list){ if(excludedModelIds.has(String(o.modelId))) addToMapSet(removeMap,o.modelId,[o.runtimeId]); } }
       // Exclusión por color.
       if(excludedColors.size>0){ const colorMap=await getCurrentColorMap(); for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); } }
-      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: marcados "+n+" objeto(s) (color/modelo).");
+      // Exclusión por valores Name configurados en stack.
+      const excludedNames=getNameFilterValues("exclude");
+      if(excludedNames.length){
+        const byModel=new Map(); for(const o of list){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
+        for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(values.some((v)=>excludedNames.includes(v))) addToMapSet(removeMap,modelId,[id]); } } }
+      }
+      const n=mapSetCount(removeMap); if(n) log("Excluir de selección: marcados "+n+" objeto(s) (color/modelo/Name).");
       return removeMap;
     }
     async function computeIncludeRemovals(list){
@@ -1217,10 +1352,9 @@
         for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(!(col&&includeColors.has(col))) addToMapSet(removeMap,o.modelId,[o.runtimeId]); }
         return removeMap;
       }
-      const value=document.getElementById("includeValue").value; if(!value){ log("Selector de items: falta elegir un valor Name."); return removeMap; }
+      const wantedValues=getNameFilterValues("include"); if(!wantedValues.length){ log("Selector de items: falta elegir al menos un valor Name."); return removeMap; }
       const byModel=new Map(); for(const o of list){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
-      const wanted=String(value).trim().toLowerCase();
-      for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(!values.includes(wanted)) addToMapSet(removeMap,modelId,[id]); } } }
+      for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const propsMap=await getPropertiesCached(modelId,chunk); for(const id of chunk){ const values=getNameValues(propsMap.get(id)||{}).map((v)=>v.toLowerCase()); if(!values.some((v)=>wantedValues.includes(v))) addToMapSet(removeMap,modelId,[id]); } } }
       return removeMap;
     }
 
@@ -1753,11 +1887,11 @@
       const size=g(["Bolt size","NominalDiameter"]), len=g(["Bolt length","NominalLength"]);
       const std=g(["Bolt standard"]), mat=g(["Material"]), hole=g(["Bolt hole diameter"]), count=g(["Bolt count"]);
       const mark=g(["Assembly/Cast unit Mark","Assembly mark","Part mark"]);
-      if(boltName) lines.push(boltName);
-      if(size||len) lines.push("Ø"+(size||"?")+(len?" x "+len:""));
-      if(std) lines.push(std);
-      if(mat) lines.push("Mat: "+mat);
-      if(hole) lines.push("Hole Ø"+hole);
+      if(boltName) lines.push("Bolt: "+boltName);
+      if(size||len) lines.push("Size: Ø"+boltDimPlain(size||"?")+(len?" x "+boltDimPlain(len):"")+" mm");
+      if(std) lines.push("Standard: "+std);
+      if(mat) lines.push("Material: "+mat);
+      if(hole) lines.push(boltHoleAndSlotLine(p));
       if(count) lines.push("x"+count);
       if(mark) lines.push("Mark: "+mark);
       return lines.join("\n");
@@ -1793,15 +1927,37 @@
       const r=Math.round(n*1000)/1000;
       return r.toLocaleString("es-ES",{maximumFractionDigits:3})+(unit?" "+unit:"");
     }
+    function boltDimPlain(v){
+      const s=String(v||"").trim();
+      const n=parseQuantNumber(s.replace(/^M/i,""));
+      if(n!=null) return quantNum(n,0);
+      return s.replace(/^M/i,"");
+    }
+    function boltSlotValue(p,axis){
+      const al=axis==="Y"
+        ? ["Slotted_Y","Slotted Y","Slotted hole Y","Slot Y","Hole slot Y","Slotted hole in Y","Longitudinal hole Y","Long hole Y"]
+        : ["Slotted_X","Slotted X","Slotted hole X","Slot X","Hole slot X","Slotted hole in X","Longitudinal hole X","Long hole X"];
+      return findPropByAliases(p,al);
+    }
+    function boltSlotPart(p){
+      const sx=boltSlotValue(p,"X"), sy=boltSlotValue(p,"Y");
+      const fmt=(axis,v)=>{ const n=parseQuantNumber(v); if(n==null||n<=0||/^no|false$/i.test(String(v))) return ""; return "Slotted_"+axis+": "+quantNum(n,0)+" mm"; };
+      return fmt("X",sx)||fmt("Y",sy)||"Slotted: No";
+    }
+    function boltHoleAndSlotLine(p){
+      const hole=findPropByAliases(p,["Bolt hole diameter","Hole diameter","Hole Ø","Diameter/tamaño"]);
+      const holeText=hole?"Hole: Ø"+boltDimPlain(hole):"Hole: No disponible";
+      return holeText+" | "+boltSlotPart(p);
+    }
     const PARAM_LINE_FORMATTERS={
       name:(p)=>{ const nv=resolveBestNameLocal(p); return nv.text||""; },
       assemblycastunitmark:(p)=>{ const v=findPropByAliases(p,["Assembly/Cast unit Mark","Cast unit Mark","Assembly mark","Part mark"]); return v?"Mark: "+v:""; },
       boltname:(p)=>{ const v=findPropByAliases(p,["Bolt Name"]); return v?"Bolt: "+v:""; },
-      boltsize:(p)=>{ const s=findPropByAliases(p,["Bolt size","NominalDiameter"]); const l=findPropByAliases(p,["Bolt length","NominalLength"]); if(!s&&!l) return ""; return "Ø"+(s||"?")+(l?" x "+l:""); },
-      boltlength:(p,ctx)=>{ if(ctx&&ctx.hasNorm("boltsize")) return ""; const l=findPropByAliases(p,["Bolt length","NominalLength"]); return l?"L: "+l:""; },
+      boltsize:(p)=>{ const s=findPropByAliases(p,["Bolt size","NominalDiameter"]); const l=findPropByAliases(p,["Bolt length","NominalLength"]); if(!s&&!l) return ""; return "Size: Ø"+boltDimPlain(s||"?")+(l?" x "+boltDimPlain(l):"")+" mm"; },
+      boltlength:(p,ctx)=>{ if(ctx&&ctx.hasNorm("boltsize")) return ""; const l=findPropByAliases(p,["Bolt length","NominalLength"]); return l?"Length: "+boltDimPlain(l)+" mm":""; },
       boltstandard:(p)=>{ const v=findPropByAliases(p,["Bolt standard"]); return v?"Standard: "+v:""; },
       material:(p)=>{ const v=findPropByAliases(p,["Material"]); return v?"Material: "+v:""; },
-      boltholediameter:(p)=>{ const v=findPropByAliases(p,["Bolt hole diameter"]); return v?"Hole Ø"+v:""; },
+      boltholediameter:(p)=>boltHoleAndSlotLine(p),
       boltcount:(p)=>{ const v=findPropByAliases(p,["Bolt count"]); return v?"x"+v:""; },
       type1:(p)=>{ const v=findPropByAliases(p,["Type1","Type 1"]); return v?"Type: "+v:""; },
       size1:(p)=>{ const v=findPropByAliases(p,["Size1","Size 1"]); return v?"Size: a"+fmtDim(v,"mm"):""; },
@@ -1928,10 +2084,10 @@
           ids=await legacyParamLabelEngine([{bb,text}]);
         } else {
           const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
-          const dzMm=Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5);
+          const dzMm=Math.max(getParamLabelOffsetMm(),heightMm*0.5);
           const labelPick=markupPick(o.modelId,o.runtimeId,bb,dzMm);
           posSent={x:labelPick.positionX,y:labelPick.positionY,z:labelPick.positionZ};
-          const payload={start:labelPick,end:labelPick,text,color:{r:0,g:0,b:0,a:255}};
+          const payload={start:labelPick,end:labelPick,text,color:{r:0,g:0,b:0,a:255},fontSize:Math.round(12*getParamLabelScale()),textSize:getParamLabelScale()};
           lastCurrentPayload=payload;
           ids=await addTextMarkupsRobust([payload]);
         }
@@ -1974,14 +2130,19 @@
     // Nota: en vistas guardadas Trimble puede no renderizar el markup aunque la API lo cree (ver v8.9.x);
     // por eso el bloque muestra un warning fijo y el Inspector de selección es la vía principal en vistas.
     let lastLegacyPayload=null, lastLegacyResponse=null, lastCurrentPayload=null;
+    function getParamLabelOffsetMm(){ const el=document.getElementById("labelOffsetRange"); const v=Number(el&&el.value); return Number.isFinite(v)?PARAM_LABEL_OFFSET_MM*(v/100):PARAM_LABEL_OFFSET_MM; }
+    function getParamLabelScale(){ const el=document.getElementById("labelSizeRange"); const v=Number(el&&el.value); return Number.isFinite(v)?v/100:1; }
+    function updateLabelControlLabels(){ const s=document.getElementById("labelSizeValue"), o=document.getElementById("labelOffsetValue"); const se=document.getElementById("labelSizeRange"), oe=document.getElementById("labelOffsetRange"); if(s&&se) s.textContent=se.value+"%"; if(o&&oe) o.textContent=oe.value+"%"; }
     function legacyLabelPayload(bb,text,color){
       const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
-      const z=(bb.max.z+0.5)*1000; // techo + 0,5 m, escalado a mm (idéntico al TEST DEO x1000)
+      const z=bb.max.z*1000+getParamLabelOffsetMm(); // techo + distancia configurable, en mm
       return {
         start:{positionX:cx*1000,positionY:cy*1000,positionZ:z},
         end:{positionX:cx*1000,positionY:cy*1000,positionZ:z},
         text:text,
-        color:color||{r:0,g:0,b:0,a:255}
+        color:color||{r:0,g:0,b:0,a:255},
+        fontSize:Math.round(12*getParamLabelScale()),
+        textSize:getParamLabelScale()
       };
     }
     // items: [{bb,text,color?}]. registry (opcional): array donde apuntar los IDs creados.
@@ -2204,7 +2365,7 @@
       if(!el) return;
       const min=Number(el.dataset&&el.dataset.minCh)||12;
       const len=Math.max(min,String(el.value||el.placeholder||"").length+2);
-      el.style.width=Math.min(Math.max(len,min),42)+"ch";
+      el.style.width=Math.min(Math.max(len,min),70)+"ch";
     }
     function tplAutosizeAll(root){
       const scope=root&&root.querySelectorAll?root:document;
@@ -2379,7 +2540,7 @@
       const used=new Set(cvGetShareTokens(scope).map((x)=>x.toLowerCase()));
       return templateProjectMembers.filter((m)=>!used.has((m.email||m.name||"").toLowerCase())&&((m.name||"").toLowerCase().includes(term)||(m.email||"").toLowerCase().includes(term))).slice(0,8);
     }
-    function cvPositionShareSuggest(scope){ const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=(r.left+window.scrollX)+"px"; sug.style.top=(r.bottom+window.scrollY+2)+"px"; sug.style.width=Math.max(220,r.width)+"px"; }
+    function cvPositionShareSuggest(scope){ const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(220,r.width)+"px"; }
     function cvHideShareSuggest(scope){ const sug=cvShareSuggestEl(scope); if(sug) sug.style.display="none"; }
     function cvShowShareSuggest(scope){
       const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return;
@@ -2435,7 +2596,7 @@
       const view=templateViewsCache.find((v)=>String(v.id)===String(sel.value)); const name=readableViewName(view);
       const parsed=parseViewName(name);
       if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
-      else { setScopeValues("tplUpd",{}); if(info) info.textContent="No se ha podido leer la estructura del nombre actual. Nombre actual: "+name; }
+      else { setScopeValues("tplUpd",{}); if(info) info.textContent=""; }
       ensureScopeAutoFields("tplUpd");
     }
     async function loadCurrentViewForUpdate(){
@@ -2489,11 +2650,11 @@
       const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo");
       if(!sel||!sel.value){ return; }
       const view=(templateViewsCache||[]).find((v)=>String(v.id)===String(sel.value));
-      if(!view){ if(info) info.textContent="No se ha podido leer la vista seleccionada."; return; }
+      if(!view){ if(info) info.textContent=""; return; }
       const name=readableViewName(view);
       const parsed=parseViewName(name);
       if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
-      else { setScopeValues("tplUpd",{task:name,author:cvViewAuthor(view)||autoAuthorValue(),date:todayDash()}); if(info) info.textContent="No se ha podido leer la estructura completa del nombre actual. Se mantiene el nombre como actuación."; }
+      else { setScopeValues("tplUpd",{task:name,author:cvViewAuthor(view)||autoAuthorValue(),date:todayDash()}); if(info) info.textContent=""; }
       const author=cvViewAuthor(view); if(author){ const a=tplEl("tplUpd","author"); if(a){ a.value=normalizeTplValue("author",author); tplAutosizeInput(a); updateScopePreview("tplUpd"); } }
       const people=cvViewPeople(view); cvSetShareTokens("cvUpd",parseTemplateList(people));
       const tags=cvViewTags(view); cvSet("cvUpd_labels",tags); tplAutosizeInput(document.getElementById("cvUpd_labels"));
@@ -2605,15 +2766,63 @@
 
     // ===================== COLORES / VALORES UI =====================
     function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
-    function syncIncludeUiState(){ const on=document.getElementById("includeToggle").checked; const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked; document.getElementById("includeValue").disabled=!on||colorMode; const wrap=document.getElementById("includeColorsWrap"); if(wrap) wrap.style.display=(on&&colorMode)?"block":"none"; const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on); }
+    function syncIncludeUiState(){
+      const on=document.getElementById("includeToggle").checked;
+      const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked;
+      document.querySelectorAll("#includeNameRows select,#includeNameRows button").forEach((el)=>{ el.disabled=!on||colorMode; });
+      const wrap=document.getElementById("includeColorsWrap"); if(wrap) wrap.style.display=(on&&colorMode)?"block":"none";
+      const c=document.getElementById("includeConfig"); if(c) c.classList.toggle("disabled-area",!on);
+    }
+    function syncExcludeNameUiState(){ const on=document.getElementById("excludeToggle")&&document.getElementById("excludeToggle").checked; document.querySelectorAll("#excludeNameRows select,#excludeNameRows button").forEach((el)=>{ el.disabled=!on; }); }
     function syncSelectPlaceholder(sel){ if(sel) sel.classList.toggle("placeholder",!sel.value); }
-    async function populateIncludeValues(){ const vsel=document.getElementById("includeValue"); vsel.innerHTML='<option value="" disabled selected hidden>elige un valor…</option>'; syncSelectPlaceholder(vsel); setProgress("Leyendo valores Name..."); const values=new Set(); try{ const sel=await safeGetSelection(); let sample=sel; if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); } const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); } for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } } }catch(e){ recordError("populateIncludeValues",e); } [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,1500).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; vsel.appendChild(o); }); syncSelectPlaceholder(vsel); setProgress("Valores Name cargados: "+values.size+"."); }
+    let nameValuesCache=null;
+    function nameSelectElements(){ return [...document.querySelectorAll(".name-filter-select")]; }
+    function fillNameSelect(sel,values,keep){
+      if(!sel) return;
+      const prev=keep!==undefined?keep:sel.value;
+      sel.innerHTML='<option value="" disabled selected hidden>elige un valor…</option>';
+      [...values].sort((a,b)=>a.localeCompare(b,"es")).slice(0,2000).forEach((v)=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o); });
+      if(prev && [...sel.options].some((o)=>o.value===prev)) sel.value=prev;
+      syncSelectPlaceholder(sel);
+    }
+    async function populateNameValues(){
+      setProgress("Leyendo valores Name...");
+      const values=new Set();
+      try{
+        const sel=await safeGetSelection(); let sample=sel;
+        if(sample.length===0){ const mm=await getModelObjectsMap(); sample=[]; for(const [modelId,ids] of mm.entries()) for(const id of ids.slice(0,2000)) sample.push({modelId,runtimeId:id}); }
+        const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
+        for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } }
+      }catch(e){ recordError("populateNameValues",e); }
+      nameValuesCache=[...values];
+      for(const sel of nameSelectElements()) fillNameSelect(sel,nameValuesCache);
+      setProgress("Valores Name cargados: "+values.size+".");
+      return nameValuesCache;
+    }
+    async function populateIncludeValues(){ return populateNameValues(); }
+    function getNameFilterValues(scope){
+      const root=document.getElementById(scope+"NameRows");
+      if(!root) return [];
+      const vals=[...root.querySelectorAll(".name-filter-select")].map((s)=>String(s.value||"").trim()).filter(Boolean);
+      return [...new Set(vals.map((v)=>v.toLowerCase()))];
+    }
+    function createNameFilterRow(scope){
+      const root=document.getElementById(scope+"NameRows"); if(!root) return null;
+      const row=document.createElement("div"); row.className="config-row name-filter-row"; row.dataset.rowScope=scope;
+      const spacer=document.createElement("span"); spacer.className="field-label"; spacer.textContent="";
+      const sel=document.createElement("select"); sel.className="placeholder name-filter-select"; sel.disabled=(scope==="include"?!document.getElementById("includeToggle").checked:!document.getElementById("excludeToggle").checked);
+      fillNameSelect(sel,nameValuesCache||[]);
+      sel.addEventListener("change",()=>{ syncSelectPlaceholder(sel); scheduleProcessSelection(); });
+      const rm=document.createElement("button"); rm.type="button"; rm.className="name-remove-btn"; rm.title="Eliminar línea"; rm.setAttribute("aria-label","Eliminar línea"); rm.textContent="−";
+      rm.addEventListener("click",()=>{ row.remove(); scheduleProcessSelection(); });
+      row.appendChild(spacer); row.appendChild(sel); row.appendChild(rm); root.appendChild(row); return row;
+    }
 
     // v8.10.2: getColoredObjects() solo devuelve colores APLICADOS por presentación/herramientas.
     // Los colores nativos del IFC/Tekla pueden no estar expuestos: si hay objetos en el visor pero 0 colores,
     // NO se concluye "no hay colores"; se informa del límite de la API y se registra en COLOR_DIAG.
     let lastColorFallbackDiag=null;
-    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; let coloredError=null; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ coloredError=e.message; recordError("populateColors."+containerId,e); } const byColor=new Map(); let illegible=0; for(const c of colored){ if(!c.colorValid){ illegible++; continue; } if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort();
+    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; let coloredError=null; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ coloredError=e.message; recordError("populateColors."+containerId,e); } const byColor=new Map(); let illegible=0; for(const c of colored){ if(!c.colorValid){ illegible++; continue; } if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.swatchCss||c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort();
       if(colors.length===0 && illegible===0){
         // Fallback diagnóstico: ¿hay objetos accesibles en el visor? Entonces el 0 es un límite de la API, no ausencia real.
         const fb={containerId,getColoredObjectsTotal:colored.length,getColoredObjectsError:coloredError,visibleObjectsTotal:null,presentationProbe:null,reason:""};
@@ -2686,11 +2895,37 @@
         row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
       }
       const sortBtn=document.getElementById("excludeModelsSort");
-      if(sortBtn){ sortBtn.classList.toggle("funnel-active",excludeModelsSortAlpha); sortBtn.title="Orden: "+(excludeModelsSortAlpha?"alfabético":"aparición"); }
+      if(sortBtn){ sortBtn.classList.toggle("funnel-active",excludeModelsSortAlpha); sortBtn.title="Orden: "+(excludeModelsSortAlpha?"alfabético":"establecido en Trimble"); }
     }
 
     // ===================== ACCIONES RÁPIDAS =====================
-    const QUICK_COLORS={ qcGray:{r:154,g:160,b:166,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{r:252,g:13,b:27,a:255} };
+    // v8.10.6: gris alineado con la paleta nativa Trimble (#a8abb4 ∈ QUICK_PALETTE). Magenta (#ec00b6) y rojo
+    // (#fc0d1b) se conservan: están en REVISION_CODE_COLORS/REVIEWED_DEO_COLORS y son los marcadores exactos
+    // que el CSV usa para codigo_revision/revisado_deo; cambiarlos rompería la exportación.
+    const QUICK_COLORS={ qcGray:{r:168,g:171,b:180,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{r:252,g:13,b:27,a:255} };
+    const QUICK_CUSTOM_COLORS_KEY="deo.quickCustomColors.v1";
+    const QUICK_PALETTE=["#b91b5f","#f04b1f","#fff72b","#0b7d45","#4357bd","#1f2230","#ec00b6","#ee7200","#e8c23a","#009688","#7184cf","#6b6b7a","#e10600","#ff8726","#bac72a","#47c7c5","#a997da","#a8abb4","#ff151d","#f39200","#70ad47","#0099d6","#d898d9","#c9ccd4","#e76f61","#f4b51e","#2fc34a","#456cdf","#b54fd6","#eef0f5"];
+    let quickCustomColors=[], quickColorEditMode=false;
+    function loadQuickCustomColors(){ try{ const a=JSON.parse(localStorage.getItem(QUICK_CUSTOM_COLORS_KEY)||"[]"); quickCustomColors=Array.isArray(a)?a.filter((c)=>/^#[0-9a-fA-F]{8}$/.test(c)).slice(0,18):[]; }catch(e){ quickCustomColors=[]; } }
+    function saveQuickCustomColors(){ try{ localStorage.setItem(QUICK_CUSTOM_COLORS_KEY,JSON.stringify(quickCustomColors)); }catch(e){ recordError("saveQuickCustomColors",e); } }
+    function hexToColorObj(hex,alpha){ const h=String(hex||"").replace("#",""); if(h.length<6) return {r:0,g:0,b:0,a:255}; return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a:alpha==null?255:Number(alpha)}; }
+    function colorObjToHex(c){ return "#"+hex2(c.r)+hex2(c.g)+hex2(c.b)+hex2(c.a==null?255:c.a); }
+    function renderQuickCustomColors(){
+      const cont=document.getElementById("quickCustomColors"), row=document.getElementById("quickColorRow"); if(!cont) return;
+      if(row) row.classList.toggle("quick-color-editing",quickColorEditMode);
+      const editBtn=document.getElementById("quickColorEdit"); if(editBtn) editBtn.classList.toggle("is-editing",quickColorEditMode);
+      cont.innerHTML="";
+      quickCustomColors.forEach((hex,idx)=>{ const a=analyzeColor(hex); const btn=document.createElement("button"); btn.type="button"; btn.className="quick-color-btn custom-color-btn"; btn.title=hex; btn.setAttribute("aria-label","Color personalizado "+hex); const sw=document.createElement("span"); sw.className="qc-swatch"; sw.style.background=a.swatchCss||a.cssColor||hex; const del=document.createElement("span"); del.className="color-delete-drop"; del.innerHTML="<span>×</span>"; del.addEventListener("click",(ev)=>{ ev.stopPropagation(); quickCustomColors.splice(idx,1); saveQuickCustomColors(); renderQuickCustomColors(); }); btn.appendChild(sw); btn.appendChild(del); btn.onclick=()=>{ if(quickColorEditMode) return; applyQuickColor(a.rgba||hexToColorObj(hex)); }; cont.appendChild(btn); });
+    }
+    function buildQuickPalette(){
+      const pal=document.getElementById("quickColorPalette"); if(!pal||pal.childElementCount) return;
+      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; b.style.background=hex; b.title=hex; b.onclick=()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(hex,alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
+    }
+    function showQuickColorPopover(){
+      const pop=document.getElementById("quickColorPopover"), anchor=document.getElementById("qcAddColor"); if(!pop||!anchor) return;
+      buildQuickPalette(); const r=anchor.getBoundingClientRect(); pop.style.left=(r.right+8)+"px"; pop.style.top=Math.max(6,r.top-12)+"px"; pop.style.display="block";
+    }
+    function hideQuickColorPopover(){ const pop=document.getElementById("quickColorPopover"); if(pop) pop.style.display="none"; }
     const QUICK_PARAM_DEFAULTS={ qsParam1:"Assembly type", qsParam2:"Bolt standard" };
     const quickParamIndexCache=new Map();
     async function applyQuickColor(colorObj){
@@ -2795,12 +3030,13 @@
       if(!group.types[t]) group.types[t]={units:0,lengthTotal:0,lengthCount:0,sizes:{}};
       const g=group.types[t]; g.units++;
       const ln=parseQuantNumber(len); if(ln!=null){ g.lengthTotal+=ln; g.lengthCount++; }
-      const s=String(size||"").trim(); if(s){ const key="a"+fmtDim(s,"mm"); g.sizes[key]=(g.sizes[key]||0)+1; }
+      const s=String(size||"").trim(); if(s){ const key="a"+fmtDim(s,""); g.sizes[key]=(g.sizes[key]||0)+1; }
     }
     function renderQuantResult(out,msg){
       const box=document.getElementById("quantifyResult"); const wrap=document.getElementById("quantifyWrap");
       if(!box) return;
       if(wrap) wrap.style.display="block";
+      const qCopy=document.getElementById("quantifyCopy"), qClear=document.getElementById("quantifyClear"); if(qCopy) qCopy.style.display="inline-flex"; if(qClear) qClear.style.display="inline-block";
       if(msg){ box.innerHTML='<div class="hint">'+inspEsc(msg)+'</div>'; return; }
       let html="";
       // Resumen superior (cambio 8)
@@ -2825,7 +3061,7 @@
         const keys=Object.keys(out.welds.byAssembly).sort((a,b)=>{ const ia=order.indexOf(a),ib=order.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b,"es"); });
         for(const ak of keys){
           const grp=out.welds.byAssembly[ak];
-          html+='<div class="quant-sub">Assembly type: '+inspEsc(ak)+'</div>';
+          html+='<div class="quant-sub"><strong>'+inspEsc(ak)+'</strong></div>';
           for(const t of Object.keys(grp.types).sort((a,b)=>a.localeCompare(b,"es"))){
             const g=grp.types[t];
             let line=inspEsc(t)+': '+g.units+' ud.';
@@ -2843,7 +3079,6 @@
           const g=out.bolts.byGroup[gk];
           html+='<div class="quant-sub">'+inspEsc(gk)+' ('+quantNum(g.units,0)+' ud.)</div>';
           for(const [k,n] of Object.entries(g.sizes).sort((a,b)=>b[1]-a[1])) html+='<div class="quant-sub2">'+inspEsc(k)+' ('+quantNum(n,0)+' ud.)</div>';
-          for(const [k,n] of Object.entries(g.lengths).sort((a,b)=>b[1]-a[1])) html+='<div class="quant-sub2">'+inspEsc(k)+' ('+quantNum(n,0)+' ud.)</div>';
         }
       }
       // Perfiles/chapas (verde), último grupo: por material con peso total (cambio 12)
@@ -2853,7 +3088,7 @@
         for(const mk of keys){
           const g=out.profiles.byMaterial[mk];
           let line=inspEsc(mk)+': ';
-          line+= g.weightCount>0 ? 'Total weight '+quantNum(g.weightTotal,2)+' kg ('+g.units+' ud.)' : g.units+' ud. (sin peso)';
+          line+= g.weightCount>0 ? quantNum(g.weightTotal,2)+' kg ('+g.units+' ud.)' : g.units+' ud. (sin peso)';
           html+='<div class="quant-sub">'+line+'</div>';
         }
       }
@@ -2908,8 +3143,6 @@
                 g.units+=bc;
                 let size=String(findPropByAliases(p,["Bolt size","NominalDiameter"])||"").trim();
                 if(size){ const sn=parseQuantNumber(size); const key=(sn!=null&&!/m/i.test(size))?("M"+quantNum(sn,0)):size; g.sizes[key]=(g.sizes[key]||0)+bc; }
-                const lenRaw=findPropByAliases(p,["Bolt length","NominalLength"]);
-                const ln=parseQuantNumber(lenRaw); if(ln!=null){ const key="L="+quantNum(ln,0)+" mm"; g.lengths[key]=(g.lengths[key]||0)+bc; }
               } else {
                 const mat=String(findPropByAliases(p,["Material","IfcMaterial.Material","Grade"])||"").trim()||"Undefined";
                 if(!out.profiles.byMaterial[mat]) out.profiles.byMaterial[mat]={units:0,weightTotal:0,weightCount:0};
@@ -2942,13 +3175,20 @@
     function quantClear(){
       const box=document.getElementById("quantifyResult"); if(box) box.innerHTML="";
       const wrap=document.getElementById("quantifyWrap"); if(wrap) wrap.style.display="none";
+      const qCopy=document.getElementById("quantifyCopy"), qClear=document.getElementById("quantifyClear"); if(qCopy) qCopy.style.display="none"; if(qClear) qClear.style.display="none";
       setProgress("Quantity Surveyor: limpiado.");
     }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
-      const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=()=>quantifySelection();
-      const quantCopy=document.getElementById("quantifyCopy"); if(quantCopy) quantCopy.onclick=()=>quantCopyToClipboard();
-      const quantClearBtn=document.getElementById("quantifyClear"); if(quantClearBtn) quantClearBtn.onclick=()=>quantClear();
+      loadQuickCustomColors(); renderQuickCustomColors(); buildQuickPalette();
+      const addColor=document.getElementById("qcAddColor"); if(addColor) addColor.onclick=(ev)=>{ ev.stopPropagation(); showQuickColorPopover(); };
+      const editColor=document.getElementById("quickColorEdit"); if(editColor) editColor.onclick=()=>{ quickColorEditMode=!quickColorEditMode; renderQuickCustomColors(); };
+      const colorAccept=document.getElementById("quickColorAccept"); if(colorAccept) colorAccept.onclick=()=>{ const inp=document.getElementById("quickColorInput"); const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(inp?inp.value:"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); };
+      document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")) hideQuickColorPopover(); });
+      const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=(ev)=>{ ev.stopPropagation(); quantifySelection(); };
+      const quantBlock=document.getElementById("quantifyBlock"); if(quantBlock) quantBlock.addEventListener("click",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear,#quantifyResult")) return; quantifySelection(); });
+      const quantCopy=document.getElementById("quantifyCopy"); if(quantCopy) quantCopy.onclick=(ev)=>{ ev.stopPropagation(); quantCopyToClipboard(); };
+      const quantClearBtn=document.getElementById("quantifyClear"); if(quantClearBtn) quantClearBtn.onclick=(ev)=>{ ev.stopPropagation(); quantClear(); };
       const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
       const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueFromCache("qsParam2","qsValue2"));
       const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
@@ -3010,8 +3250,10 @@
       const nearToggle=document.getElementById("nearToggle"); nearToggle.addEventListener("change",async ()=>{ syncNearUiState(); if(nearToggle.checked) scheduleProcessSelection(); else await removeToolAddedFromSelection(); });
 
       const excludeToggle=document.getElementById("excludeToggle");
-      excludeToggle.addEventListener("change",()=>{ if(excludeToggle.checked){ populateExcludeColors(); populateExcludeModels(); } scheduleProcessSelection(); });
+      excludeToggle.addEventListener("change",()=>{ syncExcludeNameUiState(); if(excludeToggle.checked){ populateExcludeColors(); populateExcludeModels(); populateNameValues(); } scheduleProcessSelection(); });
       const excludeRefresh=document.getElementById("excludeRefresh"); if(excludeRefresh) excludeRefresh.onclick=()=>populateExcludeColors();
+      const excludeNameAdd=document.getElementById("excludeNameAdd"); if(excludeNameAdd) excludeNameAdd.onclick=async ()=>{ if(!nameValuesCache) await populateNameValues(); createNameFilterRow("exclude"); syncExcludeNameUiState(); };
+      const excludeNameValue=document.getElementById("excludeNameValue"); if(excludeNameValue) excludeNameValue.addEventListener("change",()=>{ syncSelectPlaceholder(excludeNameValue); scheduleProcessSelection(); });
       loadExcludedModelIds(); // v8.10.0: exclusiones por modelo/IFC persistidas
       populateExcludeModels();
       const excludeModelsRefresh=document.getElementById("excludeModelsRefresh"); if(excludeModelsRefresh) excludeModelsRefresh.onclick=()=>populateExcludeModels();
@@ -3024,6 +3266,7 @@
 
       const includeToggle=document.getElementById("includeToggle");
       includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); if(includeToggle.checked){ populateIncludeValues(); if(document.getElementById("colorModeToggle").checked) populateIncludeColors(); } scheduleProcessSelection(); });
+      const includeNameAdd=document.getElementById("includeNameAdd"); if(includeNameAdd) includeNameAdd.onclick=async ()=>{ if(!nameValuesCache) await populateNameValues(); createNameFilterRow("include"); syncIncludeUiState(); };
       document.getElementById("includeValue").addEventListener("change",()=>{ document.getElementById("includeValue").classList.toggle("placeholder",!document.getElementById("includeValue").value); scheduleProcessSelection(); });
       const colorMode=document.getElementById("colorModeToggle");
       if(colorMode) colorMode.addEventListener("change",()=>{ syncIncludeUiState(); if(colorMode.checked) populateIncludeColors(); scheduleProcessSelection(); });
@@ -3037,6 +3280,7 @@
       wireLblBtn("lblAdd",addSavedLabelsForSelection);
       wireLblBtn("lblRemove",removeSavedLabelsForSelection);
       wireLblBtn("lblRemoveAll",removeAllSavedLabels);
+      ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.addEventListener("input",updateLabelControlLabels); }); updateLabelControlLabels();
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -3154,7 +3398,23 @@
       cdiag.uniqueLegibleColors=[...uniqueValid].sort().slice(0,60);
       cdiag.uniqueLegibleColorsCount=uniqueValid.size;
       cdiag.illegibleSamples=illegibleSamples;
-      cdiag.normalizationExamples=[{in:"#1A2B3C",out:normalizeColor("#1A2B3C")},{in:"{r:1,g:0.5,b:0,a:1}",out:normalizeColor({r:1,g:0.5,b:0,a:1})},{in:"[12,34,56]",out:normalizeColor([12,34,56])},{in:"rgb(10,20,30)",out:normalizeColor("rgb(10,20,30)")},{in:"texto-no-color",out:analyzeColor("texto-no-color").legible}];
+      // v8.10.6: batería ampliada de formatos + swatchCss (color sólido del círculo, sin alfa).
+      const colorProbe=(label,inp)=>{ const a=analyzeColor(inp); return {in:label,normalized:a.normalizedColor,swatchCss:a.swatchCss||null,legible:a.legible}; };
+      cdiag.normalizationExamples=[
+        colorProbe("#EC00B6",     "#EC00B6"),
+        colorProbe("#EC00B6FF",   "#EC00B6FF"),
+        colorProbe("{r,g,b,a:255}",{r:236,g:0,b:182,a:255}),
+        colorProbe("{red,green,blue,alpha:1}",{red:236,green:0,blue:182,alpha:1}),
+        colorProbe("[236,0,182]", [236,0,182]),
+        colorProbe("[0.925,0,0.714,1]",[0.925,0,0.714,1]),
+        colorProbe("rgb(236,0,182)","rgb(236,0,182)"),
+        colorProbe("rgba(236,0,182,1)","rgba(236,0,182,1)"),
+        colorProbe("alfa bajo {236,0,182,a:20}",{r:236,g:0,b:182,a:20}),
+        colorProbe("no legible", "texto-no-color")
+      ];
+      // Colores que ANTES (alfa bajo) se habrían visto lavados/blancos y ahora muestran su hue real.
+      cdiag.washedFixedSamples=colored.filter((c)=>c.colorValid&&c.normalizedColor&&!/FF$/i.test(c.normalizedColor)).slice(0,20).map((c)=>({normalizedColor:c.normalizedColor,swatchCss:c.swatchCss}));
+      cdiag.swatchRule="El círculo del swatch usa swatchCss = rgb sólido (sin alfa); la comparación/exclusión usa normalizedColor (#RRGGBBAA). Ningún color válido se pinta en blanco por alfa.";
       cdiag.rule="Todo color válido se normaliza a #RRGGBBAA; alfa ausente -> FF; no interpretable -> '"+COLOR_ILLEGIBLE_TEXT+"' (nunca blanco).";
       // v8.10.2: distinción presentación vs colores nativos IFC/Tekla (no expuestos por getColoredObjects).
       cdiag.getColoredObjectsTotal=colored.length;
