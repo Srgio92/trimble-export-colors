@@ -222,22 +222,38 @@
     .bug-btn:active { transform:scale(.94); }
     .bug-btn-send { background:#1c7fd6; border-color:#1c7fd6; color:#fff; }
     .bug-btn-send:hover { background:#1769b4; border-color:#1769b4; box-shadow:none; }
-    /* Barra flotante superior del temporizador (captura asistida) */
-    .bug-timer-bar { position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:10000; display:flex; align-items:center; gap:12px; width:auto; max-width:min(520px, calc(100vw - 24px)); background:#111827; color:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.35); padding:8px 12px; font-size:12px; box-sizing:border-box; }
+    /* Barra flotante del temporizador (captura asistida) */
+    .bug-timer-bar { position:fixed; left:50%; transform:translateX(-50%); z-index:10000; display:flex; flex-direction:column; gap:8px; width:auto; max-width:min(520px, calc(100vw - 24px)); background:#111827; color:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.35); padding:8px 12px; font-size:12px; box-sizing:border-box; }
+    .bug-timer-bar.is-top { top:10px; bottom:auto; }
+    .bug-timer-bar.is-bottom { bottom:10px; top:auto; }
+    .bug-timer-row { display:flex; align-items:center; gap:12px; }
     .bug-timer-main { display:flex; flex-direction:column; gap:1px; min-width:0; }
     .bug-timer-title { font-weight:bold; }
     .bug-timer-help { color:#cbd5e1; font-size:11px; }
     .bug-timer-count { min-width:30px; height:30px; padding:0 6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:15px; background:#1c7fd6; border-radius:6px; }
+    .bug-timer-move { width:22px; height:22px; min-width:22px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; cursor:pointer; line-height:0; display:none; align-items:center; justify-content:center; transition:transform .08s ease, background .15s ease; }
+    .bug-timer-bar:hover .bug-timer-move { display:flex; }
+    .bug-timer-move:hover { background:#1c7fd6; }
+    .bug-timer-move:active { transform:scale(.9); }
+    .bug-timer-move svg { width:13px; height:13px; display:block; }
     .bug-timer-cancel { width:22px; height:22px; min-width:22px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; }
     .bug-timer-cancel:hover { background:rgba(255,255,255,.3); }
-    /* Zona para pegar capturas */
-    .bug-paste-wrap { position:relative; margin-top:8px; }
-    .bug-paste { min-height:58px; max-height:120px; overflow:auto; padding:10px; border:1.5px dashed #b9c2cf; border-radius:8px; background:#fafbfc; font-size:12px; color:#374151; outline:none; cursor:text; }
-    .bug-paste:empty:before { content:attr(data-ph); color:#9ca3af; }
-    .bug-paste:focus { border-color:#1c7fd6; background:#f8fbff; box-shadow:0 0 0 1px #1c7fd6 inset; }
-    .bug-paste-foot { display:flex; justify-content:flex-end; margin-top:4px; }
-    .bug-paste-closebtn { width:20px; height:20px; min-width:20px; padding:0; border:1px solid #d1d5db; border-radius:50%; background:#fff; color:#6b7280; cursor:pointer; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; }
-    .bug-paste-closebtn:hover { border-color:#1c7fd6; color:#111827; }
+    /* Estado gris/desactivado al terminar la cuenta atrás (modo pegado) */
+    .bug-timer-bar.is-paste-mode { background:#4b5563; }
+    .bug-timer-bar.is-paste-mode .bug-timer-count { background:#6b7280; color:#d1d5db; }
+    .bug-timer-bar.is-paste-mode .bug-timer-title { color:#e5e7eb; }
+    .bug-timer-bar.is-paste-mode .bug-timer-help { color:#cbd5e1; }
+    .bug-timer-bar.is-paste-mode .bug-timer-cancel, .bug-timer-bar.is-paste-mode .bug-timer-move { display:none; }
+    /* Recuadro de pegado superpuesto sobre la barra gris */
+    .bug-assist-paste { position:relative; }
+    .bug-assist-box { min-height:56px; max-height:120px; overflow:auto; padding:10px; border:1.5px dashed #cbd5e1; border-radius:8px; background:rgba(255,255,255,.96); font-size:12px; color:#374151; outline:none; cursor:text; }
+    .bug-assist-box:empty:before { content:attr(data-ph); color:#9ca3af; }
+    .bug-assist-box:focus { border-color:#1c7fd6; background:#fff; box-shadow:0 0 0 1px #1c7fd6 inset; }
+    .bug-assist-note { margin-top:6px; font-size:11px; color:#fff; background:#b91c1c; border-radius:6px; padding:4px 7px; }
+    .bug-assist-foot { display:flex; justify-content:center; margin-top:6px; }
+    .bug-assist-closebtn { width:22px; height:22px; min-width:22px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,.2); color:#fff; cursor:pointer; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; transition:transform .08s ease, background .15s ease; }
+    .bug-assist-closebtn:hover { background:rgba(255,255,255,.35); }
+    .bug-assist-closebtn:active { transform:scale(.9); }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
@@ -902,7 +918,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.13.1";
+    const SCRIPT_VERSION = "v8.13.2";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -4272,10 +4288,6 @@
         +'<button type="button" id="bugShotBtn" class="bug-shot-btn" title="Captura asistida" aria-label="Captura asistida"><svg viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button>'
         +'</div>'
         +'<textarea id="bugDesc" class="bug-textarea" placeholder="Descripción"></textarea>'
-        +'<div class="bug-paste-wrap" id="bugPasteWrap" style="display:none;">'
-        +'<div id="bugPaste" class="bug-paste" contenteditable="true" tabindex="0" role="textbox" aria-label="Zona para pegar captura" data-ph="Pega aquí la captura con Ctrl + V o click derecho → Pegar"></div>'
-        +'<div class="bug-paste-foot"><button type="button" id="bugPasteClose" class="bug-paste-closebtn" title="Cerrar zona de pegado" aria-label="Cerrar zona de pegado">×</button></div>'
-        +'</div>'
         +'<div id="bugThumbs" class="bug-thumbs"></div>'
         +'<div id="bugNote" class="bug-note" style="display:none;"></div>'
         +'<div class="bug-modal-actions">'
@@ -4284,41 +4296,74 @@
         +'</div>'
         +'</div>';
       document.body.appendChild(ov);
-      // Barra flotante superior del temporizador (captura asistida)
-      const bar=document.createElement("div"); bar.id="bugTimerBar"; bar.className="bug-timer-bar"; bar.style.display="none";
+      // Barra flotante del temporizador (captura asistida). Contiene la fila de cuenta atrás
+      // y, superpuesto, el recuadro de pegado que aparece al terminar (estado gris is-paste-mode).
+      const bar=document.createElement("div"); bar.id="bugTimerBar"; bar.className="bug-timer-bar is-top"; bar.style.display="none";
       bar.innerHTML=''
+        +'<div class="bug-timer-row">'
         +'<div class="bug-timer-main"><div class="bug-timer-title">Temporizador para realizar captura de pantalla</div><div class="bug-timer-help">Usa Win + Shift + S o Impr Pant</div></div>'
         +'<div class="bug-timer-count" id="bugTimerNum">10</div>'
-        +'<button type="button" id="bugTimerCancel" class="bug-timer-cancel" title="Cancelar" aria-label="Cancelar captura asistida">×</button>';
+        +'<button type="button" id="bugTimerMove" class="bug-timer-move" title="Mover abajo" aria-label="Mover abajo"></button>'
+        +'<button type="button" id="bugTimerCancel" class="bug-timer-cancel" title="Cancelar" aria-label="Cancelar captura asistida">×</button>'
+        +'</div>'
+        +'<div id="bugAssistPasteWrap" class="bug-assist-paste" style="display:none;">'
+        +'<div id="bugAssistPaste" class="bug-assist-box" contenteditable="true" tabindex="0" role="textbox" aria-label="Zona para pegar captura" data-ph="Pega aquí la captura con Ctrl + V o click derecho → Pegar"></div>'
+        +'<div id="bugAssistPasteNote" class="bug-assist-note" style="display:none;"></div>'
+        +'<div class="bug-assist-foot"><button type="button" id="bugAssistPasteClose" class="bug-assist-closebtn" title="Cerrar pegado" aria-label="Cerrar pegado">×</button></div>'
+        +'</div>';
       document.body.appendChild(bar);
       document.getElementById("bugShotBtn").onclick=()=>startAssistedCapture();
       document.getElementById("bugTimerCancel").onclick=()=>cancelAssistedCapture();
-      document.getElementById("bugPasteClose").onclick=()=>closePasteZone();
+      document.getElementById("bugTimerMove").onclick=()=>toggleCaptureAssistPosition();
+      document.getElementById("bugAssistPasteClose").onclick=()=>exitAssistToModal();
       document.getElementById("bugCancel").onclick=()=>closeBugModal();
       document.getElementById("bugSend").onclick=()=>onBugSend();
-      const paste=document.getElementById("bugPaste");
+      const paste=document.getElementById("bugAssistPaste");
       paste.addEventListener("paste",(ev)=>onBugPaste(ev));
       // Nunca conservar texto/HTML dentro del recuadro (la imagen se procesa aparte).
       paste.addEventListener("input",()=>{ paste.innerHTML=""; });
       paste.addEventListener("keydown",(ev)=>{ const k=ev.key; const ctrl=ev.ctrlKey||ev.metaKey; if(ctrl && (k==="v"||k==="V")) return; if(k==="Tab") return; ev.preventDefault(); });
+      applyCaptureAssistPosition();
     }
 
     function showBugModalNow(){ const ov=document.getElementById("bugModalOverlay"); if(ov) ov.style.display="flex"; }
     function hideBugModalNow(){ const ov=document.getElementById("bugModalOverlay"); if(ov) ov.style.display="none"; }
+    function hideTimerBar(){ const bar=document.getElementById("bugTimerBar"); if(bar) bar.style.display="none"; }
+
+    // ----- Posición del menú de captura asistida (arriba/abajo), persistida en localStorage -----
+    const BUG_ASSIST_POS_KEY="deo.bugReport.captureAssistPosition.v1";
+    function getCaptureAssistPosition(){ try{ return (localStorage.getItem(BUG_ASSIST_POS_KEY)==="bottom")?"bottom":"top"; }catch(e){ return "top"; } }
+    function setCaptureAssistPosition(pos){ const p=(pos==="bottom")?"bottom":"top"; try{ localStorage.setItem(BUG_ASSIST_POS_KEY,p); }catch(e){ recordError("bugReport.assistPos.save",e); } applyCaptureAssistPosition(); }
+    function applyCaptureAssistPosition(){
+      const bar=document.getElementById("bugTimerBar"); if(!bar) return;
+      const pos=getCaptureAssistPosition();
+      bar.classList.toggle("is-top",pos==="top");
+      bar.classList.toggle("is-bottom",pos==="bottom");
+      const mv=document.getElementById("bugTimerMove");
+      if(mv){
+        if(pos==="top"){ mv.title="Mover abajo"; mv.setAttribute("aria-label","Mover abajo"); mv.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'; }
+        else { mv.title="Mover arriba"; mv.setAttribute("aria-label","Mover arriba"); mv.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>'; }
+      }
+    }
+    function toggleCaptureAssistPosition(){ setCaptureAssistPosition(getCaptureAssistPosition()==="top"?"bottom":"top"); }
+
+    function showAssistNote(msg){ const n=document.getElementById("bugAssistPasteNote"); if(n){ n.textContent=msg; n.style.display="block"; } }
+    function hideAssistNote(){ const n=document.getElementById("bugAssistPasteNote"); if(n){ n.style.display="none"; n.textContent=""; } }
 
     function openBugModal(){
       ensureBugModal();
       bugDraftShots=[];
       const t=document.getElementById("bugTitle"); if(t) t.value="";
       const d=document.getElementById("bugDesc"); if(d) d.value="";
-      closePasteZone(); hideBugNote(); renderBugThumbs();
+      clearInterval(bugTimerInterval); bugTimerInterval=null;
+      closePasteZone(); hideTimerBar(); hideBugNote(); renderBugThumbs();
       showBugModalNow();
       setTimeout(()=>{ const ti=document.getElementById("bugTitle"); if(ti) ti.focus(); },30);
     }
     function closeBugModal(){
       clearInterval(bugTimerInterval); bugTimerInterval=null;
-      const bar=document.getElementById("bugTimerBar"); if(bar) bar.style.display="none";
-      hideBugModalNow(); closePasteZone(); bugDraftShots=[];
+      closePasteZone(); hideTimerBar();
+      hideBugModalNow(); bugDraftShots=[];
     }
 
     // ===== Captura asistida: temporizador + pegado manual (sin captura automática de pantalla) =====
@@ -4326,7 +4371,11 @@
       ensureBugModal();
       hideBugModalNow();
       const bar=document.getElementById("bugTimerBar"), num=document.getElementById("bugTimerNum");
-      if(!bar||!num){ showBugModalNow(); openPasteZone(); return; }
+      if(!bar||!num){ openPasteZone(); return; }
+      applyCaptureAssistPosition();
+      bar.classList.remove("is-paste-mode");
+      const w=document.getElementById("bugAssistPasteWrap"); if(w) w.style.display="none";
+      hideAssistNote();
       let n=10; num.textContent=String(n); bar.style.display="flex";
       clearInterval(bugTimerInterval);
       bugTimerInterval=setInterval(()=>{
@@ -4334,40 +4383,48 @@
         if(n>0){ num.textContent=String(n); return; }
         num.textContent="0";
         clearInterval(bugTimerInterval); bugTimerInterval=null;
-        bar.style.display="none";
-        showBugModalNow();
-        openPasteZone();
+        openPasteZone(); // barra gris + recuadro de pegado; el modal sigue oculto
       },1000);
     }
-    function cancelAssistedCapture(){
-      clearInterval(bugTimerInterval); bugTimerInterval=null;
-      const bar=document.getElementById("bugTimerBar"); if(bar) bar.style.display="none";
-      showBugModalNow(); // conserva título/descripción; no abre zona de pegado
-    }
+    // Entra en modo pegado: la barra permanece visible en gris y se superpone el recuadro de pegado.
     function openPasteZone(){
-      const w=document.getElementById("bugPasteWrap"); if(w) w.style.display="block";
-      hideBugNote();
-      const p=document.getElementById("bugPaste"); if(p) setTimeout(()=>{ try{ p.focus(); }catch(e){} },40);
+      const bar=document.getElementById("bugTimerBar");
+      if(bar){ bar.style.display="flex"; bar.classList.add("is-paste-mode"); }
+      const w=document.getElementById("bugAssistPasteWrap"); if(w) w.style.display="block";
+      hideAssistNote();
+      const p=document.getElementById("bugAssistPaste"); if(p){ p.innerHTML=""; setTimeout(()=>{ try{ p.focus(); }catch(e){} },40); }
     }
     function closePasteZone(){
-      const w=document.getElementById("bugPasteWrap"); if(w) w.style.display="none";
-      const p=document.getElementById("bugPaste"); if(p) p.innerHTML="";
+      const bar=document.getElementById("bugTimerBar"); if(bar) bar.classList.remove("is-paste-mode");
+      const w=document.getElementById("bugAssistPasteWrap"); if(w) w.style.display="none";
+      const p=document.getElementById("bugAssistPaste"); if(p) p.innerHTML="";
+      hideAssistNote();
     }
+    // Sale del modo captura asistida (X, Cancelar o pegado correcto): cierra recuadro+temporizador y vuelve al modal.
+    function exitAssistToModal(){
+      clearInterval(bugTimerInterval); bugTimerInterval=null;
+      closePasteZone(); hideTimerBar();
+      showBugModalNow(); // conserva título/descripción y bugDraftShots
+    }
+    function finishAssistPasteSuccess(){ exitAssistToModal(); }
+    function cancelAssistedCapture(){ exitAssistToModal(); }
 
-    function onBugPaste(ev){
+    async function onBugPaste(ev){
       const items=(ev.clipboardData&&ev.clipboardData.items)||[];
       let imgItem=null;
       for(const it of items){ if(it && /^image\//i.test(it.type)){ imgItem=it; break; } }
       ev.preventDefault();
-      const p=document.getElementById("bugPaste"); if(p) p.innerHTML="";
-      if(!imgItem){ showBugNote("No se detectó ninguna imagen en el portapapeles."); return; }
+      const p=document.getElementById("bugAssistPaste"); if(p) p.innerHTML="";
+      if(!imgItem){ showAssistNote("No se detectó ninguna imagen en el portapapeles."); return; }
       const file=imgItem.getAsFile&&imgItem.getAsFile();
-      if(!file){ showBugNote("No se detectó ninguna imagen en el portapapeles."); return; }
-      processPastedImage(file);
+      if(!file){ showAssistNote("No se detectó ninguna imagen en el portapapeles."); return; }
+      const ok=await processPastedImage(file);
+      if(ok) finishAssistPasteSuccess(); // solo si se añadió correctamente; si no, se queda para reintentar
     }
 
+    // Devuelve true si añade la imagen correctamente, false si falla (sin cerrar el overlay).
     async function processPastedImage(file){
-      if(bugDraftShots.length>=BUG_MAX_SHOTS){ showBugNote("Máximo "+BUG_MAX_SHOTS+" capturas por reporte."); return; }
+      if(bugDraftShots.length>=BUG_MAX_SHOTS){ showAssistNote("Máximo "+BUG_MAX_SHOTS+" capturas por reporte."); return false; }
       let url=null;
       try{
         const origMime=file.type||"image/png";
@@ -4388,10 +4445,12 @@
         else { finalMime="image/jpeg"; dataUrl=canvas.toDataURL("image/jpeg",BUG_JPEG_Q); }
         const i=dataUrl.indexOf(","); const finalSize=Math.round(((dataUrl.length-(i+1))*3)/4);
         const shot={ id:"IMG-"+Date.now()+"-"+Math.random().toString(36).slice(2,7), ts:new Date().toISOString(), source:"clipboard", origMime, origSize, mime:finalMime, size:finalSize, w:fw, h:fh, dataUrl };
-        bugDraftShots.push(shot); hideBugNote(); renderBugThumbs();
+        bugDraftShots.push(shot); hideAssistNote(); renderBugThumbs();
+        return true;
       }catch(e){
         recordError("bugReport.pasteImage",e);
-        showBugNote("No se pudo procesar la imagen pegada.");
+        showAssistNote("No se pudo procesar la imagen pegada.");
+        return false;
       }finally{ if(url){ try{ URL.revokeObjectURL(url); }catch(e){} } }
     }
 
