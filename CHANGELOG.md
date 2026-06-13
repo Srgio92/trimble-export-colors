@@ -3,6 +3,20 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.13.0] — 2026-06-13
+
+Incorpora la herramienta **Bug Report** en el panel Desarrollador y varios ajustes de UI. Publicado como incremento `Y`. Verificación estática (sin node en el equipo: comprobaciones equivalentes de ids/funciones duplicadas y balance de delimitadores); **no probado en el visor de Trimble**.
+
+### Añadido
+
+* **Bug Report** (panel Desarrollador): botón de cámara que emerge bajo el botón Debug al pasar el ratón. Abre un modal ligero con título, descripción redimensionable y capturas de pantalla opcionales (`navigator.mediaDevices.getDisplayMedia` → canvas reducido). Las capturas se muestran como miniaturas con eliminación individual. Al enviar, el reporte se acumula en `localStorage` (`deo.bugReports.v1`, máx. 20 reportes / 5 capturas) junto a un *snapshot* técnico saneado (versión, selección, vista activa, modelos, resumen de colores, toggles y diagnósticos existentes). Con reportes pendientes, el botón Debug cambia a icono de descarga rojo y descarga un TXT acumulado (`DEO_bug_reports_vX.Y.Z_…txt`), limpiando los pendientes; sin reportes, el Debug funciona como antes. El modal solo se cierra con **Cancelar** o **Enviar**.
+* **Opción "— sin selección —"** en los desplegables de Name (Excluir / Selector de items), resaltada en tono rojizo; no aporta filtro y permite dejar una línea en blanco de forma explícita.
+
+### Corregido / UI
+
+* Icono del botón **Actualizar datos del visor**: orientación y sentido de giro corregidos.
+* Pestaña **Clear** del Quantity Surveyor: borde perimetral gris en las cuatro caras del trapecio; el halo azul ya no queda retenido tras pulsar (solo visible en hover).
+
 ## [v8.12.0] — 2026-06-13
 
 Estabilización crítica de **Excluir de selección por modelo/IFC** y del manejo de colores (trabajo interno v8.11.1), más auditoría dirigida del archivo. Publicado como incremento `Y` (corrección/estabilización de herramientas existentes, sin herramienta nueva). Verificación estática y de funciones puras en navegador; **no probado en el visor de Trimble**.
