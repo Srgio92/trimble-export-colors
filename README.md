@@ -5,7 +5,7 @@ DEO Tools es una extensión web para el **visor 3D de Trimble Connect** (Trimble
 Está pensada para flujos de revisión basados en IFC, donde los objetos se colorean por estado y se necesita volcar esa información a CSV (por ejemplo, para cruzarla con códigos de RFI), o a la inversa, recuperar un coloreado a partir de un CSV.
 
 > Herramienta creada por **Sergi Artigas (DEO)**. Software libre bajo licencia MIT.
-> Versión actual: **v8.10.7**
+> Versión actual: **v8.10.8**
 
 ---
 
@@ -25,6 +25,7 @@ Está pensada para flujos de revisión basados en IFC, donde los objetos se colo
 - **Inspector de selección**: lectura rápida de los datos del objeto seleccionado (tipología, marca, dimensiones con unidades) sin abrir el panel de propiedades.
 - **Quantity Surveyor**: resumen de cantidades de la selección (peso, volumen, área, longitud, % sobre items visibles) agrupado por soldaduras (por Assembly type → tipo, unidades y longitud), tornillos (por estándar + calidad usando `Bolt count` real) y perfiles/chapas por material. Formato español con unidades (kg, m³, m², mm), scroll interno y botón de copiar.
 - **Configurar vista**: crea o actualiza vistas con nombre generado por campos (código RFI, ubicación, nivel, ejes…), autor automático, compartición con chips/autocompletado de miembros del proyecto y etiquetas.
+- **Botón global "Actualizar datos del visor"**: botón sticky en la esquina superior derecha del panel (visible al hacer scroll) que vuelve a leer modelos IFC, colores, parámetros y valores `Name` del visor en una sola acción, sustituyendo a los pequeños botones de refresco repartidos por las herramientas.
 - **Zona de Desarrollador** con descarga de un informe de diagnóstico (`DEO_debug.txt`).
 - Interfaz organizada en menús desplegables, con interruptores estilo Trimble y descripciones flotantes al pasar el ratón.
 

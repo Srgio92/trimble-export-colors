@@ -329,9 +329,29 @@
     .btn-cancel-inline { background:#b91c1c; color:#fff; border:none; border-radius:7px; }
     .btn-cancel-inline:hover:not(:disabled) { background:#a11717; box-shadow:none; }
 
+    /* ===================== v8.10.8 ===================== */
+    /* Botón global sticky de "Actualizar datos del visor": esquina superior derecha del panel, visible al hacer
+       scroll. La barra ocupa el ancho con pointer-events:none (no tapa contenido); solo el botón recibe clics.
+       padding-right deja margen frente a la barra de scroll del panel. Cuadrado con esquinas redondeadas (no circular). */
+    .global-refresh-bar { position: sticky; top: 8px; z-index: 10020; display: flex; justify-content: flex-end; padding-right: 16px; margin: 0 0 2px; pointer-events: none; }
+    .global-refresh-float { pointer-events: auto; width: 36px; height: 36px; min-width: 36px; padding: 5px; margin: 0; border: 1px solid #cfd6df; border-radius: 10px; background: rgba(255,255,255,.97); color: #111827; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.10); transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .global-refresh-float:hover:not(:disabled), .global-refresh-float:focus-visible:not(:disabled) { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset, 0 2px 8px rgba(0,0,0,.10); outline:none; background:#fff; }
+    .global-refresh-float:active:not(:disabled) { transform: scale(.92); }
+    .global-refresh-float:disabled { cursor: default; opacity: .85; }
+    .global-refresh-float svg { width: 22px; height: 22px; display: block; fill: #111827; pointer-events: none; }
+    .global-refresh-float.is-refreshing svg { animation: globalRefreshSpin .75s linear infinite; transform-origin: 50% 50%; }
+    @keyframes globalRefreshSpin { to { transform: rotate(360deg); } }
+    /* Refrescos locales absorbidos por el botón global (se conservan en el DOM por compatibilidad de listeners). */
+    #excludeRefresh, #excludeModelsRefresh, #includeRefresh, #qsRefreshAll,
+    #namesParamRefresh, #boltsParamRefresh, #weldsParamRefresh, #csvParamRefresh { display:none !important; }
+
   </style>
 </head>
 <body>
+
+  <div class="global-refresh-bar">
+    <button id="globalViewerRefresh" class="global-refresh-float" type="button" title="Actualizar datos del visor" aria-label="Actualizar datos del visor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></button>
+  </div>
 
   <details>
     <summary>Herramientas del modelo</summary>
@@ -431,7 +451,7 @@
               <select id="qsParam2" class="qs-param"></select>
               <select id="qsValue2" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
             </div>
-            <div class="hint">Pulsa el botón de refrescar para leer parámetros y preparar los valores disponibles. El botón cuadrado selecciona el valor elegido.</div>
+            <div class="hint">El botón ↻ del visor (arriba) lee los parámetros y prepara los valores disponibles. El botón cuadrado selecciona el valor elegido.</div>
             <div class="toggle-line tool-spacer" id="colorModeLine" data-tip="Filtra la selección por color en lugar de por Name.">
               <label class="switch"><input type="checkbox" id="colorModeToggle"><span class="slider"></span></label>
               <label class="txt" for="colorModeToggle">Selección por color</label>
@@ -467,7 +487,7 @@
                     <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
                   </div>
-                  <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+                  <div class="hint">Usa + para añadir parámetros del modelo. El botón ↻ del visor (arriba) lee los disponibles.</div>
                 </div>
               </div>
             </div>
@@ -487,7 +507,7 @@
                     <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
                   </div>
-                  <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+                  <div class="hint">Usa + para añadir parámetros del modelo. El botón ↻ del visor (arriba) lee los disponibles.</div>
                 </div>
               </div>
             </div>
@@ -507,7 +527,7 @@
                     <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
                   </div>
-                  <div class="hint">Usa + para añadir parámetros del modelo. Pulsa &#8635; para leer los disponibles.</div>
+                  <div class="hint">Usa + para añadir parámetros del modelo. El botón ↻ del visor (arriba) lee los disponibles.</div>
                 </div>
               </div>
             </div>
@@ -652,7 +672,7 @@
                   </select>
                   <button id="csvParamRefresh" class="column-refresh" data-tip="Actualiza los parámetros disponibles del modelo." title="Actualizar parámetros">&#8635;</button>
                 </div>
-                <div class="hint" id="csvParamHint">Usa + para añadir valores predefinidos o parámetros disponibles del modelo.</div>
+                <div class="hint" id="csvParamHint">Usa + para añadir valores predefinidos o parámetros disponibles del modelo. El botón ↻ del visor (arriba) los actualiza.</div>
               </div>
             </div>
           </details>
@@ -722,7 +742,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.10.7";
+    const SCRIPT_VERSION = "v8.10.8";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -3435,8 +3455,57 @@
         toggle.dispatchEvent(new Event("change",{bubbles:true}));
       });
     }
+    // v8.10.8: refresco central de datos del visor (botón global ↻). Invalida las cachés que dependen del
+    // visor y vuelve a leer modelos/colores/parámetros/Name; conserva las preferencias del usuario
+    // (exclusiones, selección, perfiles). Sin estados visibles persistentes: el icono gira mientras trabaja y
+    // el botón se deshabilita para ignorar clics duplicados (no dispara refrescos simultáneos).
+    let viewerRefreshBusy=false;
+    async function refreshViewerDataGlobal(){
+      if(viewerRefreshBusy) return;
+      const btn=document.getElementById("globalViewerRefresh");
+      if(!API){ setProgress("No conectado a Trimble Connect."); return; }
+      viewerRefreshBusy=true;
+      if(btn){ btn.disabled=true; btn.classList.add("is-refreshing"); }
+      try{
+        // Invalidación de cachés dependientes del visor (mantiene exclusiones/selección del usuario).
+        nameValuesCache=null;
+        csvAvailableParametersCache=[];
+        quickParamIndexCache.clear();
+        propsCache.clear();
+        lastColorFallbackDiag=null;
+        // Modelos IFC cargados y colores de presentación.
+        await populateExcludeModels();
+        await populateExcludeColors();
+        const colorMode=document.getElementById("colorModeToggle");
+        const colorWrap=document.getElementById("includeColorsWrap");
+        if((colorMode&&colorMode.checked)||(colorWrap&&colorWrap.style.display!=="none")) await populateIncludeColors();
+        // Valores Name y parámetros del modelo.
+        await populateNameValues();
+        await scanModelParameters();
+        updateCsvColumnSelect();
+        namesPicker.updateSelect(); boltsPicker.updateSelect(); weldsPicker.updateSelect();
+        populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
+        populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+        // Reindexar valores rápidos solo si el Selector de items está en uso (evita escaneos pesados de más).
+        const includeTool=document.getElementById("includeTool");
+        const includeOn=document.getElementById("includeToggle")&&document.getElementById("includeToggle").checked;
+        if((includeTool&&includeTool.open)||includeOn) await refreshQuickAll();
+        // Presentación/vista activa y selección dependientes del visor.
+        scheduleSelectionInspector();
+        scheduleProcessSelection();
+        log("Datos del visor actualizados (botón global).");
+        setProgress("Datos del visor actualizados.");
+      }catch(e){
+        recordError("refreshViewerDataGlobal",e);
+        log("ERROR actualizando datos del visor: "+(e&&e.message?e.message:e));
+      }finally{
+        if(btn){ btn.classList.remove("is-refreshing"); btn.disabled=false; }
+        viewerRefreshBusy=false;
+      }
+    }
     function wireUI(){
       const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
+      const globalRefresh=document.getElementById("globalViewerRefresh"); if(globalRefresh) globalRefresh.onclick=()=>refreshViewerDataGlobal();
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
       wireSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
       wireSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");

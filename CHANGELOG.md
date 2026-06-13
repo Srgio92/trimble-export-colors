@@ -3,6 +3,23 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.10.8] — 2026-06-13
+
+Botón global de actualización del visor y auditoría de cambios manuales recientes (revertidos parcialmente y rehechos).
+
+### Corregido / auditoría
+
+* **Botón global "Actualizar datos del visor"** rehecho correctamente. Los cambios manuales previos (externos, no de Claude) eran defectuosos: dos bloques CSS contradictorios (`.global-refresh-btn` circular + `.global-refresh-float` cuadrado, este último CSS muerto sin elemento), botón **circular** y alineado a la **izquierda**, espacios en blanco al final (línea con trailing whitespace) y conversión de todo el archivo de CRLF a LF. Se restauró la base limpia v8.10.7 (CRLF) y se reimplementó el botón.
+* El botón es ahora **cuadrado con esquinas redondeadas** (36×36, `border-radius:10px`, no circular), **sticky en la esquina superior derecha** del panel (`top:8px`, margen derecho de 16 px para no solaparse con la barra de scroll), visible al hacer scroll, con icono negro de dos flechas circulares centrado, hover azul coherente y contracción al pulsar. Sin texto ni estados visibles persistentes; solo gira el icono mientras refresca.
+* La barra contenedora usa `pointer-events:none` (no tapa títulos ni contenido) y solo el botón recibe clics.
+* **Incremento de versión corregido**: el cambio manual había saltado a v8.10.10 (con comentario v8.10.8 incoherente); se fija el incremento limpio **v8.10.8** sobre la última versión buena v8.10.7.
+
+### Cambiado
+
+* **Refrescos locales integrados en el botón global**: `excludeRefresh`, `excludeModelsRefresh`, `includeRefresh`, `qsRefreshAll`, `namesParamRefresh`, `boltsParamRefresh`, `weldsParamRefresh` y `csvParamRefresh` se ocultan (se conservan en el DOM por compatibilidad de listeners; ningún listener queda roto). Se mantienen **Actualizar vistas**, **Debug** y **Cancelar** de export/import.
+* Nueva función central `refreshViewerDataGlobal()`: invalida las cachés dependientes del visor (Name, parámetros, índice rápido, propiedades, fallback de color) y vuelve a leer modelos IFC, colores de presentación, valores Name y parámetros; reindexa valores rápidos solo si el Selector de items está en uso; refresca Inspector y motor de selección. Deshabilita el botón y bloquea reentradas mientras trabaja (sin refrescos simultáneos); los errores se registran en debug sin texto visible permanente.
+* Textos de ayuda que apuntaban a los botones ↻ locales ahora apuntan al botón global del visor.
+
 ## [v8.10.7] — 2026-06-12
 
 Corrección de interfaz y E/S por lotes. Lote de 19 ajustes sobre v8.10.6.
