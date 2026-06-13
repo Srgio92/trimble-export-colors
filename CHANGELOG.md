@@ -3,6 +3,26 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.12.0] — 2026-06-13
+
+Estabilización crítica de **Excluir de selección por modelo/IFC** y del manejo de colores (trabajo interno v8.11.1), más auditoría dirigida del archivo. Publicado como incremento `Y` (corrección/estabilización de herramientas existentes, sin herramienta nueva). Verificación estática y de funciones puras en navegador; **no probado en el visor de Trimble**.
+
+### Corregido
+
+* **Excluir de selección por modelo/IFC**: marcar un modelo (p. ej. `Project Axes.trb`) ahora elimina de forma fiable sus objetos de la selección, incluso seleccionando un único objeto. Se añade una **capa de alias** entre los ids de `getModels()`, `getObjects()` y `getSelection()` y el **nombre normalizado** del modelo; la exclusión se resuelve por el `modelId` real de la selección (por id directo o por nombre normalizado), de modo que funciona aunque Trimble devuelva ids distintos para el mismo archivo.
+* **Persistencia de exclusiones migrada a formato versionado** `deo.excludedModels.v2` (`{names, ids}`), con lectura tolerante del formato antiguo (solo ids). Los ids persistidos **huérfanos** (de modelos que ya no están cargados) se descartan al refrescar y no contaminan modelos actuales; la intención del usuario se conserva por nombre normalizado.
+* **Color "no legible" `#RRGGBBAA…` sobredimensionado**: un hexadecimal con más de 8 dígitos (p. ej. `#50D0CB39C`) ya no se marca como "Color no legible". Si contiene al menos RGB válido se interpreta de forma tolerante (RGB de los 6 primeros dígitos; alfa de los 8 primeros si existen, si no `FF`), conservando la normalización exacta a `#RRGGBBAA` y la comparación por color. El swatch sigue usando color sólido.
+* **Estabilización del filtro tras selección**: si Trimble dispara eventos de selección troceados (al seleccionar una capa/modelo) o durante una operación en curso, la herramienta reaplica el filtro con un pequeño *retry* controlado, sin bucles ni llamadas masivas, y `setSelection` solo se llama si hay cambios reales.
+* **Inicialización con `API = null`**: `getLoadedModelsList()`, `getModelObjectsMap()` y `safeGetSelection()` degradan sin romper si `API`/`API.viewer` aún no están listos (eliminando los errores `Cannot read properties of null (reading 'viewer')` del arranque). La lista de modelos se repuebla tras la conexión.
+
+### Diagnóstico
+
+* `COLOR_DIAG` añade el caso de hex sobredimensionado (`coerced`, raw, normalized y motivo). `EXCLUDE_MODELS_DIAG` se amplía con el registro de modelos y aliases, ids huérfanos descartados, nombres/ids efectivos, mapa id→nombre y el último resumen de filtrado de selección por modelo.
+
+### Auditoría (sin cambios funcionales)
+
+* Revisión dirigida del archivo: sin ids HTML ni funciones duplicadas; todas las llamadas `JSON.parse`/`localStorage` están protegidas; el arranque no invoca `API.viewer` sin guarda. El flujo activo de **Configurar vista** (escenarios `cvNew`/`cvUpd` con chips de Compartir/Etiquetas) funciona; queda **pendiente** (no abordado en esta versión, por seguridad) la limpieza del clúster de código muerto de "plantillas" previo al rework (`tplCfg_*`, `templateSelect`, `createViewFromTemplate`, etc.), que está protegido con guardas y no se ejecuta.
+
 ## [v8.11.0] — 2026-06-13
 
 Rework de **Configurar vista** (incorporado desde versiones internas de trabajo v8.10.38–v8.10.43) y mejoras de la pestaña **Clear** del Quantity Surveyor (trabajo interno v8.10.9–v8.10.37). Publicado como incremento `Y` por estabilización/mejora de herramientas existentes, sin herramienta nueva.

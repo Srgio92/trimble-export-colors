@@ -845,7 +845,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.11.0";
+    const SCRIPT_VERSION = "v8.12.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -872,12 +872,15 @@
     const PARAM_SAVED_LABEL_ENGINE = "legacy";
 
     let API=null, lastConvertError="", cancelRequested=false, opRunning=false;
-    let selectionTimer=null, selBusy=false, suppressSelectionUntil=0;
+    let selectionTimer=null, selBusy=false, suppressSelectionUntil=0, selectionDirty=false;
     let toolAddedKeys=new Set();            // claves modelId:runtimeId añadidas por "Selección cercanos"
     const excludedColors=new Set();
     const includeColors=new Set();
-    const excludedModelIds=new Set();       // v8.10.0: modelId/IFC completos excluidos de la selección (persistente)
-    const EXCLUDE_MODELS_KEY="deo.excludedModelIds.v1";
+    const excludedModelIds=new Set();       // v8.10.0: ids (alias) de modelos excluidos de la selección
+    const excludedModelNames=new Set();     // v8.11.1: nombres NORMALIZADOS de modelos excluidos (fuente durable)
+    const EXCLUDE_MODELS_KEY="deo.excludedModelIds.v1";    // formato antiguo (solo ids) -> lectura para migración
+    const EXCLUDE_MODELS_KEY_V2="deo.excludedModels.v2";  // v8.11.1: {names:[],ids:[]}
+    function normModelName(n){ return String(n==null?"":n).trim().toLowerCase(); }
     const logLines=[];
     const errorHistory=[];
     const propsCache=new Map();             // modelId -> Map(rid -> props)
@@ -955,7 +958,7 @@
     function badColor(color){ return {valid:false,legible:false,text:(color==null||color==="")?"":(typeof color==="string"?color:safeJson(color)),normalizedColor:"",cssColor:""}; }
     function analyzeColor(color){
       if(color==null||color==="") return badColor(color);
-      let r,g,b,a=255;
+      let r,g,b,a=255,coerced=false;
       if(Array.isArray(color)){
         const arr=color.map(Number); if(arr.length<3||arr.slice(0,3).some((x)=>!Number.isFinite(x))) return badColor(color);
         const rgb=arr.slice(0,3); const scale=Math.max(...rgb)<=1?255:1; r=rgb[0]*scale; g=rgb[1]*scale; b=rgb[2]*scale; a=arr[3]==null?255:Number(arr[3]); if(!Number.isFinite(a))a=255; if(a<=1&&a>0)a*=255; if(a===0&&arr.length<4)a=255;
@@ -964,15 +967,26 @@
         const rgb=[Number(r),Number(g),Number(b)]; if(rgb.some((x)=>!Number.isFinite(x))) return badColor(color);
         const scale=Math.max(...rgb)<=1?255:1; r=rgb[0]*scale; g=rgb[1]*scale; b=rgb[2]*scale; a=Number(a); if(!Number.isFinite(a))a=255; if(a<=1)a*=255;
       } else {
-        let s=String(color).trim(); const hex=s.match(/^#?([0-9a-fA-F]{3,8})$/);
-        if(hex){ let h=hex[1]; if(h.length===3||h.length===4) h=h.split("").map((c)=>c+c).join(""); if(h.length===6) h+="FF"; if(h.length!==8) return badColor(color); r=parseInt(h.slice(0,2),16); g=parseInt(h.slice(2,4),16); b=parseInt(h.slice(4,6),16); a=parseInt(h.slice(6,8),16); }
+        let s=String(color).trim(); const hex=s.match(/^#?([0-9a-fA-F]{3,})$/);
+        if(hex){
+          let h=hex[1];
+          if(h.length===3||h.length===4) h=h.split("").map((c)=>c+c).join("");
+          if(h.length===6){ h+="FF"; }
+          else if(h.length!==8){
+            // v8.11.1: hex sobredimensionado/impar (p.ej. "#50D0CB39C"): si hay al menos RGB (6 dígitos),
+            // se tolera. RGB = primeros 6; alfa = primeros 8 si existen, si no FF. Conserva comparación exacta.
+            if(h.length<6) return badColor(color);
+            coerced=true; h=h.slice(0,6)+(h.length>=8?h.slice(6,8):"FF");
+          }
+          r=parseInt(h.slice(0,2),16); g=parseInt(h.slice(2,4),16); b=parseInt(h.slice(4,6),16); a=parseInt(h.slice(6,8),16);
+        }
         else { const rgba=s.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i); if(!rgba) return badColor(color); r=Number(rgba[1]); g=Number(rgba[2]); b=Number(rgba[3]); a=rgba[4]==null?255:Number(rgba[4]); if(a<=1)a*=255; }
       }
       r=clampByte(r); g=clampByte(g); b=clampByte(b); a=clampByte(a);
       if([r,g,b,a].some((x)=>x==null)) return badColor(color);
       // v8.10.6: swatchCss = color SÓLIDO (sin alfa) para el círculo del swatch. Evita que un color válido
       // con alfa bajo (típico en Tekla) se vea lavado/blanco. La normalización (con alfa) no cambia.
-      return { valid:true, legible:true, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", swatchCss:"rgb("+r+","+g+","+b+")", rgba:{r,g,b,a} };
+      return { valid:true, legible:true, coerced:coerced, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", swatchCss:"rgb("+r+","+g+","+b+")", rgba:{r,g,b,a} };
     }
     function normalizeColor(c){ return analyzeColor(c).normalizedColor; }
     function looksRed(c){ const a=analyzeColor(c); return a.valid && a.rgba.r>140 && a.rgba.g<95 && a.rgba.b<95; }
@@ -1237,7 +1251,7 @@
     function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
     function getParamValue(p,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; if(target==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
     async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
-    async function safeGetSelection(){ let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
+    async function safeGetSelection(){ if(!API||!API.viewer) return []; let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
     // v8.10.0: ¿hay una vista guardada activa? Heurística defensiva — getCurrentView devuelve un objeto con id
     // cuando el usuario tiene cargada una vista guardada. INCERTIDUMBRE: si la API de Trimble no distinguiera
     // navegación libre de vista guardada, las etiquetas 3D se deshabilitan de más, nunca de menos
@@ -1631,8 +1645,20 @@
     async function computeExcludedRemovals(list){
       const removeMap=new Map();
       if(!document.getElementById("excludeToggle").checked) return removeMap;
-      // v8.10.0: exclusión por modelo/IFC completo (no oculta ni recolorea, solo saca de la selección).
-      if(excludedModelIds.size>0){ for(const o of list){ if(excludedModelIds.has(String(o.modelId))) addToMapSet(removeMap,o.modelId,[o.runtimeId]); } }
+      // v8.11.1: exclusión por modelo/IFC. Fuente de verdad = modelId de la selección real, resuelto a nombre
+      // normalizado vía la capa de alias (getModels superset). Excluye si el id coincide directamente O si el
+      // nombre normalizado del modelo de ese objeto está marcado. Funciona aunque Trimble cambie el id del archivo.
+      if(excludedModelNames.size>0||excludedModelIds.size>0){
+        if(excludedModelNames.size>0 && modelIdToNormName.size===0){ try{ await getLoadedModelsList(); }catch(e){ recordError("computeExcludedRemovals.lazyModels",e); } }
+        let filtered=0; const unresolved=new Set();
+        for(const o of list){
+          const mid=String(o.modelId);
+          const norm=modelIdToNormName.get(mid);
+          if(!norm) unresolved.add(mid);
+          if(excludedModelIds.has(mid) || (norm&&excludedModelNames.has(norm))){ addToMapSet(removeMap,o.modelId,[o.runtimeId]); filtered++; }
+        }
+        lastSelectionModelFilterDiag={excludedNames:[...excludedModelNames],excludedIds:[...excludedModelIds],selectionSize:list.length,filteredCount:filtered,unresolvedModelIds:[...unresolved]};
+      }
       // Exclusión por color.
       if(excludedColors.size>0){ const colorMap=await getCurrentColorMap(); for(const o of list){ const col=colorMap.get(o.modelId+":"+o.runtimeId); if(col&&excludedColors.has(col)) addToMapSet(removeMap,o.modelId,[o.runtimeId]); } }
       // Exclusión por valores Name configurados en stack.
@@ -1664,9 +1690,10 @@
     function toolsActive(){ return !!(document.getElementById("nearToggle").checked||document.getElementById("excludeToggle").checked||document.getElementById("includeToggle").checked); }
     async function processSelectionNow(){
       if(!toolsActive()) return;
-      if(selBusy) return;
-      if(Date.now()<suppressSelectionUntil) return;
-      selBusy=true;
+      if(selBusy){ selectionDirty=true; return; }
+      // v8.11.1: si estamos en ventana de supresión, no se descarta el disparo: se reprograma pasada la ventana.
+      if(Date.now()<suppressSelectionUntil){ clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,Math.max(suppressSelectionUntil-Date.now(),0)+60); return; }
+      selBusy=true; selectionDirty=false;
       try{
         const current=await safeGetSelection();
         if(current.length===0){ toolAddedKeys=new Set(); return; }
@@ -1710,9 +1737,17 @@
         if(removeCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(removeFromSel),"remove"); }catch(e){ recordError("setSelection.remove",e); } }
         toolAddedKeys=newToolKeys;
       }catch(err){ recordError("processSelectionNow",err); log("Selección: "+(err&&err.message?err.message:err)); }
-      finally{ selBusy=false; }
+      finally{ selBusy=false; if(selectionDirty){ selectionDirty=false; scheduleProcessSelection(); } }
     }
-    function scheduleProcessSelection(){ if(!toolsActive()) return; if(Date.now()<suppressSelectionUntil) return; clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,220); }
+    // v8.11.1: debounce + retry controlado. Si llega un cambio de selección mientras la herramienta trabaja
+    // (selBusy) o dentro de la ventana de supresión, se marca pendiente y se reprograma; evita el "solo
+    // funciona a veces" al seleccionar una capa/modelo cuyos eventos llegan troceados, sin bucles infinitos.
+    function scheduleProcessSelection(){
+      if(!toolsActive()) return;
+      if(selBusy){ selectionDirty=true; return; }
+      if(Date.now()<suppressSelectionUntil){ selectionDirty=true; clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,Math.max(suppressSelectionUntil-Date.now(),0)+60); return; }
+      clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,220);
+    }
     async function removeToolAddedFromSelection(){
       if(toolAddedKeys.size===0) return;
       const map=new Map(); for(const k of toolAddedKeys){ const [m,id]=splitKey(k); addToMapSet(map,m,[id]); }
@@ -3462,17 +3497,37 @@
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
     // ===================== EXCLUSIÓN POR MODELO/IFC (v8.10.0) =====================
-    function loadExcludedModelIds(){ try{ const raw=localStorage.getItem(EXCLUDE_MODELS_KEY); if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)){ excludedModelIds.clear(); arr.forEach((id)=>{ if(id!=null&&id!=="") excludedModelIds.add(String(id)); }); } } }catch(e){ recordError("loadExcludedModelIds",e); } }
-    function saveExcludedModelIds(){ try{ localStorage.setItem(EXCLUDE_MODELS_KEY,JSON.stringify([...excludedModelIds])); }catch(e){ recordError("saveExcludedModelIds",e); } }
+    // v8.11.1: persistencia versionada. Fuente durable = nombres normalizados; los ids son volátiles (alias actuales).
+    // Lee primero v2 ({names,ids}); si no existe, migra del formato antiguo v1 (solo ids) sin perder preferencias.
+    function loadExcludedModelIds(){
+      try{
+        const rawV2=localStorage.getItem(EXCLUDE_MODELS_KEY_V2);
+        if(rawV2){
+          const obj=JSON.parse(rawV2); excludedModelNames.clear(); excludedModelIds.clear();
+          if(obj&&Array.isArray(obj.names)) obj.names.forEach((n)=>{ const nn=normModelName(n); if(nn) excludedModelNames.add(nn); });
+          if(obj&&Array.isArray(obj.ids)) obj.ids.forEach((id)=>{ if(id!=null&&id!=="") excludedModelIds.add(String(id)); });
+          return;
+        }
+        const raw=localStorage.getItem(EXCLUDE_MODELS_KEY); // migración: solo ids antiguos
+        if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)){ excludedModelIds.clear(); arr.forEach((id)=>{ if(id!=null&&id!=="") excludedModelIds.add(String(id)); }); } }
+      }catch(e){ recordError("loadExcludedModelIds",e); }
+    }
+    function saveExcludedModelIds(){ try{ localStorage.setItem(EXCLUDE_MODELS_KEY_V2,JSON.stringify({names:[...excludedModelNames],ids:[...excludedModelIds]})); }catch(e){ recordError("saveExcludedModelIds",e); } }
     // v8.10.2: getModels() puede devolver TODOS los modelos del proyecto, no solo los abiertos.
     // Fuente de verdad de "abierto en el visor": getObjects() — solo los modelos con objetos accesibles.
     // getModels() se usa únicamente para resolver nombres. Diagnóstico en EXCLUDE_MODELS_DIAG.
-    let lastModelsListDiag=null;
+    let lastModelsListDiag=null, lastExcludeReconcileDiag=null, lastSelectionModelFilterDiag=null;
+    // v8.11.1: capa de alias entre ids de getModels / getObjects / getSelection y nombre normalizado.
+    let modelRegistry=[];                 // [{displayName,normalizedName,primaryModelId,objectModelIds,apiModelIds,aliases}]
+    let modelIdToNormName=new Map();       // CUALQUIER id (getModels/getObjects) -> nombre normalizado
+    let modelIdToDisplayName=new Map();
+    // v8.11.1: Task 4 — nunca tocar API.viewer si API no está inicializada (degrada en lugar de romper).
     async function getLoadedModelsList(){
       const diag={getModelsTotal:null,openByObjectsTotal:null,source:"",notes:[]};
+      if(!API||!API.viewer){ diag.notes.push("API no inicializada (se reintenta tras conexión)"); lastModelsListDiag=diag; return []; }
       let nameById=new Map(); let getModelsOrder=[];
       try{
-        if(API.viewer&&typeof API.viewer.getModels==="function"){
+        if(typeof API.viewer.getModels==="function"){
           const ms=await API.viewer.getModels();
           for(const m of (Array.isArray(ms)?ms:[])){ const id=String((m&&(m.id??m.modelId))||""); if(!id) continue; nameById.set(id,String((m&&m.name)||"(sin nombre)")); getModelsOrder.push(id); }
           diag.getModelsTotal=nameById.size;
@@ -3481,20 +3536,57 @@
       let openIds=[];
       try{
         const byModel=await getModelObjectsMap(); // getObjects(): solo modelos con objetos accesibles en el visor
-        openIds=[...byModel.keys()];
+        openIds=[...byModel.keys()].map(String);
         diag.openByObjectsTotal=openIds.length;
         diag.source="getObjects (objetos accesibles)";
       }catch(e){ recordError("getLoadedModelsList.getObjects",e); diag.notes.push("getObjects error: "+e.message); }
-      let models=[];
-      if(openIds.length){
-        models=openIds.map((id)=>({id,name:nameById.get(id)||("(modelo "+id+")")}));
-      } else if(nameById.size){
-        // Degradación: si getObjects no devuelve nada (visor vacío o API limitada), se listan los de getModels con aviso.
-        diag.source="getModels (fallback: getObjects sin resultados; puede incluir modelos no abiertos)";
-        models=getModelsOrder.map((id)=>({id,name:nameById.get(id)}));
+
+      // Master id -> nombre. getModels cubre TODO el proyecto (superset): permite resolver el modelId de la
+      // selección real aunque getObjects/getSelection usen un id distinto del de la lista.
+      modelIdToNormName=new Map(); modelIdToDisplayName=new Map();
+      for(const [id,nm] of nameById.entries()){ modelIdToDisplayName.set(String(id),nm); modelIdToNormName.set(String(id),normModelName(nm)); }
+
+      // Identidades a mostrar: modelos abiertos (getObjects). Fallback: getModels si getObjects no devolvió nada.
+      let baseIds=[], usedFallback=false;
+      if(openIds.length){ baseIds=openIds; }
+      else if(nameById.size){ baseIds=getModelsOrder.map(String); usedFallback=true; diag.source="getModels (fallback: getObjects sin resultados; puede incluir modelos no abiertos)"; }
+
+      const openSet=new Set(openIds);
+      const groups=new Map(); // normName -> registro
+      for(const id of baseIds){
+        const display=nameById.get(id)||("(modelo "+id+")");
+        const norm=normModelName(display)||("__id__"+id);
+        if(!modelIdToNormName.has(id)){ modelIdToNormName.set(id,norm); modelIdToDisplayName.set(id,display); }
+        let g=groups.get(norm);
+        if(!g){ g={displayName:display,normalizedName:norm,primaryModelId:id,objectModelIds:[],apiModelIds:[],aliases:new Set()}; groups.set(norm,g); }
+        g.aliases.add(id);
+        if(openSet.has(id)) g.objectModelIds.push(id); else g.apiModelIds.push(id);
       }
+      // Todo id de getModels con el mismo nombre normalizado se añade como alias (mismo archivo, id distinto).
+      for(const [id,nm] of nameById.entries()){
+        const g=groups.get(normModelName(nm));
+        if(g){ const sid=String(id); g.aliases.add(sid); if(!g.objectModelIds.includes(sid)&&!g.apiModelIds.includes(sid)) g.apiModelIds.push(sid); }
+      }
+      modelRegistry=[...groups.values()].map((g)=>({displayName:g.displayName,normalizedName:g.normalizedName,primaryModelId:g.primaryModelId,objectModelIds:g.objectModelIds,apiModelIds:g.apiModelIds,aliases:[...g.aliases]}));
+      diag.usedFallback=usedFallback;
+      diag.registry=modelRegistry.map((g)=>({name:g.displayName,normalizedName:g.normalizedName,primaryModelId:g.primaryModelId,aliases:g.aliases}));
       lastModelsListDiag=diag;
-      return models;
+      // Compat: un item por identidad lógica, enriquecido con normalizedName y aliases.
+      return modelRegistry.map((g)=>({id:g.primaryModelId,name:g.displayName,normalizedName:g.normalizedName,aliases:g.aliases}));
+    }
+    // v8.11.1: re-deriva ids excluidos a partir de los nombres excluidos + modelos cargados. Descarta ids
+    // huérfanos (persistidos antiguos sin correspondencia actual) y mantiene la intención durable por nombre.
+    function reconcileExcludedModels(models){
+      const aliasUniverse=new Set();
+      for(const m of models){ (m.aliases||[m.id]).forEach((id)=>aliasUniverse.add(String(id))); }
+      const dropped=[];
+      for(const id of [...excludedModelIds]){ if(!aliasUniverse.has(String(id))){ excludedModelIds.delete(id); dropped.push(id); } }
+      // Modelos cuyo nombre está excluido: asegurar que TODOS sus alias actuales están en el set de ids.
+      for(const m of models){ if(excludedModelNames.has(m.normalizedName)){ (m.aliases||[m.id]).forEach((id)=>excludedModelIds.add(String(id))); } }
+      // Modelos cargados con algún alias excluido por id: marcar también su nombre (coherencia checkbox).
+      for(const m of models){ const al=(m.aliases||[m.id]).map(String); if(al.some((id)=>excludedModelIds.has(id))) excludedModelNames.add(m.normalizedName); }
+      lastExcludeReconcileDiag={droppedOrphanIds:dropped,excludedNames:[...excludedModelNames],effectiveIds:[...excludedModelIds]};
+      saveExcludedModelIds();
     }
     // Orden de la lista: aparición (orden del visor) o alfabético. Alternable con el botón embudo.
     let excludeModelsSortAlpha=false;
@@ -3502,14 +3594,22 @@
       const cont=document.getElementById("excludeModels"); if(!cont) return;
       cont.innerHTML="Leyendo modelos abiertos...";
       const models=await getLoadedModelsList();
+      reconcileExcludedModels(models); // limpia ids huérfanos y sincroniza nombres<->ids con lo realmente cargado
       cont.innerHTML="";
       if(!models.length){ cont.textContent="No hay modelos abiertos en el visor."; return; }
       const list=models.slice();
       if(excludeModelsSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
       for(const m of list){
+        const aliases=(m.aliases||[m.id]).map(String);
         const row=document.createElement("label"); row.className="model-exclude-row"; row.title=m.name+" ("+m.id+")";
-        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=excludedModelIds.has(m.id);
-        cb.addEventListener("change",()=>{ if(cb.checked) excludedModelIds.add(m.id); else excludedModelIds.delete(m.id); saveExcludedModelIds(); scheduleProcessSelection(); log("Excluir modelo "+(cb.checked?"activado":"desactivado")+": "+m.name+" ("+m.id+")."); });
+        const cb=document.createElement("input"); cb.type="checkbox";
+        cb.checked=excludedModelNames.has(m.normalizedName)||aliases.some((id)=>excludedModelIds.has(id));
+        cb.addEventListener("change",()=>{
+          if(cb.checked){ excludedModelNames.add(m.normalizedName); aliases.forEach((id)=>excludedModelIds.add(id)); }
+          else { excludedModelNames.delete(m.normalizedName); aliases.forEach((id)=>excludedModelIds.delete(id)); }
+          saveExcludedModelIds(); scheduleProcessSelection();
+          log("Excluir modelo "+(cb.checked?"activado":"desactivado")+": "+m.name+" ["+m.normalizedName+"] alias="+aliases.join(",")+".");
+        });
         const span=document.createElement("span"); span.className="model-exclude-name"; span.textContent=m.name;
         row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
       }
@@ -3565,7 +3665,8 @@
       if([...sel.options].some((o)=>o.value===keep)) sel.value=keep; else if(defaultParam) sel.value=defaultParam;
     }
     async function getModelObjectsMap(){
-      const map=new Map(); const attempts=[ ()=>API.viewer.getObjects(), ()=>API.viewer.getObjects(undefined,{visible:true}) ];
+      const map=new Map(); if(!API||!API.viewer) return map; // v8.11.1: Task 4 — degrada si API no inicializada
+      const attempts=[ ()=>API.viewer.getObjects(), ()=>API.viewer.getObjects(undefined,{visible:true}) ];
       for(const fn of attempts){ try{ const groups=await fn(); for(const g of groups||[]){ const modelId=g.modelId||g.id||""; const ids=(g.objects||g.objectRuntimeIds||g.runtimeIds||[]).map((o)=>Number(typeof o==="object"?(o.id??o.objectRuntimeId??o.runtimeId):o)).filter(Number.isFinite); if(modelId&&ids.length){ const prev=map.get(modelId)||[]; map.set(modelId,prev.concat(ids)); } } if(map.size) break; }catch(e){ recordError("getModelObjectsMap",e); } }
       for(const [m,ids] of map.entries()) map.set(m,[...new Set(ids)]); return map;
     }
@@ -3988,6 +4089,9 @@
       API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
       log("Conectado a Trimble Connect.\nCódigo de versión: "+SCRIPT_VERSION);
       setProgress("Conectado a Trimble Connect.");
+      // v8.11.1: wireUI corre antes de la conexión (API=null), por lo que la lista de modelos quedó vacía.
+      // Tras conectar, repoblar resuelve los alias reales y limpia ids persistidos huérfanos (reconcile).
+      try{ await populateExcludeModels(); }catch(e){ recordError("postConnect.populateExcludeModels",e); }
       await initTemplateTool();
       updateCsvColumnSelect();
 
@@ -4083,7 +4187,7 @@
       cdiag.uniqueLegibleColorsCount=uniqueValid.size;
       cdiag.illegibleSamples=illegibleSamples;
       // v8.10.6: batería ampliada de formatos + swatchCss (color sólido del círculo, sin alfa).
-      const colorProbe=(label,inp)=>{ const a=analyzeColor(inp); return {in:label,normalized:a.normalizedColor,swatchCss:a.swatchCss||null,legible:a.legible}; };
+      const colorProbe=(label,inp)=>{ const a=analyzeColor(inp); return {in:label,normalized:a.normalizedColor,swatchCss:a.swatchCss||null,legible:a.legible,coerced:!!a.coerced}; };
       cdiag.normalizationExamples=[
         colorProbe("#EC00B6",     "#EC00B6"),
         colorProbe("#EC00B6FF",   "#EC00B6FF"),
@@ -4094,8 +4198,12 @@
         colorProbe("rgb(236,0,182)","rgb(236,0,182)"),
         colorProbe("rgba(236,0,182,1)","rgba(236,0,182,1)"),
         colorProbe("alfa bajo {236,0,182,a:20}",{r:236,g:0,b:182,a:20}),
+        colorProbe("hex sobredimensionado #50D0CB39C","#50D0CB39C"),
+        colorProbe("hex 7 dígitos #50D0CB3","#50D0CB3"),
         colorProbe("no legible", "texto-no-color")
       ];
+      // v8.11.1: caso real del bug. Un hex con más de 8 dígitos ya no es "Color no legible": se interpreta su RGB.
+      cdiag.coercedHexExample=(()=>{ const raw="#50D0CB39C"; const a=analyzeColor(raw); return {raw,normalized:a.normalizedColor,legible:a.legible,coerced:!!a.coerced,reason:a.coerced?"hex >8 dígitos: RGB = primeros 6; alfa = primeros 8 ('39'); resto descartado":"sin coerción"}; })();
       // Colores que ANTES (alfa bajo) se habrían visto lavados/blancos y ahora muestran su hue real.
       cdiag.washedFixedSamples=colored.filter((c)=>c.colorValid&&c.normalizedColor&&!/FF$/i.test(c.normalizedColor)).slice(0,20).map((c)=>({normalizedColor:c.normalizedColor,swatchCss:c.swatchCss}));
       cdiag.swatchRule="El círculo del swatch usa swatchCss = rgb sólido (sin alfa); la comparación/exclusión usa normalizedColor (#RRGGBBAA). Ningún color válido se pinta en blanco por alfa.";
@@ -4106,12 +4214,18 @@
       cdiag.lastColorFallback=lastColorFallbackDiag;
       try{ if(API.viewer&&typeof API.viewer.getPresentation==="function"){ const pres=await API.viewer.getPresentation(); cdiag.presentationCurrent=pres?String(safeJson(pres)).slice(0,500):null; } }catch(e){ cdiag.presentationError=e.message; }
       add("COLOR_DIAG",safeJsonDeep(cdiag,2));
-      // ===== EXCLUDE_MODELS_DIAG (v8.10.0): exclusión por modelo/IFC =====
-      const exm={ excludeToggle:!!(document.getElementById("excludeToggle")&&document.getElementById("excludeToggle").checked), excludedModelIds:[...excludedModelIds], excludedModelCount:excludedModelIds.size };
-      exm.modelsListDiag=lastModelsListDiag; // v8.10.2: getModels vs modelos abiertos por getObjects
+      // ===== EXCLUDE_MODELS_DIAG (v8.10.0 / ampliado v8.11.1): exclusión por modelo/IFC =====
+      const exm={ excludeToggle:!!(document.getElementById("excludeToggle")&&document.getElementById("excludeToggle").checked), excludedModelIds:[...excludedModelIds], excludedModelNames:[...excludedModelNames], excludedModelCount:excludedModelIds.size };
+      exm.modelsListDiag=lastModelsListDiag; // getModels vs modelos abiertos por getObjects + registro de alias
       exm.sortMode=excludeModelsSortAlpha?"alfabético":"aparición";
       try{ exm.loadedModels=await getLoadedModelsList(); }catch(e){ exm.loadedModelsError=e.message; }
-      try{ exm.persisted=localStorage.getItem(EXCLUDE_MODELS_KEY); }catch(e){ exm.persistedError=e.message; }
+      exm.modelRegistry=modelRegistry; // displayName/normalizedName/primaryModelId/objectModelIds/apiModelIds/aliases
+      exm.reconcile=lastExcludeReconcileDiag; // ids huérfanos descartados + nombres/ids efectivos
+      exm.lastSelectionModelFilter=lastSelectionModelFilterDiag; // último resumen de filtrado de selección por modelo
+      exm.masterIdToNormName=[...modelIdToNormName.entries()].slice(0,80).map(([id,nm])=>({id,normalizedName:nm}));
+      exm.effectiveExcludedIds=[...excludedModelIds]; // ids realmente usados para filtrar
+      try{ exm.persistedV2=localStorage.getItem(EXCLUDE_MODELS_KEY_V2); }catch(e){ exm.persistedV2Error=e.message; }
+      try{ exm.persistedV1Legacy=localStorage.getItem(EXCLUDE_MODELS_KEY); }catch(e){ exm.persistedV1Error=e.message; }
       add("EXCLUDE_MODELS_DIAG",safeJsonDeep(exm,2));
       // ===== QUANTIFICATION_DIAG (v8.10.0): última cuantificación de selección =====
       add("QUANTIFICATION_DIAG",safeJsonDeep(lastQuantification||{info:"Aún no se ha pulsado Cuantificar selección en esta sesión."},2));
