@@ -3,6 +3,23 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.11.0] — 2026-06-13
+
+Rework de **Configurar vista** (incorporado desde versiones internas de trabajo v8.10.38–v8.10.43) y mejoras de la pestaña **Clear** del Quantity Surveyor (trabajo interno v8.10.9–v8.10.37). Publicado como incremento `Y` por estabilización/mejora de herramientas existentes, sin herramienta nueva.
+
+### Configurar vista
+
+* Campos agrupados en **líneas fijas por flujo** (principal, secundaria, actuación, meta, etiquetas, compartir) con autoajuste de ancho (`tpl-autosize`/`tpl-autofit`) y *wrap* interno cuando el panel se estrecha.
+* **Prefijos automáticos no seleccionables** para Código (`RFI_`) y Nivel (`N`), separados del valor editable. El parser de código (`codeUserPart`) limpia y normaliza solo la parte de usuario.
+* **Fecha secuencial** `dd-mm-aaaa` con guiones automáticos, validación de prefijo por dígitos (`isValidDateDigitsPrefix`) y placeholder no editable.
+* **Nivel** con formato `N-N` (dos tramos numéricos) y normalización propia.
+* Alineación al extremo derecho del campo Ejes; ancho base alineado con Etiquetas.
+* Chips/autocompletado de **Etiquetas** y **Compartir con** integrados en los flujos Crear y Actualizar (`cvNew_*` / `cvUpd_*`).
+
+### Quantity Surveyor
+
+* **Pestaña Clear** rediseñada como pestaña colgante en la esquina inferior derecha del panel: trapecio con esquinas inferiores ligeramente redondeadas, contorno en las 4 caras, halo azul continuo que envuelve panel y pestaña, interior blanco al pasar el ratón por la herramienta y gris oscuro al pasar sobre la propia pestaña; sin desplazamiento al pulsar (solo contrae el texto). Margen inferior solo cuando la pestaña está activa.
+
 ## [v8.10.8] — 2026-06-13
 
 Botón global de actualización del visor y auditoría de cambios manuales recientes (revertidos parcialmente y rehechos).

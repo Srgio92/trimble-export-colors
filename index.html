@@ -48,10 +48,10 @@
     .quick-add-color { border-color:#d1d5db; background:#fff; position:relative; color:#111827; border-radius:50%; }
     .quick-add-color .qc-add-plus { opacity:0; font-size:19px; line-height:1; font-weight:bold; }
     .quick-add-color:hover .qc-add-plus { opacity:1; }
-    .quick-color-popover { position:fixed; z-index:10001; width:228px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:12px 14px; }
+    .quick-color-popover { position:fixed; z-index:10001; left:50%; transform:translateX(-50%); width:228px; max-width:calc(100vw - 16px); box-sizing:border-box; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:12px 14px; }
     .quick-pop-title { font-size:12px; color:#6b7280; margin-bottom:8px; }
-    .quick-color-palette { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px 13px; }
-    .quick-palette-swatch { width:23px; height:23px; border-radius:50%; border:1px solid rgba(0,0,0,.12); cursor:pointer; padding:0; }
+    .quick-color-palette { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px 13px; justify-items:center; }
+    .quick-palette-swatch { width:100%; max-width:23px; aspect-ratio:1; border-radius:50%; border:1px solid rgba(0,0,0,.12); cursor:pointer; padding:0; }
     .quick-custom-line { display:flex; align-items:center; gap:8px; }
     .quick-custom-line input[type="color"] { width:30px; height:30px; padding:0; border:1px solid #d1d5db; border-radius:50%; overflow:hidden; }
     #quickAlphaInput { width:100%; }
@@ -242,17 +242,21 @@
     .quick-add-color:hover .qc-add-plus, .quick-add-color:focus-visible .qc-add-plus { opacity:1; }
     /* v8.10.7 (#6): animación de lápiz que escribe. La rotación se aplica al grupo .writing-pencil. */
     @keyframes pencilWrite { from { transform:rotate(0deg); } to { transform:rotate(-25deg); } }
-    .quant-panel { background:#f3f4f6; border-radius:10px; cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease, background .15s ease; }
-    .quant-panel:hover, .quant-panel:focus-within { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; background:#f8fbff; }
+    .quant-panel { position:relative; overflow:visible; background:#f3f4f6; border-radius:10px; cursor:pointer; filter:drop-shadow(0 0 1px transparent) drop-shadow(0 0 1px transparent); transition:border-color .15s ease, background .15s ease, filter .15s ease; }
+    .quant-panel.clear-on { margin-bottom:26px; }
+    .quant-panel:hover, .quant-panel:focus-within { border-color:transparent; background:#f8fbff; filter:drop-shadow(0 0 1px #1c7fd6) drop-shadow(0 0 1px #1c7fd6); }
     .quant-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .quant-title-btn { border:none; background:transparent; padding:0; margin:0; font-weight:bold; color:#1f2937; cursor:pointer; text-align:left; }
     .quant-wrap { margin-top:6px; }
     .quant-box { max-height:340px; overflow-y:auto; border:none; background:transparent; padding:3px 2px 2px 0; box-sizing:border-box; font-size:11px; }
     .quant-copy-btn { position:static; width:24px; height:22px; padding:3px; background:rgba(255,255,255,.75); border:1px solid #cfd6df; border-radius:6px; line-height:0; transition:transform .08s ease, background .15s ease; }
     .quant-copy-btn:active { transform:scale(.88); }
-    .quant-clear-text { display:inline-block; margin:6px 0 0 0; padding:0; border:none; background:transparent; color:#6b7280; font-size:11px; text-decoration:underline; cursor:pointer; transition:transform .08s ease, color .15s ease; }
-    .quant-clear-text:hover { color:#1f2937; }
-    .quant-clear-text:active { transform:scale(.92); }
+    .quant-clear-text { position:absolute; bottom:-1px; right:18px; transform:translateY(100%); padding:3px 20px 5px; font-size:11px; color:#6b7280; background:#f3f4f6; border:none; cursor:pointer; white-space:nowrap; clip-path:polygon(0% 0%,100% 0%,calc(100% - 12px) calc(100% - 3px),calc(100% - 16px) 100%,16px 100%,12px calc(100% - 3px)); filter:drop-shadow(0 0 0.8px #cfd6df) drop-shadow(0 0 0.8px #cfd6df); transition:color .15s ease, background .15s ease, filter .15s ease; }
+    .quant-clear-text span { display:inline-block; transition:transform .08s ease; }
+    .quant-clear-text:active:not(:disabled) { transform:translateY(100%); }
+    .quant-clear-text:active:not(:disabled) span { transform:scale(.88); }
+    .quant-panel:hover .quant-clear-text, .quant-panel:focus-within .quant-clear-text { background:#f8fbff; filter:none; }
+    .quant-clear-text:hover:not(:disabled) { color:#374151; background:#e9e9eb; box-shadow:none; }
     /* v8.10.6: thumb centrado verticalmente sobre el track de 4px (Chrome/Edge/Firefox). El track lleva la
        muesca del 100% en 47.368% = (100-10)/(200-10). appearance:none es imprescindible para que el track
        custom y el thumb se rendericen y alineen igual en webkit. Solo afecta a estas dos barras. */
@@ -270,11 +274,11 @@
     #customCodesText:focus { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none; }
     #viewTemplateTool .tpl-token-box { min-height:30px; border-radius:8px; padding:3px 5px; }
     #viewTemplateTool .tpl-token-box input { height:20px; }
-    #viewTemplateTool .template-grid { gap:10px 12px; }
-    #viewTemplateTool .tpl-short { grid-column: span 4; }
-    #viewTemplateTool .tpl-medium { grid-column: span 6; }
-    #viewTemplateTool #tplNew_element, #viewTemplateTool #tplUpd_element { min-width:28ch; }
-    #viewTemplateTool #tplNew_task, #viewTemplateTool #tplUpd_task { min-width:42ch; }
+    #viewTemplateTool .template-grid { display:flex; flex-wrap:wrap; align-items:end; column-gap:5px; row-gap:10px; }
+    #viewTemplateTool .template-field.tpl-autofit { flex:0 1 auto; min-width:0; }
+    #viewTemplateTool .tpl-full, #viewTemplateTool .tpl-share-field { flex:1 0 100%; min-width:100%; }
+    #viewTemplateTool .template-field input.tpl-autosize[data-min-px] { min-width:0 !important; }
+
 
     /* ===================== v8.10.7 ===================== */
     /* #19 Hover azul en cualquier botón pulsable (ring interior, sin salto de layout; nunca en deshabilitados) */
@@ -282,7 +286,7 @@
     .name-add-btn:hover:not(:disabled), .name-remove-btn:hover:not(:disabled),
     .csv-add-button:hover:not(:disabled), .csv-remove-button:hover:not(:disabled),
     .column-refresh:hover:not(:disabled), .qs-refresh:hover:not(:disabled),
-    .quant-copy-btn:hover:not(:disabled), .quant-clear-text:hover:not(:disabled) {
+    .quant-copy-btn:hover:not(:disabled) {
       border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none;
     }
     /* #1 Excluir de selección: alinear la PRIMERA fila de la lista IFC con los botones filtro/refrescar.
@@ -331,19 +335,103 @@
 
     /* ===================== v8.10.8 ===================== */
     /* Botón global sticky de "Actualizar datos del visor": esquina superior derecha del panel, visible al hacer
-       scroll. La barra ocupa el ancho con pointer-events:none (no tapa contenido); solo el botón recibe clics.
-       padding-right deja margen frente a la barra de scroll del panel. Cuadrado con esquinas redondeadas (no circular). */
-    .global-refresh-bar { position: sticky; top: 8px; z-index: 10020; display: flex; justify-content: flex-end; padding-right: 16px; margin: 0 0 2px; pointer-events: none; }
-    .global-refresh-float { pointer-events: auto; width: 36px; height: 36px; min-width: 36px; padding: 5px; margin: 0; border: 1px solid #cfd6df; border-radius: 10px; background: rgba(255,255,255,.97); color: #111827; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.10); transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+       scroll. La barra tiene height:0 + overflow:visible → no ocupa espacio en el flujo, el botón se superpone
+       encima del primer menú al inicio. align-items:flex-start evita que el flex estire el botón a 0 px. */
+    .global-refresh-bar { position: sticky; top: 12px; z-index: 10020; display: flex; justify-content: flex-end; align-items: flex-start; padding-right: 8px; height: 0; overflow: visible; margin: 0; pointer-events: none; }
+    /* v8.10.9: contracción leve en cualquier botón pulsable al hacer clic (igual que el hover azul). */
+    button { transition: transform .08s ease; }
+    button:active:not(:disabled) { transform: scale(.92); }
+    .global-refresh-float { pointer-events: auto; width: 30px; height: 30px; min-width: 30px; padding: 2px; margin: 0; border: 1px solid #cfd6df; border-radius: 10px; background: rgba(255,255,255,.97); color: #111827; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.10); transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
     .global-refresh-float:hover:not(:disabled), .global-refresh-float:focus-visible:not(:disabled) { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset, 0 2px 8px rgba(0,0,0,.10); outline:none; background:#fff; }
     .global-refresh-float:active:not(:disabled) { transform: scale(.92); }
     .global-refresh-float:disabled { cursor: default; opacity: .85; }
     .global-refresh-float svg { width: 22px; height: 22px; display: block; fill: #111827; pointer-events: none; }
     .global-refresh-float.is-refreshing svg { animation: globalRefreshSpin .75s linear infinite; transform-origin: 50% 50%; }
     @keyframes globalRefreshSpin { to { transform: rotate(360deg); } }
+    /* Botón ? de ayuda en Mostrar parámetros: solo visible cuando el details está abierto, alineado a la derecha del summary. */
+    .param-help-btn { float: right; width: 20px; height: 20px; min-width: 20px; padding: 0; border: 1px solid #cfd6df; border-radius: 50%; background: #fff; font-size: 11px; font-weight: bold; line-height: 1; display: inline-flex; align-items: center; justify-content: center; margin-top: -1px; cursor: pointer; }
+    #paramGroup:not([open]) .param-help-btn { display: none; }
+    .param-help-box { background: #f0f6ff; border: 1px solid #bcd4f0; border-radius: 6px; padding: 8px 10px; margin: 0 0 8px; font-size: 11px; line-height: 1.55; color: #1f2937; }
+    .param-help-box li { margin: 2px 0; }
     /* Refrescos locales absorbidos por el botón global (se conservan en el DOM por compatibilidad de listeners). */
     #excludeRefresh, #excludeModelsRefresh, #includeRefresh, #qsRefreshAll,
     #namesParamRefresh, #boltsParamRefresh, #weldsParamRefresh, #csvParamRefresh { display:none !important; }
+
+
+    /* ===================== v8.10.39 ===================== */
+    /* Configurar vista: los campos se agrupan en 4 líneas fijas por flujo. */
+    #viewTemplateTool .template-grid { display:flex; flex-direction:column; flex-wrap:nowrap; align-items:stretch; row-gap:5px; column-gap:0; }
+    #viewTemplateTool .template-line { display:flex; flex-wrap:nowrap; align-items:end; gap:5px; width:100%; min-width:0; }
+    #viewTemplateTool .template-line .template-field { flex:0 1 auto; min-width:0; }
+    #viewTemplateTool .template-line-share { flex-direction:column; align-items:stretch; gap:2px; }
+    #viewTemplateTool .template-line-share .tpl-share-field { flex:1 0 100%; min-width:100%; }
+    #viewTemplateTool .template-line-share .tpl-token-box { width:100%; }
+    #viewTemplateTool .template-line-primary { overflow-x:auto; padding-bottom:1px; }
+    #viewTemplateTool .template-line-secondary,
+    #viewTemplateTool .template-line-meta { overflow-x:auto; padding-bottom:1px; }
+
+    /* ===================== v8.10.40 ===================== */
+    /* Configurar vista: prefijos automáticos no seleccionables para Código y Nivel. */
+    #viewTemplateTool .tpl-locked-control {
+      display:inline-flex; align-items:center; gap:0; box-sizing:border-box; height:30px;
+      min-width:var(--tpl-lock-min-width, 60px); border:1px solid #cfd6df; background:#fff;
+      border-radius:8px; padding:4px 7px; box-shadow:none; white-space:nowrap;
+    }
+    #viewTemplateTool .tpl-locked-control:focus-within { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; outline:none; }
+    #viewTemplateTool .tpl-locked-input {
+      border:0; outline:0; padding:0; margin:0; height:20px; min-width:1ch;
+      font-size:11px; line-height:1.2; background:transparent; color:#111827; box-shadow:none;
+    }
+    #viewTemplateTool .tpl-locked-input:focus { outline:none; box-shadow:none; }
+    #viewTemplateTool .tpl-auto-char { user-select:none; pointer-events:none; color:#c4c9d1; font-size:11px; line-height:1.2; }
+    #viewTemplateTool .tpl-locked-control.has-value .tpl-code-prefix,
+    #viewTemplateTool .tpl-level-control.has-head .tpl-level-prefix,
+    #viewTemplateTool .tpl-level-control.has-tail .tpl-level-sep,
+    #viewTemplateTool .tpl-level-control.has-tail .tpl-level-n2 { color:#111827; }
+    #viewTemplateTool .tpl-code-control .tpl-locked-input { width:2ch; text-transform:uppercase; }
+    #viewTemplateTool .tpl-level-control .tpl-level-head,
+    #viewTemplateTool .tpl-level-control .tpl-level-tail { width:2.4ch; text-align:left; }
+    #viewTemplateTool .tpl-level-control:not(.show-sep) .tpl-level-sep,
+    #viewTemplateTool .tpl-level-control:not(.show-sep) .tpl-level-tail { display:none; }
+    #viewTemplateTool .tpl-level-control:not(.has-tail) .tpl-level-n2 { display:none; }
+
+    /* ===================== v8.10.41 ===================== */
+    /* Configurar vista: fecha con guiones automáticos y etiquetas con chips/sugerencias. */
+    #viewTemplateTool .tpl-date-control .tpl-date-day,
+    #viewTemplateTool .tpl-date-control .tpl-date-month { width:2.3ch; text-align:center; }
+    #viewTemplateTool .tpl-date-control .tpl-date-year { width:4.6ch; text-align:center; }
+    #viewTemplateTool .tpl-date-control.has-day .tpl-date-sep1,
+    #viewTemplateTool .tpl-date-control.has-month .tpl-date-sep2 { color:#111827; }
+    #viewTemplateTool .tpl-date-control input::placeholder { color:#c4c9d1; opacity:1; }
+    #viewTemplateTool .tpl-label-field .tpl-token-box { min-width:170px; width:100%; min-height:30px; border-radius:8px; }
+    #viewTemplateTool .tpl-label-field .tpl-token-box input { min-width:70px; }
+
+
+    /* ===================== v8.10.43 ===================== */
+    /* Configurar vista: alineación al extremo derecho de Ejes y fecha secuencial con placeholder no editable. */
+    #viewTemplateTool { --tpl-view-line-width: 290px; }
+    #viewTemplateTool .template-line { gap:5px; }
+    #viewTemplateTool .template-line-wide { width:min(100%, var(--tpl-view-line-width)); max-width:100%; overflow:visible; padding-bottom:1px; }
+    #viewTemplateTool .template-line-wide .template-field { flex:1 1 100%; min-width:0; }
+    #viewTemplateTool .template-line-wide input.tpl-autosize { width:100% !important; max-width:100%; }
+    #viewTemplateTool .template-line-share { align-items:flex-start; }
+    #viewTemplateTool .template-line-share .tpl-share-field { flex:0 0 auto; min-width:0; width:min(100%, var(--tpl-view-line-width)); }
+    #viewTemplateTool .template-line-share .tpl-token-box { width:100%; max-width:100%; }
+    #viewTemplateTool .tpl-date-control { position:relative; cursor:text; }
+    #viewTemplateTool .tpl-date-visual { user-select:none; pointer-events:none; color:#c4c9d1; font-size:11px; line-height:1.2; }
+    #viewTemplateTool .tpl-date-control.has-value .tpl-date-visual { color:#111827; }
+    #viewTemplateTool .tpl-date-hidden-input { position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; padding:0; margin:0; background:transparent; color:transparent; caret-color:transparent; }
+    #viewTemplateTool .tpl-date-hidden-input:focus { outline:none; box-shadow:none; }
+
+    /* ===================== v8.10.43 ===================== */
+    /* Configurar vista: ancho base alineado con Etiquetas y wrap interno si el panel se estrecha. */
+    #viewTemplateTool { --tpl-view-line-width: 324px; }
+    #viewTemplateTool .template-line-primary,
+    #viewTemplateTool .template-line-meta { width:min(100%, var(--tpl-view-line-width)); max-width:100%; flex-wrap:wrap; overflow:visible; padding-bottom:1px; }
+    #viewTemplateTool .template-line-primary .template-field,
+    #viewTemplateTool .template-line-meta .template-field { flex:0 0 auto; }
+    #viewTemplateTool .template-line-wide,
+    #viewTemplateTool .template-line-share .tpl-share-field { width:min(100%, var(--tpl-view-line-width)); }
 
   </style>
 </head>
@@ -371,8 +459,7 @@
             <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m&#179;.</div>
             <div class="config-row range-row">
               <label for="nearPercent" class="field-label">Sensibilidad</label>
-              <input type="range" id="nearPercent" min="0" max="300" step="5" value="100" list="nearTicks" disabled>
-              <datalist id="nearTicks"><option value="100" label="100%"></option></datalist>
+              <input type="range" id="nearPercent" min="0" max="300" step="5" value="100" disabled>
               <span id="nearPercentLabel">100%</span>
             </div>
           </div>
@@ -451,7 +538,7 @@
               <select id="qsParam2" class="qs-param"></select>
               <select id="qsValue2" class="qs-value"><option value="" disabled selected hidden>valor…</option></select>
             </div>
-            <div class="hint">El botón ↻ del visor (arriba) lee los parámetros y prepara los valores disponibles. El botón cuadrado selecciona el valor elegido.</div>
+            <div class="hint">Pulsa <svg style="width:14px;height:14px;vertical-align:middle;fill:#374151;display:inline-block;" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> para ver los parámetros del modelo activo.</div>
             <div class="toggle-line tool-spacer" id="colorModeLine" data-tip="Filtra la selección por color en lugar de por Name.">
               <label class="switch"><input type="checkbox" id="colorModeToggle"><span class="slider"></span></label>
               <label class="txt" for="colorModeToggle">Selección por color</label>
@@ -468,10 +555,10 @@
       </details>
 
       <details class="param-group" id="paramGroup">
-        <summary data-tip="Muestra etiquetas con parámetros de los objetos seleccionados.">Mostrar parámetros</summary>
+        <summary data-tip="Muestra etiquetas con parámetros de los objetos seleccionados.">Mostrar parámetros<button type="button" id="paramHelpBtn" class="param-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
         <div class="param-group-body">
-          <div class="hint" style="margin-bottom:6px;">El inspector muestra los datos del objeto seleccionado. Configura los parámetros por tipología en cada sección y usa Agregar para guardar etiquetas 3D.</div>
-          <div class="hint param-warning"><span>Warning:</span> Sobre vistas existentes guardadas esta función puede no estar disponible.</div>
+          <div id="paramHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Pulsa <svg style="width:12px;height:12px;vertical-align:middle;fill:#374151;display:inline-block;" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> para cargar los parámetros del modelo activo.</li><li>Configura qué parámetros mostrar en cada sección (nombres, tornillos, soldaduras).</li><li>Selecciona objetos en el visor y activa el interruptor de la sección.</li><li>Las etiquetas 3D se colocan sobre los objetos seleccionados.</li><li style="color:#b45309;">En vistas guardadas las etiquetas pueden no renderizarse (limitación del visor).</li></ul></div>
+          <div class="hint" style="margin-bottom:6px;">El inspector muestra los datos del objeto seleccionado.</div>
 
           <details class="tool model-tool" id="namesTool">
             <summary class="subtitle" data-tip="Etiqueta los objetos seleccionados con su Name (y los parámetros que añadas).">
@@ -487,7 +574,6 @@
                     <select id="namesParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="namesParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
                   </div>
-                  <div class="hint">Usa + para añadir parámetros del modelo. El botón ↻ del visor (arriba) lee los disponibles.</div>
                 </div>
               </div>
             </div>
@@ -507,7 +593,6 @@
                     <select id="boltsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="boltsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
                   </div>
-                  <div class="hint">Usa + para añadir parámetros del modelo. El botón ↻ del visor (arriba) lee los disponibles.</div>
                 </div>
               </div>
             </div>
@@ -527,7 +612,6 @@
                     <select id="weldsParamSelect"><option value="" disabled selected hidden>Añadir parámetro...</option></select>
                     <button id="weldsParamRefresh" class="column-refresh" title="Actualizar parámetros">&#8635;</button>
                   </div>
-                  <div class="hint">Usa + para añadir parámetros del modelo. El botón ↻ del visor (arriba) lee los disponibles.</div>
                 </div>
               </div>
             </div>
@@ -574,14 +658,13 @@
             <div class="quick-pop-title">Color</div>
             <div id="quickColorPalette" class="quick-color-palette"></div>
             <div class="quick-pop-title" style="margin-top:12px;">Personalizado</div>
-            <div class="quick-custom-line"><input type="color" id="quickColorInput" value="#1c7fd6"><span class="quick-pop-title" style="margin:0;">Elige un color para añadirlo</span></div>
+            <div class="quick-custom-line"><label class="quick-color-btn quick-add-color" title="Elegir color personalizado" style="cursor:pointer;"><span class="qc-add-plus">+</span><input type="color" id="quickColorInput" value="#1c7fd6" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;"></label></div>
             <div class="quick-pop-title" style="margin-top:14px;">Transparencia</div>
             <input type="range" id="quickAlphaInput" min="0" max="255" value="255">
           </div>
 
-          <div class="sel-inspector" id="selInspector">
+          <div class="sel-inspector" id="selInspector" style="margin-top:22px;">
             <div class="sel-inspector-head" data-tip="Lectura rápida de los datos del objeto seleccionado. Funciona en modelos y en vistas guardadas.">Inspector de selección</div>
-            <div class="insp-config-note">El Inspector muestra los parámetros configurados en Mostrar parámetros.</div>
             <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
           </div>
 
@@ -592,8 +675,8 @@
             </div>
             <div class="quant-wrap" id="quantifyWrap" style="display:none;">
               <div id="quantifyResult" class="quant-box"></div>
-              <button type="button" id="quantifyClear" class="quant-clear-text" style="display:none;">Clear</button>
             </div>
+            <button type="button" id="quantifyClear" class="quant-clear-text" style="display:none;"><span>Clear</span></button>
           </div>
         </div>
       </details>
@@ -613,16 +696,26 @@
             <summary>Crear nueva vista</summary>
             <div class="tpl-block">
               <div class="template-grid">
-                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><input type="text" id="tplNew_code" class="tpl-autosize tpl-code-locked" data-min-ch="10" placeholder="RFI_"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" placeholder=""></div>
-                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><input type="text" id="tplNew_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
-                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_element">Elemento</label><input type="text" id="tplNew_element" class="tpl-autosize" data-min-ch="28" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_task">Actuación</label><input type="text" id="tplNew_task" class="tpl-autosize" data-min-ch="42" placeholder=""></div>
-                <div class="template-field tpl-short tpl-autofit"><label for="tplNew_date">Fecha</label><input type="text" id="tplNew_date" class="tpl-autosize" data-min-ch="12" placeholder="dd-mm-aaaa"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
-                <div class="template-field tpl-full tpl-share-field"><label for="cvNew_shareEntry" id="cvNew_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvNew_shareBox"><div id="cvNew_shareTokens" class="tpl-tokens"></div><input type="text" id="cvNew_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvNew_share" value=""><div id="cvNew_shareSuggest" class="tpl-suggest"></div></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="cvNew_labels">Etiquetas</label><input type="text" id="cvNew_labels" class="tpl-autosize" data-min-ch="24" placeholder="Etiquetas separadas por coma"></div>
+                <div class="template-line template-line-primary">
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="65"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplNew_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" data-min-px="103" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplNew" data-min-px="47"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplNew_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplNew_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"></div></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" data-min-px="66" placeholder=""></div>
+                </div>
+                <div class="template-line template-line-secondary template-line-wide">
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_element">Capítulo</label><input type="text" id="tplNew_element" class="tpl-autosize" data-min-ch="28" data-min-px="177" placeholder=""></div>
+                </div>
+                <div class="template-line template-line-task template-line-wide">
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_task">Actuación</label><input type="text" id="tplNew_task" class="tpl-autosize" data-min-ch="42" data-min-px="242" placeholder=""></div>
+                </div>
+                <div class="template-line template-line-meta">
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_date">Fecha</label><div class="tpl-locked-control tpl-date-control" data-scope="tplNew" data-min-px="76"><span class="tpl-date-visual" id="tplNew_date_visual">dd-mm-aaaa</span><input type="text" id="tplNew_date" class="tpl-date-hidden-input" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="8" aria-label="Fecha"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="12" data-min-px="54" placeholder=""></div>
+                  <div class="template-field tpl-medium tpl-autofit tpl-label-field"><label for="cvNew_labelsEntry" id="cvNew_labelsLabel">Etiquetas (0)</label><div class="tpl-token-box tpl-label-box" id="cvNew_labelsBox"><div id="cvNew_labelsTokens" class="tpl-tokens"></div><input type="text" id="cvNew_labelsEntry" placeholder="Añadir etiquetas" autocomplete="off"></div><input type="hidden" id="cvNew_labels" value=""><div id="cvNew_labelsSuggest" class="tpl-suggest"></div></div>
+                </div>
+                <div class="template-line template-line-share">
+                  <div class="template-field tpl-full tpl-share-field"><label for="cvNew_shareEntry" id="cvNew_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvNew_shareBox"><div id="cvNew_shareTokens" class="tpl-tokens"></div><input type="text" id="cvNew_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvNew_share" value=""><div id="cvNew_shareSuggest" class="tpl-suggest"></div></div>
+                </div>
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplNew_preview">(sin nombre)</span></div>
               <div class="row"><button id="cvCreateBtn">Crear nueva vista</button></div>
@@ -638,16 +731,26 @@
               </div>
               <div class="hint" id="tplUpdateParseInfo"></div>
               <div class="template-grid">
-                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><input type="text" id="tplUpd_code" class="tpl-autosize tpl-code-locked" data-min-ch="10" placeholder="RFI_"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" placeholder=""></div>
-                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><input type="text" id="tplUpd_level" class="tpl-autosize" data-min-ch="10" placeholder=""></div>
-                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_element">Elemento</label><input type="text" id="tplUpd_element" class="tpl-autosize" data-min-ch="28" placeholder=""></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_task">Actuación</label><input type="text" id="tplUpd_task" class="tpl-autosize" data-min-ch="42" placeholder=""></div>
-                <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_date">Fecha</label><input type="text" id="tplUpd_date" class="tpl-autosize" data-min-ch="12" placeholder="dd-mm-aaaa"></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="12" placeholder=""></div>
-                <div class="template-field tpl-full tpl-share-field"><label for="cvUpd_shareEntry" id="cvUpd_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvUpd_shareBox"><div id="cvUpd_shareTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvUpd_share" value=""><div id="cvUpd_shareSuggest" class="tpl-suggest"></div></div>
-                <div class="template-field tpl-medium tpl-autofit"><label for="cvUpd_labels">Etiquetas</label><input type="text" id="cvUpd_labels" class="tpl-autosize" data-min-ch="24" placeholder="Etiquetas separadas por coma"></div>
+                <div class="template-line template-line-primary">
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="65"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplUpd_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" data-min-px="103" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplUpd" data-min-px="47"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplUpd_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplUpd_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"></div></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" data-min-px="66" placeholder=""></div>
+                </div>
+                <div class="template-line template-line-secondary template-line-wide">
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_element">Capítulo</label><input type="text" id="tplUpd_element" class="tpl-autosize" data-min-ch="28" data-min-px="177" placeholder=""></div>
+                </div>
+                <div class="template-line template-line-task template-line-wide">
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_task">Actuación</label><input type="text" id="tplUpd_task" class="tpl-autosize" data-min-ch="42" data-min-px="242" placeholder=""></div>
+                </div>
+                <div class="template-line template-line-meta">
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_date">Fecha</label><div class="tpl-locked-control tpl-date-control" data-scope="tplUpd" data-min-px="76"><span class="tpl-date-visual" id="tplUpd_date_visual">dd-mm-aaaa</span><input type="text" id="tplUpd_date" class="tpl-date-hidden-input" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="8" aria-label="Fecha"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="12" data-min-px="54" placeholder=""></div>
+                  <div class="template-field tpl-medium tpl-autofit tpl-label-field"><label for="cvUpd_labelsEntry" id="cvUpd_labelsLabel">Etiquetas (0)</label><div class="tpl-token-box tpl-label-box" id="cvUpd_labelsBox"><div id="cvUpd_labelsTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_labelsEntry" placeholder="Añadir etiquetas" autocomplete="off"></div><input type="hidden" id="cvUpd_labels" value=""><div id="cvUpd_labelsSuggest" class="tpl-suggest"></div></div>
+                </div>
+                <div class="template-line template-line-share">
+                  <div class="template-field tpl-full tpl-share-field"><label for="cvUpd_shareEntry" id="cvUpd_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvUpd_shareBox"><div id="cvUpd_shareTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvUpd_share" value=""><div id="cvUpd_shareSuggest" class="tpl-suggest"></div></div>
+                </div>
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplUpd_preview">(sin nombre)</span></div>
               <div class="row"><button id="cvUpdateBtn">Actualizar vista</button></div>
@@ -672,7 +775,7 @@
                   </select>
                   <button id="csvParamRefresh" class="column-refresh" data-tip="Actualiza los parámetros disponibles del modelo." title="Actualizar parámetros">&#8635;</button>
                 </div>
-                <div class="hint" id="csvParamHint">Usa + para añadir valores predefinidos o parámetros disponibles del modelo. El botón ↻ del visor (arriba) los actualiza.</div>
+                <div class="hint" id="csvParamHint">Usa + para añadir valores predefinidos o parámetros del modelo. Pulsa <svg style="width:12px;height:12px;vertical-align:middle;fill:#374151;display:inline-block;" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> para cargarlos.</div>
               </div>
             </div>
           </details>
@@ -742,7 +845,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.10.8";
+    const SCRIPT_VERSION = "v8.11.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -2523,21 +2626,90 @@
     function readableViewName(v){ return String((v&&(v.name||v.description||v.id))||"").trim(); }
     function tplEl(scope,field){ return document.getElementById(scope+"_"+field); }
     function normalizeDateDash(v){ const s=String(v||"").trim(); if(!s) return ""; const m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/); if(!m) return s; const y=m[3].length===2?"20"+m[3]:m[3]; return m[1].padStart(2,"0")+"-"+m[2].padStart(2,"0")+"-"+y; }
+    function isValidDateDigitsPrefix(digits){
+      const d=String(digits||"").replace(/[^0-9]/g,"").slice(0,8);
+      if(!d) return true;
+      if(d.length>=1 && Number(d[0])>3) return false;
+      if(d.length>=2){ const day=Number(d.slice(0,2)); if(day<1||day>31) return false; }
+      if(d.length>=3 && Number(d[2])>1) return false;
+      if(d.length>=4){ const month=Number(d.slice(2,4)); if(month<1||month>12) return false; }
+      return true;
+    }
+    function dateDigitsFromValue(v){
+      const raw=String(v||"").replace(/[^0-9]/g,"").slice(0,8);
+      let out="";
+      for(const ch of raw){
+        const next=out+ch;
+        if(isValidDateDigitsPrefix(next)) out=next;
+        else break;
+      }
+      return out;
+    }
+    function normalizeDateValue(v){ const d=dateDigitsFromValue(v); if(!d) return ""; if(d.length<8) return ""; return d.slice(0,2)+"-"+d.slice(2,4)+"-"+d.slice(4,8); }
+    function codeUserPart(v){
+      return String(v||"").trim().toUpperCase().replace(/^\s*RFI[_\s-]*/i,"").replace(/^_+/,"").replace(/\s+/g,"_").replace(/[-]+/g,"_").replace(/^_+|_+$/g,"");
+    }
     function normalizeCodeValue(v){
-      let s=String(v||"").trim().toUpperCase().replace(/\s+/g,"_").replace(/[-]+/g,"_");
-      if(!s) return "";
-      s=s.replace(/^RFI[_\s-]*/i,"");
-      s=s.replace(/^_+|_+$/g,"");
+      const s=codeUserPart(v);
       return s?"RFI_"+s:"";
+    }
+    function levelDigitsFromValue(v){ return String(v||"").replace(/[^0-9]/g,"").slice(0,4); }
+    function normalizeLevelValue(v){
+      const d=levelDigitsFromValue(v);
+      if(!d) return "";
+      if(d.length<=2) return "N"+d;
+      return "N"+d.slice(0,2)+"-N"+d.slice(2);
     }
     function normalizeTplValue(field,value){
       let v=String(value||"").trim().replace(/\s+/g," ");
       if(field==="code") return normalizeCodeValue(v);
-      if(field==="date") return normalizeDateDash(v);
+      if(field==="level") return normalizeLevelValue(v);
+      if(field==="date") return normalizeDateValue(v);
       return v.toUpperCase();
     }
-    function getScopeValues(scope){ const out={}; for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); out[f]=normalizeTplValue(f,el?el.value:""); } return out; }
-    function setScopeValues(scope,data){ for(const f of TEMPLATE_FIELDS){ const el=tplEl(scope,f); if(!el) continue; const v=data&&data[f]!=null?data[f]:""; el.value=normalizeTplValue(f,v); tplAutosizeInput(el); } updateScopePreview(scope); }
+    function getLevelDigits(scope){
+      const h=document.getElementById(scope+"_level"), t=document.getElementById(scope+"_level_tail");
+      return levelDigitsFromValue(String(h?h.value:"")+String(t?t.value:""));
+    }
+    function setLevelDigits(scope,value){
+      const d=levelDigitsFromValue(value);
+      const h=document.getElementById(scope+"_level"), t=document.getElementById(scope+"_level_tail");
+      if(h) h.value=d.slice(0,2);
+      if(t) t.value=d.slice(2,4);
+      syncLevelControl(scope);
+    }
+    function getDateDigits(scope){
+      const el=document.getElementById(scope+"_date");
+      return dateDigitsFromValue(el?el.value:"");
+    }
+    function setDateDigits(scope,value){
+      const x=dateDigitsFromValue(value);
+      const el=document.getElementById(scope+"_date");
+      if(el) el.value=x;
+      syncDateControl(scope);
+    }
+    function formatDateDigitsForControl(digits){
+      const d=dateDigitsFromValue(digits);
+      if(!d) return "dd-mm-aaaa";
+      if(d.length<=2) return d;
+      if(d.length<=4) return d.slice(0,2)+"-"+d.slice(2);
+      return d.slice(0,2)+"-"+d.slice(2,4)+"-"+d.slice(4,8);
+    }
+    function setTplDisplayValue(scope,field,value){
+      if(field==="level"){ setLevelDigits(scope,value); return; }
+      if(field==="date"){ setDateDigits(scope,value); return; }
+      const el=tplEl(scope,field); if(!el) return;
+      if(field==="code") el.value=codeUserPart(value);
+      else el.value=normalizeTplValue(field,value);
+      tplAutosizeInput(el);
+    }
+    function getTplRawValue(scope,field){
+      if(field==="level") return getLevelDigits(scope);
+      if(field==="date") return getDateDigits(scope);
+      const el=tplEl(scope,field); return el?el.value:"";
+    }
+    function getScopeValues(scope){ const out={}; for(const f of TEMPLATE_FIELDS){ out[f]=normalizeTplValue(f,getTplRawValue(scope,f)); } return out; }
+    function setScopeValues(scope,data){ for(const f of TEMPLATE_FIELDS){ const v=data&&data[f]!=null?data[f]:""; setTplDisplayValue(scope,f,v); } updateScopePreview(scope); }
     function getTemplateMetaFromConfig(){ const out={}; for(const f of TEMPLATE_META_FIELDS){ const el=tplEl("tplCfg",f); out[f]=String(el?el.value:"").trim(); } out.share=getShareTokens().join(", "); return out; }
     function setConfigMeta(tpl){
       const labels=tplEl("tplCfg","labels"); if(labels) labels.value=String(tpl&&tpl.labels||"");
@@ -2557,15 +2729,163 @@
       return name.replace(/\s+/g," ").replace(/\s+,/g,",").trim();
     }
     function updateScopePreview(scope){ const el=document.getElementById(scope+"_preview"); if(el) el.textContent=templateNameFromValues(getScopeValues(scope))||"(sin nombre)"; }
+    function tplInputChromePx(el){
+      try{ const cs=getComputedStyle(el); return ["paddingLeft","paddingRight","borderLeftWidth","borderRightWidth"].reduce((s,k)=>s+(parseFloat(cs[k])||0),0); }catch(e){ return 0; }
+    }
+    function tplMeasureTextPx(el,text){
+      try{
+        const canvas=tplMeasureTextPx.canvas||(tplMeasureTextPx.canvas=document.createElement("canvas"));
+        const ctx=canvas.getContext("2d");
+        const cs=getComputedStyle(el); ctx.font=cs.font||[cs.fontStyle,cs.fontVariant,cs.fontWeight,cs.fontSize,cs.fontFamily].filter(Boolean).join(" ");
+        return ctx.measureText(String(text||"")).width;
+      }catch(e){ return String(text||"").length*7; }
+    }
     function tplAutosizeInput(el){
       if(!el) return;
+      if(el.classList&&el.classList.contains("tpl-locked-input")){ syncLockedInput(el); return; }
+      const text=String(el.value||el.placeholder||"");
+      const minPx=Number(el.dataset&&el.dataset.minPx);
+      if(Number.isFinite(minPx)&&minPx>0){
+        const textPx=Math.ceil(tplMeasureTextPx(el,text)+6);
+        el.style.width=Math.ceil(Math.max(minPx,textPx)+tplInputChromePx(el))+"px";
+        return;
+      }
       const min=Number(el.dataset&&el.dataset.minCh)||12;
-      const len=Math.max(min,String(el.value||el.placeholder||"").length+2);
+      const len=Math.max(min,text.length+2);
       el.style.width=Math.min(Math.max(len,min),70)+"ch";
     }
     function tplAutosizeAll(root){
       const scope=root&&root.querySelectorAll?root:document;
-      scope.querySelectorAll("input.tpl-autosize").forEach(tplAutosizeInput);
+      scope.querySelectorAll("input.tpl-autosize, input.tpl-locked-input").forEach(tplAutosizeInput);
+    }
+    function applyLockedMinWidth(ctrl){
+      if(!ctrl) return;
+      const px=Number(ctrl.dataset&&ctrl.dataset.minPx);
+      if(Number.isFinite(px)&&px>0) ctrl.style.setProperty("--tpl-lock-min-width",px+"px");
+    }
+    function syncLockedCodeInput(el){
+      if(!el) return;
+      const clean=codeUserPart(el.value);
+      if(el.value!==clean) el.value=clean;
+      const ctrl=el.closest(".tpl-code-control");
+      applyLockedMinWidth(ctrl);
+      if(ctrl) ctrl.classList.toggle("has-value",!!clean);
+      const len=Math.max(1,Math.min(26,clean.length||1));
+      el.style.width=(len+1)+"ch";
+    }
+    function syncLevelControl(scope){
+      const h=document.getElementById(scope+"_level"), t=document.getElementById(scope+"_level_tail");
+      const ctrl=h?h.closest(".tpl-level-control"):(t?t.closest(".tpl-level-control"):null);
+      if(!ctrl) return;
+      applyLockedMinWidth(ctrl);
+      if(h){ const v=levelDigitsFromValue(h.value).slice(0,2); if(h.value!==v) h.value=v; }
+      if(t){ const v=levelDigitsFromValue(t.value).slice(0,2); if(t.value!==v) t.value=v; }
+      const head=String(h&&h.value||""), tail=String(t&&t.value||"");
+      ctrl.classList.toggle("has-head",!!head);
+      ctrl.classList.toggle("show-sep",head.length>=2);
+      ctrl.classList.toggle("has-tail",!!tail);
+      if(t) t.style.display=head.length>=2?"inline-block":"none";
+    }
+    function syncDateControl(scope){
+      const el=document.getElementById(scope+"_date");
+      const ctrl=el?el.closest(".tpl-date-control"):null;
+      if(!ctrl) return;
+      applyLockedMinWidth(ctrl);
+      const clean=dateDigitsFromValue(el.value);
+      if(el.value!==clean) el.value=clean;
+      const visual=document.getElementById(scope+"_date_visual")||ctrl.querySelector(".tpl-date-visual");
+      if(visual) visual.textContent=formatDateDigitsForControl(clean);
+      ctrl.classList.toggle("has-value",!!clean);
+      ctrl.classList.toggle("has-day",clean.length>=2);
+      ctrl.classList.toggle("has-month",clean.length>=4);
+      ctrl.classList.toggle("has-year",clean.length>=5);
+    }
+    function syncLockedInput(el){
+      if(!el) return;
+      if(el.classList.contains("tpl-code-locked")) syncLockedCodeInput(el);
+      else if(el.classList.contains("tpl-level-head")||el.classList.contains("tpl-level-tail")){ const ctrl=el.closest(".tpl-level-control"); syncLevelControl(ctrl?ctrl.dataset.scope:"tplNew"); }
+      else if(el.classList.contains("tpl-date-hidden-input")){ const ctrl=el.closest(".tpl-date-control"); syncDateControl(ctrl?ctrl.dataset.scope:"tplNew"); }
+    }
+    function focusUnlockedCode(el){ if(el) setTimeout(()=>{ try{ const p=String(el.value||"").length; el.setSelectionRange(p,p); }catch(e){} },0); }
+    function wireLockedCode(scope){
+      const el=tplEl(scope,"code"); if(!el) return;
+      const update=()=>{ syncLockedCodeInput(el); updateScopePreview(scope); };
+      el.addEventListener("input",update);
+      el.addEventListener("focus",()=>{ syncLockedCodeInput(el); focusUnlockedCode(el); });
+      el.addEventListener("mouseup",()=>focusUnlockedCode(el));
+      el.addEventListener("blur",update);
+      syncLockedCodeInput(el);
+    }
+    function wireLockedLevel(scope){
+      const h=document.getElementById(scope+"_level"), t=document.getElementById(scope+"_level_tail");
+      if(!h||!t) return;
+      const refresh=()=>{ syncLevelControl(scope); updateScopePreview(scope); };
+      const splitPaste=(target,ev)=>{
+        const raw=(ev.clipboardData&&ev.clipboardData.getData("text"))||"";
+        const d=levelDigitsFromValue(raw);
+        if(!d) return;
+        ev.preventDefault();
+        if(target===h){ h.value=d.slice(0,2); t.value=d.slice(2,4); }
+        else { t.value=d.slice(0,2); }
+        refresh();
+        if((h.value||"").length>=2) t.focus();
+      };
+      const sanitizeHead=()=>{ const d=levelDigitsFromValue(h.value); h.value=d.slice(0,2); if(d.length>2) t.value=(d.slice(2)+String(t.value||"")).slice(0,2); if((h.value||"").length>=2) setTimeout(()=>t.focus(),0); refresh(); };
+      const sanitizeTail=()=>{ t.value=levelDigitsFromValue(t.value).slice(0,2); refresh(); };
+      const digitKeyGuard=(ev)=>{ if(ev.ctrlKey||ev.metaKey||ev.altKey) return; if(ev.key.length===1&&!/[0-9]/.test(ev.key)) ev.preventDefault(); };
+      h.addEventListener("keydown",digitKeyGuard); t.addEventListener("keydown",digitKeyGuard);
+      h.addEventListener("input",sanitizeHead); t.addEventListener("input",sanitizeTail);
+      h.addEventListener("paste",(ev)=>splitPaste(h,ev)); t.addEventListener("paste",(ev)=>splitPaste(t,ev));
+      h.addEventListener("focus",()=>syncLevelControl(scope)); t.addEventListener("focus",()=>syncLevelControl(scope));
+      h.addEventListener("blur",refresh); t.addEventListener("blur",refresh);
+      syncLevelControl(scope);
+    }
+    function wireLockedDate(scope){
+      const input=document.getElementById(scope+"_date");
+      const ctrl=input?input.closest(".tpl-date-control"):null;
+      if(!input||!ctrl) return;
+      const refresh=()=>{ syncDateControl(scope); updateScopePreview(scope); };
+      const setDigits=(digits)=>{ input.value=dateDigitsFromValue(digits); refresh(); focusDateEnd(); };
+      const focusDateEnd=()=>setTimeout(()=>{ try{ input.focus(); const p=String(input.value||"").length; input.setSelectionRange(p,p); }catch(e){} },0);
+      ctrl.addEventListener("mousedown",(ev)=>{ ev.preventDefault(); focusDateEnd(); });
+      ctrl.addEventListener("focus",focusDateEnd);
+      input.addEventListener("keydown",(ev)=>{
+        if(ev.key==="Tab") return;
+        if(ev.ctrlKey||ev.metaKey){
+          if(String(ev.key||"").toLowerCase()==="v") return;
+          ev.preventDefault(); return;
+        }
+        if(/^[0-9]$/.test(ev.key)){
+          ev.preventDefault();
+          const old=getDateDigits(scope);
+          const next=old+ev.key;
+          if(old.length<8 && isValidDateDigitsPrefix(next)) setDigits(next);
+          else focusDateEnd();
+          return;
+        }
+        if(ev.key==="Backspace"||ev.key==="Delete"){
+          ev.preventDefault();
+          const old=getDateDigits(scope);
+          if(old.length) setDigits(old.slice(0,-1));
+          return;
+        }
+        if(ev.key==="Enter"){ ev.preventDefault(); input.blur(); return; }
+        if(ev.key==="Escape"){ ev.preventDefault(); input.blur(); return; }
+        ev.preventDefault();
+      });
+      input.addEventListener("beforeinput",(ev)=>{
+        const t=ev.inputType||"";
+        if(t==="insertText"||t==="deleteContentBackward"||t==="deleteContentForward") ev.preventDefault();
+      });
+      input.addEventListener("paste",(ev)=>{
+        ev.preventDefault();
+        const paste=dateDigitsFromValue((ev.clipboardData&&ev.clipboardData.getData("text"))||"");
+        if(paste) setDigits((getDateDigits(scope)+paste).slice(0,8));
+      });
+      input.addEventListener("input",()=>setDigits(input.value));
+      input.addEventListener("select",focusDateEnd);
+      input.addEventListener("blur",refresh);
+      syncDateControl(scope);
     }
     function currentTemplateFromConfig(){ const tpl={}; tpl.name=String((document.getElementById("tplCfg_name")||{}).value||"").trim(); Object.assign(tpl,getTemplateMetaFromConfig()); return tpl; }
     function populateTemplateSelects(selected){
@@ -2631,23 +2951,34 @@
     // comas separan ubicación/nivel/ejes/elemento). Evita meter todo el título en Actuación.
     function parseViewName(name){
       let s=String(name||"").trim(); if(!s) return null;
-      const m=s.match(VIEW_NAME_RE);
-      if(m) return {code:m[1].trim(),location:m[2].trim(),level:m[3].trim(),axes:m[4].trim(),element:m[5].trim(),task:m[6].trim(),date:m[7].trim(),author:m[8].trim()};
-      const hasStructure=/^\(/.test(s)||s.includes(" - ")||s.includes(",");
-      if(!hasStructure) return null;
       const out={code:"",location:"",level:"",axes:"",element:"",task:"",date:"",author:""};
-      const tail=s.match(/\(\s*(\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4})\s*,\s*([^)]*)\)\s*$/);
-      if(tail){ out.date=tail[1].trim(); out.author=tail[2].trim(); s=s.slice(0,tail.index).trim(); }
-      const code=s.match(/^\(\s*([^)]*)\)\s*/);
-      if(code){ out.code=code[1].trim(); s=s.slice(code[0].length).trim(); }
-      let mainPart=s; const dash=s.indexOf(" - ");
-      if(dash>=0){ mainPart=s.slice(0,dash).trim(); out.task=s.slice(dash+3).trim(); }
+      const canonical=s.match(VIEW_NAME_RE);
+      if(canonical){
+        return {code:canonical[1].trim(),location:canonical[2].trim(),level:canonical[3].trim(),axes:canonical[4].trim(),element:canonical[5].trim(),task:canonical[6].trim(),date:canonical[7].trim(),author:canonical[8].trim()};
+      }
+      const tail=s.match(/\(\s*(\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4})\s*(?:,|;)\s*([^)]*)\)\s*$/);
+      if(tail){ out.date=normalizeDateDash(tail[1].trim()); out.author=tail[2].trim(); s=s.slice(0,tail.index).trim(); }
+      const codeParen=s.match(/^\(\s*(RFI[_\s-]*[^)]*|[^)]*\d+[^)]*)\)\s*/i);
+      if(codeParen){ out.code=codeParen[1].trim(); s=s.slice(codeParen[0].length).trim(); }
+      else {
+        const codePlain=s.match(/^(RFI[_\s-]*\d+[A-Z0-9_\-]*)\s*/i);
+        if(codePlain){ out.code=codePlain[1].trim(); s=s.slice(codePlain[0].length).replace(/^[-,\s]+/,"").trim(); }
+      }
+      const dash=s.search(/\s+-\s+/);
+      let mainPart=s;
+      if(dash>=0){ mainPart=s.slice(0,dash).trim(); out.task=s.slice(dash).replace(/^\s+-\s+/,"").trim(); }
       const segs=mainPart.split(",").map((x)=>x.trim()).filter(Boolean);
       if(segs.length>=4){ out.location=segs[0]; out.level=segs[1]; out.axes=segs[2]; out.element=segs.slice(3).join(", "); }
       else if(segs.length===3){ out.location=segs[0]; out.level=segs[1]; out.axes=segs[2]; }
-      else if(segs.length===2){ out.location=segs[0]; out.element=segs[1]; }
+      else if(segs.length===2){ out.location=segs[0]; if(/^N\d/i.test(segs[1])) out.level=segs[1]; else out.element=segs[1]; }
       else if(segs.length===1){ if(out.task) out.element=segs[0]; else out.location=segs[0]; }
-      return out;
+      // Si aún no hay actuación, intenta detectar títulos con separadores alternativos usados en vistas antiguas.
+      if(!out.task){
+        const alt=s.split(/\s+[|–—]\s+/).map((x)=>x.trim()).filter(Boolean);
+        if(alt.length>=2){ out.task=alt.pop(); if(!out.element) out.element=alt.pop()||""; if(!out.location&&alt.length) out.location=alt.join(" "); }
+      }
+      const hasAny=Object.keys(out).some((k)=>String(out[k]||"").trim());
+      return hasAny?out:null;
     }
     function memberEmail(u){ return String(u.email||u.mail||u.userEmail||u.login||u.upn||"").trim(); }
     function memberName(u){ return String(u.name||u.fullName||u.displayName||[u.firstName,u.lastName].filter(Boolean).join(" ")||u.username||u.id||"").trim(); }
@@ -2680,15 +3011,14 @@
     }
     function autoAuthorValue(){
       const u=templateCurrentUser||{};
-      const raw=String(u.lastName||u.familyName||u.name||u.fullName||u.displayName||userDisplayName(u)||u.email||"").trim();
+      const raw=String(u.name||u.fullName||u.displayName||userDisplayName(u)||u.email||u.lastName||u.familyName||"").trim();
       if(!raw) return "";
       if(raw.includes("@")) return raw.split("@")[0].replace(/[._-]+/g," ").trim().toUpperCase();
-      const parts=raw.split(/\s+/).filter(Boolean);
-      return (parts.length>1?parts[parts.length-1]:raw).toUpperCase();
+      return raw.toUpperCase();
     }
     function ensureScopeAutoFields(scope){
-      const d=tplEl(scope,"date"); if(d&&!String(d.value||"").trim()) d.value=todayDash();
-      const a=tplEl(scope,"author"); if(a&&!String(a.value||"").trim()){ const v=autoAuthorValue(); if(v) a.value=v; }
+      const a=tplEl(scope,"author");
+      if(a&&!String(a.value||"").trim()){ const v=autoAuthorValue(); if(v) a.value=v; }
       updateScopePreview(scope);
     }
     function ensureCreateAutoFields(){ ensureScopeAutoFields("tplNew"); }
@@ -2775,6 +3105,70 @@
       input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddShareToken(scope,input.value); cvHideShareSuggest(scope); },180); });
       window.addEventListener("resize",()=>cvPositionShareSuggest(scope));
       cvRenderShareTokens(scope);
+    }
+
+    // Etiquetas en Configurar vista: mismo patrón de chips que Compartir con, con sugerencias desde etiquetas existentes.
+    const cvLabelTokenState={cvNew:[],cvUpd:[]};
+    function cvLabelScopeOk(scope){ return scope==="cvNew"||scope==="cvUpd"; }
+    function cvLabelsHidden(scope){ return document.getElementById(scope+"_labels"); }
+    function cvLabelsLabelEl(scope){ return document.getElementById(scope+"_labelsLabel"); }
+    function cvLabelsTokensEl(scope){ return document.getElementById(scope+"_labelsTokens"); }
+    function cvLabelsEntryEl(scope){ return document.getElementById(scope+"_labelsEntry"); }
+    function cvLabelsSuggestEl(scope){ return document.getElementById(scope+"_labelsSuggest"); }
+    function cvGetLabelTokens(scope){ return (cvLabelTokenState[scope]||[]).slice(); }
+    function cvSetLabelTokens(scope,list){
+      if(!cvLabelScopeOk(scope)) return;
+      const seen=new Set(), arr=[];
+      for(const raw of list||[]){ const v=String(raw||"").trim(); if(!v) continue; const key=v.toLowerCase(); if(seen.has(key)) continue; seen.add(key); arr.push(v); }
+      cvLabelTokenState[scope]=arr; cvRenderLabelTokens(scope);
+    }
+    function cvRenderLabelTokens(scope){
+      const arr=cvLabelTokenState[scope]||[];
+      const hidden=cvLabelsHidden(scope); if(hidden) hidden.value=arr.join(", ");
+      const label=cvLabelsLabelEl(scope); if(label) label.textContent="Etiquetas ("+arr.length+")";
+      const box=cvLabelsTokensEl(scope); if(!box) return; box.innerHTML="";
+      arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; const txt=document.createElement("span"); txt.textContent=v; const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvLabelTokenState[scope]||[]).splice(idx,1); cvRenderLabelTokens(scope); }; chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
+    }
+    function cvExistingLabels(){
+      const labels=new Set();
+      const add=(txt)=>parseTemplateList(txt).forEach((x)=>labels.add(x));
+      for(const v of templateViewsCache||[]){
+        const cands=v&&(v.tags||v.labels);
+        if(Array.isArray(cands)) cands.forEach((x)=>labels.add(typeof x==="string"?x:String((x&&(x.name||x.label||x.value))||"")));
+        else add(cands||"");
+      }
+      for(const t of loadTemplates()) add(t&&t.labels);
+      return [...labels].map((x)=>String(x||"").trim()).filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+    }
+    function cvAddLabelToken(scope,v){
+      const token=String(v||"").trim().replace(/[;,]+$/g,"");
+      if(!token) return;
+      cvSetLabelTokens(scope,cvGetLabelTokens(scope).concat([token]));
+      const input=cvLabelsEntryEl(scope); if(input) input.value="";
+      cvHideLabelSuggest(scope);
+    }
+    function cvLabelSuggestions(scope,q){
+      const term=String(q||"").trim().toLowerCase(); if(!term) return [];
+      const used=new Set(cvGetLabelTokens(scope).map((x)=>x.toLowerCase()));
+      return cvExistingLabels().filter((x)=>!used.has(x.toLowerCase())&&x.toLowerCase().includes(term)).slice(0,8);
+    }
+    function cvPositionLabelSuggest(scope){ const input=cvLabelsEntryEl(scope), sug=cvLabelsSuggestEl(scope); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(170,r.width)+"px"; }
+    function cvHideLabelSuggest(scope){ const sug=cvLabelsSuggestEl(scope); if(sug) sug.style.display="none"; }
+    function cvShowLabelSuggest(scope){
+      const input=cvLabelsEntryEl(scope), sug=cvLabelsSuggestEl(scope); if(!input||!sug) return;
+      const items=cvLabelSuggestions(scope,input.value); sug.innerHTML="";
+      if(!items.length){ cvHideLabelSuggest(scope); return; }
+      for(const label of items){ const row=document.createElement("div"); row.className="tpl-suggest-item"; row.innerHTML='<strong>'+xmlEsc(label)+'</strong>'; row.onmousedown=(ev)=>{ ev.preventDefault(); cvAddLabelToken(scope,label); }; sug.appendChild(row); }
+      cvPositionLabelSuggest(scope); sug.style.display="block";
+    }
+    function cvWireLabelAutocomplete(scope){
+      const input=cvLabelsEntryEl(scope); if(!input) return;
+      input.addEventListener("input",()=>cvShowLabelSuggest(scope));
+      input.addEventListener("focus",()=>cvShowLabelSuggest(scope));
+      input.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_labelsSuggest .tpl-suggest-item"); const sug=cvLabelsSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddLabelToken(scope,input.value); } else if(ev.key==="Escape") cvHideLabelSuggest(scope); });
+      input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddLabelToken(scope,input.value); cvHideLabelSuggest(scope); },180); });
+      window.addEventListener("resize",()=>cvPositionLabelSuggest(scope));
+      cvRenderLabelTokens(scope);
     }
     function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
     function selectedNewTemplate(){ const sel=document.getElementById("newTemplateSelect"); if(!sel||!sel.value) return null; return loadTemplates().find((t)=>t.name===sel.value)||null; }
@@ -2872,10 +3266,11 @@
       const name=readableViewName(view);
       const parsed=parseViewName(name);
       if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
-      else { setScopeValues("tplUpd",{task:name,author:cvViewAuthor(view)||autoAuthorValue(),date:todayDash()}); if(info) info.textContent=""; }
+      else { setScopeValues("tplUpd",{}); if(info) info.textContent="No se pudo descomponer automáticamente el título existente."; }
       const author=cvViewAuthor(view); if(author){ const a=tplEl("tplUpd","author"); if(a){ a.value=normalizeTplValue("author",author); tplAutosizeInput(a); updateScopePreview("tplUpd"); } }
+      tplAutosizeAll(document.getElementById("tplFoldUpdate"));
       const people=cvViewPeople(view); cvSetShareTokens("cvUpd",parseTemplateList(people));
-      const tags=cvViewTags(view); cvSet("cvUpd_labels",tags); tplAutosizeInput(document.getElementById("cvUpd_labels"));
+      const tags=cvViewTags(view); cvSetLabelTokens("cvUpd",parseTemplateList(tags));
       log("Actualizar vista: leída '"+name+"' — compartidos:"+(people?people.split(",").length:0)+", etiquetas:"+(tags?tags.split(",").length:0)+".");
     }
     async function cvPreloadCurrentView(){
@@ -2895,7 +3290,7 @@
       if(!desc){ setProgress("Completa al menos un campo para generar el título de la vista."); log("Crear vista: falta nombre generado."); return; }
       const author=String((tplEl("tplNew","author")||{}).value||"").trim();
       const share=cvGetShareTokens("cvNew");
-      const labels=parseTemplateList((document.getElementById("cvNew_labels")||{}).value);
+      const labels=cvGetLabelTokens("cvNew");
       const btn=document.getElementById("cvCreateBtn"); if(btn) btn.disabled=true;
       try{
         setProgress("Creando vista con el estado actual del visor...");
@@ -2914,7 +3309,7 @@
       const desc=templateNameFromValues(getScopeValues("tplUpd")); if(!desc){ setProgress("Falta nombre de vista generado."); return; }
       const author=String((tplEl("tplUpd","author")||{}).value||"").trim();
       const share=cvGetShareTokens("cvUpd");
-      const labels=parseTemplateList((document.getElementById("cvUpd_labels")||{}).value);
+      const labels=cvGetLabelTokens("cvUpd");
       const btn=document.getElementById("cvUpdateBtn"); if(btn) btn.disabled=true;
       try{
         setProgress("Actualizando estado de la vista seleccionada...");
@@ -2930,24 +3325,25 @@
     async function cvOnOpenConfigureView(){
       try{ await loadProjectMembers(); }catch(e){}
       try{ await loadTemplateUser(); }catch(e){}
-      const an=tplEl("tplNew","author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview("tplNew"); } }
-      cvRenderShareTokens("cvNew"); cvRenderShareTokens("cvUpd");
+      for(const scope of ["tplNew","tplUpd"]){
+        const an=tplEl(scope,"author");
+        if(an && !String(an.value||"").trim()){
+          const v=autoAuthorValue();
+          if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview(scope); }
+        }
+      }
+      cvRenderShareTokens("cvNew"); cvRenderShareTokens("cvUpd"); cvRenderLabelTokens("cvNew"); cvRenderLabelTokens("cvUpd");
       await populateUpdateViews();
       await cvPreloadCurrentView();
       await autoExpandViewFlow();
     }
     function wireTemplateScope(scope){
       for(const f of TEMPLATE_FIELDS){
+        if(f==="code"){ wireLockedCode(scope); continue; }
+        if(f==="level"){ wireLockedLevel(scope); continue; }
+        if(f==="date"){ wireLockedDate(scope); continue; }
         const el=tplEl(scope,f); if(!el) continue;
-        if(f==="code"){
-          // v8.10.7 (#12): prefijo RFI_ bloqueado. El usuario solo edita el número/código posterior.
-          const ensurePrefix=()=>{ const rest=String(el.value||"").replace(/^\s*RFI[_\s-]*/i,"").replace(/^_+/,""); el.value="RFI_"+rest; };
-          el.addEventListener("focus",()=>{ if(!/^RFI_/i.test(el.value||"")) ensurePrefix(); tplAutosizeInput(el); });
-          el.addEventListener("input",()=>{ ensurePrefix(); tplAutosizeInput(el); updateScopePreview(scope); });
-          el.addEventListener("keydown",(ev)=>{ if(ev.key==="Backspace"||ev.key==="Delete"){ const a=el.selectionStart,b=el.selectionEnd; if(a===b&&a<=4) ev.preventDefault(); else if(a<4) ev.preventDefault(); } });
-        } else {
-          el.addEventListener("input",()=>{ tplAutosizeInput(el); updateScopePreview(scope); });
-        }
+        el.addEventListener("input",()=>{ tplAutosizeInput(el); updateScopePreview(scope); });
         el.addEventListener("blur",()=>{ el.value=normalizeTplValue(f,el.value); tplAutosizeInput(el); updateScopePreview(scope); });
         tplAutosizeInput(el);
       }
@@ -2957,7 +3353,7 @@
       // ya no existe en la UI; su wiring se elimina para no hacer llamadas API innecesarias.
       for(const scope of ["tplNew","tplUpd"]) wireTemplateScope(scope);
       cvWireShareAutocomplete("cvNew"); cvWireShareAutocomplete("cvUpd");
-      ["cvNew_labels","cvUpd_labels"].forEach((id)=>{ const el=document.getElementById(id); if(el){ el.addEventListener("input",()=>tplAutosizeInput(el)); el.addEventListener("blur",()=>tplAutosizeInput(el)); tplAutosizeInput(el); } });
+      cvWireLabelAutocomplete("cvNew"); cvWireLabelAutocomplete("cvUpd");
       const createBtn=document.getElementById("cvCreateBtn"); if(createBtn) createBtn.onclick=()=>cvCreateView();
       const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",cvLoadSelectedView);
       const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await cvPreloadCurrentView(); };
@@ -2980,8 +3376,10 @@
       setScopeValues("tplNew",{});
       ensureCreateAutoFields();
       setScopeValues("tplUpd",{});
+      ensureScopeAutoFields("tplUpd");
       await populateUpdateViews();
-      const an=tplEl("tplNew","author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview("tplNew"); } }
+      for(const scope of ["tplNew","tplUpd"]){ const an=tplEl(scope,"author"); if(an && !String(an.value||"").trim()){ const v=autoAuthorValue(); if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview(scope); } } }
+      cvRenderLabelTokens("cvNew"); cvRenderLabelTokens("cvUpd");
       await cvPreloadCurrentView(); await autoExpandViewFlow();
     }
 
@@ -3147,7 +3545,7 @@
     }
     function showQuickColorPopover(){
       const pop=document.getElementById("quickColorPopover"), anchor=document.getElementById("qcAddColor"); if(!pop||!anchor) return;
-      buildQuickPalette(); const r=anchor.getBoundingClientRect(); pop.style.left=(r.right+8)+"px"; pop.style.top=Math.max(6,r.top-12)+"px"; pop.style.display="block";
+      buildQuickPalette(); const r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+6)+"px"; pop.style.display="block";
     }
     function hideQuickColorPopover(){ const pop=document.getElementById("quickColorPopover"); if(pop) pop.style.display="none"; }
     const QUICK_PARAM_DEFAULTS={ qsParam1:"Assembly type", qsParam2:"Bolt standard" };
@@ -3260,7 +3658,7 @@
       const box=document.getElementById("quantifyResult"); const wrap=document.getElementById("quantifyWrap");
       if(!box) return;
       if(wrap) wrap.style.display="block";
-      const qCopy=document.getElementById("quantifyCopy"), qClear=document.getElementById("quantifyClear"); if(qCopy) qCopy.style.display="inline-flex"; if(qClear) qClear.style.display="inline-block";
+      const qCopy=document.getElementById("quantifyCopy"), qClear=document.getElementById("quantifyClear"); if(qCopy) qCopy.style.display="inline-flex"; if(qClear) qClear.style.display="block"; const qBlk=document.getElementById("quantifyBlock"); if(qBlk) qBlk.classList.add("clear-on");
       if(msg){ box.innerHTML='<div class="hint">'+inspEsc(msg)+'</div>'; return; }
       let html="";
       // Resumen superior (cambio 8)
@@ -3402,13 +3800,13 @@
     function quantClear(){
       const box=document.getElementById("quantifyResult"); if(box) box.innerHTML="";
       const wrap=document.getElementById("quantifyWrap"); if(wrap) wrap.style.display="none";
-      const qCopy=document.getElementById("quantifyCopy"), qClear=document.getElementById("quantifyClear"); if(qCopy) qCopy.style.display="none"; if(qClear) qClear.style.display="none";
+      const qCopy=document.getElementById("quantifyCopy"), qClear=document.getElementById("quantifyClear"); if(qCopy) qCopy.style.display="none"; if(qClear) qClear.style.display="none"; const qBlk=document.getElementById("quantifyBlock"); if(qBlk) qBlk.classList.remove("clear-on");
       setProgress("Quantity Surveyor: limpiado.");
     }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
       loadQuickCustomColors(); renderQuickCustomColors(); buildQuickPalette();
-      const addColor=document.getElementById("qcAddColor"); if(addColor) addColor.onclick=(ev)=>{ ev.stopPropagation(); showQuickColorPopover(); };
+      const addColor=document.getElementById("qcAddColor"); if(addColor) addColor.onclick=(ev)=>{ ev.stopPropagation(); const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none") hideQuickColorPopover(); else showQuickColorPopover(); };
       const editColor=document.getElementById("quickColorEdit"); if(editColor) editColor.onclick=()=>{ quickColorEditMode=!quickColorEditMode; renderQuickCustomColors(); };
       // v8.10.7 (#9): sin botón Aceptar. Al elegir un color en el selector nativo se añade directamente (con la transparencia seleccionada).
       const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
@@ -3558,6 +3956,7 @@
 
       // Mostrar parámetros (#4-7)
       for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>{ if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); else removeParamVisuals(cfg); scheduleSelectionInspector(); }); }
+      const paramHelpBtn=document.getElementById("paramHelpBtn"); if(paramHelpBtn) paramHelpBtn.onclick=(e)=>{ e.stopPropagation(); const box=document.getElementById("paramHelpBox"); if(box) box.style.display=box.style.display==="none"?"block":"none"; };
       namesPicker.wire(); boltsPicker.wire(); weldsPicker.wire();
       applyStoredParamProfiles(); // perfiles por tipología guardados (v8.9.0); corrupto -> defaults
       const wireLblBtn=(id,fn)=>{ const b=document.getElementById(id); if(!b) return; b.onclick=async ()=>{ b.disabled=true; try{ await fn(); }catch(e){ recordError(id,e); log("ERROR etiquetas guardadas: "+e.message); } finally{ b.disabled=false; } }; };
