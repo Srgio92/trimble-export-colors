@@ -78,6 +78,15 @@
     .toggle-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
     .toggle-line label.txt { cursor: pointer; }
     .toggle-line.is-disabled { color: #9ca3af; }
+    /* Botón compacto del atajo de Selección cercanos (muestra la combinación; click para grabar). */
+    .near-shortcut-btn { margin-left: auto; min-width: 56px; height: 24px; padding: 0 10px; border: 1px solid #cfd6df; border-radius: 6px; background: #fff; color: #1f2937; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .near-shortcut-btn:hover { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; background: #f8fbff; }
+    .near-shortcut-btn:active { transform: scale(.94); }
+    .near-shortcut-btn.is-recording { border-color: #1c7fd6; background: #e8f2fd; box-shadow: 0 0 0 1px #1c7fd6 inset; }
+    .near-shortcut-reset { width: 24px; height: 24px; min-width: 24px; padding: 0; border: 1px solid #cfd6df; border-radius: 6px; background: #fff; color: #374151; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 0; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .near-shortcut-reset:hover { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; background: #f8fbff; }
+    .near-shortcut-reset:active { transform: scale(.9); }
+    .near-shortcut-reset svg { width: 14px; height: 14px; display: block; }
 
     input[type="text"], select { padding: 4px; box-sizing: border-box; }
     input:disabled, select:disabled { background: #eee; color: #999; }
@@ -184,18 +193,21 @@
     summary.dev-summary .dev-summary-text { font-weight: bold; }
     .dev-summary .debug-wrap { float: right; position: relative; display: inline-block; margin-top: -3px; }
     summary.dev-summary #debug { float: none; margin-top: 0; }
-    /* ===== Bug Report: botón cámara flotante bajo debug ===== */
-    .bug-cam-btn { position:absolute; top:100%; right:0; width:30px; height:26px; padding:3px 6px; margin:0; background:#fff; border:1px solid #d1d5db; border-radius:4px; cursor:pointer; line-height:0; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transform:translateY(-100%) scale(.85); transition:opacity .12s ease, transform .12s ease, border-color .15s ease, box-shadow .15s ease; box-shadow:0 2px 6px rgba(0,0,0,.12); z-index:5; }
-    .bug-cam-btn::before { content:""; position:absolute; left:0; right:0; bottom:100%; height:10px; }
-    .debug-wrap:hover .bug-cam-btn, .bug-cam-btn:focus-visible { opacity:1; pointer-events:auto; transform:translateY(3px) scale(1); }
-    .bug-cam-btn:hover { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset, 0 2px 6px rgba(0,0,0,.12); }
-    .bug-cam-btn:active { transform:translateY(3px) scale(.92); }
-    .bug-cam-btn svg { width:16px; height:16px; display:block; }
-    /* estado de debug con reportes pendientes: icono descarga rojo */
-    .debug-ico-download { display:none; }
-    #debug.has-bug-reports { border-color:#dc2626; }
-    #debug.has-bug-reports .debug-ico-default { display:none; }
-    #debug.has-bug-reports .debug-ico-download { display:block; }
+    /* ===== Bug Report (v9.0.5): #debug es el botón principal (icono bug, posición superior derecha) y abre el modal. ===== */
+    /* Botón secundario de descarga: anclado DEBAJO del principal, aparece con slide vertical al hover/focus, solo si hay reportes. */
+    .bug-download-btn { position:absolute; top:calc(100% + 4px); right:0; z-index:20; width:30px; height:26px; padding:3px 6px; margin:0; background:#fff; border:1px solid #d1d5db; border-radius:4px; color:#374151; cursor:pointer; line-height:0; display:flex; align-items:center; justify-content:center; opacity:0; transform:translateY(-4px); pointer-events:none; transition:opacity .14s ease, transform .14s ease, border-color .15s ease, box-shadow .15s ease; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+    .bug-download-btn[hidden] { display:none; }
+    .bug-download-btn::before { content:""; position:absolute; left:0; right:0; bottom:100%; height:6px; } /* puente de hover */
+    .debug-wrap:hover .bug-download-btn:not([hidden]), .bug-download-btn:not([hidden]):focus-visible { opacity:1; transform:translateY(0); pointer-events:auto; }
+    .bug-download-btn:hover { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset, 0 2px 6px rgba(0,0,0,.12); }
+    .bug-download-btn:active { transform:scale(.92); }
+    .bug-download-btn svg { width:16px; height:16px; display:block; stroke:currentColor; }
+    /* Rojo solo mientras haya reportes sin descargar; tras descargar queda neutro/negro pero sigue disponible. */
+    .bug-download-btn.is-pending { color:#dc2626; border-color:#dc2626; }
+    /* Halo rojo palpitante en el botón principal de Bug Report mientras existan reportes sin descargar. */
+    #debug.bug-report-pending { border-color:#dc2626; animation:bugPendingPulse 1.3s ease-in-out infinite; }
+    @keyframes bugPendingPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(220,38,38,.55); } 50%{ box-shadow:0 0 0 5px rgba(220,38,38,0); } }
+    @media (prefers-reduced-motion: reduce){ #debug.bug-report-pending{ animation:none; box-shadow:0 0 0 2px rgba(220,38,38,.5); } }
     /* ===== Modal Bug Report ===== */
     .bug-modal-overlay { position:fixed; inset:0; background:rgba(17,24,39,.45); display:flex; align-items:center; justify-content:center; z-index:9999; padding:12px; box-sizing:border-box; }
     .bug-modal { width:340px; max-width:100%; max-height:calc(100vh - 24px); overflow:auto; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.25); padding:12px; box-sizing:border-box; font-size:13px; color:#1f2937; }
@@ -378,8 +390,9 @@
     .quant-panel { position:relative; overflow:visible; background:#f3f4f6; border-radius:10px; cursor:pointer; filter:drop-shadow(0 0 1px transparent) drop-shadow(0 0 1px transparent); transition:border-color .15s ease, background .15s ease, filter .15s ease; }
     .quant-panel.clear-on { margin-bottom:26px; }
     .quant-panel:hover { border-color:transparent; background:#f8fbff; filter:drop-shadow(0 0 1px #1c7fd6) drop-shadow(0 0 1px #1c7fd6); }
+    .quant-panel:focus-visible { outline:none; filter:drop-shadow(0 0 1px #1c7fd6) drop-shadow(0 0 1px #1c7fd6); }
     .quant-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .quant-title-btn { border:none; background:transparent; padding:0; margin:0; font-weight:bold; color:#1f2937; cursor:pointer; text-align:left; }
+    .quant-title-btn { border:none; background:transparent; padding:0; margin:0; font-weight:bold; color:#1f2937; cursor:pointer; text-align:left; user-select:none; }
     .quant-wrap { margin-top:6px; }
     .quant-box { max-height:340px; overflow-y:auto; border:none; background:transparent; padding:3px 2px 2px 0; box-sizing:border-box; font-size:11px; }
     .quant-copy-btn { position:static; width:24px; height:22px; padding:3px; background:rgba(255,255,255,.75); border:1px solid #cfd6df; border-radius:6px; line-height:0; transition:transform .08s ease, background .15s ease; }
@@ -470,11 +483,12 @@
     /* Botón global sticky de "Actualizar datos del visor": esquina superior derecha del panel, visible al hacer
        scroll. La barra tiene height:0 + overflow:visible → no ocupa espacio en el flujo, el botón se superpone
        encima del primer menú al inicio. align-items:flex-start evita que el flex estire el botón a 0 px. */
-    .global-refresh-bar { position: sticky; top: 12px; z-index: 10020; display: flex; justify-content: flex-end; align-items: flex-start; padding-right: 8px; height: 0; overflow: visible; margin: 0; pointer-events: none; }
+    /* v9.0.2: el botón global se fija al viewport del panel (no sticky frágil); no ocupa flujo y sigue el scroll. */
+    .global-refresh-bar { height: 0; margin: 0; overflow: visible; pointer-events: none; }
     /* v8.10.9: contracción leve en cualquier botón pulsable al hacer clic (igual que el hover azul). */
     button { transition: transform .08s ease; }
     button:active:not(:disabled) { transform: scale(.92); }
-    .global-refresh-float { pointer-events: auto; width: 30px; height: 30px; min-width: 30px; padding: 2px; margin: 0; border: 1px solid #cfd6df; border-radius: 10px; background: rgba(255,255,255,.97); color: #111827; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.10); transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .global-refresh-float { position: fixed; top: 12px; right: 18px; z-index: 10020; pointer-events: auto; width: 30px; height: 30px; min-width: 30px; padding: 2px; margin: 0; border: 1px solid #cfd6df; border-radius: 10px; background: rgba(255,255,255,.97); color: #111827; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.10); transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
     .global-refresh-float:hover:not(:disabled), .global-refresh-float:focus-visible:not(:disabled) { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset, 0 2px 8px rgba(0,0,0,.10); outline:none; background:#fff; }
     .global-refresh-float:active:not(:disabled) { transform: scale(.92); }
     .global-refresh-float:disabled { cursor: default; opacity: .85; }
@@ -486,6 +500,26 @@
     #paramGroup:not([open]) .param-help-btn { display: none; }
     .param-help-box { background: #f0f6ff; border: 1px solid #bcd4f0; border-radius: 6px; padding: 8px 10px; margin: 0 0 8px; font-size: 11px; line-height: 1.55; color: #1f2937; }
     .param-help-box li { margin: 2px 0; }
+    /* Botón ? reutilizado en Exportar/Importar registro y Desarrollador (siempre visible en su summary). */
+    .io-help-btn { float: right; margin-left: 6px; }
+    /* El ? de Exportar/Importar solo se ve con su desplegable abierto. */
+    #exportTool:not([open]) #exportHelpBtn { display: none; }
+    #importTool:not([open]) #importHelpBtn { display: none; }
+    /* Fila "Registro de consola": texto a la izquierda, ? a la derecha. */
+    .dev-log-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .dev-log-summary .io-help-btn { float: none; margin-left: 0; }
+    /* Buscador global de "Vista activa" en Configurar vista */
+    .av-search { margin: 0 0 10px; }
+    .av-search-label { display: block; font-size: 11px; color: #4b5563; margin-bottom: 3px; font-weight: bold; }
+    .av-search-row { display: flex; align-items: center; gap: 6px; }
+    .av-search-inputwrap { position: relative; flex: 1; min-width: 0; }
+    .av-search-input { width: 100%; box-sizing: border-box; height: 30px; padding: 4px 8px; border: 1px solid #cfd6df; border-radius: 6px; font-size: 12px; }
+    .av-search-input:focus { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; outline: none; }
+    .av-search-suggest { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 50; max-height: 220px; overflow-y: auto; background: #fff; border: 1px solid #cfd6df; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.14); }
+    .av-search-item { padding: 6px 9px; font-size: 12px; color: #1f2937; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .av-search-item:hover, .av-search-item.is-active { background: #eaf3fd; }
+    .av-search-empty { padding: 6px 9px; font-size: 11px; color: #9ca3af; }
+    .av-search-sort, .av-search-refresh { flex: 0 0 auto; }
     /* Refrescos locales absorbidos por el botón global (se conservan en el DOM por compatibilidad de listeners). */
     #excludeRefresh, #excludeModelsRefresh, #includeRefresh, #qsRefreshAll,
     #namesParamRefresh, #boltsParamRefresh, #weldsParamRefresh, #csvParamRefresh { display:none !important; }
@@ -607,9 +641,15 @@
           <span class="summary-switch" id="nearSummarySwitch"><label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
+          <div class="toggle-line" id="nearShortcutLine" data-tip="Atajo de teclado para activar/desactivar Selección cercanos.">
+            <label class="switch"><input type="checkbox" id="nearShortcutToggle"><span class="slider"></span></label>
+            <label class="txt" for="nearShortcutToggle">Atajo de teclado</label>
+            <button type="button" id="nearShortcutEdit" class="near-shortcut-btn" title="Personalizar atajo (pulsa y graba una combinación)" aria-label="Personalizar atajo"><span id="nearShortcutCombo">Alt+C</span></button>
+            <button type="button" id="nearShortcutReset" class="near-shortcut-reset" title="Restaurar atajo por defecto (Alt+C)" aria-label="Restaurar atajo por defecto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg></button>
+          </div>
           <div class="toggle-line" id="nearCustomLine" data-tip="Ajusta la sensibilidad del criterio por defecto.">
             <label class="switch"><input type="checkbox" id="nearCustom"><span class="slider"></span></label>
-            <label class="txt" for="nearCustom">Configuración personalizada</label>
+            <label class="txt" for="nearCustom">Configurar sensibilidad</label>
           </div>
           <div id="nearConfig">
             <div class="hint" id="nearDefaultHint">Criterio por defecto: elementos del mismo ensamblaje, en contacto, con volumen inferior a 0,001 m&#179;.</div>
@@ -824,9 +864,9 @@
             <div id="selInspectorBody"><div class="hint">Sin selección</div></div>
           </div>
 
-          <div class="sel-inspector quant-panel" id="quantifyBlock" data-tip="Calcula el Quantity Surveyor sobre los objetos seleccionados.">
+          <div class="sel-inspector quant-panel" id="quantifyBlock" role="button" tabindex="0" data-tip="Calcula el Quantity Surveyor sobre los objetos seleccionados.">
             <div class="quant-title-row">
-              <button type="button" id="quantifyBtn" class="quant-title-btn">Quantity Surveyor</button>
+              <span id="quantifyBtn" class="quant-title-btn">Quantity Surveyor</span>
               <button type="button" id="quantifyCopy" class="quant-copy-btn" title="Copiar resultado" aria-label="Copiar resultado" style="display:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
             </div>
             <div class="quant-wrap" id="quantifyWrap" style="display:none;">
@@ -847,6 +887,18 @@
       <details class="tool" id="viewTemplateTool">
         <summary class="subtitle">Configurar vista</summary>
         <div class="tool-body">
+
+          <div id="activeViewSearch" class="av-search">
+            <label class="av-search-label" for="activeViewSearchInput">Vista activa</label>
+            <div class="av-search-row">
+              <div class="av-search-inputwrap">
+                <input type="text" id="activeViewSearchInput" class="av-search-input" placeholder="Buscar vista…" autocomplete="off">
+                <div id="activeViewSearchSuggest" class="av-search-suggest" style="display:none;"></div>
+              </div>
+              <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Alternar orden (Trimble / alfabético)" aria-label="Alternar orden de vistas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg></button>
+              <button type="button" id="activeViewSearchRefresh" class="icon-btn av-search-refresh" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            </div>
+          </div>
 
           <details class="tpl-fold" id="tplFoldCreate">
             <summary>Crear nueva vista</summary>
@@ -881,7 +933,8 @@
           <details class="tpl-fold" id="tplFoldUpdate">
             <summary>Actualizar vista</summary>
             <div class="tpl-block">
-              <div class="tpl-row">
+              <!-- v9.0.5: selector interno oculto; la selección de vista se gestiona desde el buscador global "Vista activa". -->
+              <div class="tpl-row" style="display:none;">
                 <select id="updateViewSelect"><option value="">Cargando vistas...</option></select>
                 <button id="updateRefreshViews" class="icon-btn" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
               </div>
@@ -916,9 +969,10 @@
         </div>
       </details>
 
-      <details class="tool">
-        <summary class="subtitle">Exportar colores a CSV</summary>
+      <details class="tool" id="exportTool">
+        <summary class="subtitle">Exportar registro<button type="button" id="exportHelpBtn" class="param-help-btn io-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
         <div class="tool-body">
+          <div id="exportHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Exporta los colores del modelo/vista activa a un CSV.</li><li>En modo <strong>exportación masiva</strong> genera un ZIP con un CSV por cada vista seleccionada.</li><li>Permite configurar las columnas y los códigos de revisión.</li><li>Usa el botón global de actualizar si faltan parámetros o vistas.</li></ul></div>
           <details class="cols-details">
             <summary>Columnas a exportar</summary>
             <div class="cols-inner">
@@ -962,16 +1016,17 @@
             </div>
             <div id="massViewsList" class="mass-views-list">Pulsa actualizar para leer las vistas del proyecto...</div>
           </div>
-          <div class="row io-actions"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar CSV</button><button id="exportCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button></div>
+          <div class="row io-actions"><button id="export" data-tip="Exporta según la vista activa o la exportación masiva.">Exportar registro</button><button id="exportCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button></div>
         </div>
       </details>
 
-      <details class="tool">
-        <summary class="subtitle">Importar colores desde CSV</summary>
+      <details class="tool" id="importTool">
+        <summary class="subtitle">Importar registro<button type="button" id="importHelpBtn" class="param-help-btn io-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
         <div class="tool-body">
-          <div class="hint">Importa uno o varios CSV, o un ZIP con CSV dentro. Solo procesa las filas con <code>revisado_deo = TRUE</code>, selecciona esos GUID y los pinta en rojo. El resto de filas se omite.</div>
+          <div id="importHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Importa un CSV o ZIP generado por esta extensión.</li><li>Solo aplica filas con <code>revisado_deo = TRUE</code>.</li><li>Localiza los GUID revisados y los pinta en rojo como revisión DEO.</li><li>Las filas no revisadas se ignoran para evitar cambios accidentales.</li></ul></div>
+          <div class="hint">Importa un registro CSV o ZIP generado por la extensión. Solo se aplican las filas marcadas como revisadas (<code>revisado_deo = TRUE</code>): se localizan sus GUID y se colorean en rojo como revisión DEO. Las demás filas se ignoran para evitar cambios no deseados.</div>
           <div class="row io-actions">
-            <button id="importBtn" data-tip="Selecciona uno o varios CSV, o un ZIP con CSV dentro.">Importar CSV/ZIP</button>
+            <button id="importBtn" data-tip="Selecciona uno o varios CSV, o un ZIP con CSV dentro.">Importar registro</button>
             <button id="importCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button>
             <input type="file" id="importFile" accept=".csv,.zip,text/csv,application/zip" multiple style="display:none;">
           </div>
@@ -987,13 +1042,16 @@
   </details>
 
   <details open id="devPanel">
-    <summary class="dev-summary"><span class="dev-summary-text">Desarrollador</span><span class="debug-wrap"><button id="debug" data-tip="Descarga un TXT con estado, API, selección, vista, colores y errores." aria-label="debug" title="Descargar informe de diagnóstico"><svg class="debug-ico-default" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg><svg class="debug-ico-download" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7 10l5 5 5-5M5 20h14"/></svg></button><button id="bugCamBtn" class="bug-cam-btn" type="button" title="Reportar incidencia (Bug Report)" aria-label="Reportar incidencia"><svg viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button></span></summary>
+    <summary class="dev-summary"><span class="dev-summary-text">Desarrollador</span><span class="debug-wrap"><button id="debug" type="button" data-tip="Crea un reporte de incidencia (Bug Report) con capturas, anotaciones y menciones de la interfaz." aria-label="Crear Bug Report" title="Crear Bug Report"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button><button id="bugDownloadBtn" class="bug-download-btn" type="button" title="Descargar reportes de incidencia" aria-label="Descargar reportes de incidencia" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7 10l5 5 5-5M5 20h14"/></svg></button></span></summary>
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
       <details class="tool">
-        <summary class="subtitle">Registro de trabajo</summary>
-        <div class="tool-body"><pre id="log"></pre></div>
+        <summary class="subtitle dev-log-summary"><span>Registro de consola</span><button type="button" id="devHelpBtn" class="param-help-btn io-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
+        <div class="tool-body">
+          <div id="devHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Muestra la versión, la fecha y el registro de consola.</li><li><strong>Bug Report</strong> permite crear reportes con capturas, anotaciones y menciones de la interfaz.</li><li>El botón de descarga se activa cuando existen reportes pendientes.</li></ul></div>
+          <pre id="log"></pre>
+        </div>
       </details>
     </div>
   </details>
@@ -1001,7 +1059,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.0.0";
+    const SCRIPT_VERSION = "v9.0.5";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1041,6 +1099,8 @@
     const errorHistory=[];
     const propsCache=new Map();             // modelId -> Map(rid -> props)
     const hiddenWhiteRegistry=new Map();    // modelId -> Set(rid)
+    let hiddenBusy=false;                    // markHiddenObjectsWhite() en curso (evita carrera con "Ver ocultos")
+    let pendingViewHiddenState=null;         // intención de "Ver ocultos" guardada durante la detección
     let csvAvailableParametersCache=[];
     let draggedColumnIndex=null;
 
@@ -1573,8 +1633,22 @@
       for(const m of cands){ const fn=API&&API.view&&API.view[m]; if(typeof fn==="function"){ try{ await fn.call(API.view,viewId); return m; }catch(e){ recordError("activateView."+m,e); } } }
       return null;
     }
+    // Confirma que la vista activa coincide realmente con la pedida (por id, o por nombre con tolerancia).
+    async function verifyActiveView(view){
+      await sleep(250);
+      let cur=null; try{ cur=await API.view.getCurrentView(); }catch(e){ recordError("verifyActiveView.get",e); return {ok:false,reason:"no se pudo leer la vista activa"}; }
+      if(!cur) return {ok:false,reason:"vista activa no disponible"};
+      const nm=(s)=>String(s||"").toLowerCase().replace(/\s+/g," ").trim();
+      const curId=String(cur.id||cur.viewId||"");
+      if(view.id && curId && curId===String(view.id)) return {ok:true,by:"id"};
+      const curName=nm(readableViewName(cur)||""), wantName=nm(view.name||"");
+      if(wantName && curName && curName===wantName) return {ok:true,by:"nombre"};
+      return {ok:false,reason:"la vista activa no coincide (id/nombre)",curId,curName:readableViewName(cur)||""};
+    }
     // ===================== EXPORTACIÓN MASIVA: SELECCIÓN DE VISTAS (v8.10.7) =====================
     let massViews=[]; const massViewsSelected=new Set(); let massViewsSortAlpha=false; let massExportCancel=false;
+    let massSelectionInitialized=false;   // true tras la primera carga (para preservar selección manual al refrescar)
+    let lastMassExport=null;              // resumen ligero para debug/Bug Report
     function updateMassViewsCount(){ const el=document.getElementById("massViewsCount"); if(el) el.textContent=massViewsSelected.size+"/"+massViews.length+" vistas"; }
     function updateMassToggleAllLabel(){ const b=document.getElementById("massViewsToggleAll"); if(b) b.textContent=(massViews.length&&massViewsSelected.size===massViews.length)?"Deseleccionar todas":"Seleccionar todas"; }
     function renderMassViewsList(){
@@ -1594,10 +1668,21 @@
     async function populateMassViews(){
       const cont=document.getElementById("massViewsList"); if(cont) cont.textContent="Leyendo vistas del proyecto...";
       let views=[]; try{ views=await API.view.getViews()||[]; }catch(e){ recordError("populateMassViews",e); }
+      const prevSel=new Set(massViewsSelected);
       massViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre"})).filter((v)=>v.id);
-      massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); // por defecto todas
+      const validIds=new Set(massViews.map((v)=>v.id));
+      if(massSelectionInitialized && prevSel.size){
+        // Conservar la selección manual; descartar las vistas que ya no existen.
+        massViewsSelected.clear();
+        for(const id of prevSel){ if(validIds.has(id)) massViewsSelected.add(id); }
+        if(!massViewsSelected.size){ for(const v of massViews) massViewsSelected.add(v.id); } // todas desaparecieron -> por defecto todas
+      } else {
+        // Primera carga o sin selección previa válida: todas por defecto.
+        massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id);
+      }
+      massSelectionInitialized=true;
       renderMassViewsList();
-      log("Exportación masiva: "+massViews.length+" vista(s) disponibles.");
+      log("Exportación masiva: "+massViews.length+" vista(s) disponibles; "+massViewsSelected.size+" seleccionada(s).");
     }
 
     // ===================== EXPORTAR =====================
@@ -1626,38 +1711,58 @@
       const chosen=massViews.filter((v)=>massViewsSelected.has(v.id));
       if(!chosen.length){ log("Exportación masiva: no hay vistas seleccionadas. No se inicia la exportación."); setProgress("Selecciona al menos una vista para exportar."); return; }
       const switcher=await activateViewById(chosen[0].id);
-      if(!switcher) log("Aviso: la API no expone método para cambiar de vista; cada vista puede leer el mismo contexto actual.");
+      lastMassExport={ selectedCount:chosen.length, totalViews:massViews.length, lastMethod:(switcher||"no disponible"), lastStatus:"EN CURSO", lastFailedView:"", zipFilesCount:0, ts:new Date().toISOString() };
+      // Sin método de cambio de vista no se puede garantizar la vista de cada CSV: abortar para no exportar datos engañosos.
+      if(!switcher){
+        log("Exportación masiva ABORTADA: la API no expone método para cambiar de vista; no se generan CSV para evitar exportar la misma vista repetida.");
+        setProgress("Exportación masiva abortada: sin cambio de vista.");
+        lastMassExport.lastStatus="ABORTADA";
+        return;
+      }
       showExportCancel(true);
       const enc=new TextEncoder(); const eta=makeEta(chosen.length); let lastEta=NaN;
       const zipFiles=[]; const usedNames=new Set();
-      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Vistas seleccionadas: "+chosen.length,""];
-      let okViews=0, emptyViews=0, totalRows=0;
+      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Vistas seleccionadas: "+chosen.length,"Método cambio de vista: "+switcher,""];
+      let okViews=0, emptyViews=0, failViews=0, totalRows=0, aborted=false;
       try{
         for(let i=0;i<chosen.length;i++){
           if(massExportCancel){ log("Exportación masiva cancelada por el usuario."); break; }
           const v=chosen[i];
           setProgress("Exportando "+(i+1)+"/"+chosen.length+" vistas · ETA "+fmtClock(lastEta));
-          if(switcher){ try{ await API.view[switcher](v.id); }catch(e){ recordError("exportMassive.switch",e); } await sleep(250); }
-          let entries=[]; try{ entries=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("exportMassive.colors",e); }
+          let switched=false; try{ await API.view[switcher](v.id); switched=true; }catch(e){ recordError("exportMassive.switch",e); }
+          if(!switched){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al activar la vista (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          const vr=await verifyActiveView(v);
+          if(!vr.ok){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO de verificación de vista ("+(vr.reason||"")+"); no se exporta para evitar datos de vista equivocada."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          let entries=null; try{ entries=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("exportMassive.colors",e); }
+          if(!Array.isArray(entries)){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al leer colores (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           if(!entries.length){ emptyViews++; report.push("- "+v.name+": sin objetos coloreados (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           const revisionBase=computeRevisionBase(v.name);
           const rows=await buildRows(entries,revisionBase,v.name,wantGuid);
           const csv=rowsToCsv(rows,cols);
           let base=sanitizeFilename(v.name)||("vista_"+(i+1)); let nm=base+".csv"; let k=2; while(usedNames.has(nm.toLowerCase())){ nm=base+"_"+(k++)+".csv"; } usedNames.add(nm.toLowerCase());
           zipFiles.push({name:nm,data:enc.encode("﻿"+csv)});
-          okViews++; totalRows+=rows.length; report.push("- "+v.name+": "+rows.length+" fila(s) -> "+nm);
+          okViews++; totalRows+=rows.length; report.push("- "+v.name+": "+rows.length+" fila(s) -> "+nm+" (verificada por "+vr.by+")");
           const t=eta.tick(); lastEta=t.etaSec;
           await sleep(0);
         }
-      }catch(e){ recordError("exportMassive",e); log("ERROR exportación masiva: "+(e&&e.message?e.message:e)); }
+      }catch(e){ recordError("exportMassive",e); log("ERROR exportación masiva: "+(e&&e.message?e.message:e)); aborted=true; }
       finally{ showExportCancel(false); }
-      if(!zipFiles.length){ log("Exportación masiva: ninguna vista seleccionada tenía objetos coloreados."); setProgress("Sin datos para exportar."); return; }
-      report.push("",(massExportCancel?"ESTADO: CANCELADA":"ESTADO: COMPLETADA"),"Vistas con datos: "+okViews,"Vistas vacías: "+emptyViews,"Filas totales: "+totalRows,"Columnas: "+cols.map((c)=>c.header).join(", "),"Método cambio de vista: "+(switcher||"no disponible"));
+      const status=aborted?"ABORTADA":(massExportCancel?"CANCELADA":"COMPLETADA");
+      lastMassExport.lastStatus=status;
+      // Cancelación / abortado: si ya hay CSV generados, se entrega ZIP parcial con informe; si no, no se descarga ZIP vacío.
+      if(!zipFiles.length){
+        log("Exportación masiva ("+status+"): sin CSV generados"+(failViews?(" ("+failViews+" fallo(s) de vista)"):"")+"; no se descarga ZIP vacío.");
+        setProgress("Exportación masiva "+status.toLowerCase()+": sin datos.");
+        lastMassExport.zipFilesCount=0;
+        return;
+      }
+      report.push("","ESTADO: "+status,"Vistas con datos: "+okViews,"Vistas vacías: "+emptyViews,"Vistas con fallo: "+failViews,"Filas totales: "+totalRows,"Columnas: "+cols.map((c)=>c.header).join(", "),"Método cambio de vista: "+switcher);
       zipFiles.push({name:"_informe.txt",data:enc.encode("﻿"+report.join("\n"))});
-      const zipName="DEO_export_masiva_"+new Date().toISOString().slice(0,10)+".zip";
+      const zipName="DEO_export_masiva_"+new Date().toISOString().slice(0,10)+(status!=="COMPLETADA"?("_"+status.toLowerCase()):"")+".zip";
       downloadBlob(zipName,zipStore(zipFiles));
-      log("Exportación masiva: "+okViews+" CSV en un ZIP ("+totalRows+" filas). Vistas vacías: "+emptyViews+".");
-      setProgress("Exportación masiva "+(massExportCancel?"cancelada":"completada")+": "+okViews+" vista(s) en ZIP.");
+      lastMassExport.zipFilesCount=zipFiles.length;
+      log("Exportación masiva ("+status+"): "+okViews+" CSV en un ZIP ("+totalRows+" filas). Vacías: "+emptyViews+", fallos: "+failViews+".");
+      setProgress("Exportación masiva "+status.toLowerCase()+": "+okViews+" vista(s) en ZIP.");
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
@@ -2123,7 +2228,7 @@
       log("Selección ocultos OFF: "+count+" objeto(s) ocultados y registro limpiado.");
       setProgress("Selección ocultos desactivada.");
     }
-    function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); if(view) view.disabled=!on; if(line) line.classList.toggle("is-disabled",!on); }
+    function syncHiddenUiState(){ const on=document.getElementById("hiddenSelectionToggle").checked; const view=document.getElementById("viewHiddenToggle"); const line=document.getElementById("viewHiddenLine"); const enable=on&&!hiddenBusy; if(view) view.disabled=!enable; if(line) line.classList.toggle("is-disabled",!enable); }
 
     // ===================== MOSTRAR PARÁMETROS (#4-7) =====================
     // Detecta el namespace de markups disponible (varía según versión del Workspace API).
@@ -2155,7 +2260,10 @@
     }
     function stripPickRefs(m){
       const strip=(p)=>({positionX:p.positionX,positionY:p.positionY,positionZ:p.positionZ});
-      return {start:strip(m.start),end:strip(m.end),text:m.text,color:m.color};
+      const o={start:strip(m.start),end:strip(m.end),text:m.text,color:m.color};
+      if(m.fontSize!=null) o.fontSize=m.fontSize;
+      if(m.textSize!=null) o.textSize=m.textSize;
+      return o;
     }
     // Cascada: lote completo -> uno a uno -> lote sin referencias de objeto (solo coordenadas).
     async function addTextMarkupsRobust(batch){
@@ -2186,10 +2294,11 @@
       const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><rect x="1" y="1" width="'+(w-2)+'" height="'+(h-2)+'" rx="4" fill="white" fill-opacity="0.92" stroke="#1c7fd6" stroke-width="1"/>'+rows+'</svg>';
       return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
     }
-    function centerIconFromBox(bb){ return {x:(bb.min.x+bb.max.x)/2,y:(bb.min.y+bb.max.y)/2,z:bb.max.z+Math.max(0.08,(bb.max.z-bb.min.z)*0.35)}; }
-    async function addLabelIcons(items){
+    function centerIconFromBox(bb,distFactor){ const base=Math.max(0.08,(bb.max.z-bb.min.z)*0.35); return {x:(bb.min.x+bb.max.x)/2,y:(bb.min.y+bb.max.y)/2,z:bb.max.z+base*(distFactor||1)}; }
+    async function addLabelIcons(items,sizeScale,distFactor){
       if(!API.viewer||typeof API.viewer.addIcon!=="function") return [];
-      const icons=items.map((it)=>({id:paramIconSeq++, position:centerIconFromBox(it.bb), size:42, iconPath:labelIconPath(it.text)}));
+      const sz=Math.max(14,Math.round(42*(sizeScale||1)));
+      const icons=items.map((it)=>({id:paramIconSeq++, position:centerIconFromBox(it.bb,distFactor), size:sz, iconPath:labelIconPath(it.text)}));
       try{ await API.viewer.addIcon(icons); return icons.map((x)=>x.id); }
       catch(e){ recordError("paramIcons.add",e); return []; }
     }
@@ -2664,7 +2773,9 @@
     // por eso el bloque muestra un warning fijo y el Inspector de selección es la vía principal en vistas.
     let lastLegacyPayload=null, lastLegacyResponse=null, lastCurrentPayload=null;
     function getParamLabelOffsetMm(){ const el=document.getElementById("labelOffsetRange"); const v=Number(el&&el.value); return Number.isFinite(v)?PARAM_LABEL_OFFSET_MM*(v/100):PARAM_LABEL_OFFSET_MM; }
-    function getParamLabelScale(){ const el=document.getElementById("labelSizeRange"); const v=Number(el&&el.value); return Number.isFinite(v)?v/100:1; }
+    function getParamLabelScale(){ const el=document.getElementById("labelSizeRange"); const v=Number(el&&el.value); return Number.isFinite(v)?Math.max(0.1,Math.min(2,v/100)):1; }
+    // Factor de distancia (slider Distancia): 10–200% -> 0.1–2. Multiplica el offset vertical de la etiqueta.
+    function getParamLabelDistanceFactor(){ const el=document.getElementById("labelOffsetRange"); const v=Number(el&&el.value); return Number.isFinite(v)?Math.max(0.1,Math.min(2,v/100)):1; }
     function updateLabelControlLabels(){ const s=document.getElementById("labelSizeValue"), o=document.getElementById("labelOffsetValue"); const se=document.getElementById("labelSizeRange"), oe=document.getElementById("labelOffsetRange"); if(s&&se) s.textContent=se.value+"%"; if(o&&oe) o.textContent=oe.value+"%"; }
     function legacyLabelPayload(bb,text,color){
       const cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
@@ -2709,6 +2820,8 @@
         log("Mostrar parámetros ("+toolKey+"): no hay objetos seleccionados."); return;
       }
       const params=cfg.picker.getParams();
+      const sizeScale=getParamLabelScale();          // slider Tamaño texto
+      const distFactor=getParamLabelDistanceFactor(); // slider Distancia
       const allowDeep=sel.length<=DEEP_LOOKUP_CAP;
       log("Mostrar parámetros ("+toolKey+"): selección recibida "+sel.length+" objeto(s), allowDeep="+allowDeep+".");
       const byModel=new Map(); for(const o of sel){ if(!byModel.has(o.modelId)) byModel.set(o.modelId,[]); byModel.get(o.modelId).push(o.runtimeId); }
@@ -2748,15 +2861,17 @@
           }
           if(!text){ noText++; continue; }
           const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
-          // Offset base claramente visible (mín. 500 mm) + offset por herramienta para no apilar. Sin doble-escalado: markupPick suma mm tras escalar.
-          const dzMm=Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5)+(PARAM_TOOL_OFFSET_MM[toolKey]||0);
+          // Offset base claramente visible (mín. 500 mm) + offset por herramienta para no apilar, escalado por el slider Distancia.
+          const dzMm=(Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5)+(PARAM_TOOL_OFFSET_MM[toolKey]||0))*distFactor;
           // start y end en el mismo punto elevado — igual que el TEST DEO que sí fue visible.
           const labelPick=markupPick(modelId,ids[i],bb,dzMm);
           markups.push({
             start:labelPick,
             end:labelPick,
             text,
-            color:{r:0,g:0,b:0,a:255}
+            color:{r:0,g:0,b:0,a:255},
+            fontSize:Math.round(12*sizeScale),
+            textSize:sizeScale
           });
           iconItems.push({bb,text});
           // Diagnóstico comparativo (IFC normal vs modelo problemático): bbox, centro y posición exacta enviada.
@@ -2807,15 +2922,74 @@
       // Diagnóstico real: ¿Trimble devolvió IDs y los conserva en getTextMarkups? Detalle completo en debug TXT.
       try{ const dg=await captureMarkupDiag(toolKey,markups,stored,cfg,diagItems); log("Mostrar parámetros ("+toolKey+"): markups diag -> enviados:"+dg.payloadCount+", ids:"+dg.responseCount+", getTextMarkups total:"+(dg.getTextMarkupsTotal!=null?dg.getTextMarkupsTotal:"n/a")+", recién presentes:"+(dg.createdIdsPresent!=null?dg.createdIdsPresent:"n/a")+", offset herramienta:"+dg.toolOffsetMm+"mm."); }catch(e){ recordError("captureMarkupDiag",e); }
       if(stored.length===0 && !cancelRequested){
-        const iconIds=await addLabelIcons(iconItems.slice(0,markups.length)); cfg.iconStore=iconIds;
+        const iconIds=await addLabelIcons(iconItems.slice(0,markups.length),sizeScale,distFactor); cfg.iconStore=iconIds;
         if(iconIds.length){ log("Mostrar parámetros ("+toolKey+"): "+iconIds.length+" etiqueta(s) como iconos SVG 3D (fallback). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas (fallback iconos): "+iconIds.length+"."); }
         else { log("Mostrar parámetros ("+toolKey+"): la API ha rechazado las etiquetas y el fallback de iconos no está disponible. Revisa permisos del visor."); setProgress("No se han podido crear etiquetas."); }
       }
-      else if(stored.length){ let modo; if(toolKey==="names") modo="nombre"; else if(!presetCount) modo="params UI"; else if(weakSubstCount&&weakSubstCount===presetCount) modo="preset por etiqueta débil:"+presetCount+"/"+markups.length; else if(weakSubstCount) modo="preset:"+presetCount+"/"+markups.length+"("+weakSubstCount+" débil→preset)"; else modo="preset:"+presetCount+"/"+markups.length; log("Mostrar parámetros ("+toolKey+"): "+stored.length+"/"+markups.length+" etiqueta(s) creada(s) sobre "+sel.length+" seleccionado(s). Tipo "+toolKey+", "+modo+". Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas: "+stored.length+"."); }
+      else if(stored.length){ let modo; if(toolKey==="names") modo="nombre"; else if(!presetCount) modo="params UI"; else if(weakSubstCount&&weakSubstCount===presetCount) modo="preset por etiqueta débil:"+presetCount+"/"+markups.length; else if(weakSubstCount) modo="preset:"+presetCount+"/"+markups.length+"("+weakSubstCount+" débil→preset)"; else modo="preset:"+presetCount+"/"+markups.length; log("Mostrar parámetros ("+toolKey+"): "+stored.length+"/"+markups.length+" etiqueta(s) creada(s) sobre "+sel.length+" seleccionado(s). Tipo "+toolKey+", "+modo+". Tamaño "+Math.round(sizeScale*100)+"%, distancia "+Math.round(distFactor*100)+"% (markup texto). Fuentes "+srcLabel+"."); setProgress("Etiquetas creadas: "+stored.length+"."); }
     }
     function scheduleParamMarkups(toolKey){ const cfg=paramTools[toolKey]; if(!cfg) return; const toggle=document.getElementById(cfg.toggleId); if(!toggle||!toggle.checked){ removeParamVisuals(cfg); return; } clearTimeout(paramTimers[toolKey]); paramTimers[toolKey]=setTimeout(()=>refreshParamMarkups(toolKey),350); }
     function anyParamToolActive(){ return Object.values(paramTools).some((c)=>{ const t=document.getElementById(c.toggleId); return t&&t.checked; }); }
+    // Diagnóstico consolidado de Mostrar parámetros: grupos activos, etiquetas vivas por grupo y guardadas.
+    function logActiveParamGroups(reason){
+      try{
+        const parts=[];
+        for(const key of Object.keys(paramTools)){ const c=paramTools[key]; const t=document.getElementById(c.toggleId); const on=!!(t&&t.checked); const live=((c.store||[]).length)+((c.iconStore||[]).length); parts.push(key+":"+(on?"on":"off")+(on?("/"+live+" etq, off+"+(PARAM_TOOL_OFFSET_MM[key]||0)+"mm"):"")); }
+        log("Mostrar parámetros ["+(reason||"")+"]: "+parts.join(" · ")+". Guardadas: "+savedParamLabels.length+". Límite por grupo: "+MAX_PARAM_MARKUPS+".");
+      }catch(e){ recordError("logActiveParamGroups",e); }
+    }
     function scheduleAllParamMarkups(){ if(!anyParamToolActive()) return; for(const key of Object.keys(paramTools)) scheduleParamMarkups(key); }
+    // ----- Re-render inmediato al mover los sliders Tamaño/Distancia (opción A) -----
+    let paramSliderTimer=null;
+    function scheduleParamSliderRerender(reason){
+      updateLabelControlLabels();
+      clearTimeout(paramSliderTimer);
+      paramSliderTimer=setTimeout(()=>{ applyParamSliderRerender(reason); },320); // debounce mientras se arrastra
+    }
+    async function applyParamSliderRerender(reason){
+      const sizeV=String((document.getElementById("labelSizeRange")||{}).value||"100");
+      const offV=String((document.getElementById("labelOffsetRange")||{}).value||"100");
+      const active=Object.keys(paramTools).filter((k)=>{ const t=document.getElementById(paramTools[k].toggleId); return t&&t.checked; });
+      const hasSaved=savedParamLabels.length>0;
+      if(!active.length && !hasSaved){ log("Sliders etiquetas: sin grupos activos ni etiquetas guardadas; solo se actualizan valores (tamaño "+sizeV+"%, distancia "+offV+"%)."); return; }
+      if(PARAM_USE_3D_MARKUPS && active.length){
+        log("Sliders etiquetas: reconstruyendo grupos activos ["+active.join(", ")+"] con tamaño "+sizeV+"% y distancia "+offV+"% ("+reason+").");
+        scheduleAllParamMarkups(); // elimina y recrea cada grupo activo con los valores actuales del slider
+      }
+      if(hasSaved){ try{ await rebuildSavedParamLabels(sizeV,offV,reason); }catch(e){ recordError("rebuildSavedParamLabels",e); } }
+    }
+    // Reconstruye las etiquetas guardadas (Agregar) con el tamaño/distancia actuales: por lotes, sin duplicar.
+    async function rebuildSavedParamLabels(sizeV,offV,reason){
+      if(!savedParamLabels.length) return;
+      const sizeScale=getParamLabelScale(), distFactor=getParamLabelDistanceFactor();
+      const byModel=new Map(); for(const s of savedParamLabels){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s); }
+      let rebuilt=0, failed=0;
+      for(const [modelId,list] of byModel.entries()){
+        let boxes=[]; try{ boxes=await API.viewer.getObjectBoundingBoxes(modelId,list.map((s)=>s.runtimeId)); }catch(e){ recordError("rebuildSaved.bbox",e); failed+=list.length; continue; }
+        for(let i=0;i<list.length;i++){
+          const s=list[i]; const bb=bboxOf(boxes[i]); if(!bb){ failed++; continue; }
+          let newId=null, posSent=null;
+          try{
+            if(s.engine==="legacy"){
+              const payload=legacyLabelPayload(bb,s.text); posSent={x:payload.start.positionX,y:payload.start.positionY,z:payload.start.positionZ};
+              const ids=await legacyParamLabelEngine([{bb,text:s.text}]); newId=ids&&ids[0];
+            } else {
+              const heightMm=Math.max(1,(bb.max.z-bb.min.z)*1000);
+              const dzMm=Math.max(PARAM_LABEL_OFFSET_MM,heightMm*0.5)*distFactor;
+              const labelPick=markupPick(s.modelId,s.runtimeId,bb,dzMm);
+              posSent={x:labelPick.positionX,y:labelPick.positionY,z:labelPick.positionZ};
+              const payload={start:labelPick,end:labelPick,text:s.text,color:{r:0,g:0,b:0,a:255},fontSize:Math.round(12*sizeScale),textSize:sizeScale};
+              const ids=await addTextMarkupsRobust([payload]); newId=ids&&ids[0];
+            }
+          }catch(e){ recordError("rebuildSaved.create",e); }
+          if(newId){ try{ await removeMarkupIds([s.markupId]); }catch(e){} s.markupId=newId; s.position=posSent; rebuilt++; }
+          else failed++;
+        }
+        await sleep(0);
+      }
+      log("Sliders etiquetas: etiquetas guardadas reconstruidas "+rebuilt+(failed?(" (fallos "+failed+")"):"")+" con tamaño "+sizeV+"% y distancia "+offV+"% ("+reason+").");
+      updateSavedLabelsCount();
+    }
 
     // ===================== PLANTILLAS DE VISTA (#9) =====================
     const TEMPLATE_STORE_KEY="deo_view_templates_v3";
@@ -3605,7 +3779,63 @@
       cvRenderShareTokens("cvNew"); cvRenderShareTokens("cvUpd"); cvRenderLabelTokens("cvNew"); cvRenderLabelTokens("cvUpd");
       await populateUpdateViews();
       await cvPreloadCurrentView();
+      try{ await loadActiveViewSearchViews(); }catch(e){ recordError("loadActiveViewSearchViews",e); }
       await autoExpandViewFlow();
+    }
+    // ===================== Buscador global de "Vista activa" (Configurar vista, v9.0.5) =====================
+    let activeViewSearchViews=[], activeViewSearchSelectedId="", activeViewSearchSortAlpha=false;
+    function avSearchOrderedViews(){ const list=activeViewSearchViews.slice(); if(activeViewSearchSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es")); return list; }
+    function avSetInputToSelected(){ const inp=document.getElementById("activeViewSearchInput"); if(!inp) return; const v=activeViewSearchViews.find((x)=>x.id===activeViewSearchSelectedId); inp.value=v?v.name:""; }
+    function avHideSuggest(){ const box=document.getElementById("activeViewSearchSuggest"); if(box) box.style.display="none"; }
+    function renderActiveViewSuggest(filter){
+      const box=document.getElementById("activeViewSearchSuggest"); if(!box) return;
+      const term=String(filter||"").trim().toLowerCase();
+      let list=avSearchOrderedViews(); if(term) list=list.filter((v)=>v.name.toLowerCase().includes(term));
+      box.innerHTML="";
+      if(!list.length){ const e=document.createElement("div"); e.className="av-search-empty"; e.textContent="Sin vistas que coincidan."; box.appendChild(e); box.style.display="block"; return; }
+      list.slice(0,200).forEach((v)=>{
+        const it=document.createElement("div"); it.className="av-search-item"+(v.id===activeViewSearchSelectedId?" is-active":""); it.textContent=v.name; it.title=v.name;
+        it.addEventListener("mousedown",(ev)=>{ ev.preventDefault(); avSelectView(v); });
+        box.appendChild(it);
+      });
+      box.style.display="block";
+    }
+    async function loadActiveViewSearchViews(){
+      if(!API||!API.view||!API.view.getViews) return;
+      let views=[]; try{ views=await API.view.getViews()||[]; }catch(e){ recordError("activeViewSearch.getViews",e); }
+      activeViewSearchViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre"})).filter((v)=>v.id);
+      let cur=null; try{ cur=await getCurrentViewSpecWithRetry(); }catch(e){}
+      let curId=cur?String(cur.id||cur.viewId||""):""; const curName=cur?(readableViewName(cur)||""):"";
+      if(!curId && curName){ const m=activeViewSearchViews.find((v)=>v.name===curName); if(m) curId=m.id; }
+      if(curId && activeViewSearchViews.some((v)=>v.id===curId)) activeViewSearchSelectedId=curId;
+      else if(activeViewSearchSelectedId && !activeViewSearchViews.some((v)=>v.id===activeViewSearchSelectedId)) activeViewSearchSelectedId="";
+      avSetInputToSelected();
+    }
+    async function avSelectView(v){
+      avHideSuggest();
+      if(!v||!v.id) return;
+      const method=await activateViewById(v.id);
+      if(!method){ log("Vista activa: la API no permite cambiar de vista en este entorno."); avSetInputToSelected(); return; }
+      const vr=await verifyActiveView(v);
+      if(!vr.ok){ log("Vista activa: no se pudo confirmar el cambio a '"+v.name+"' ("+(vr.reason||"")+")."); avSetInputToSelected(); return; }
+      activeViewSearchSelectedId=v.id;
+      const inp=document.getElementById("activeViewSearchInput"); if(inp) inp.value=v.name;
+      // Sincroniza la sección "Actualizar vista" (selector interno oculto) para que parsee la vista elegida.
+      const sel=document.getElementById("updateViewSelect");
+      if(sel){ if(![...sel.options].some((o)=>String(o.value)===String(v.id))){ try{ await populateUpdateViews(); }catch(e){} } if([...sel.options].some((o)=>String(o.value)===String(v.id))){ sel.value=v.id; try{ cvLoadSelectedView(); }catch(e){} } }
+      log("Vista activa: cambiada a '"+v.name+"' (verificada por "+vr.by+").");
+    }
+    function avToggleSort(){ activeViewSearchSortAlpha=!activeViewSearchSortAlpha; const b=document.getElementById("activeViewSearchSort"); if(b) b.classList.toggle("funnel-active",activeViewSearchSortAlpha); const inp=document.getElementById("activeViewSearchInput"); renderActiveViewSuggest(inp?inp.value:""); }
+    function initActiveViewSearch(){
+      const inp=document.getElementById("activeViewSearchInput");
+      if(inp){
+        inp.addEventListener("focus",()=>renderActiveViewSuggest(inp.value));
+        inp.addEventListener("input",()=>renderActiveViewSuggest(inp.value));
+        inp.addEventListener("blur",()=>{ setTimeout(avHideSuggest,150); });
+        inp.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape"){ avHideSuggest(); avSetInputToSelected(); inp.blur(); } });
+      }
+      const sort=document.getElementById("activeViewSearchSort"); if(sort) sort.addEventListener("click",(ev)=>{ ev.preventDefault(); avToggleSort(); });
+      const refresh=document.getElementById("activeViewSearchRefresh"); if(refresh) refresh.addEventListener("click",async (ev)=>{ ev.preventDefault(); await loadActiveViewSearchViews(); renderActiveViewSuggest(""); log("Vista activa: lista actualizada ("+activeViewSearchViews.length+" vistas)."); });
     }
     function wireTemplateScope(scope){
       for(const f of TEMPLATE_FIELDS){
@@ -3630,6 +3860,7 @@
       const updBtn=document.getElementById("cvUpdateBtn"); if(updBtn) updBtn.onclick=()=>cvUpdateView();
       const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open) await cvOnOpenConfigureView(); });
       const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open){ await populateUpdateViews(); await cvPreloadCurrentView(); } });
+      initActiveViewSearch();
     }
     // v8.10.0: al abrir Configurar vista, expande Actualizar si hay vista guardada activa; si no, Crear vista nueva.
     async function autoExpandViewFlow(){
@@ -3655,6 +3886,96 @@
 
     // ===================== COLORES / VALORES UI =====================
     function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
+    // Flujo común de activar/desactivar Selección cercanos (UI y atajo de teclado comparten esta vía).
+    async function setNearEnabled(on, source){
+      const t=document.getElementById("nearToggle"); if(!t) return;
+      on=!!on;
+      if(t.checked!==on) t.checked=on;
+      syncNearUiState();
+      try{ recordUserAction("nearToggle",{on,source:source||"ui"}); }catch(e){}
+      if(on) scheduleProcessSelection();
+      else await removeToolAddedFromSelection();
+    }
+
+    // ===================== Atajo de teclado para "Selección cercanos" =====================
+    const NEAR_SC_EN_KEY="deo.nearShortcut.enabled.v1";
+    const NEAR_SC_COMBO_KEY="deo.nearShortcut.combo.v1";
+    let nearShortcutEnabled=true, nearShortcutCombo="Alt+C", nearShortcutRecording=false;
+    function loadNearShortcut(){ try{ const e=localStorage.getItem(NEAR_SC_EN_KEY); if(e!==null) nearShortcutEnabled=(e==="1"||e==="true"); const c=localStorage.getItem(NEAR_SC_COMBO_KEY); if(c) nearShortcutCombo=c; }catch(e){} }
+    function saveNearShortcut(){ try{ localStorage.setItem(NEAR_SC_EN_KEY,nearShortcutEnabled?"1":"0"); localStorage.setItem(NEAR_SC_COMBO_KEY,nearShortcutCombo); }catch(e){ recordError("nearShortcut.save",e); } }
+    // Normaliza un evento de teclado a {mods:[...], key, str}. Devuelve null si solo hay modificador o tecla Meta (sistema).
+    function nearComboFromEvent(ev){
+      if(ev.metaKey) return null;
+      let key=ev.key; if(key==="Control"||key==="Alt"||key==="Shift"||key==="Meta") return null;
+      const mods=[]; if(ev.ctrlKey) mods.push("Ctrl"); if(ev.altKey) mods.push("Alt"); if(ev.shiftKey) mods.push("Shift");
+      const map={" ":"Space","Spacebar":"Space","ArrowLeft":"Left","ArrowRight":"Right","ArrowUp":"Up","ArrowDown":"Down","Escape":"Esc","Esc":"Esc","Enter":"Enter","Tab":"Tab"};
+      if(map[key]) key=map[key];
+      else if(/^[a-z]$/i.test(key)) key=key.toUpperCase();
+      else if(/^f\d{1,2}$/i.test(key)) key=key.toUpperCase();
+      return { mods, key, str:(mods.length?mods.join("+")+"+":"")+key };
+    }
+    // Reglas de validación de la combinación grabada (máx. dos teclas; rechaza reservadas/conflictivas).
+    function validateNearCombo(c){
+      if(!c||!c.key) return {ok:false,reason:"combinación no válida"};
+      if(c.mods.length>1) return {ok:false,reason:"máximo dos teclas (un solo modificador)"};
+      const reserved=["Esc","Enter","Space","Left","Right","Up","Down","Tab"];
+      if(c.mods.length===0){
+        if(/^F\d{1,2}$/.test(c.key)){ if(c.key==="F5") return {ok:false,reason:"F5 reservada"}; return {ok:true}; }
+        return {ok:false,reason:"una sola tecla sin modificador no se permite"};
+      }
+      if(reserved.includes(c.key)) return {ok:false,reason:"tecla reservada"};
+      if(c.key==="F5") return {ok:false,reason:"F5 reservada"};
+      const black=new Set(["Ctrl+C","Ctrl+F","Ctrl+S","Ctrl+P","Ctrl+R","Alt+Left","Alt+Right"]);
+      if(black.has(c.str)) return {ok:false,reason:"atajo reservado del sistema/navegador"};
+      return {ok:true};
+    }
+    function nearShortcutLabel(){ const el=document.getElementById("nearShortcutCombo"); if(el) el.textContent=nearShortcutCombo; }
+    // ¿Hay un campo de texto o un modal/editor del Bug Report activo? -> el atajo no debe dispararse.
+    function nearShortcutBlocked(){
+      const ae=document.activeElement;
+      if(ae){ const tag=(ae.tagName||"").toUpperCase(); if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||ae.isContentEditable) return true; }
+      const ov=document.getElementById("bugModalOverlay"); if(ov&&ov.style.display!=="none") return true;
+      const ao=document.getElementById("bugAnnotOverlay"); if(ao&&ao.style.display!=="none") return true;
+      const po=document.getElementById("bugAssistOverlay"); if(po&&po.style.display!=="none") return true;
+      if(typeof bugUiPicking!=="undefined" && bugUiPicking) return true;
+      return false;
+    }
+    function onNearShortcutKeydown(ev){
+      if(nearShortcutRecording || !nearShortcutEnabled) return;
+      if(nearShortcutBlocked()) return;
+      const c=nearComboFromEvent(ev); if(!c || c.str!==nearShortcutCombo) return;
+      ev.preventDefault();
+      const t=document.getElementById("nearToggle"); if(!t) return;
+      setNearEnabled(!t.checked,"shortcut");
+      log("Selección cercanos: "+(t.checked?"activado":"desactivado")+" por atajo "+nearShortcutCombo+".");
+    }
+    function startNearShortcutRecording(){
+      if(nearShortcutRecording) return;
+      nearShortcutRecording=true;
+      const btn=document.getElementById("nearShortcutEdit"), lab=document.getElementById("nearShortcutCombo");
+      const prev=nearShortcutCombo;
+      if(btn) btn.classList.add("is-recording");
+      if(lab) lab.textContent="Pulsa…";
+      const onKey=(ev)=>{
+        if(ev.key==="Control"||ev.key==="Alt"||ev.key==="Shift"||ev.key==="Meta") return; // espera la tecla final
+        ev.preventDefault(); ev.stopPropagation();
+        document.removeEventListener("keydown",onKey,true);
+        nearShortcutRecording=false; if(btn) btn.classList.remove("is-recording");
+        const c=nearComboFromEvent(ev); const v=c?validateNearCombo(c):{ok:false,reason:"combinación no válida"};
+        if(v.ok){ nearShortcutCombo=c.str; saveNearShortcut(); nearShortcutLabel(); log("Selección cercanos: atajo configurado en "+nearShortcutCombo+"."); }
+        else { nearShortcutCombo=prev; nearShortcutLabel(); log("Selección cercanos: atajo rechazado ("+(v.reason||"")+"). Se mantiene "+prev+"."); }
+      };
+      document.addEventListener("keydown",onKey,true);
+    }
+    function initNearShortcut(){
+      loadNearShortcut();
+      const scToggle=document.getElementById("nearShortcutToggle");
+      if(scToggle){ scToggle.checked=nearShortcutEnabled; scToggle.addEventListener("change",()=>{ nearShortcutEnabled=scToggle.checked; saveNearShortcut(); log("Selección cercanos: atajo de teclado "+(nearShortcutEnabled?("activado ("+nearShortcutCombo+")"):"desactivado")+"."); }); }
+      const edit=document.getElementById("nearShortcutEdit"); if(edit) edit.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); startNearShortcutRecording(); });
+      const reset=document.getElementById("nearShortcutReset"); if(reset) reset.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(nearShortcutRecording) return; nearShortcutCombo="Alt+C"; saveNearShortcut(); nearShortcutLabel(); log("Selección cercanos: atajo restaurado a Alt+C."); });
+      nearShortcutLabel();
+      document.addEventListener("keydown",onNearShortcutKeydown,true);
+    }
     function syncIncludeUiState(){
       const on=document.getElementById("includeToggle").checked;
       const colorMode=document.getElementById("colorModeToggle")&&document.getElementById("colorModeToggle").checked;
@@ -4148,8 +4469,12 @@
       // v8.10.7 (#9): sin botón Aceptar. Al elegir un color en el selector nativo se añade directamente (con la transparencia seleccionada).
       const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
       document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")) hideQuickColorPopover(); });
-      const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=(ev)=>{ ev.stopPropagation(); quantifySelection(); };
-      const quantBlock=document.getElementById("quantifyBlock"); if(quantBlock) quantBlock.addEventListener("click",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear")) return; quantifySelection(); });
+      // El bloque completo actúa como botón: click o Enter/Espacio ejecutan Quantity Surveyor; copiar/limpiar se excluyen.
+      const quantBlock=document.getElementById("quantifyBlock");
+      if(quantBlock){
+        quantBlock.addEventListener("click",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear")) return; quantifySelection(); });
+        quantBlock.addEventListener("keydown",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear")) return; if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); quantifySelection(); } });
+      }
       const quantCopy=document.getElementById("quantifyCopy"); if(quantCopy) quantCopy.onclick=(ev)=>{ ev.stopPropagation(); quantCopyToClipboard(); };
       const quantClearBtn=document.getElementById("quantifyClear"); if(quantClearBtn) quantClearBtn.onclick=(ev)=>{ ev.stopPropagation(); quantClear(); };
       const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
@@ -4240,7 +4565,7 @@
     }
     function wireUI(){
       const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
-      const bugCamBtn=document.getElementById("bugCamBtn"); if(bugCamBtn) bugCamBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); openBugModal(); });
+      const bugDownloadBtn=document.getElementById("bugDownloadBtn"); if(bugDownloadBtn) bugDownloadBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); downloadBugReports(); });
       updateDebugButtonState();
       const globalRefresh=document.getElementById("globalViewerRefresh"); if(globalRefresh) globalRefresh.onclick=()=>refreshViewerDataGlobal();
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
@@ -4268,7 +4593,8 @@
       // Selección cercanos (#1): la sensibilidad es un radio absoluto; recalcula sin reiniciar el estado.
       const nearPercent=document.getElementById("nearPercent"); if(nearPercent){ nearPercent.addEventListener("input",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); nearPercent.addEventListener("change",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); }
       const nearCustom=document.getElementById("nearCustom"); nearCustom.addEventListener("change",()=>{ syncNearUiState(); scheduleProcessSelection(); });
-      const nearToggle=document.getElementById("nearToggle"); nearToggle.addEventListener("change",async ()=>{ syncNearUiState(); if(nearToggle.checked) scheduleProcessSelection(); else await removeToolAddedFromSelection(); });
+      const nearToggle=document.getElementById("nearToggle"); nearToggle.addEventListener("change",()=>{ setNearEnabled(nearToggle.checked,"ui"); });
+      initNearShortcut();
 
       const excludeToggle=document.getElementById("excludeToggle");
       excludeToggle.addEventListener("change",()=>{ syncExcludeNameUiState(); if(excludeToggle.checked){ populateExcludeColors(); populateExcludeModels(); populateNameValues(); } scheduleProcessSelection(); });
@@ -4282,8 +4608,43 @@
       const excludeModelsSort=document.getElementById("excludeModelsSort"); if(excludeModelsSort) excludeModelsSort.onclick=()=>{ excludeModelsSortAlpha=!excludeModelsSortAlpha; populateExcludeModels(); };
 
       const hiddenToggle=document.getElementById("hiddenSelectionToggle"); const viewHidden=document.getElementById("viewHiddenToggle");
-      hiddenToggle.addEventListener("change",async ()=>{ if(hiddenToggle.checked){ syncHiddenUiState(); await markHiddenObjectsWhite(); } else { if(viewHidden) viewHidden.checked=false; syncHiddenUiState(); await clearHiddenWhite(); } });
-      if(viewHidden) viewHidden.addEventListener("change",async ()=>{ await setRegistryVisible(viewHidden.checked); });
+      hiddenToggle.addEventListener("change",async ()=>{
+        if(hiddenToggle.checked){
+          // Mientras se detecta/marca: bloquear "Ver ocultos" y guardar la intención del usuario.
+          hiddenBusy=true; pendingViewHiddenState=null; syncHiddenUiState();
+          let ok=false;
+          try{ await markHiddenObjectsWhite(); ok=true; }
+          catch(e){ recordError("markHiddenObjectsWhite",e); }
+          finally{
+            hiddenBusy=false; syncHiddenUiState(); // reactiva el toggle si "Selección ocultos" sigue ON
+            if(ok && hiddenToggle.checked){
+              const want=(viewHidden&&viewHidden.checked)||pendingViewHiddenState===true;
+              if(want && mapSetCount(hiddenWhiteRegistry)>0){
+                if(viewHidden && !viewHidden.checked) viewHidden.checked=true;
+                await setRegistryVisible(true);
+              } else if(want){
+                // pidió ver ocultos pero no hay registro: no dejar el toggle ON sin efecto
+                if(viewHidden) viewHidden.checked=false;
+                log("Ver ocultos: la detección no registró objetos ocultos; no hay nada que mostrar.");
+              }
+            }
+            pendingViewHiddenState=null;
+          }
+        } else {
+          if(viewHidden) viewHidden.checked=false; pendingViewHiddenState=null;
+          syncHiddenUiState(); await clearHiddenWhite();
+        }
+      });
+      if(viewHidden) viewHidden.addEventListener("change",async ()=>{
+        // Si la detección sigue en curso, guardar la intención: se aplicará al terminar.
+        if(hiddenBusy){ pendingViewHiddenState=viewHidden.checked; return; }
+        if(viewHidden.checked && mapSetCount(hiddenWhiteRegistry)===0){
+          viewHidden.checked=false;
+          log("Ver ocultos: no hay objetos ocultos registrados todavía. Activa 'Selección ocultos' y espera a que termine la detección.");
+          return;
+        }
+        await setRegistryVisible(viewHidden.checked);
+      });
 
       const includeToggle=document.getElementById("includeToggle");
       includeToggle.addEventListener("change",()=>{ syncIncludeUiState(); if(includeToggle.checked){ populateIncludeValues(); if(document.getElementById("colorModeToggle").checked) populateIncludeColors(); } scheduleProcessSelection(); });
@@ -4294,8 +4655,12 @@
       const includeRefresh=document.getElementById("includeRefresh"); if(includeRefresh) includeRefresh.onclick=()=>populateIncludeColors();
 
       // Mostrar parámetros (#4-7)
-      for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>{ if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); else removeParamVisuals(cfg); scheduleSelectionInspector(); }); }
+      for(const key of ["names","bolts","welds"]){ const cfg=paramTools[key]; const toggle=document.getElementById(cfg.toggleId); if(toggle) toggle.addEventListener("change",()=>{ if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); else removeParamVisuals(cfg); scheduleSelectionInspector(); logActiveParamGroups("toggle "+key+"="+(toggle.checked?"on":"off")); }); }
       const paramHelpBtn=document.getElementById("paramHelpBtn"); if(paramHelpBtn) paramHelpBtn.onclick=(e)=>{ e.stopPropagation(); const box=document.getElementById("paramHelpBox"); if(box) box.style.display=box.style.display==="none"?"block":"none"; };
+      // Botones ? de ayuda (Exportar registro / Importar registro / Desarrollador): abren/cierran su caja sin abrir el summary.
+      [["exportHelpBtn","exportHelpBox"],["importHelpBtn","importHelpBox"],["devHelpBtn","devHelpBox"]].forEach(([bId,boxId])=>{ const b=document.getElementById(bId); if(b) b.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); const box=document.getElementById(boxId); if(box) box.style.display=box.style.display==="none"?"block":"none"; }; });
+      // Al cerrar Exportar/Importar, ocultar su caja de ayuda (el ? ya se oculta por CSS al cerrar el details).
+      [["exportTool","exportHelpBox"],["importTool","importHelpBox"]].forEach(([dId,boxId])=>{ const d=document.getElementById(dId); if(d) d.addEventListener("toggle",()=>{ if(!d.open){ const box=document.getElementById(boxId); if(box) box.style.display="none"; } }); });
       namesPicker.wire(); boltsPicker.wire(); weldsPicker.wire();
       applyStoredParamProfiles(); // perfiles por tipología guardados (v8.9.0); corrupto -> defaults
       const wireLblBtn=(id,fn)=>{ const b=document.getElementById(id); if(!b) return; b.onclick=async ()=>{ b.disabled=true; try{ await fn(); }catch(e){ recordError(id,e); log("ERROR etiquetas guardadas: "+e.message); } finally{ b.disabled=false; } }; };
@@ -4303,7 +4668,7 @@
       wireLblBtn("lblRemove",removeSavedLabelsForSelection);
       wireLblBtn("lblRemoveAll",removeAllSavedLabels);
       // v8.10.7 (#3): imán al 100% (±8) y refresco del % al mover. Los valores afectan a las etiquetas creadas con Agregar.
-      ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.addEventListener("input",()=>{ const v=parseFloat(el.value); if(Number.isFinite(v)&&v!==100&&Math.abs(v-100)<=8) el.value="100"; updateLabelControlLabels(); }); }); updateLabelControlLabels();
+      ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.addEventListener("input",()=>{ const v=parseFloat(el.value); if(Number.isFinite(v)&&v!==100&&Math.abs(v-100)<=8) el.value="100"; scheduleParamSliderRerender(id); }); }); updateLabelControlLabels();
 
       const csvParamAdd=document.getElementById("csvParamAdd"); if(csvParamAdd) csvParamAdd.onclick=()=>addColumnFromPicker();
       const csvParamRefresh=document.getElementById("csvParamRefresh"); if(csvParamRefresh) csvParamRefresh.onclick=()=>refreshCsvAvailableParameters();
@@ -4334,7 +4699,8 @@
       updateCsvColumnSelect();
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; const massive=document.getElementById("extendedExport").checked; recordUserAction("exportStart",{massive}); try{ if(massive) await exportMassive(); else await exportActiveView(); recordUserAction("exportEnd",{massive,ok:true}); }catch(err){ recordError("export",err); log("ERROR: "+err.message); recordUserAction("exportEnd",{massive,ok:false}); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
-      document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.stopPropagation(); } try{ if(bugReportsCount()>0){ await downloadBugReports(); } else { await exportDebug(); } }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
+      // Botón principal = Bug Report: abre el modal. La descarga vive en el botón secundario (hover).
+      document.getElementById("debug").onclick=(ev)=>{ if(ev){ ev.stopPropagation(); } try{ openBugModal(); }catch(err){ recordError("bugReport.open",err); log("ERROR Bug Report: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; cancelRequested=false; showImportCancel(true); try{ const expanded=await expandImportInputs(files); if(!expanded.length){ log("No se han encontrado CSV para importar (revisa el ZIP o los archivos)."); setProgress("Sin CSV que importar."); return; } await importCsvFiles(expanded); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showImportCancel(false); showCancel(false); } };
     }
@@ -4408,7 +4774,7 @@
         const inputs={};
         ["tplNew_date","tplUpd_date","tplNew_author","tplUpd_author","cvNew_labels","cvUpd_labels","cvNew_share","cvUpd_share","csvCustomCodes","nearPercent"].forEach((id)=>{ if(document.getElementById(id)) inputs[id]=valOf(id); });
         const buttons={};
-        ["export","debug","cvCreateBtn","cvUpdateBtn","globalViewerRefresh","quantifyBtn"].forEach((id)=>{ const b=document.getElementById(id); if(b) buttons[id]={disabled:!!b.disabled,display:getComputedStyle(b).display}; });
+        ["export","debug","cvCreateBtn","cvUpdateBtn","globalViewerRefresh","quantifyBlock"].forEach((id)=>{ const b=document.getElementById(id); if(b) buttons[id]={disabled:!!b.disabled,display:getComputedStyle(b).display}; });
         const sliders={};
         ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) sliders[id]=el.value; });
         const panelSizes={ body:Math.round(document.body.getBoundingClientRect().width) };
@@ -4424,7 +4790,8 @@
         viewsCount:(typeof massViews!=="undefined"?massViews.length:undefined),
         selected:(typeof massViewsSelected!=="undefined"?[...massViewsSelected]:undefined),
         sortAlpha:(typeof massViewsSortAlpha!=="undefined"?massViewsSortAlpha:undefined),
-        counterText:String((document.getElementById("massViewsCount")||{}).textContent||"")
+        counterText:String((document.getElementById("massViewsCount")||{}).textContent||""),
+        lastMassExport:(typeof lastMassExport!=="undefined"?lastMassExport:undefined)
       }));
       addTool("viewTemplate",()=>({
         create:(typeof getScopeValues==="function"?getScopeValues("tplNew"):undefined),
@@ -5211,14 +5578,24 @@
         if(!ok){ showBugNote("No se pudo guardar el reporte. Descarga el debug manualmente."); return; }
       }
       closeBugModal();
+      bugReportsAcknowledged=false; // nuevo reporte: el halo rojo vuelve a indicar pendiente de descarga
       updateDebugButtonState();
     }
 
+    // true tras descargar los reportes en esta sesión: detiene el halo pero NO borra los reportes (re-descarga posible).
+    let bugReportsAcknowledged=false;
     function updateDebugButtonState(){
-      const btn=document.getElementById("debug"); if(!btn) return;
+      const btn=document.getElementById("debug");           // botón principal Bug Report (icono bug)
+      const dl=document.getElementById("bugDownloadBtn");   // botón secundario de descarga (hover)
       const n=bugReportsCount();
-      if(n>0){ btn.classList.add("has-bug-reports"); btn.title="Descargar "+n+" reporte(s) de incidencia pendientes"; btn.setAttribute("aria-label","Descargar reportes de incidencia ("+n+")"); }
-      else { btn.classList.remove("has-bug-reports"); btn.title="Descargar informe de diagnóstico"; btn.setAttribute("aria-label","debug"); }
+      // Botón principal: siempre abre Bug Report; halo rojo solo si hay reportes sin descargar.
+      if(btn) btn.classList.toggle("bug-report-pending", n>0 && !bugReportsAcknowledged);
+      // Botón secundario de descarga: presente (revelable por hover) solo si hay reportes; oculto si no.
+      // Rojo (is-pending) mientras no se haya descargado; neutro/negro tras descargar, pero sigue disponible.
+      if(dl){
+        if(n>0){ dl.hidden=false; dl.classList.toggle("is-pending", !bugReportsAcknowledged); dl.title="Descargar "+n+" reporte(s) de incidencia"+(bugReportsAcknowledged?" (re-descarga disponible)":""); dl.setAttribute("aria-label","Descargar reportes de incidencia ("+n+")"); }
+        else { dl.hidden=true; dl.classList.remove("is-pending"); }
+      }
     }
 
     async function downloadBugReports(){
@@ -5243,16 +5620,17 @@
         });
         files.push({name:"bug_reports.txt",data:enc.encode("﻿"+buildBugReportsText(reports))});
         files.push({name:"bug_reports.json",data:enc.encode(safeJsonDeep(jsonReports,2))});
-        const blob=zipStore(files);
+        const blob=zipStore(files); // se construye el blob ANTES de tocar el almacenamiento
         downloadBlob("DEO_bug_reports_"+SCRIPT_VERSION+"_"+stamp+".zip",blob);
-        saveBugReports([]); updateDebugButtonState();
-        log("Bug reports (ZIP) descargados ("+reports.length+"). Pendientes limpiados.");
+        // No se borran los reportes: se conservan para una posible segunda descarga; solo se detiene el halo.
+        bugReportsAcknowledged=true; updateDebugButtonState();
+        log("Bug reports (ZIP) descargados ("+reports.length+"). Se conservan en memoria para re-descarga; no se borran automáticamente.");
       }catch(e){
         recordError("bugReport.zip",e);
-        // Fallback: TXT plano si el ZIP falla.
+        // Fallback: TXT plano si el ZIP falla. Tampoco se borran los reportes.
         downloadText("DEO_bug_reports_"+SCRIPT_VERSION+"_"+stamp+".txt",buildBugReportsText(reports),"text/plain");
-        saveBugReports([]); updateDebugButtonState();
-        log("Bug reports (TXT fallback) descargados ("+reports.length+"). Pendientes limpiados.");
+        bugReportsAcknowledged=true; updateDebugButtonState();
+        log("Bug reports (TXT fallback) descargados ("+reports.length+"). Se conservan para re-descarga.");
       }
     }
 
