@@ -11,99 +11,148 @@ Extensión HTML/JavaScript para Trimble Connect 3D Viewer.
 
 ## Eficiencia de tokens
 
-Trabaja con eficiencia de tokens. No cargues más contexto del necesario. No hagas auditorías completas salvo que el usuario lo pida expresamente.
+Trabaja con eficiencia de tokens. No cargues más contexto del necesario. No hagas auditorías completas salvo que el usuario lo pida expresamente o la gravedad del fallo lo justifique.
 
-- Usa `rg` (ripgrep / Grep tool) para localizar ids, clases y funciones antes de abrir bloques grandes.
+### Lectura mínima del repositorio
+
+- Usa `rg` (ripgrep / Grep tool) para localizar ids, clases, constantes, listeners y funciones antes de abrir bloques grandes.
 - No uses `cat index.html` completo salvo que sea imprescindible.
 - Lee solo los bloques relacionados con la tarea.
 - Si el cambio afecta a un botón, revisa solo su HTML, CSS, listener y función asociada.
 - Si el cambio afecta a una herramienta, revisa solo esa herramienta y sus helpers directos.
 - Para revisar cambios recientes, usa `git diff`, no el archivo entero.
+- Para revisar una versión GPT, usa `rg` y `git diff --no-index` sobre archivos concretos; no abras toda la carpeta.
+- No leas `gpt_code/`, `old_code/` ni documentación si la tarea no lo requiere.
+
+### Edición mínima
+
 - No reescribas bloques completos si puedes aplicar un parche mínimo.
 - No hagas refactors grandes sin permiso.
+- No reformatees el archivo completo.
+- No cambies nombres de funciones, ids o estructuras si no es necesario.
 - Si el cambio toca más de 3 zonas funcionales, detente y pregunta antes de aplicar.
+- Prioriza cambios pequeños, localizados y verificables.
+- Si hay varias soluciones, elige la que modifique menos código siempre que no sacrifique estabilidad.
+
+### Herramientas y coste
+
+- Agrupa búsquedas relacionadas en pocos comandos `rg`.
+- Evita ejecutar comandos exploratorios repetidos sin hipótesis clara.
+- No lances subagentes ni flujos multiagente salvo que el usuario haya pedido `ultracode` o una auditoría profunda.
+- No generes informes largos si basta una respuesta breve.
+- No pegues bloques grandes de código en la respuesta final salvo petición expresa.
+- Ejecuta verificaciones estáticas necesarias, pero evita repetirlas si no ha habido cambios desde la última verificación.
+- Antes de subir el nivel de esfuerzo, intenta acotar el problema con búsquedas y diff.
+
+### Diagnóstico incremental
+
+- Primero identifica el bloque afectado.
+- Después revisa dependencias directas.
+- Solo si el problema no se explica con esas zonas, amplía el análisis.
+- Si faltan datos, pregunta antes de hacer una auditoría completa.
+- Si una tarea parece cara en tokens, propón dividirla en fases:
+  1. diagnóstico limitado;
+  2. parche mínimo;
+  3. verificación;
+  4. ampliación solo si falla.
 
 ---
 
-## Clasificación de tareas y modelo recomendado
+## Clasificación de tareas y nivel recomendado
 
-**Modelo por defecto: Sonnet 4.6, uso bajo.** No usar Fable como modelo habitual. Fable solo en dos casos: (a) tokens cerca de reiniciarse y hay que cerrar una tarea crítica; (b) consolidar versión estable final antes de un commit + push importante.
+Solo usar **Opus**. No recomendar ni usar Sonnet ni Fable en este proyecto.
 
-1. **UI simple** — Sonnet 4.6, uso bajo.
+Los niveles disponibles se tratan como niveles de dedicación/esfuerzo para Opus:
+
+- `baja` = `low`
+- `media` = `medium`
+- `alta` = `high`
+- `extra` = `xhigh`
+- `máxima` = `max`
+- `ultracode` = modo de Claude Code, no un nivel estándar de API; equivale a `xhigh` con permiso para flujos multiagente/subagentes.
+
+Regla general:
+- No asumir que más nivel siempre es mejor.
+- Elegir el nivel mínimo que mantenga fiabilidad.
+- Subir de nivel solo si la tarea lo justifica por riesgo, ambigüedad, tamaño, interacción entre herramientas o necesidad de exploración.
+- Si el usuario pide ahorrar créditos, priorizar `baja` o `media` y dividir la tarea en fases.
+- Si el usuario pide máxima fiabilidad o reparación crítica, usar `extra` o `máxima` según el caso.
+
+### Tabla de decisión
+
+1. **Consulta, redacción de prompt, comandos Git o explicación breve** — Opus, nivel `baja`.
+   Ejemplos: redactar prompt para Claude Code, preparar comandos PowerShell, explicar un flujo, revisar una instrucción corta.
+
+2. **UI simple** — Opus, nivel `baja`.
    Ejemplos: textos, márgenes, alineación, iconos, colores CSS, border-radius, hover, espaciados.
 
-2. **UI con comportamiento** — Sonnet 4.6, uso medio/alto.
-   Ejemplos: botones con listener, popovers, sliders, inputs dinámicos, selección/deselección, sticky/floating.
+3. **UI con comportamiento localizado** — Opus, nivel `media`.
+   Ejemplos: botón con listener, popover simple, slider, input dinámico, pequeña interacción de modal, ajuste de una zona concreta.
 
-3. **Código funcional localizado** — Sonnet 4.6, uso alto.
-   Ejemplos: funciones concretas, listeners, cachés locales, parsing, pequeñas reparaciones JS.
+4. **Código funcional localizado** — Opus, nivel `media` o `alta`.
+   Usar `media` si el bloque está claro y el riesgo es bajo.
+   Usar `alta` si hay asincronía, estado compartido, `localStorage`, listeners múltiples, cachés o interacción con el visor.
 
-4. **Lógica crítica Trimble** — Opus 4.8, uso alto/máximo.
+5. **Lógica crítica Trimble** — Opus, nivel `alta` o `extra`.
    Ejemplos: colores Trimble/Tekla/IFC, selección de objetos, API Trimble, etiquetas 3D, Quantity Surveyor, Configurar vista, export/import CSV, exportación masiva, ZIP, cachés globales.
+   Usar `alta` para cambios acotados.
+   Usar `extra` si el fallo es ambiguo, afecta a varias funciones o requiere búsqueda/depuración con herramientas.
 
-5. **Auditoría completa o depuración profunda** — Opus 4.8, uso máximo.
+6. **Depuración profunda o regresión difícil** — Opus, nivel `extra`.
+   Ejemplos: errores que aparecen solo en Trimble, estados inconsistentes, bugs intermitentes, interacción entre varias herramientas protegidas, análisis de logs/debug largos.
 
-6. **Versión estable final o cierre antes de reinicio de tokens** — Fable, uso máximo.
-   Solo usar si: queda poco para reinicio de tokens; hay que consolidar una versión estable; se va a hacer commit + push relevante; la tarea requiere máxima fiabilidad.
+7. **Auditoría completa, reparación estructural o fallo crítico** — Opus, nivel `máxima`.
+   Usar solo cuando:
+   - `extra` no sea suficiente;
+   - el cambio afecte a muchas zonas;
+   - haya riesgo alto de romper herramientas protegidas;
+   - se necesite la máxima capacidad aunque consuma más créditos.
 
-Si la tarea requiere un modelo superior al actual, detente antes de modificar archivos y di:
-> "Esta tarea debería hacerse con [modelo] y uso [nivel]. ¿Cambio de modelo antes de continuar?"
+8. **Ultracode** — Opus, modo `ultracode`.
+   Usar solo con permiso explícito del usuario para:
+   - auditoría/reparación multiárea larga;
+   - refactorización compleja autorizada;
+   - preparación final de versión estable con varias comprobaciones;
+   - tareas donde se justifique usar subagentes o exploración amplia.
+   No usar para UI, cambios localizados, prompts, comandos Git ni depuración intermedia.
 
-No recomendar Fable para UI, cambios localizados o depuración intermedia.
+### Regla antes de modificar archivos
+
+Antes de editar, evalúa:
+- alcance del cambio;
+- número de zonas funcionales;
+- riesgo para herramientas protegidas;
+- necesidad real de herramientas/subagentes;
+- coste estimado de tokens;
+- si puede resolverse con parche mínimo.
+
+Si la tarea requiere un nivel superior al que el usuario está usando o al que ha pedido, detente antes de modificar archivos y di:
+
+> "Esta tarea debería hacerse con Opus y nivel [baja/media/alta/extra/máxima/ultracode]. ¿Cambio de nivel antes de continuar?"
+
+Si el usuario ya ha indicado el nivel, respétalo salvo que sea claramente insuficiente o excesivo. Si es excesivo para una tarea simple, puedes sugerir bajar nivel para ahorrar créditos.
+
+### Revisión de documentación Anthropic
+
+La selección de nivel debe basarse en la documentación oficial actual de Anthropic sobre `effort` cuando esté disponible:
+- `low` prioriza velocidad y coste, con reducción de capacidad.
+- `medium` busca equilibrio entre coste y rendimiento.
+- `high` es el comportamiento por defecto de Opus y sirve para razonamiento/coding difícil.
+- `xhigh` está orientado a coding/agentes complejos y trabajo largo con más uso de tokens.
+- `max` se reserva para máxima capacidad, con coste alto y posibles ganancias marginales respecto a `xhigh`.
+- `ultracode` en Claude Code debe tratarse como modo especial, no como nivel de API.
+
+Si la documentación o la UI de Claude cambia, aplicar la regla conservadora:
+usar el nivel mínimo que permita resolver la tarea con seguridad y preguntar antes de escalar.
 
 ---
 
-## Regla de versionado
+## Regla obligatoria de versión
 
-El proyecto usa versiones con formato `vX.Y.Z`, donde:
-
-- `X` = versiones con incorporación de nuevas funciones, nuevas herramientas o cambios funcionales relevantes.
-- `Y` = versiones publicadas mediante push que corrigen errores, estabilizan funciones existentes o incorporan ajustes funcionales sin crear una herramienta nueva.
-- `Z` = versiones internas de trabajo, pruebas o correcciones locales sin push.
-
-### Reglas obligatorias
-
-1. Siempre que se modifique `index.html`, debe actualizarse `SCRIPT_VERSION`.
-
-2. Las versiones `Z` son versiones internas:
-   - pueden existir en local;
-   - pueden existir en `gpt_code/`;
-   - pueden usarse para pruebas previas;
-   - no deben publicarse como versión final mediante push;
-   - no deben generar entrada en `CHANGELOG.md`.
-
-3. Si una versión interna `vX.Y.Z` va a publicarse, debe convertirse antes en versión publicable:
-   - si incorpora nuevas funciones o herramientas, incrementar `X` y resetear `Y = 0`, `Z = 0`;
-   - si corrige errores o estabiliza funciones existentes, incrementar `Y` y resetear `Z = 0`.
-
-   Ejemplos:
-   - De `v8.10.43` a push por corrección de errores → `v8.11.0`.
-   - De `v8.10.43` a push por nueva función relevante → `v9.0.0`.
-   - De `v8.10.43` a nueva prueba interna sin push → `v8.10.44`.
-
-4. `CHANGELOG.md` solo se actualiza cuando la versión publicada modifica `X` o `Y`.
-   - Sí actualizar changelog: `v8.10.43` → `v8.11.0`.
-   - Sí actualizar changelog: `v8.10.43` → `v9.0.0`.
-   - No actualizar changelog: `v8.10.43` → `v8.10.44`.
-
-5. `old_code/` solo debe guardar copias de versiones publicadas o preparadas para publicación.
-   - No crear backup histórico para versiones internas `Z` salvo petición expresa.
-   - Antes de commit + push, crear copia exacta del `index.html` final en: `old_code/index_vX.Y.0.html`
-   - La versión del archivo de backup debe coincidir exactamente con `SCRIPT_VERSION`.
-
-6. La carpeta `gpt_code/` puede contener versiones internas con incremento `Z`.
-   - Al ejecutar el flujo `consulta nueva versión GPT`, se puede revisar la versión GPT más alta.
-   - Si esa versión solo incrementa `Z`, debe tratarse como versión de trabajo.
-   - Si el usuario pide push de esa versión, reclasificarla antes como incremento `X` o `Y`, según el contenido real de los cambios.
-
-7. Antes de decidir si una versión publicable sube `X` o `Y`, analizar la intención del diff:
-   - Nueva función, nueva herramienta, nuevo flujo principal o capacidad nueva → subir `X`.
-   - Corrección, ajuste, reparación, estabilización, mejora de UI o mejora interna de función existente → subir `Y`.
-   - Prueba local, ajuste previo, parche pendiente de validar o versión generada por ChatGPT no publicada → subir `Z`.
-
-8. Si hay duda entre `X` e `Y`, usar `Y` salvo que exista una función nueva clara.
-
-9. Si hay duda sobre publicar o no una versión `Z`, detenerse y preguntar antes de hacer commit + push.
+- Siempre que modifiques código, incrementa `SCRIPT_VERSION` en `index.html`.
+- Si solo analizas y no modificas código, no cambies versión.
+- Si modificas `index.html`, la versión debe subir aunque el cambio sea pequeño.
+- Antes de finalizar, confirma la versión resultante.
 
 ---
 
@@ -246,116 +295,3 @@ Si no se puede probar algo porque requiere Trimble abierto:
 - No hacer commits sin confirmación explícita del usuario.
 - No suponer comportamiento de Trimble Connect si no está visible en el código.
 - Marcar incertidumbres en vez de inventar.
-
----
-
-## Flujo: Consulta nueva versión GPT
-
-**Frases de activación** (ejecutar este flujo automáticamente al detectar cualquiera de ellas, o cualquier instrucción equivalente que haga referencia a revisar una versión GPT desde `gpt_code/`):
-
-- `consulta nueva version gpt`
-- `consulta nueva versión gpt`
-- `consulta gpt version`
-- `consulta gpt versión`
-- `revisa nueva version gpt`
-- `revisa nueva versión gpt`
-
-**Regla principal:** La carpeta `gpt_code/` es una bandeja de entrada de versiones o fragmentos generados por ChatGPT. Nunca copiar automáticamente un archivo de `gpt_code/` sobre `index.html`. Siempre localizar, comparar, evaluar y aplicar solo los cambios válidos mediante parche controlado.
-
-### 1. Comandos iniciales obligatorios
-
-Antes de analizar o modificar, ejecutar:
-
-```bash
-git status
-git diff --check
-git diff --stat
-```
-
-### 2. Selección de versión GPT
-
-Localizar versiones disponibles con:
-
-```bash
-rg "SCRIPT_VERSION|v[0-9]+\.[0-9]+\.[0-9]+" gpt_code
-```
-
-- Si el usuario indica una versión concreta (p. ej. `v8.10.43`), usar exclusivamente esa.
-- Si no indica versión, seleccionar automáticamente la versión semánticamente más alta.
-- Ignorar versiones anteriores salvo que el usuario las mencione expresamente.
-- Si hay varios archivos con la misma versión más alta, detenerse y mostrar la lista antes de modificar nada.
-- Si no se encuentra ninguna versión GPT válida, detenerse e indicarlo.
-
-### 3. Validación del archivo GPT seleccionado
-
-1. Verificar que contiene una declaración clara: `const SCRIPT_VERSION = "vX.Y.Z";`
-2. Verificar que esa versión es superior a la declarada en el `index.html` del repositorio.
-3. Si la versión GPT es igual o inferior, no aplicar sin confirmación explícita del usuario.
-
-### 4. Comparación
-
-- No sustituir el archivo completo sin evaluar el diff.
-- Identificar qué bloques cambia: HTML, CSS, JS, listeners, funciones, constantes o textos.
-- Evaluar si el cambio es coherente con la petición del usuario.
-- Descartar cambios colaterales no justificados.
-- No aceptar reformateos masivos, cambios de saltos de línea globales, cambios de indentación global ni reordenaciones no necesarias.
-- Si el cambio afecta a más de 3 zonas funcionales, detenerse y resumir riesgos antes de aplicar.
-
-### 5. Herramientas protegidas — verificar antes de aplicar
-
-Si el diff toca alguna de estas herramientas sin relación clara con la petición, no incorporar ese cambio:
-
-- Excluir de selección · Selector de items · Selección cercanos · Selección ocultos / Ver ocultos
-- Mostrar parámetros / Etiquetas 3D · Inspector de selección · Quantity Surveyor
-- Configurar vista / Compartir con chips/autocompletado
-- Exportación CSV / Importación CSV · Exportación masiva ZIP · Debug
-
-### 6. Aplicación
-
-- Aplicar al `index.html` real solo los cambios necesarios.
-- La versión final de `index.html` debe coincidir con la versión GPT incorporada.
-- Confirmar que `SCRIPT_VERSION` queda actualizado.
-- No modificar `README.md`, `CONTRIBUTING.md`, `manifest.json`, `assets` ni otros archivos salvo petición expresa.
-- No modificar `CHANGELOG.md` salvo que el trabajo vaya a terminar con commit + push.
-
-### 7. Carpeta `old_code/`
-
-La carpeta `old_code/` es el histórico de versiones publicadas. Solo crear copia cuando el usuario pida commit + push o indique expresamente que la versión se va a publicar:
-
-```
-old_code/index_vX.Y.Z.html
-```
-
-La copia debe coincidir exactamente con el `index.html` que se va a commitear. No crear copias de versiones descartadas.
-
-### 8. Carpeta `gpt_code/` — regla de commit
-
-La carpeta `gpt_code/` no se commitea por defecto. Solo sirve como entrada de revisión. No incluir archivos de `gpt_code/` en commits salvo orden expresa del usuario.
-
-### 9. Verificación posterior
-
-```bash
-git diff --check
-git diff --stat
-git status
-```
-
-### 10. Commit y push (solo si el usuario lo pide expresamente)
-
-- No hacer force push. No cambiar de rama automáticamente.
-- Rama `main`: `git push origin main`.
-- Incluir en el commit únicamente: `index.html`, `old_code/index_vX.Y.Z.html`, `CHANGELOG.md` (solo si procede), y otros archivos solo si el usuario lo ha pedido expresamente.
-
-### 11. Respuesta obligatoria tras ejecutar el flujo
-
-```
-Versión detectada en repositorio:
-Versión GPT consultada:
-Archivo GPT usado:
-Archivos modificados:
-Cambios incorporados:
-Cambios descartados:
-Verificación:
-Commit/push:
-Pendiente de probar en Trimble:
-```
