@@ -3,6 +3,21 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v8.14.0] — 2026-06-14
+
+Versión estable que consolida las mejoras de **Bug Report / Debug** y un conjunto de correcciones y ajustes de UI en **Configurar vista** y **Quantity Surveyor**. Publicado como incremento `Y`. Verificación estática (`node --check` del JS inline, `git diff --check`); **no probado en el visor de Trimble**.
+
+### Añadido / Mejorado
+
+* **Bug Report / Debug**: snapshot técnico ampliado (historial de acciones de usuario, última selección no vacía con bbox/propiedades, estado de UI, estado por herramienta, capacidades de la API, diagnóstico de descargas y de almacenamiento, identidad de código con hash del HTML). El TXT incluye un resumen legible y el detalle completo; el Debug grande también incorpora el snapshot común. Captura asistida con temporizador rediseñado (burbujas flotantes mover/cancelar, botón "Pegar ahora") y zona de pegado centrada con el modal atenuado detrás.
+
+### Corregido / UI
+
+* **Configurar vista**: fecha de hoy autocompletada al crear; autor unificado mostrando nombre legible (nunca el correo) en crear y actualizar; chips de Etiquetas y Compartir con borrables por teclado (Backspace/Delete); sugerencias de Compartir con posicionadas bajo el cuadro y mejor ordenadas.
+* **Configurar vista — layout responsive de textboxes**: los campos conservan su ancho mínimo y crecen de forma proporcional al ancho del panel; las filas Código/Ubicación/Nivel/Ejes y Fecha/Autor solo saltan de línea cuando no caben; ancho de Nivel suficiente para `N10-N100`.
+* **Quantity Surveyor**: toda el área del bloque recalcula al pulsar; copiar/limpiar no recalculan.
+* Icono del botón **Actualizar datos del visor**: orientación corregida.
+
 ## [v8.13.0] — 2026-06-13
 
 Incorpora la herramienta **Bug Report** en el panel Desarrollador y varios ajustes de UI. Publicado como incremento `Y`. Verificación estática (sin node en el equipo: comprobaciones equivalentes de ids/funciones duplicadas y balance de delimitadores); **no probado en el visor de Trimble**.

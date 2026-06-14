@@ -231,20 +231,26 @@
     .bug-timer-title { font-weight:bold; }
     .bug-timer-help { color:#cbd5e1; font-size:11px; }
     .bug-timer-count { min-width:30px; height:30px; padding:0 6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:15px; background:#1c7fd6; border-radius:6px; }
-    .bug-timer-move { width:22px; height:22px; min-width:22px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; cursor:pointer; line-height:0; display:none; align-items:center; justify-content:center; transition:transform .08s ease, background .15s ease; }
-    .bug-timer-bar:hover .bug-timer-move { display:flex; }
-    .bug-timer-move:hover { background:#1c7fd6; }
-    .bug-timer-move:active { transform:scale(.9); }
-    .bug-timer-move svg { width:13px; height:13px; display:block; }
-    .bug-timer-cancel { width:22px; height:22px; min-width:22px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; }
-    .bug-timer-cancel:hover { background:rgba(255,255,255,.3); }
-    /* Estado gris/desactivado al terminar la cuenta atrás (modo pegado) */
-    .bug-timer-bar.is-paste-mode { background:#4b5563; }
-    .bug-timer-bar.is-paste-mode .bug-timer-count { background:#6b7280; color:#d1d5db; }
-    .bug-timer-bar.is-paste-mode .bug-timer-title { color:#e5e7eb; }
-    .bug-timer-bar.is-paste-mode .bug-timer-help { color:#cbd5e1; }
-    .bug-timer-bar.is-paste-mode .bug-timer-cancel, .bug-timer-bar.is-paste-mode .bug-timer-move { display:none; }
-    /* Recuadro de pegado superpuesto sobre la barra gris */
+    /* Botón discreto inferior para saltar el temporizador y pasar directo a pegar */
+    .bug-timer-skip { align-self:center; margin-top:1px; padding:3px 12px; border:none; border-radius:6px; background:rgba(255,255,255,.12); color:#cbd5e1; font-size:11px; cursor:pointer; transition:transform .08s ease, background .15s ease, color .15s ease; }
+    .bug-timer-skip:hover { background:#1c7fd6; color:#fff; }
+    .bug-timer-skip:active { transform:scale(.94); }
+    /* Burbujas flotantes (mover/cancelar) fuera del cuadro, visibles al hover, con puente invisible */
+    .bug-timer-bubbles { position:absolute; right:4px; display:flex; gap:6px; opacity:0; pointer-events:none; transition:opacity .12s ease; }
+    .bug-timer-bar.is-top .bug-timer-bubbles { top:100%; margin-top:7px; }
+    .bug-timer-bar.is-bottom .bug-timer-bubbles { bottom:100%; margin-bottom:7px; }
+    .bug-timer-bubbles::after { content:""; position:absolute; left:-12px; right:-12px; height:10px; }
+    .bug-timer-bar.is-top .bug-timer-bubbles::after { bottom:100%; }
+    .bug-timer-bar.is-bottom .bug-timer-bubbles::after { top:100%; }
+    .bug-timer-bar:hover .bug-timer-bubbles, .bug-timer-bubbles:hover { opacity:1; pointer-events:auto; }
+    .bug-timer-bubble { width:26px; height:26px; min-width:26px; padding:0; border:none; border-radius:50%; background:rgba(31,41,55,.55); color:#fff; cursor:pointer; line-height:0; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.25); transition:transform .08s ease, background .15s ease; }
+    .bug-timer-bubble:hover { background:#1c7fd6; }
+    .bug-timer-bubble:active { transform:scale(.9); }
+    .bug-timer-bubble svg { width:14px; height:14px; display:block; }
+    /* Overlay de pegado centrado; el modal Bug Report queda sombreado y no seleccionable detrás */
+    .bug-assist-overlay { position:fixed; inset:0; z-index:10001; display:flex; align-items:center; justify-content:center; padding:14px; box-sizing:border-box; background:rgba(17,24,39,.35); }
+    .bug-assist-card { width:340px; max-width:100%; background:#1f2937; border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,.45); padding:12px; box-sizing:border-box; }
+    .bug-modal-overlay.is-paste-active .bug-modal { filter:grayscale(.4) brightness(.97); opacity:.5; pointer-events:none; }
     .bug-assist-paste { position:relative; }
     .bug-assist-box { min-height:56px; max-height:120px; overflow:auto; padding:10px; border:1.5px dashed #cbd5e1; border-radius:8px; background:rgba(255,255,255,.96); font-size:12px; color:#374151; outline:none; cursor:text; }
     .bug-assist-box:empty:before { content:attr(data-ph); color:#9ca3af; }
@@ -461,9 +467,9 @@
     #viewTemplateTool .tpl-level-control.has-head .tpl-level-prefix,
     #viewTemplateTool .tpl-level-control.has-tail .tpl-level-sep,
     #viewTemplateTool .tpl-level-control.has-tail .tpl-level-n2 { color:#111827; }
-    #viewTemplateTool .tpl-code-control .tpl-locked-input { width:2ch; text-transform:uppercase; }
-    #viewTemplateTool .tpl-level-control .tpl-level-head,
-    #viewTemplateTool .tpl-level-control .tpl-level-tail { width:2.4ch; text-align:left; }
+    #viewTemplateTool .tpl-code-control .tpl-locked-input { width:6ch; text-transform:uppercase; }
+    #viewTemplateTool .tpl-level-control .tpl-level-head { width:2.4ch; text-align:left; }
+    #viewTemplateTool .tpl-level-control .tpl-level-tail { width:3.4ch; text-align:left; }
     #viewTemplateTool .tpl-level-control:not(.show-sep) .tpl-level-sep,
     #viewTemplateTool .tpl-level-control:not(.show-sep) .tpl-level-tail { display:none; }
     #viewTemplateTool .tpl-level-control:not(.has-tail) .tpl-level-n2 { display:none; }
@@ -496,22 +502,45 @@
     #viewTemplateTool .tpl-date-hidden-input { position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; padding:0; margin:0; background:transparent; color:transparent; caret-color:transparent; }
     #viewTemplateTool .tpl-date-hidden-input:focus { outline:none; box-shadow:none; }
 
-    /* ===================== v8.10.43 ===================== */
-    /* Configurar vista: ancho base alineado con Etiquetas y wrap interno si el panel se estrecha. */
-    #viewTemplateTool { --tpl-view-line-width: 324px; }
+    /* ===================== v8.13.5 ===================== */
+    /* Configurar vista: filas responsive. Cada campo conserva su ancho mínimo (flex-basis)
+       y crece de forma proporcional a ese mínimo (flex-grow = mínimo). flex-shrink:0 => no
+       baja del mínimo y, cuando una fila no cabe, los campos saltan a una nueva fila (solo
+       cuando ya no caben). Las filas ocupan todo el ancho del panel, como Nombre de vista. */
     #viewTemplateTool .template-line-primary,
-    #viewTemplateTool .template-line-meta { width:min(100%, var(--tpl-view-line-width)); max-width:100%; flex-wrap:wrap; overflow:visible; padding-bottom:1px; }
-    #viewTemplateTool .template-line-primary .template-field,
-    #viewTemplateTool .template-line-meta .template-field { flex:0 0 auto; }
-    #viewTemplateTool .template-line-wide,
-    #viewTemplateTool .template-line-share .tpl-share-field { width:min(100%, var(--tpl-view-line-width)); }
+    #viewTemplateTool .template-line-meta { width:100%; max-width:100%; flex-wrap:wrap; overflow:visible; padding-bottom:1px; }
+    #viewTemplateTool .template-line-wide { width:100%; max-width:100%; overflow:visible; padding-bottom:1px; }
+    #viewTemplateTool .template-line-wide .template-field { flex:1 1 100%; min-width:0; }
+    #viewTemplateTool .template-line-wide input.tpl-autosize { width:100% !important; max-width:100%; }
+    #viewTemplateTool .template-line-share .tpl-share-field { flex:1 1 100%; min-width:0; width:100%; max-width:100%; }
+    #viewTemplateTool .template-line-share .tpl-token-box { width:100%; max-width:100%; }
+
+    /* Campos de las filas multi-campo: el control/input interno llena el campo crecido. */
+    #viewTemplateTool .template-line-primary > .template-field,
+    #viewTemplateTool .template-line-meta > .template-field { min-width:0; box-sizing:border-box; }
+    #viewTemplateTool .template-line-primary > .template-field > .tpl-locked-control,
+    #viewTemplateTool .template-line-meta > .template-field > .tpl-locked-control { width:100%; max-width:100%; }
+    #viewTemplateTool .template-line-primary > .template-field input.tpl-autosize,
+    #viewTemplateTool .template-line-meta > .template-field input.tpl-autosize { width:100% !important; max-width:100%; }
+
+    /* Fila Código / Ubicación / Nivel / Ejes (flex-grow proporcional al mínimo en px). */
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(1) { flex:86 0 86px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(2) { flex:62 0 62px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(3) { flex:76 0 76px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(4) { flex:66 0 66px; }
+
+    /* Fila Fecha / Autor (Etiquetas salta a su propia línea, ancho completo). */
+    #viewTemplateTool .template-line-meta > .template-field:nth-child(1) { flex:79 0 79px; }
+    #viewTemplateTool .template-line-meta > .template-field:nth-child(2) { flex:88 0 88px; }
+    #viewTemplateTool .template-line-meta > .tpl-label-field { flex:1 1 100%; min-width:0; }
+    #viewTemplateTool .template-line-meta > .tpl-label-field .tpl-token-box { width:100%; }
 
   </style>
 </head>
 <body>
 
   <div class="global-refresh-bar">
-    <button id="globalViewerRefresh" class="global-refresh-float" type="button" title="Actualizar datos del visor" aria-label="Actualizar datos del visor"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(-90,12,12)" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></button>
+    <button id="globalViewerRefresh" class="global-refresh-float" type="button" title="Actualizar datos del visor" aria-label="Actualizar datos del visor"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="translate(24,0) scale(-1,1) rotate(-90,12,12)" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></button>
   </div>
 
   <details>
@@ -770,9 +799,9 @@
             <div class="tpl-block">
               <div class="template-grid">
                 <div class="template-line template-line-primary">
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="65"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplNew_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
-                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" data-min-px="103" placeholder=""></div>
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplNew" data-min-px="47"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplNew_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplNew_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"></div></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="86"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplNew_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" data-min-px="62" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplNew" data-min-px="76"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplNew_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplNew_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="3"></div></div>
                   <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" data-min-px="66" placeholder=""></div>
                 </div>
                 <div class="template-line template-line-secondary template-line-wide">
@@ -782,8 +811,8 @@
                   <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_task">Actuación</label><input type="text" id="tplNew_task" class="tpl-autosize" data-min-ch="42" data-min-px="242" placeholder=""></div>
                 </div>
                 <div class="template-line template-line-meta">
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_date">Fecha</label><div class="tpl-locked-control tpl-date-control" data-scope="tplNew" data-min-px="76"><span class="tpl-date-visual" id="tplNew_date_visual">dd-mm-aaaa</span><input type="text" id="tplNew_date" class="tpl-date-hidden-input" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="8" aria-label="Fecha"></div></div>
-                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="12" data-min-px="54" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_date">Fecha</label><div class="tpl-locked-control tpl-date-control" data-scope="tplNew" data-min-px="79"><span class="tpl-date-visual" id="tplNew_date_visual">dd-mm-aaaa</span><input type="text" id="tplNew_date" class="tpl-date-hidden-input" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="8" aria-label="Fecha"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_author">Autor</label><input type="text" id="tplNew_author" class="tpl-autosize" data-min-ch="13" data-min-px="88" placeholder=""></div>
                   <div class="template-field tpl-medium tpl-autofit tpl-label-field"><label for="cvNew_labelsEntry" id="cvNew_labelsLabel">Etiquetas (0)</label><div class="tpl-token-box tpl-label-box" id="cvNew_labelsBox"><div id="cvNew_labelsTokens" class="tpl-tokens"></div><input type="text" id="cvNew_labelsEntry" placeholder="Añadir etiquetas" autocomplete="off"></div><input type="hidden" id="cvNew_labels" value=""><div id="cvNew_labelsSuggest" class="tpl-suggest"></div></div>
                 </div>
                 <div class="template-line template-line-share">
@@ -805,9 +834,9 @@
               <div class="hint" id="tplUpdateParseInfo"></div>
               <div class="template-grid">
                 <div class="template-line template-line-primary">
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="65"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplUpd_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
-                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" data-min-px="103" placeholder=""></div>
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplUpd" data-min-px="47"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplUpd_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplUpd_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"></div></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="86"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplUpd_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" data-min-px="62" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplUpd" data-min-px="76"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplUpd_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplUpd_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="3"></div></div>
                   <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" data-min-px="66" placeholder=""></div>
                 </div>
                 <div class="template-line template-line-secondary template-line-wide">
@@ -817,8 +846,8 @@
                   <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_task">Actuación</label><input type="text" id="tplUpd_task" class="tpl-autosize" data-min-ch="42" data-min-px="242" placeholder=""></div>
                 </div>
                 <div class="template-line template-line-meta">
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_date">Fecha</label><div class="tpl-locked-control tpl-date-control" data-scope="tplUpd" data-min-px="76"><span class="tpl-date-visual" id="tplUpd_date_visual">dd-mm-aaaa</span><input type="text" id="tplUpd_date" class="tpl-date-hidden-input" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="8" aria-label="Fecha"></div></div>
-                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="12" data-min-px="54" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_date">Fecha</label><div class="tpl-locked-control tpl-date-control" data-scope="tplUpd" data-min-px="79"><span class="tpl-date-visual" id="tplUpd_date_visual">dd-mm-aaaa</span><input type="text" id="tplUpd_date" class="tpl-date-hidden-input" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="8" aria-label="Fecha"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_author">Autor</label><input type="text" id="tplUpd_author" class="tpl-autosize" data-min-ch="13" data-min-px="88" placeholder=""></div>
                   <div class="template-field tpl-medium tpl-autofit tpl-label-field"><label for="cvUpd_labelsEntry" id="cvUpd_labelsLabel">Etiquetas (0)</label><div class="tpl-token-box tpl-label-box" id="cvUpd_labelsBox"><div id="cvUpd_labelsTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_labelsEntry" placeholder="Añadir etiquetas" autocomplete="off"></div><input type="hidden" id="cvUpd_labels" value=""><div id="cvUpd_labelsSuggest" class="tpl-suggest"></div></div>
                 </div>
                 <div class="template-line template-line-share">
@@ -918,7 +947,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.13.2";
+    const SCRIPT_VERSION = "v8.14.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -968,6 +997,49 @@
     const setProgress=(t)=>{ const el=document.getElementById("progress"); if(el) el.textContent=t; };
     function showCancel(on){ const el=document.getElementById("cancelOp"); if(el) el.style.display=on?"inline-block":"none"; }
     function recordError(ctx,err){ errorHistory.push({ts:new Date().toISOString(),ctx,message:err&&err.message?err.message:String(err),stack:err&&err.stack?String(err.stack).slice(0,2000):""}); if(errorHistory.length>80) errorHistory.shift(); }
+
+    // ===================== DIAGNÓSTICO (Bug Report / Debug) =====================
+    // Historial circular de acciones del usuario (ligero; nunca objetos grandes).
+    const USER_ACTION_MAX=150;
+    const userActionHistory=[];
+    function recordUserAction(type,data){
+      try{
+        const entry={ts:new Date().toISOString(),type:String(type||"")};
+        if(data&&typeof data==="object"){
+          const small={};
+          for(const k of Object.keys(data)){ let v=data[k]; if(typeof v==="string"){ if(v.length>120) v=v.slice(0,120)+"…"; } else if(v&&typeof v==="object"){ try{ v=JSON.stringify(v).slice(0,160); }catch(e){ v="[obj]"; } } small[k]=v; }
+          entry.data=small;
+        } else if(data!=null){ const v=String(data); entry.data=v.length>120?v.slice(0,120)+"…":v; }
+        userActionHistory.push(entry);
+        if(userActionHistory.length>USER_ACTION_MAX) userActionHistory.shift();
+      }catch(e){ /* el registro nunca debe romper la app */ }
+    }
+    // Última selección no vacía (resumen ligero, sin pedir props/bbox en cada evento).
+    let lastNonEmptySelectionSnapshot=null;
+    function noteSelectionSnapshot(sel){
+      try{
+        if(!Array.isArray(sel)||!sel.length) return;
+        const byModel={};
+        for(const s of sel){ const m=s&&s.modelId; if(m==null) continue; byModel[m]=(byModel[m]||0)+1; }
+        lastNonEmptySelectionSnapshot={ts:new Date().toISOString(),total:sel.length,byModel,sample:sel.slice(0,20)};
+      }catch(e){}
+    }
+    // Diagnóstico de descargas (no cambia el comportamiento; solo registra la última).
+    let lastDownloadDiagnostics=null;
+    function noteDownload(fn,filename,type,size,clicked,ctx){
+      try{ lastDownloadDiagnostics={ts:new Date().toISOString(),fn,filename,type:type||"",size:(typeof size==="number"?size:null),clicked:!!clicked,ctx:ctx||null}; recordUserAction("download",{fn,filename,size:(typeof size==="number"?size:null)}); }catch(e){}
+    }
+    // Hash no criptográfico (FNV-1a 32 bits) para identificar el HTML/script cargado.
+    function simpleHash32(str){ try{ let h=0x811c9dc5; const s=String(str||""); for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0; } return ("00000000"+h.toString(16)).slice(-8); }catch(e){ return "n/a"; } }
+    // Captura no invasiva de clicks/cambios/aperturas sin tocar las herramientas protegidas.
+    function wireUserActionTracking(){
+      try{
+        document.addEventListener("click",(ev)=>{ const b=ev.target&&ev.target.closest&&ev.target.closest("button, summary"); if(!b) return; recordUserAction("click",{id:b.id||"",txt:String(b.textContent||b.getAttribute("aria-label")||b.title||"").trim().slice(0,40)}); },true);
+        document.addEventListener("change",(ev)=>{ const el=ev.target; if(!el||!el.id) return; const val=(el.type==="checkbox")?!!el.checked:String(el.value||"").slice(0,40); recordUserAction("change",{id:el.id,val}); },true);
+        document.addEventListener("toggle",(ev)=>{ const el=ev.target; if(!el||el.tagName!=="DETAILS") return; recordUserAction("details",{id:el.id||"",summary:String((el.querySelector("summary")||{}).textContent||"").trim().slice(0,40),open:!!el.open}); },true);
+      }catch(e){ recordError("wireUserActionTracking",e); }
+    }
+    wireUserActionTracking();
     // v8.10.0: captura global de errores no controlados para que aparezcan en el debug (lista limitada por recordError).
     if(typeof window!=="undefined"){
       window.addEventListener("error",(ev)=>{ try{ recordError("window.onerror",(ev&&ev.error)||{message:(ev&&ev.message)||"error",stack:(ev&&ev.filename)?(ev.filename+":"+ev.lineno+":"+ev.colno):""}); }catch(e){} });
@@ -1017,7 +1089,7 @@
     }
     function safeJsonDeep(v,sp){ try{ return JSON.stringify(debugSanitize(v),null,sp||0); }catch(e){ return "[debugSerialize fallo: "+e.message+"]"; } }
     function formatETA(sec){ if(!isFinite(sec)||sec<0) return "calculando..."; sec=Math.round(sec); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
-    function downloadText(filename,text,mime){ const blob=new Blob(["\uFEFF"+text],{type:(mime||"text/csv")+";charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+    function downloadText(filename,text,mime){ const blob=new Blob(["\uFEFF"+text],{type:(mime||"text/csv")+";charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; let clicked=false; try{ a.click(); clicked=true; }finally{ noteDownload("downloadText",filename,blob.type,blob.size,clicked); } URL.revokeObjectURL(a.href); }
     function sanitizeFilename(name){ return String(name||"").replace(/[\\/:*?"<>|]+/g,"_").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,"").slice(0,120); }
     function extractRevisionCode(text){ const m=String(text||"").match(/RFI[_\-\s]*\d+/i); return m?m[0].replace(/[\-\s]/g,"_").toUpperCase():""; }
 
@@ -1324,7 +1396,7 @@
     function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
     function getParamValue(p,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; if(target==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
     async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
-    async function safeGetSelection(){ if(!API||!API.viewer) return []; let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } return out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); }
+    async function safeGetSelection(){ if(!API||!API.viewer) return []; let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } const res=out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); noteSelectionSnapshot(res); return res; }
     // v8.10.0: ¿hay una vista guardada activa? Heurística defensiva — getCurrentView devuelve un objeto con id
     // cuando el usuario tiene cargada una vista guardada. INCERTIDUMBRE: si la API de Trimble no distinguiera
     // navegación libre de vista guardada, las etiquetas 3D se deshabilitan de más, nunca de menos
@@ -1435,7 +1507,7 @@
       }
       return out;
     }
-    function downloadBlob(filename,blob){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
+    function downloadBlob(filename,blob){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; let clicked=false; try{ a.click(); clicked=true; }finally{ noteDownload("downloadBlob",filename,blob&&blob.type,blob&&blob.size,clicked); } setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
     // ETA por media móvil del tiempo por elemento (vista/archivo).
     function makeEta(total){ let done=0,sum=0,last=(typeof performance!=="undefined"&&performance.now)?performance.now():Date.now(); return { tick(){ const now=(typeof performance!=="undefined"&&performance.now)?performance.now():Date.now(); sum+=now-last; last=now; done++; const avg=sum/Math.max(1,done); return {done,total,etaSec:Math.max(0,total-done)*avg/1000}; } }; }
     function fmtClock(sec){ if(!isFinite(sec)||sec<0) return "--:--"; sec=Math.round(sec); const m=Math.floor(sec/60),s=sec%60; return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
@@ -2878,7 +2950,7 @@
       const ctrl=el.closest(".tpl-code-control");
       applyLockedMinWidth(ctrl);
       if(ctrl) ctrl.classList.toggle("has-value",!!clean);
-      const len=Math.max(1,Math.min(26,clean.length||1));
+      const len=Math.max(6,Math.min(26,clean.length));
       el.style.width=(len+1)+"ch";
     }
     function syncLevelControl(scope){
@@ -2887,7 +2959,7 @@
       if(!ctrl) return;
       applyLockedMinWidth(ctrl);
       if(h){ const v=levelDigitsFromValue(h.value).slice(0,2); if(h.value!==v) h.value=v; }
-      if(t){ const v=levelDigitsFromValue(t.value).slice(0,2); if(t.value!==v) t.value=v; }
+      if(t){ const v=levelDigitsFromValue(t.value).slice(0,3); if(t.value!==v) t.value=v; }
       const head=String(h&&h.value||""), tail=String(t&&t.value||"");
       ctrl.classList.toggle("has-head",!!head);
       ctrl.classList.toggle("show-sep",head.length>=2);
@@ -3117,19 +3189,40 @@
       // Fallback razonable: si la API no expone usuario activo, no se inventa; solo se usa si hay un único miembro.
       if(templateProjectMembers.length===1) templateCurrentUser=templateProjectMembers[0].raw;
     }
-    function autoAuthorValue(){
-      const u=templateCurrentUser||{};
-      const raw=String(u.name||u.fullName||u.displayName||userDisplayName(u)||u.email||u.lastName||u.familyName||"").trim();
+    // Autor unificado (Crear/Actualizar): convierte cualquier fuente a nombre legible en MAYÚSCULAS.
+    // Email solo como último recurso, transformando la parte previa a @ en nombre (nunca se muestra el correo crudo).
+    let lastAuthorSourceDiag=null;
+    function humanizeAuthorString(raw){
+      raw=String(raw||"").trim();
       if(!raw) return "";
       if(raw.includes("@")) return raw.split("@")[0].replace(/[._-]+/g," ").trim().toUpperCase();
       return raw.toUpperCase();
+    }
+    function autoAuthorValue(){
+      const u=templateCurrentUser||{};
+      const full=String(u.fullName||"").trim();
+      const name=String(u.name||"").trim();
+      const disp=String(u.displayName||"").trim();
+      const composed=[u.firstName,u.lastName].filter(Boolean).join(" ").trim();
+      let raw="", src="none";
+      if(full){ raw=full; src="fullName"; }
+      else if(disp){ raw=disp; src="displayName"; }
+      else if(name){ raw=name; src="name"; }
+      else if(composed){ raw=composed; src="firstName+lastName"; }
+      else { const dn=String(userDisplayName(u)||"").trim(); if(dn && !dn.includes("@")){ raw=dn; src="userDisplayName"; } }
+      if(!raw){ const email=String(u.email||u.username||"").trim(); if(email){ raw=email; src="email→nombre"; } }
+      lastAuthorSourceDiag={ scope:"active-user", source:src, rawHadAt:String(raw).includes("@"), ts:new Date().toISOString() };
+      return humanizeAuthorString(raw);
     }
     function ensureScopeAutoFields(scope){
       const a=tplEl(scope,"author");
       if(a&&!String(a.value||"").trim()){ const v=autoAuthorValue(); if(v) a.value=v; }
       updateScopePreview(scope);
     }
-    function ensureCreateAutoFields(){ ensureScopeAutoFields("tplNew"); }
+    // Fecha de hoy (dd-mm-aaaa) autocompletada solo en "Crear nueva vista" y solo si está vacía.
+    function todayDateDigits(){ const d=new Date(); return String(d.getDate()).padStart(2,"0")+String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).padStart(4,"0"); }
+    function ensureCreateDate(){ const el=document.getElementById("tplNew_date"); if(el && !dateDigitsFromValue(el.value)){ setDateDigits("tplNew",todayDateDigits()); updateScopePreview("tplNew"); } }
+    function ensureCreateAutoFields(){ ensureScopeAutoFields("tplNew"); ensureCreateDate(); }
     function getShareTokens(){ return shareTokens.slice(); }
     function setShareTokens(list){
       const seen=new Set(); shareTokens=[];
@@ -3188,15 +3281,21 @@
       const hidden=cvShareHidden(scope); if(hidden) hidden.value=arr.join(", ");
       const label=cvShareLabelEl(scope); if(label) label.textContent="Compartir con ("+arr.length+")";
       const box=cvShareTokensEl(scope); if(!box) return; box.innerHTML="";
-      arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; const txt=document.createElement("span"); txt.textContent=shareTokenLabel(v); const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvShareTokenState[scope]||[]).splice(idx,1); cvRenderShareTokens(scope); }; chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
+      arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; chip.tabIndex=0; const txt=document.createElement("span"); txt.textContent=shareTokenLabel(v); const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvShareTokenState[scope]||[]).splice(idx,1); cvRenderShareTokens(scope); }; chip.addEventListener("keydown",(ev)=>{ if(ev.key==="Backspace"||ev.key==="Delete"){ ev.preventDefault(); (cvShareTokenState[scope]||[]).splice(idx,1); cvRenderShareTokens(scope); const inp=cvShareEntryEl(scope); if(inp) inp.focus(); } }); chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
     }
     function cvAddShareToken(scope,v){ const token=String(v||"").trim(); if(!token) return; cvSetShareTokens(scope,cvGetShareTokens(scope).concat([token])); const input=cvShareEntryEl(scope); if(input) input.value=""; cvHideShareSuggest(scope); }
+    function cvActiveUserDomain(){ try{ const u=templateCurrentUser||{}; const email=String(u.email||u.username||"").toLowerCase(); const at=email.indexOf("@"); return at>=0?email.slice(at+1):""; }catch(e){ return ""; } }
+    // Orden: 1) coincidencia directa (empieza por el término), 2) mismo dominio del usuario activo, 3) resto alfabético.
     function cvShareSuggestions(scope,q){
       const term=String(q||"").trim().toLowerCase(); if(!term) return [];
       const used=new Set(cvGetShareTokens(scope).map((x)=>x.toLowerCase()));
-      return templateProjectMembers.filter((m)=>!used.has((m.email||m.name||"").toLowerCase())&&((m.name||"").toLowerCase().includes(term)||(m.email||"").toLowerCase().includes(term))).slice(0,8);
+      const myDomain=cvActiveUserDomain();
+      const matches=templateProjectMembers.filter((m)=>!used.has((m.email||m.name||"").toLowerCase())&&((m.name||"").toLowerCase().includes(term)||(m.email||"").toLowerCase().includes(term)));
+      const rankOf=(m)=>{ const name=(m.name||"").toLowerCase(), email=(m.email||"").toLowerCase(); if(name.startsWith(term)||email.startsWith(term)) return 0; if(myDomain && email.endsWith("@"+myDomain)) return 1; return 2; };
+      matches.sort((a,b)=>{ const ra=rankOf(a), rb=rankOf(b); if(ra!==rb) return ra-rb; return String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),"es"); });
+      return matches.slice(0,8);
     }
-    function cvPositionShareSuggest(scope){ const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(220,r.width)+"px"; }
+    function cvPositionShareSuggest(scope){ const box=document.getElementById(scope+"_shareBox")||cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!box||!sug) return; const r=box.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(220,r.width)+"px"; }
     function cvHideShareSuggest(scope){ const sug=cvShareSuggestEl(scope); if(sug) sug.style.display="none"; }
     function cvShowShareSuggest(scope){
       const input=cvShareEntryEl(scope), sug=cvShareSuggestEl(scope); if(!input||!sug) return;
@@ -3209,9 +3308,10 @@
       const input=cvShareEntryEl(scope); if(!input) return;
       input.addEventListener("input",()=>cvShowShareSuggest(scope));
       input.addEventListener("focus",()=>cvShowShareSuggest(scope));
-      input.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_shareSuggest .tpl-suggest-item"); const sug=cvShareSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddShareToken(scope,input.value); } else if(ev.key==="Escape") cvHideShareSuggest(scope); });
+      input.addEventListener("keydown",(ev)=>{ if((ev.key==="Backspace"||ev.key==="Delete") && String(input.value||"")===""){ const arr=cvShareTokenState[scope]||[]; if(arr.length){ ev.preventDefault(); arr.pop(); cvRenderShareTokens(scope); cvHideShareSuggest(scope); } return; } if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_shareSuggest .tpl-suggest-item"); const sug=cvShareSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddShareToken(scope,input.value); } else if(ev.key==="Escape") cvHideShareSuggest(scope); });
       input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddShareToken(scope,input.value); cvHideShareSuggest(scope); },180); });
       window.addEventListener("resize",()=>cvPositionShareSuggest(scope));
+      window.addEventListener("scroll",()=>{ const sug=cvShareSuggestEl(scope); if(sug&&sug.style.display!=="none") cvPositionShareSuggest(scope); },true);
       cvRenderShareTokens(scope);
     }
 
@@ -3235,7 +3335,7 @@
       const hidden=cvLabelsHidden(scope); if(hidden) hidden.value=arr.join(", ");
       const label=cvLabelsLabelEl(scope); if(label) label.textContent="Etiquetas ("+arr.length+")";
       const box=cvLabelsTokensEl(scope); if(!box) return; box.innerHTML="";
-      arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; const txt=document.createElement("span"); txt.textContent=v; const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvLabelTokenState[scope]||[]).splice(idx,1); cvRenderLabelTokens(scope); }; chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
+      arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; chip.tabIndex=0; const txt=document.createElement("span"); txt.textContent=v; const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvLabelTokenState[scope]||[]).splice(idx,1); cvRenderLabelTokens(scope); }; chip.addEventListener("keydown",(ev)=>{ if(ev.key==="Backspace"||ev.key==="Delete"){ ev.preventDefault(); (cvLabelTokenState[scope]||[]).splice(idx,1); cvRenderLabelTokens(scope); const inp=cvLabelsEntryEl(scope); if(inp) inp.focus(); } }); chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
     }
     function cvExistingLabels(){
       const labels=new Set();
@@ -3260,7 +3360,7 @@
       const used=new Set(cvGetLabelTokens(scope).map((x)=>x.toLowerCase()));
       return cvExistingLabels().filter((x)=>!used.has(x.toLowerCase())&&x.toLowerCase().includes(term)).slice(0,8);
     }
-    function cvPositionLabelSuggest(scope){ const input=cvLabelsEntryEl(scope), sug=cvLabelsSuggestEl(scope); if(!input||!sug) return; const r=input.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(170,r.width)+"px"; }
+    function cvPositionLabelSuggest(scope){ const box=document.getElementById(scope+"_labelsBox")||cvLabelsEntryEl(scope), sug=cvLabelsSuggestEl(scope); if(!box||!sug) return; const r=box.getBoundingClientRect(); sug.style.left=r.left+"px"; sug.style.top=(r.bottom+2)+"px"; sug.style.width=Math.max(170,r.width)+"px"; }
     function cvHideLabelSuggest(scope){ const sug=cvLabelsSuggestEl(scope); if(sug) sug.style.display="none"; }
     function cvShowLabelSuggest(scope){
       const input=cvLabelsEntryEl(scope), sug=cvLabelsSuggestEl(scope); if(!input||!sug) return;
@@ -3273,9 +3373,10 @@
       const input=cvLabelsEntryEl(scope); if(!input) return;
       input.addEventListener("input",()=>cvShowLabelSuggest(scope));
       input.addEventListener("focus",()=>cvShowLabelSuggest(scope));
-      input.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_labelsSuggest .tpl-suggest-item"); const sug=cvLabelsSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddLabelToken(scope,input.value); } else if(ev.key==="Escape") cvHideLabelSuggest(scope); });
+      input.addEventListener("keydown",(ev)=>{ if((ev.key==="Backspace"||ev.key==="Delete") && String(input.value||"")===""){ const arr=cvLabelTokenState[scope]||[]; if(arr.length){ ev.preventDefault(); arr.pop(); cvRenderLabelTokens(scope); cvHideLabelSuggest(scope); } return; } if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_labelsSuggest .tpl-suggest-item"); const sug=cvLabelsSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddLabelToken(scope,input.value); } else if(ev.key==="Escape") cvHideLabelSuggest(scope); });
       input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddLabelToken(scope,input.value); cvHideLabelSuggest(scope); },180); });
       window.addEventListener("resize",()=>cvPositionLabelSuggest(scope));
+      window.addEventListener("scroll",()=>{ const sug=cvLabelsSuggestEl(scope); if(sug&&sug.style.display!=="none") cvPositionLabelSuggest(scope); },true);
       cvRenderLabelTokens(scope);
     }
     function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
@@ -3364,7 +3465,13 @@
       if(Array.isArray(cands)) return cands.map((x)=> typeof x==="string"?x:((x&&(x.name||x.label||x.value))||"") ).filter(Boolean).join(", ");
       return String(cands||"");
     }
-    function cvViewAuthor(view){ const a=view&&(view.author||view.createdBy||view.owner||view.creator); if(!a) return ""; return typeof a==="string"?a:String(a.name||a.displayName||a.email||""); }
+    function cvViewAuthor(view){
+      const a=view&&(view.author||view.createdBy||view.owner||view.creator); if(!a) return "";
+      const raw=(typeof a==="string")?a:String(a.fullName||a.name||a.displayName||a.email||"");
+      const src=(typeof a==="string")?"view.string":(a.fullName?"view.fullName":(a.name?"view.name":(a.displayName?"view.displayName":(a.email?"view.email→nombre":"view.unknown"))));
+      lastAuthorSourceDiag={ scope:"tplUpd", source:src, rawHadAt:String(raw).includes("@"), ts:new Date().toISOString() };
+      return humanizeAuthorString(raw);
+    }
     function cvSet(id,val){ const el=document.getElementById(id); if(el) el.value=val||""; }
     function cvLoadSelectedView(){
       const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo");
@@ -3440,6 +3547,7 @@
           if(v){ an.value=normalizeTplValue("author",v); tplAutosizeInput(an); updateScopePreview(scope); }
         }
       }
+      ensureCreateDate();
       cvRenderShareTokens("cvNew"); cvRenderShareTokens("cvUpd"); cvRenderLabelTokens("cvNew"); cvRenderLabelTokens("cvUpd");
       await populateUpdateViews();
       await cvPreloadCurrentView();
@@ -3987,7 +4095,7 @@
       const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
       document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")) hideQuickColorPopover(); });
       const quantBtn=document.getElementById("quantifyBtn"); if(quantBtn) quantBtn.onclick=(ev)=>{ ev.stopPropagation(); quantifySelection(); };
-      const quantBlock=document.getElementById("quantifyBlock"); if(quantBlock) quantBlock.addEventListener("click",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear,#quantifyResult")) return; quantifySelection(); });
+      const quantBlock=document.getElementById("quantifyBlock"); if(quantBlock) quantBlock.addEventListener("click",(ev)=>{ if(ev.target.closest("#quantifyCopy,#quantifyClear")) return; quantifySelection(); });
       const quantCopy=document.getElementById("quantifyCopy"); if(quantCopy) quantCopy.onclick=(ev)=>{ ev.stopPropagation(); quantCopyToClipboard(); };
       const quantClearBtn=document.getElementById("quantifyClear"); if(quantClearBtn) quantClearBtn.onclick=(ev)=>{ ev.stopPropagation(); quantClear(); };
       const p1=document.getElementById("qsParam1"); if(p1) p1.addEventListener("change",()=>populateQuickValueFromCache("qsParam1","qsValue1"));
@@ -4171,7 +4279,7 @@
       await initTemplateTool();
       updateCsvColumnSelect();
 
-      document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; try{ if(document.getElementById("extendedExport").checked) await exportMassive(); else await exportActiveView(); }catch(err){ recordError("export",err); log("ERROR: "+err.message); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
+      document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; const massive=document.getElementById("extendedExport").checked; recordUserAction("exportStart",{massive}); try{ if(massive) await exportMassive(); else await exportActiveView(); recordUserAction("exportEnd",{massive,ok:true}); }catch(err){ recordError("export",err); log("ERROR: "+err.message); recordUserAction("exportEnd",{massive,ok:false}); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
       document.getElementById("debug").onclick=async (ev)=>{ if(ev){ ev.stopPropagation(); } try{ if(bugReportsCount()>0){ await downloadBugReports(); } else { await exportDebug(); } }catch(err){ recordError("debug",err); log("ERROR DEBUG: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; cancelRequested=false; showImportCancel(true); try{ const expanded=await expandImportInputs(files); if(!expanded.length){ log("No se han encontrado CSV para importar (revisa el ZIP o los archivos)."); setProgress("Sin CSV que importar."); return; } await importCsvFiles(expanded); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showImportCancel(false); showCancel(false); } };
@@ -4220,6 +4328,131 @@
       d("hidden",()=>typeof lastHiddenDiag!=="undefined"?lastHiddenDiag:undefined);
       d("colorFallback",()=>typeof lastColorFallbackDiag!=="undefined"?lastColorFallbackDiag:undefined);
       snap.diagnostics=diag;
+
+      // ===== Ampliaciones de diagnóstico (Fase 0) =====
+      snap.userActionHistory=userActionHistory.slice(-USER_ACTION_MAX);
+      // Última selección no vacía + enriquecimiento limitado (hasta 3 objetos) si la API está disponible.
+      try{
+        const base=lastNonEmptySelectionSnapshot?JSON.parse(JSON.stringify(lastNonEmptySelectionSnapshot)):null;
+        if(base){
+          const sample=(base.sample||[]).slice(0,3); const enriched=[];
+          for(const s of sample){
+            const e={modelId:s.modelId,runtimeId:s.runtimeId};
+            try{ if(API&&API.viewer&&API.viewer.getObjectBoundingBoxes){ const bxs=await API.viewer.getObjectBoundingBoxes(s.modelId,[s.runtimeId]); e.bbox=(bxs&&bxs[0])?(typeof bboxOf==="function"?bboxOf(bxs[0]):bxs[0]):null; } }catch(err){ e.bboxError=err&&err.message; }
+            try{ if(API&&API.viewer&&API.viewer.getObjectProperties){ const pr=await API.viewer.getObjectProperties(s.modelId,[s.runtimeId]); const p=pr&&pr[0]?pr[0]:null; if(p){ e.propsClass=p.class; if(typeof findProductName==="function") e.productName=findProductName(p); } } }catch(err){ e.propsError=err&&err.message; }
+            enriched.push(e);
+          }
+          base.enriched=enriched;
+        }
+        snap.lastNonEmptySelection=base;
+      }catch(e){ snap.lastNonEmptySelectionError=e&&e.message; }
+
+      // Estado de UI global
+      grab("uiState",()=>{
+        const openDetails=[...document.querySelectorAll("details[open]")].map((dt)=>(dt.id||String((dt.querySelector("summary")||{}).textContent||"").trim().slice(0,40))).slice(0,40);
+        const valOf=(id)=>{ const el=document.getElementById(id); if(!el) return null; return (el.type==="checkbox")?!!el.checked:String(el.value||""); };
+        const inputs={};
+        ["tplNew_date","tplUpd_date","tplNew_author","tplUpd_author","cvNew_labels","cvUpd_labels","cvNew_share","cvUpd_share","csvCustomCodes","nearPercent"].forEach((id)=>{ if(document.getElementById(id)) inputs[id]=valOf(id); });
+        const buttons={};
+        ["export","debug","cvCreateBtn","cvUpdateBtn","globalViewerRefresh","quantifyBtn"].forEach((id)=>{ const b=document.getElementById(id); if(b) buttons[id]={disabled:!!b.disabled,display:getComputedStyle(b).display}; });
+        const sliders={};
+        ["labelSizeRange","labelOffsetRange"].forEach((id)=>{ const el=document.getElementById(id); if(el) sliders[id]=el.value; });
+        const panelSizes={ body:Math.round(document.body.getBoundingClientRect().width) };
+        const vt=document.getElementById("viewTemplateTool"); if(vt) panelSizes.viewTemplate=Math.round(vt.getBoundingClientRect().width);
+        return {openDetails,inputs,buttons,sliders,panelSizes};
+      });
+
+      // Diagnóstico por módulo (solo lectura; no repara nada)
+      const toolState={};
+      const addTool=(k,fn)=>{ try{ toolState[k]=fn(); }catch(e){ toolState[k]="[err: "+(e&&e.message||e)+"]"; } };
+      addTool("massExport",()=>({
+        extendedExport:tg("extendedExport"),
+        viewsCount:(typeof massViews!=="undefined"?massViews.length:undefined),
+        selected:(typeof massViewsSelected!=="undefined"?[...massViewsSelected]:undefined),
+        sortAlpha:(typeof massViewsSortAlpha!=="undefined"?massViewsSortAlpha:undefined),
+        counterText:String((document.getElementById("massViewsCount")||{}).textContent||"")
+      }));
+      addTool("viewTemplate",()=>({
+        create:(typeof getScopeValues==="function"?getScopeValues("tplNew"):undefined),
+        update:(typeof getScopeValues==="function"?getScopeValues("tplUpd"):undefined),
+        previewNew:(typeof templateNameFromValues==="function"&&typeof getScopeValues==="function")?templateNameFromValues(getScopeValues("tplNew")):undefined,
+        previewUpd:(typeof templateNameFromValues==="function"&&typeof getScopeValues==="function")?templateNameFromValues(getScopeValues("tplUpd")):undefined,
+        dateNew:{visual:String((document.getElementById("tplNew_date_visual")||{}).textContent||""),hidden:String((document.getElementById("tplNew_date")||{}).value||"")},
+        dateUpd:{visual:String((document.getElementById("tplUpd_date_visual")||{}).textContent||""),hidden:String((document.getElementById("tplUpd_date")||{}).value||"")},
+        authorNew:String((document.getElementById("tplNew_author")||{}).value||""),
+        authorUpd:String((document.getElementById("tplUpd_author")||{}).value||""),
+        authorSource:(typeof lastAuthorSourceDiag!=="undefined"?lastAuthorSourceDiag:null),
+        activeUser:(typeof templateCurrentUser!=="undefined"&&templateCurrentUser)?{name:templateCurrentUser.name,email:templateCurrentUser.email,displayName:templateCurrentUser.displayName}:null,
+        projectMembers:(typeof templateProjectMembers!=="undefined"?templateProjectMembers.length:undefined)
+      }));
+      addTool("shareAndLabels",()=>{
+        const active=document.activeElement?document.activeElement.id||"":"";
+        const sugVisible=(id)=>{ const el=document.getElementById(id); return !!(el&&el.style.display!=="none"&&el.children&&el.children.length); };
+        return {
+          shareTokens:{cvNew:(typeof cvShareTokenState!=="undefined"?(cvShareTokenState.cvNew||[]):undefined),cvUpd:(typeof cvShareTokenState!=="undefined"?(cvShareTokenState.cvUpd||[]):undefined)},
+          labelTokens:{cvNew:(typeof cvLabelTokenState!=="undefined"?(cvLabelTokenState.cvNew||[]):undefined),cvUpd:(typeof cvLabelTokenState!=="undefined"?(cvLabelTokenState.cvUpd||[]):undefined)},
+          activeInput:active,
+          suggestVisible:{cvNew_share:sugVisible("cvNew_shareSuggest"),cvUpd_share:sugVisible("cvUpd_shareSuggest"),cvNew_labels:sugVisible("cvNew_labelsSuggest"),cvUpd_labels:sugVisible("cvUpd_labelsSuggest")}
+        };
+      });
+      addTool("paramLabels",()=>({
+        PARAM_USE_3D_MARKUPS:(typeof PARAM_USE_3D_MARKUPS!=="undefined"?PARAM_USE_3D_MARKUPS:undefined),
+        PARAM_SAVED_LABEL_ENGINE:(typeof PARAM_SAVED_LABEL_ENGINE!=="undefined"?PARAM_SAVED_LABEL_ENGINE:undefined),
+        labelSize:String((document.getElementById("labelSizeRange")||{}).value||""),
+        labelOffset:String((document.getElementById("labelOffsetRange")||{}).value||""),
+        params:{names:(typeof namesPicker!=="undefined"?namesPicker.getParams():undefined),bolts:(typeof boltsPicker!=="undefined"?boltsPicker.getParams():undefined),welds:(typeof weldsPicker!=="undefined"?weldsPicker.getParams():undefined)},
+        toggles:{names:tg("namesToggle"),bolts:tg("boltsToggle"),welds:tg("weldsToggle")},
+        lastLabelContext:(typeof lastLabelContext!=="undefined"?lastLabelContext:undefined)
+      }));
+      addTool("quantitySurveyor",()=>{
+        const wrap=document.getElementById("quantifyWrap"); const res=document.getElementById("quantifyResult");
+        const visible=!!(wrap&&getComputedStyle(wrap).display!=="none");
+        const txt=String((res||{}).textContent||"");
+        return {
+          panelVisible:visible, hasResult:!!txt.trim(), resultLength:txt.length, resultSummary:txt.slice(0,200),
+          copyVisible:!!(document.getElementById("quantifyCopy")&&document.getElementById("quantifyCopy").style.display!=="none"),
+          clearVisible:!!(document.getElementById("quantifyClear")&&document.getElementById("quantifyClear").style.display!=="none"),
+          last:(typeof lastQuantification!=="undefined"?lastQuantification:undefined)
+        };
+      });
+      addTool("bugReport",()=>{
+        const ov=document.getElementById("bugModalOverlay"); const pov=document.getElementById("bugAssistOverlay");
+        let pendingBytes=0; try{ pendingBytes=(localStorage.getItem(BUG_REPORTS_KEY)||"").length; }catch(e){}
+        let shotBytes=0; try{ for(const s of bugDraftShots){ shotBytes+=(s&&s.size)||0; } }catch(e){}
+        return {
+          modalOpen:!!(ov&&ov.style.display!=="none"),
+          assistActive:!!(pov&&pov.style.display!=="none"),
+          pasteOverlayVisible:!!(pov&&pov.style.display!=="none"),
+          position:(typeof getCaptureAssistPosition==="function"?getCaptureAssistPosition():undefined),
+          draftThumbs:bugDraftShots.length, draftImagesBytes:shotBytes,
+          pendingReports:bugReportsCount(), pendingStoreBytes:pendingBytes
+        };
+      });
+      snap.toolState=toolState;
+
+      // Capacidades de API (solo nombres de métodos)
+      grab("apiCapabilities",()=>{
+        const names=(o)=>{ try{ return o?Object.keys(o).filter((k)=>typeof o[k]==="function").slice(0,80):null; }catch(e){ return null; } };
+        return { viewer:names(API&&API.viewer), view:names(API&&API.view), markup:names(API&&API.markup), project:names(API&&API.project), user:names(API&&API.user) };
+      });
+
+      // Diagnóstico de descargas
+      snap.lastDownloadDiagnostics=lastDownloadDiagnostics;
+
+      // Diagnóstico de almacenamiento
+      grab("storage",()=>{
+        let deoBytes=0, bugBytes=0, keys=0;
+        try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||k.indexOf("deo.")!==0) continue; keys++; const v=localStorage.getItem(k)||""; deoBytes+=k.length+v.length; if(k===BUG_REPORTS_KEY) bugBytes=v.length; } }catch(e){}
+        return { deoKeys:keys, deoApproxBytes:deoBytes, bugReportsApproxBytes:bugBytes, pendingReports:bugReportsCount() };
+      });
+      try{ if(navigator.storage&&navigator.storage.estimate){ const est=await navigator.storage.estimate(); snap.storageEstimate={quota:est&&est.quota,usage:est&&est.usage}; } }catch(e){ snap.storageEstimateError=e&&e.message; }
+
+      // Identidad de código (versión, fecha, UA, longitud y hash no criptográfico del HTML cargado)
+      grab("codeIdentity",()=>{
+        const html=document.documentElement?document.documentElement.outerHTML:"";
+        return { version:SCRIPT_VERSION, documentLastModified:document.lastModified, url:location.href, userAgent:navigator.userAgent, htmlLength:html.length, htmlHash:simpleHash32(html) };
+      });
+
       return snap;
     }
 
@@ -4231,6 +4464,23 @@
       return bytes;
     }
 
+    // Resumen legible de las secciones de diagnóstico para el TXT (el JSON conserva el detalle completo).
+    function bugSnapshotSummaryLines(s){
+      s=s||{}; const L=[]; const t=s.toolState||{}; const n=(a)=>Array.isArray(a)?a.length:0;
+      L.push("Versión: "+(s.version||"?")+"  |  HTML hash: "+((s.codeIdentity&&s.codeIdentity.htmlHash)||"?")+"  |  HTML len: "+((s.codeIdentity&&s.codeIdentity.htmlLength)||"?"));
+      L.push("UserAgent: "+(s.userAgent||"?"));
+      if(s.selection) L.push("Selección actual: "+s.selection.count+" objeto(s).");
+      if(s.lastNonEmptySelection) L.push("Última selección no vacía: "+s.lastNonEmptySelection.total+" objeto(s), "+Object.keys(s.lastNonEmptySelection.byModel||{}).length+" modelo(s).");
+      L.push("Acciones de usuario registradas: "+n(s.userActionHistory)+".");
+      if(t.viewTemplate) L.push("Configurar vista: autor crear='"+(t.viewTemplate.authorNew||"")+"', actualizar='"+(t.viewTemplate.authorUpd||"")+"' (fuente autor: "+((t.viewTemplate.authorSource&&t.viewTemplate.authorSource.source)||"?")+"); fecha crear="+((t.viewTemplate.dateNew&&t.viewTemplate.dateNew.visual)||"")+".");
+      if(t.massExport) L.push("Exportación masiva: "+(t.massExport.extendedExport?"ON":"OFF")+", "+n(t.massExport.selected)+"/"+(t.massExport.viewsCount||0)+" vistas seleccionadas.");
+      if(t.quantitySurveyor) L.push("Quantity Surveyor: "+(t.quantitySurveyor.hasResult?"con resultado":"sin resultado")+(t.quantitySurveyor.panelVisible?" (panel visible)":"")+".");
+      if(t.bugReport) L.push("Bug Report: "+t.bugReport.draftThumbs+" miniatura(s) borrador, "+t.bugReport.pendingReports+" reporte(s) pendiente(s), ~"+Math.round((t.bugReport.pendingStoreBytes||0)/1024)+" KB en cola.");
+      if(s.lastDownloadDiagnostics) L.push("Última descarga: "+(s.lastDownloadDiagnostics.filename||"?")+" ("+(s.lastDownloadDiagnostics.fn||"?")+", ~"+Math.round((s.lastDownloadDiagnostics.size||0)/1024)+" KB, click="+s.lastDownloadDiagnostics.clicked+").");
+      if(s.storage) L.push("Almacenamiento: "+s.storage.deoKeys+" claves deo.* (~"+Math.round((s.storage.deoApproxBytes||0)/1024)+" KB); reportes ~"+Math.round((s.storage.bugReportsApproxBytes||0)/1024)+" KB.");
+      if(s.apiCapabilities){ const c=s.apiCapabilities; L.push("API métodos: viewer="+n(c.viewer)+", view="+n(c.view)+", markup="+n(c.markup)+", project="+n(c.project)+", user="+n(c.user)+"."); }
+      return L;
+    }
     // El TXT no embebe las imágenes (van como archivos en el ZIP); solo referencia su ruta y metadatos.
     function buildBugReportsText(reports){
       const lines=[];
@@ -4257,7 +4507,8 @@
           const path="images/report_"+rn+"_image_"+sn+"."+extForMime(s&&s.mime);
           lines.push("  "+(si+1)+". "+path+" — "+((s&&s.w)||"?")+"x"+((s&&s.h)||"?")+", "+((s&&s.mime)||"?")+", ~"+Math.round(((s&&s.size)||0)/1024)+" KB (origen: "+((s&&s.source)||"?")+", original: "+((s&&s.origMime)||"?")+").");
         });
-        lines.push("\n--- Contexto técnico ---\n"+safeJsonDeep(r.snapshot,2));
+        lines.push("\n--- Resumen técnico ---\n"+bugSnapshotSummaryLines(r.snapshot).join("\n"));
+        lines.push("\n--- Contexto técnico (detalle) ---\n"+safeJsonDeep(r.snapshot,2));
       });
       return lines.join("\n");
     }
@@ -4296,25 +4547,33 @@
         +'</div>'
         +'</div>';
       document.body.appendChild(ov);
-      // Barra flotante del temporizador (captura asistida). Contiene la fila de cuenta atrás
-      // y, superpuesto, el recuadro de pegado que aparece al terminar (estado gris is-paste-mode).
+      // Barra flotante del temporizador (captura asistida): fila de cuenta atrás + botón "Pegar ahora"
+      // y dos burbujas flotantes (mover/cancelar) fuera del cuadro, visibles al hover.
       const bar=document.createElement("div"); bar.id="bugTimerBar"; bar.className="bug-timer-bar is-top"; bar.style.display="none";
       bar.innerHTML=''
         +'<div class="bug-timer-row">'
         +'<div class="bug-timer-main"><div class="bug-timer-title">Temporizador para realizar captura de pantalla</div><div class="bug-timer-help">Usa Win + Shift + S o Impr Pant</div></div>'
         +'<div class="bug-timer-count" id="bugTimerNum">10</div>'
-        +'<button type="button" id="bugTimerMove" class="bug-timer-move" title="Mover abajo" aria-label="Mover abajo"></button>'
-        +'<button type="button" id="bugTimerCancel" class="bug-timer-cancel" title="Cancelar" aria-label="Cancelar captura asistida">×</button>'
         +'</div>'
-        +'<div id="bugAssistPasteWrap" class="bug-assist-paste" style="display:none;">'
+        +'<button type="button" id="bugTimerSkip" class="bug-timer-skip">Pegar ahora</button>'
+        +'<div class="bug-timer-bubbles">'
+        +'<button type="button" id="bugTimerMove" class="bug-timer-bubble" title="Mover abajo" aria-label="Mover abajo"></button>'
+        +'<button type="button" id="bugTimerCancel" class="bug-timer-bubble" title="Cancelar captura asistida" aria-label="Cancelar captura asistida"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
+        +'</div>';
+      document.body.appendChild(bar);
+      // Overlay de pegado centrado e independiente; el modal Bug Report queda sombreado y no seleccionable detrás.
+      const pov=document.createElement("div"); pov.id="bugAssistOverlay"; pov.className="bug-assist-overlay"; pov.style.display="none";
+      pov.innerHTML=''
+        +'<div class="bug-assist-card">'
         +'<div id="bugAssistPaste" class="bug-assist-box" contenteditable="true" tabindex="0" role="textbox" aria-label="Zona para pegar captura" data-ph="Pega aquí la captura con Ctrl + V o click derecho → Pegar"></div>'
         +'<div id="bugAssistPasteNote" class="bug-assist-note" style="display:none;"></div>'
         +'<div class="bug-assist-foot"><button type="button" id="bugAssistPasteClose" class="bug-assist-closebtn" title="Cerrar pegado" aria-label="Cerrar pegado">×</button></div>'
         +'</div>';
-      document.body.appendChild(bar);
+      document.body.appendChild(pov);
       document.getElementById("bugShotBtn").onclick=()=>startAssistedCapture();
       document.getElementById("bugTimerCancel").onclick=()=>cancelAssistedCapture();
       document.getElementById("bugTimerMove").onclick=()=>toggleCaptureAssistPosition();
+      document.getElementById("bugTimerSkip").onclick=()=>skipToPaste();
       document.getElementById("bugAssistPasteClose").onclick=()=>exitAssistToModal();
       document.getElementById("bugCancel").onclick=()=>closeBugModal();
       document.getElementById("bugSend").onclick=()=>onBugSend();
@@ -4326,8 +4585,9 @@
       applyCaptureAssistPosition();
     }
 
-    function showBugModalNow(){ const ov=document.getElementById("bugModalOverlay"); if(ov) ov.style.display="flex"; }
-    function hideBugModalNow(){ const ov=document.getElementById("bugModalOverlay"); if(ov) ov.style.display="none"; }
+    function showBugModalNow(){ const ov=document.getElementById("bugModalOverlay"); if(ov){ ov.style.display="flex"; ov.classList.remove("is-paste-active"); } }
+    function showBugModalBehind(){ const ov=document.getElementById("bugModalOverlay"); if(ov){ ov.style.display="flex"; ov.classList.add("is-paste-active"); } }
+    function hideBugModalNow(){ const ov=document.getElementById("bugModalOverlay"); if(ov){ ov.style.display="none"; ov.classList.remove("is-paste-active"); } }
     function hideTimerBar(){ const bar=document.getElementById("bugTimerBar"); if(bar) bar.style.display="none"; }
 
     // ----- Posición del menú de captura asistida (arriba/abajo), persistida en localStorage -----
@@ -4352,6 +4612,7 @@
 
     function openBugModal(){
       ensureBugModal();
+      recordUserAction("bugReportOpen",{});
       bugDraftShots=[];
       const t=document.getElementById("bugTitle"); if(t) t.value="";
       const d=document.getElementById("bugDesc"); if(d) d.value="";
@@ -4370,11 +4631,11 @@
     function startAssistedCapture(){
       ensureBugModal();
       hideBugModalNow();
+      closePasteZone();
+      recordUserAction("bugReport.assistStart",{});
       const bar=document.getElementById("bugTimerBar"), num=document.getElementById("bugTimerNum");
       if(!bar||!num){ openPasteZone(); return; }
       applyCaptureAssistPosition();
-      bar.classList.remove("is-paste-mode");
-      const w=document.getElementById("bugAssistPasteWrap"); if(w) w.style.display="none";
       hideAssistNote();
       let n=10; num.textContent=String(n); bar.style.display="flex";
       clearInterval(bugTimerInterval);
@@ -4383,31 +4644,32 @@
         if(n>0){ num.textContent=String(n); return; }
         num.textContent="0";
         clearInterval(bugTimerInterval); bugTimerInterval=null;
-        openPasteZone(); // barra gris + recuadro de pegado; el modal sigue oculto
+        openPasteZone(); // termina cuenta atrás -> recuadro de pegado centrado
       },1000);
     }
-    // Entra en modo pegado: la barra permanece visible en gris y se superpone el recuadro de pegado.
+    // "Pegar ahora": salta el temporizador y pasa directo al modo pegado (no cancela el reporte).
+    function skipToPaste(){ clearInterval(bugTimerInterval); bugTimerInterval=null; recordUserAction("bugReport.assistSkip",{}); openPasteZone(); }
+    // Entra en modo pegado: oculta el temporizador, muestra el recuadro centrado y el modal sombreado detrás.
     function openPasteZone(){
-      const bar=document.getElementById("bugTimerBar");
-      if(bar){ bar.style.display="flex"; bar.classList.add("is-paste-mode"); }
-      const w=document.getElementById("bugAssistPasteWrap"); if(w) w.style.display="block";
+      hideTimerBar();
+      showBugModalBehind();
+      const ov=document.getElementById("bugAssistOverlay"); if(ov) ov.style.display="flex";
       hideAssistNote();
       const p=document.getElementById("bugAssistPaste"); if(p){ p.innerHTML=""; setTimeout(()=>{ try{ p.focus(); }catch(e){} },40); }
     }
     function closePasteZone(){
-      const bar=document.getElementById("bugTimerBar"); if(bar) bar.classList.remove("is-paste-mode");
-      const w=document.getElementById("bugAssistPasteWrap"); if(w) w.style.display="none";
+      const ov=document.getElementById("bugAssistOverlay"); if(ov) ov.style.display="none";
       const p=document.getElementById("bugAssistPaste"); if(p) p.innerHTML="";
       hideAssistNote();
     }
-    // Sale del modo captura asistida (X, Cancelar o pegado correcto): cierra recuadro+temporizador y vuelve al modal.
+    // Sale del modo captura asistida (X, Cancelar o pegado correcto): cierra recuadro+temporizador y vuelve al modal normal.
     function exitAssistToModal(){
       clearInterval(bugTimerInterval); bugTimerInterval=null;
       closePasteZone(); hideTimerBar();
       showBugModalNow(); // conserva título/descripción y bugDraftShots
     }
-    function finishAssistPasteSuccess(){ exitAssistToModal(); }
-    function cancelAssistedCapture(){ exitAssistToModal(); }
+    function finishAssistPasteSuccess(){ recordUserAction("bugReport.assistPasteOk",{shots:bugDraftShots.length}); exitAssistToModal(); }
+    function cancelAssistedCapture(){ recordUserAction("bugReport.assistCancel",{}); exitAssistToModal(); }
 
     async function onBugPaste(ev){
       const items=(ev.clipboardData&&ev.clipboardData.items)||[];
@@ -4458,6 +4720,7 @@
       const title=String((document.getElementById("bugTitle")||{}).value||"").trim();
       const desc=String((document.getElementById("bugDesc")||{}).value||"").trim();
       if(!title&&!desc){ showBugNote("Escribe al menos un título o una descripción."); return; }
+      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!desc,shots:bugDraftShots.length});
       let snapshot={}; try{ snapshot=await collectDebugSnapshot(); }catch(e){ recordError("bugReport.snapshot",e); snapshot={snapshotError:String(e&&e.message||e)}; }
       const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:new Date().toISOString(), version:SCRIPT_VERSION, title, description:desc, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), snapshot };
       let reports=loadBugReports(); reports.push(report);
@@ -4521,6 +4784,7 @@
       const out=[]; const add=(title,data)=>{ out.push("\n\n==================== "+title+" ====================\n"); out.push(typeof data==="string"?data:safeJson(data,2)); };
       add("VERSION",{SCRIPT_VERSION,documentLastModified:document.lastModified,now:new Date().toString(),url:location.href,userAgent:navigator.userAgent});
       add("LOG",logLines);
+      try{ add("SNAPSHOT COMÚN (Fase 0: acciones, toolState, apiCapabilities, almacenamiento, identidad)",safeJsonDeep(await collectDebugSnapshot(),2)); }catch(e){ add("SNAPSHOT COMÚN ERROR",e.message); }
       try{ add("Object.keys(API)",Object.keys(API||{})); }catch(e){}
       try{ add("Object.keys(API.viewer)",Object.keys((API&&API.viewer)||{})); }catch(e){}
       try{ add("Object.keys(API.view)",Object.keys((API&&API.view)||{})); }catch(e){}
