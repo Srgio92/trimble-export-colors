@@ -14,4 +14,14 @@ desktop.ini
 *_trimble_colores_guid_ifc.csv
 DEO_extended_export*.csv
 DEO_debug.txt
+DEO_debug*.txt
 debug_trimble_*.txt
+.tmp_*
+
+# Descargas del Bug Report (no versionar)
+DEO_bug_reports*.zip
+DEO_bug_reports*.txt
+
+# Carpetas locales de trabajo (no versionar)
+.claude/
+gpt_code/

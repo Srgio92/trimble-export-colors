@@ -260,6 +260,60 @@
     .bug-assist-closebtn { width:22px; height:22px; min-width:22px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,.2); color:#fff; cursor:pointer; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; transition:transform .08s ease, background .15s ease; }
     .bug-assist-closebtn:hover { background:rgba(255,255,255,.35); }
     .bug-assist-closebtn:active { transform:scale(.9); }
+    /* Campo "Zona/Herramienta afectada" en el modal Bug Report */
+    .bug-modal-field { margin-top:8px; }
+    .bug-field-label { display:block; font-size:11px; color:#4b5563; margin-bottom:3px; }
+    .bug-area-input { width:100%; }
+    /* Miniaturas: click sobre la propia miniatura abre el editor de anotaciones; halo azul al hover/foco. */
+    .bug-thumb { cursor:pointer; }
+    .bug-thumb:hover, .bug-thumb:focus, .bug-thumb:focus-within { border-color:#1c7fd6; box-shadow:0 0 0 2px rgba(28,127,214,.45); outline:none; }
+    .bug-thumb.is-annotated { border-color:#1c7fd6; box-shadow:0 0 0 2px rgba(28,127,214,.35); }
+    .bug-thumb-badge { position:absolute; bottom:2px; left:2px; height:13px; padding:0 4px; border-radius:7px; background:rgba(28,127,214,.92); color:#fff; font-size:9px; line-height:13px; display:flex; align-items:center; pointer-events:none; }
+    /* Editor de descripción enriquecido (contenteditable) con menciones/chips */
+    .bug-desc-editor { display:block; width:100%; margin-top:8px; min-height:70px; max-height:260px; overflow:auto; resize:vertical; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; font-family:inherit; line-height:1.45; box-sizing:border-box; background:#fff; color:#1f2937; cursor:text; }
+    .bug-desc-editor:focus { outline:none; border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; }
+    .bug-desc-editor:empty:before { content:attr(data-ph); color:#9ca3af; }
+    .bug-mention { display:inline-flex; align-items:center; gap:4px; vertical-align:baseline; margin:0 1px; padding:1px 4px 1px 7px; background:#eef2f7; border:1px solid #d6dde6; border-radius:10px; font-size:12px; color:#243244; line-height:1.4; white-space:nowrap; }
+    .bug-mention-t { overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+    .bug-mention-x { width:14px; height:14px; min-width:14px; padding:0; border:none; border-radius:50%; background:#c2ccd8; color:#fff; font-size:11px; line-height:12px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+    .bug-mention-x:hover { background:#1c7fd6; }
+    /* ===== Editor de anotaciones de capturas (Bug Report) ===== */
+    .bug-annot-overlay { position:fixed; inset:0; z-index:10002; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; background:rgba(17,24,39,.62); }
+    .bug-annot-card { width:auto; max-width:min(96vw,720px); max-height:calc(100vh - 24px); display:flex; flex-direction:column; gap:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 14px 40px rgba(0,0,0,.45); padding:12px; box-sizing:border-box; }
+    .bug-annot-head { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+    .bug-annot-title { font-weight:bold; font-size:14px; color:#1f2937; }
+    .bug-annot-tools { display:flex; flex-wrap:wrap; gap:4px; }
+    .bug-annot-tool { width:30px; height:30px; min-width:30px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid #d1d5db; border-radius:6px; cursor:pointer; line-height:0; color:#1f2937; transition:transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .bug-annot-tool:hover { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; background:#f8fbff; }
+    .bug-annot-tool:active { transform:scale(.92); }
+    .bug-annot-tool.is-active { border-color:#1c7fd6; background:#e8f2fd; box-shadow:0 0 0 1px #1c7fd6 inset; }
+    .bug-annot-tool svg { width:16px; height:16px; display:block; }
+    .bug-annot-canvas-wrap { flex:1; min-height:0; overflow:auto; display:flex; align-items:center; justify-content:center; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; }
+    .bug-annot-canvas { max-width:100%; max-height:60vh; height:auto; display:block; cursor:crosshair; touch-action:none; background:#fff; }
+    .bug-annot-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+    .bug-annot-actions-r { display:flex; gap:8px; }
+    .bug-annot-hint { font-size:11px; color:#6b7280; align-self:center; }
+    /* Controles de color y grosor del editor de anotaciones */
+    .bug-annot-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:2px 0; }
+    .bug-annot-swatches { display:flex; gap:4px; flex-wrap:wrap; }
+    .bug-annot-swatch { width:18px; height:18px; padding:0; border:1px solid rgba(0,0,0,.28); border-radius:4px; cursor:pointer; box-sizing:border-box; transition:transform .08s ease; }
+    .bug-annot-swatch:hover { transform:scale(1.12); }
+    .bug-annot-swatch.is-active { outline:2px solid #1c7fd6; outline-offset:1px; }
+    .bug-annot-color-custom { width:26px; height:24px; padding:0; border:1px solid #d1d5db; border-radius:4px; background:#fff; cursor:pointer; }
+    .bug-annot-width { display:flex; align-items:center; gap:6px; font-size:11px; color:#4b5563; }
+    .bug-annot-width input[type="range"] { width:96px; }
+    .bug-annot-preview { border:1px solid #e5e7eb; border-radius:4px; background:#fff; display:block; }
+    /* Botón "seleccionar elemento de la interfaz" junto a Zona/Herramienta afectada */
+    .bug-area-row { display:flex; gap:6px; align-items:center; }
+    .bug-area-pick { width:30px; height:30px; min-width:30px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid #1c7fd6; border-radius:6px; cursor:pointer; line-height:0; transition:transform .08s ease, background .15s ease, box-shadow .15s ease; }
+    .bug-area-pick:hover { background:#eaf3fd; box-shadow:0 0 0 1px #1c7fd6 inset; }
+    .bug-area-pick:active { transform:scale(.92); }
+    .bug-area-pick svg { width:16px; height:16px; display:block; }
+    .bug-area-pick.is-active { background:#1c7fd6; }
+    .bug-area-pick.is-active svg { stroke:#fff; }
+    /* Selector visual de elementos UI (resalte + barra flotante) */
+    .bug-ui-pick-highlight { position:fixed; z-index:100000; pointer-events:none; border:2px solid #1c7fd6; background:rgba(28,127,214,.14); border-radius:3px; box-shadow:0 0 0 1px rgba(255,255,255,.65); display:none; }
+    .bug-ui-pick-bar { position:fixed; left:50%; top:12px; transform:translateX(-50%); z-index:100001; pointer-events:none; background:#111827; color:#fff; font-size:12px; padding:6px 12px; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.35); display:none; }
 
     #log { white-space: pre-wrap; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; margin-top: 10px; max-height: 200px; overflow: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     .hint { color: #666; font-size: 11px; }
@@ -947,7 +1001,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v8.14.0";
+    const SCRIPT_VERSION = "v9.0.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -4418,13 +4472,18 @@
       addTool("bugReport",()=>{
         const ov=document.getElementById("bugModalOverlay"); const pov=document.getElementById("bugAssistOverlay");
         let pendingBytes=0; try{ pendingBytes=(localStorage.getItem(BUG_REPORTS_KEY)||"").length; }catch(e){}
-        let shotBytes=0; try{ for(const s of bugDraftShots){ shotBytes+=(s&&s.size)||0; } }catch(e){}
+        let shotBytes=0, annotN=0; try{ for(const s of bugDraftShots){ shotBytes+=(s&&s.size)||0; if(s&&s.annotated) annotN++; } }catch(e){}
+        let area=""; try{ area=String((document.getElementById("bugArea")||{}).value||"").trim(); }catch(e){}
+        let uiT=undefined; try{ if(bugLastUiTarget) uiT={label:bugLastUiTarget.label,tag:bugLastUiTarget.tagName,id:bugLastUiTarget.id||undefined}; }catch(e){}
         return {
           modalOpen:!!(ov&&ov.style.display!=="none"),
           assistActive:!!(pov&&pov.style.display!=="none"),
           pasteOverlayVisible:!!(pov&&pov.style.display!=="none"),
+          annotEditorOpen:(function(){ const ao=document.getElementById("bugAnnotOverlay"); return !!(ao&&ao.style.display!=="none"); })(),
+          uiPicking:(typeof bugUiPicking!=="undefined"?!!bugUiPicking:undefined),
           position:(typeof getCaptureAssistPosition==="function"?getCaptureAssistPosition():undefined),
-          draftThumbs:bugDraftShots.length, draftImagesBytes:shotBytes,
+          draftThumbs:bugDraftShots.length, draftAnnotated:annotN, draftImagesBytes:shotBytes,
+          affectedArea:area||undefined, lastUiTarget:uiT,
           pendingReports:bugReportsCount(), pendingStoreBytes:pendingBytes
         };
       });
@@ -4500,12 +4559,21 @@
         lines.push("URL: "+((r.snapshot&&r.snapshot.url)||""));
         lines.push("\n--- Título ---\n"+(r.title||"(vacío)"));
         lines.push("\n--- Descripción ---\n"+(r.description||"(vacío)"));
+        lines.push("\n--- Zona/Herramienta afectada ---\n"+(r.affectedArea||"(no indicada)"));
+        const mentions=r.uiMentions||[];
+        if(mentions.length){
+          lines.push("\n--- Menciones UI ("+mentions.length+") ---");
+          mentions.forEach((m,mi)=>{ lines.push("  "+(mi+1)+". "+((m&&m.label)||"?")+((m&&m.tagName)?(" ["+m.tagName+(m.id?("#"+m.id):"")+"]"):"")+((m&&m.cssPath)?(" · "+m.cssPath):"")); });
+        }
+        if(r.uiTarget){ const u=r.uiTarget; lines.push("  Último elemento seleccionado: "+(u.label||"?")+" ["+(u.tagName||"")+(u.id?("#"+u.id):"")+"]"+((u.ariaLabel)?(" aria=\""+u.ariaLabel+"\""):"")+(u.cssPath?("\n  Ruta CSS: "+u.cssPath):"")); }
         const shots=r.screenshots||[];
-        lines.push("\n--- Capturas: "+shots.length+" ---");
+        const annotN=shots.filter((s)=>s&&s.annotated).length;
+        lines.push("\n--- Capturas: "+shots.length+(annotN?(" (anotadas: "+annotN+")"):"")+" ---");
         shots.forEach((s,si)=>{
           const sn=String(si+1).padStart(3,"0");
           const path="images/report_"+rn+"_image_"+sn+"."+extForMime(s&&s.mime);
-          lines.push("  "+(si+1)+". "+path+" — "+((s&&s.w)||"?")+"x"+((s&&s.h)||"?")+", "+((s&&s.mime)||"?")+", ~"+Math.round(((s&&s.size)||0)/1024)+" KB (origen: "+((s&&s.source)||"?")+", original: "+((s&&s.origMime)||"?")+").");
+          const annotInfo=(s&&s.annotated)?(" [ANOTADA: "+((s.annotationCount)||0)+" anotación(es); tipos: "+(((s.annotationTypes)||[]).join(", ")||"?")+"]"):"";
+          lines.push("  "+(si+1)+". "+path+" — "+((s&&s.w)||"?")+"x"+((s&&s.h)||"?")+", "+((s&&s.mime)||"?")+", ~"+Math.round(((s&&s.size)||0)/1024)+" KB (origen: "+((s&&s.source)||"?")+", original: "+((s&&s.origMime)||"?")+")."+annotInfo);
         });
         lines.push("\n--- Resumen técnico ---\n"+bugSnapshotSummaryLines(r.snapshot).join("\n"));
         lines.push("\n--- Contexto técnico (detalle) ---\n"+safeJsonDeep(r.snapshot,2));
@@ -4519,13 +4587,405 @@
     function renderBugThumbs(){
       const wrap=document.getElementById("bugThumbs"); if(!wrap) return; wrap.innerHTML="";
       bugDraftShots.forEach((s,i)=>{
-        const cell=document.createElement("div"); cell.className="bug-thumb";
+        const cell=document.createElement("div"); cell.className="bug-thumb"+((s&&s.annotated)?" is-annotated":""); cell.title="Anotar captura"; cell.tabIndex=0; cell.setAttribute("role","button"); cell.setAttribute("aria-label","Anotar captura "+(i+1));
+        // Click sobre la miniatura abre el editor de anotaciones de esta captura.
+        cell.onclick=(ev)=>{ if(ev&&ev.target&&ev.target.closest&&ev.target.closest(".bug-thumb-del")) return; bugAnnotOpen(i); };
+        cell.onkeydown=(ev)=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); bugAnnotOpen(i); } };
         const img=document.createElement("img"); img.src=s.dataUrl; img.alt="Captura "+(i+1); cell.appendChild(img);
         const del=document.createElement("button"); del.type="button"; del.className="bug-thumb-del"; del.title="Eliminar captura"; del.setAttribute("aria-label","Eliminar captura");
         del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-        del.onclick=()=>{ bugDraftShots.splice(i,1); renderBugThumbs(); };
-        cell.appendChild(del); wrap.appendChild(cell);
+        del.onclick=(ev)=>{ if(ev) ev.stopPropagation(); bugDraftShots.splice(i,1); renderBugThumbs(); };
+        cell.appendChild(del);
+        if(s&&s.annotated){ const badge=document.createElement("span"); badge.className="bug-thumb-badge"; badge.textContent="✎"+(s.annotationCount?(" "+s.annotationCount):""); badge.title="Captura anotada"; cell.appendChild(badge); }
+        wrap.appendChild(cell);
       });
+    }
+
+    // ===================== Editor de anotaciones de capturas (Bug Report) =====================
+    // Módulo encapsulado: dibuja sobre un canvas a resolución de imagen y, al guardar, "hornea"
+    // las anotaciones en el dataUrl del shot. No conserva el dataUrl original (solo metadatos
+    // mínimos) para no duplicar peso en localStorage. Reutiliza bugDraftShots como fuente.
+    const BUG_ANNOT_COLOR_DEFAULT="#ff2d2d";
+    const BUG_ANNOT_WIDTH_DEFAULT=4;
+    // Paleta compacta inspirada en Recortes de Windows.
+    const BUG_ANNOT_PALETTE=["#000000","#ffffff","#9ca3af","#4b5563","#ff2d2d","#ff7a00","#ffd400","#19a974","#1c7fd6","#7c3aed","#e0218a"];
+    let bugAnnotIndex=-1, bugAnnotShot=null, bugAnnotBaseImg=null;
+    let bugAnnotItems=[], bugAnnotDrawing=null, bugAnnotTool="arrow";
+    let bugAnnotColor=BUG_ANNOT_COLOR_DEFAULT, bugAnnotWidth=BUG_ANNOT_WIDTH_DEFAULT, bugAnnotLW=BUG_ANNOT_WIDTH_DEFAULT;
+
+    function bugAnnotTypesOf(items){ const out=[]; for(const a of items){ if(a&&a.type&&out.indexOf(a.type)<0) out.push(a.type); } return out; }
+    function bugAnnotToolBtn(tool,label,inner){
+      return '<button type="button" class="bug-annot-tool" data-tool="'+tool+'" title="'+label+'" aria-label="'+label+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg></button>';
+    }
+    function ensureBugAnnotEditor(){
+      if(document.getElementById("bugAnnotOverlay")) return;
+      const ov=document.createElement("div"); ov.id="bugAnnotOverlay"; ov.className="bug-annot-overlay"; ov.style.display="none";
+      ov.innerHTML=''
+        +'<div class="bug-annot-card" role="dialog" aria-label="Editor de anotaciones" aria-modal="true">'
+        +'<div class="bug-annot-head"><span class="bug-annot-title">Anotar captura</span>'
+        +'<div class="bug-annot-tools">'
+        +bugAnnotToolBtn("arrow","Flecha",'<path d="M5 19L19 5M19 5h-7M19 5v7"/>')
+        +bugAnnotToolBtn("rect","Rectángulo",'<rect x="4" y="6" width="16" height="12" rx="1"/>')
+        +bugAnnotToolBtn("circle","Círculo",'<circle cx="12" cy="12" r="8"/>')
+        +bugAnnotToolBtn("text","Texto",'<path d="M5 6h14M12 6v13M9 19h6"/>')
+        +bugAnnotToolBtn("free","Mano libre",'<path d="M4 16c3 0 3-8 6-8s3 8 6 8 4-4 4-4"/>')
+        +'<button type="button" class="bug-annot-tool" id="bugAnnotUndo" title="Deshacer" aria-label="Deshacer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-1"/></svg></button>'
+        +'<button type="button" class="bug-annot-tool" id="bugAnnotClear" title="Limpiar anotaciones" aria-label="Limpiar anotaciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>'
+        +'</div></div>'
+        +'<div class="bug-annot-controls">'
+        +'<div class="bug-annot-swatches" id="bugAnnotSwatches"></div>'
+        +'<input type="color" id="bugAnnotColorCustom" class="bug-annot-color-custom" title="Color personalizado" value="'+BUG_ANNOT_COLOR_DEFAULT+'">'
+        +'<div class="bug-annot-width"><label for="bugAnnotWidthRange">Grosor</label><input type="range" id="bugAnnotWidthRange" min="1" max="18" step="1" value="'+BUG_ANNOT_WIDTH_DEFAULT+'"><span id="bugAnnotWidthVal">'+BUG_ANNOT_WIDTH_DEFAULT+'</span></div>'
+        +'<canvas id="bugAnnotPreview" class="bug-annot-preview" width="54" height="24"></canvas>'
+        +'</div>'
+        +'<div class="bug-annot-canvas-wrap"><canvas id="bugAnnotCanvas" class="bug-annot-canvas"></canvas></div>'
+        +'<div class="bug-annot-actions">'
+        +'<span class="bug-annot-hint" id="bugAnnotHint">Arrastra sobre la imagen para dibujar</span>'
+        +'<div class="bug-annot-actions-r"><button type="button" id="bugAnnotCancel" class="bug-btn">Cancelar</button><button type="button" id="bugAnnotSave" class="bug-btn bug-btn-send">Guardar</button></div>'
+        +'</div>'
+        +'</div>';
+      document.body.appendChild(ov);
+      ov.querySelectorAll(".bug-annot-tool[data-tool]").forEach((b)=>{ b.onclick=()=>bugAnnotSetTool(b.getAttribute("data-tool")); });
+      document.getElementById("bugAnnotUndo").onclick=()=>bugAnnotUndoLast();
+      document.getElementById("bugAnnotClear").onclick=()=>bugAnnotClearAll();
+      document.getElementById("bugAnnotCancel").onclick=()=>bugAnnotClose(false);
+      document.getElementById("bugAnnotSave").onclick=()=>bugAnnotClose(true);
+      // Paleta de colores
+      const sw=document.getElementById("bugAnnotSwatches");
+      if(sw){ BUG_ANNOT_PALETTE.forEach((col)=>{ const b=document.createElement("button"); b.type="button"; b.className="bug-annot-swatch"; b.setAttribute("data-color",col); b.title=col; b.style.background=col; b.onclick=()=>{ bugAnnotColor=col; const cc=document.getElementById("bugAnnotColorCustom"); if(cc) cc.value=col; bugAnnotSyncControls(); }; sw.appendChild(b); }); }
+      const cc=document.getElementById("bugAnnotColorCustom"); if(cc) cc.oninput=(e)=>{ bugAnnotColor=(e.target&&e.target.value)||bugAnnotColor; bugAnnotSyncControls(); };
+      const wr=document.getElementById("bugAnnotWidthRange"); if(wr) wr.oninput=(e)=>{ const v=parseInt(e.target&&e.target.value,10); if(isFinite(v)&&v>0){ bugAnnotWidth=v; bugAnnotLW=v; } const wv=document.getElementById("bugAnnotWidthVal"); if(wv) wv.textContent=String(bugAnnotWidth); bugAnnotUpdatePreview(); };
+      const cv=document.getElementById("bugAnnotCanvas");
+      cv.addEventListener("pointerdown",bugAnnotPointerDown);
+      cv.addEventListener("pointermove",bugAnnotPointerMove);
+      cv.addEventListener("pointerup",bugAnnotPointerUp);
+      cv.addEventListener("pointercancel",bugAnnotPointerUp);
+    }
+    function bugAnnotSetTool(tool){
+      bugAnnotTool=tool;
+      const ov=document.getElementById("bugAnnotOverlay"); if(!ov) return;
+      ov.querySelectorAll(".bug-annot-tool[data-tool]").forEach((b)=>{ b.classList.toggle("is-active",b.getAttribute("data-tool")===tool); });
+    }
+    function bugAnnotUpdatePreview(){
+      const c=document.getElementById("bugAnnotPreview"); if(!c) return; const x=c.getContext("2d"); if(!x) return;
+      x.clearRect(0,0,c.width,c.height);
+      x.strokeStyle=bugAnnotColor; x.lineCap="round"; x.lineWidth=Math.max(1,Math.min(bugAnnotWidth,c.height-4));
+      x.beginPath(); x.moveTo(7,c.height/2); x.lineTo(c.width-7,c.height/2); x.stroke();
+    }
+    function bugAnnotSyncControls(){
+      const ov=document.getElementById("bugAnnotOverlay"); if(!ov) return;
+      ov.querySelectorAll(".bug-annot-swatch").forEach((s)=>{ s.classList.toggle("is-active",String(s.getAttribute("data-color")||"").toLowerCase()===String(bugAnnotColor).toLowerCase()); });
+      const cc=document.getElementById("bugAnnotColorCustom"); if(cc) cc.value=bugAnnotColor;
+      const wr=document.getElementById("bugAnnotWidthRange"); if(wr) wr.value=String(bugAnnotWidth);
+      const wv=document.getElementById("bugAnnotWidthVal"); if(wv) wv.textContent=String(bugAnnotWidth);
+      bugAnnotUpdatePreview();
+    }
+    function bugAnnotOpen(index){
+      try{
+        const shot=bugDraftShots[index]; if(!shot||!shot.dataUrl) return;
+        ensureBugAnnotEditor();
+        bugAnnotIndex=index; bugAnnotShot=shot; bugAnnotItems=[]; bugAnnotDrawing=null;
+        // Reset a valores por defecto (rojo, grosor 4) en cada apertura.
+        bugAnnotColor=BUG_ANNOT_COLOR_DEFAULT; bugAnnotWidth=BUG_ANNOT_WIDTH_DEFAULT; bugAnnotLW=BUG_ANNOT_WIDTH_DEFAULT;
+        const img=new Image();
+        img.onload=()=>{
+          bugAnnotBaseImg=img;
+          const cv=document.getElementById("bugAnnotCanvas"); if(!cv) return;
+          cv.width=img.naturalWidth||shot.w||img.width||1;
+          cv.height=img.naturalHeight||shot.h||img.height||1;
+          bugAnnotSetTool("arrow");
+          bugAnnotSyncControls();
+          bugAnnotRedraw();
+          const ov=document.getElementById("bugAnnotOverlay"); if(ov) ov.style.display="flex";
+        };
+        img.onerror=()=>{ recordError("bugReport.annotLoad",new Error("No se pudo cargar la captura para anotar")); };
+        img.src=shot.dataUrl;
+        recordUserAction("bugReport.annotOpen",{index:index});
+      }catch(e){ recordError("bugReport.annotOpen",e); }
+    }
+    function bugAnnotPos(ev){
+      const cv=document.getElementById("bugAnnotCanvas"); const r=cv.getBoundingClientRect();
+      const sx=cv.width/(r.width||1), sy=cv.height/(r.height||1);
+      return { x:(ev.clientX-r.left)*sx, y:(ev.clientY-r.top)*sy };
+    }
+    function bugAnnotRedraw(){
+      const cv=document.getElementById("bugAnnotCanvas"); if(!cv) return; const ctx=cv.getContext("2d");
+      ctx.clearRect(0,0,cv.width,cv.height);
+      if(bugAnnotBaseImg){ try{ ctx.drawImage(bugAnnotBaseImg,0,0,cv.width,cv.height); }catch(e){} }
+      for(const a of bugAnnotItems) bugAnnotDrawOne(ctx,a);
+      if(bugAnnotDrawing) bugAnnotDrawOne(ctx,bugAnnotDrawing);
+    }
+    function bugAnnotDrawArrow(ctx,x0,y0,x1,y1,lw){
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+      const ang=Math.atan2(y1-y0,x1-x0); const head=Math.max(10,lw*4);
+      ctx.beginPath();
+      ctx.moveTo(x1,y1); ctx.lineTo(x1-head*Math.cos(ang-Math.PI/6),y1-head*Math.sin(ang-Math.PI/6));
+      ctx.moveTo(x1,y1); ctx.lineTo(x1-head*Math.cos(ang+Math.PI/6),y1-head*Math.sin(ang+Math.PI/6));
+      ctx.stroke();
+    }
+    function bugAnnotDrawOne(ctx,a){
+      if(!a) return;
+      ctx.save();
+      ctx.strokeStyle=a.color||bugAnnotColor; ctx.fillStyle=a.color||bugAnnotColor;
+      ctx.lineWidth=a.width||bugAnnotWidth||bugAnnotLW; ctx.lineJoin="round"; ctx.lineCap="round";
+      if(a.type==="rect"){ const x=Math.min(a.x0,a.x1),y=Math.min(a.y0,a.y1),w=Math.abs(a.x1-a.x0),h=Math.abs(a.y1-a.y0); ctx.strokeRect(x,y,w,h); }
+      else if(a.type==="circle"){ const cx=(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2,rx=Math.max(1,Math.abs(a.x1-a.x0)/2),ry=Math.max(1,Math.abs(a.y1-a.y0)/2); ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.stroke(); }
+      else if(a.type==="arrow"){ bugAnnotDrawArrow(ctx,a.x0,a.y0,a.x1,a.y1,a.width||bugAnnotWidth||bugAnnotLW); }
+      else if(a.type==="free"){ const p=a.points||[]; if(p.length){ ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y); for(let k=1;k<p.length;k++) ctx.lineTo(p[k].x,p[k].y); ctx.stroke(); } }
+      else if(a.type==="text"){ const fs=Math.max(12,(a.width||bugAnnotWidth||bugAnnotLW)*6); ctx.font="bold "+fs+"px Arial, sans-serif"; ctx.textBaseline="top"; ctx.fillText(String(a.text||""),a.x0,a.y0); }
+      ctx.restore();
+    }
+    function bugAnnotPointerDown(ev){
+      if(!bugAnnotBaseImg) return;
+      ev.preventDefault();
+      const cv=document.getElementById("bugAnnotCanvas"); try{ cv.setPointerCapture(ev.pointerId); }catch(e){}
+      const p=bugAnnotPos(ev);
+      if(bugAnnotTool==="text"){
+        let txt=""; try{ txt=window.prompt("Texto de la anotación:",""); }catch(e){ txt=""; }
+        if(txt&&String(txt).trim()){ bugAnnotItems.push({type:"text",x0:p.x,y0:p.y,text:String(txt).trim().slice(0,120),color:bugAnnotColor,width:bugAnnotWidth}); bugAnnotRedraw(); }
+        bugAnnotDrawing=null; return;
+      }
+      if(bugAnnotTool==="free"){ bugAnnotDrawing={type:"free",points:[{x:p.x,y:p.y}],color:bugAnnotColor,width:bugAnnotWidth}; }
+      else { bugAnnotDrawing={type:bugAnnotTool,x0:p.x,y0:p.y,x1:p.x,y1:p.y,color:bugAnnotColor,width:bugAnnotWidth}; }
+      bugAnnotRedraw();
+    }
+    function bugAnnotPointerMove(ev){
+      if(!bugAnnotDrawing) return;
+      const p=bugAnnotPos(ev);
+      if(bugAnnotDrawing.type==="free"){ bugAnnotDrawing.points.push({x:p.x,y:p.y}); }
+      else { bugAnnotDrawing.x1=p.x; bugAnnotDrawing.y1=p.y; }
+      bugAnnotRedraw();
+    }
+    function bugAnnotPointerUp(ev){
+      if(!bugAnnotDrawing) return;
+      const d=bugAnnotDrawing; bugAnnotDrawing=null;
+      let keep=true;
+      if(d.type==="free"){ keep=!!(d.points&&d.points.length>1); }
+      else { keep=(Math.abs(d.x1-d.x0)>2||Math.abs(d.y1-d.y0)>2); }
+      if(keep) bugAnnotItems.push(d);
+      bugAnnotRedraw();
+    }
+    function bugAnnotUndoLast(){ if(bugAnnotItems.length){ bugAnnotItems.pop(); bugAnnotRedraw(); } }
+    function bugAnnotClearAll(){ if(bugAnnotItems.length){ bugAnnotItems=[]; bugAnnotRedraw(); } }
+    function bugAnnotApplyToShot(){
+      const cv=document.getElementById("bugAnnotCanvas"); const shot=bugAnnotShot; if(!cv||!shot) return;
+      bugAnnotDrawing=null; bugAnnotRedraw();
+      const types=bugAnnotTypesOf(bugAnnotItems);
+      const colors=[], widths=[];
+      for(const a of bugAnnotItems){ if(a){ if(a.color&&colors.indexOf(a.color)<0) colors.push(a.color); if(a.width!=null&&widths.indexOf(a.width)<0) widths.push(a.width); } }
+      // Metadatos mínimos del original (solo la primera vez; nunca el dataUrl original).
+      if(!shot.annotated){ shot.originalW=shot.w; shot.originalH=shot.h; shot.originalMime=shot.mime; shot.originalSize=shot.size; }
+      const useMime=(shot.mime==="image/png")?"image/png":"image/jpeg";
+      let dataUrl; try{ dataUrl=(useMime==="image/png")?cv.toDataURL("image/png"):cv.toDataURL("image/jpeg",BUG_JPEG_Q); }catch(e){ recordError("bugReport.annotEncode",e); return; }
+      const i=dataUrl.indexOf(","); const newSize=Math.round(((dataUrl.length-(i+1))*3)/4);
+      shot.dataUrl=dataUrl; shot.mime=useMime; shot.size=newSize; shot.w=cv.width; shot.h=cv.height;
+      shot.annotated=true; shot.annotationTs=new Date().toISOString();
+      shot.annotationCount=(shot.annotationCount||0)+bugAnnotItems.length;
+      shot.annotationTypes=Array.from(new Set([].concat(shot.annotationTypes||[],types)));
+      shot.annotationColors=Array.from(new Set([].concat(shot.annotationColors||[],colors)));
+      shot.annotationWidths=Array.from(new Set([].concat(shot.annotationWidths||[],widths)));
+      recordUserAction("bugReport.annotSave",{index:bugAnnotIndex,count:bugAnnotItems.length,types:types});
+    }
+    function bugAnnotClose(save){
+      try{ if(save&&bugAnnotShot&&bugAnnotItems.length){ bugAnnotApplyToShot(); } }
+      catch(e){ recordError("bugReport.annotClose",e); }
+      const ov=document.getElementById("bugAnnotOverlay"); if(ov) ov.style.display="none";
+      bugAnnotBaseImg=null; bugAnnotDrawing=null; bugAnnotItems=[]; bugAnnotIndex=-1; bugAnnotShot=null;
+      renderBugThumbs(); // el modal Bug Report sigue visible detrás
+    }
+
+    // ===================== Selector visual de elemento de la interfaz (Bug Report) =====================
+    // Activa un modo en el que el usuario hace click sobre cualquier elemento real del panel; se
+    // resalta bajo el cursor (overlay con pointer-events:none) y, al seleccionar, se rellena el campo
+    // "Zona / Herramienta afectada" y se guardan metadatos técnicos en bugLastUiTarget (report.uiTarget).
+    let bugUiPicking=false;
+    let bugLastUiTarget=null;
+    // ----- Descripción enriquecida: menciones/chips de elementos UI -----
+    let bugUiMentionsMap={};   // mid -> meta completa del elemento mencionado
+    let bugDescSavedRange=null; // última posición conocida del cursor dentro de #bugDesc
+    function bugDescInEditor(node){ const ed=document.getElementById("bugDesc"); return !!(ed&&node&&(node===ed||ed.contains(node))); }
+    function bugDescSaveSelection(){
+      try{ const sel=window.getSelection(); if(sel&&sel.rangeCount){ const r=sel.getRangeAt(0); if(bugDescInEditor(r.startContainer)) bugDescSavedRange=r.cloneRange(); } }catch(e){}
+    }
+    function bugDescRestoreSelection(){
+      try{ if(bugDescSavedRange){ const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(bugDescSavedRange); return bugDescSavedRange.cloneRange(); } }catch(e){}
+      return null;
+    }
+    function bugInsertUiMention(meta){
+      const ed=document.getElementById("bugDesc"); if(!ed||!meta) return;
+      const mid="UIM-"+Date.now()+"-"+Math.random().toString(36).slice(2,6);
+      bugUiMentionsMap[mid]=meta;
+      const chip=document.createElement("span");
+      chip.className="bug-mention"; chip.setAttribute("contenteditable","false"); chip.setAttribute("data-mid",mid); chip.setAttribute("data-label",meta.label||""); chip.title=meta.label||"";
+      const t=document.createElement("span"); t.className="bug-mention-t"; t.textContent=meta.label||"(elemento)";
+      const x=document.createElement("button"); x.type="button"; x.className="bug-mention-x"; x.setAttribute("aria-label","Quitar mención"); x.tabIndex=-1; x.textContent="×";
+      chip.appendChild(t); chip.appendChild(x);
+      let range=bugDescRestoreSelection();
+      if(!range || !bugDescInEditor(range.startContainer)){ range=document.createRange(); range.selectNodeContents(ed); range.collapse(false); }
+      try{
+        range.deleteContents();
+        range.insertNode(chip);
+        const space=document.createTextNode(" ");
+        if(chip.parentNode) chip.parentNode.insertBefore(space,chip.nextSibling);
+        const after=document.createRange(); after.setStartAfter(space); after.collapse(true);
+        const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(after);
+        bugDescSavedRange=after.cloneRange();
+      }catch(e){ recordError("bugReport.insertMention",e); ed.appendChild(chip); }
+    }
+    function bugSerializeDescription(){
+      const ed=document.getElementById("bugDesc"); if(!ed) return "";
+      let out="";
+      const walk=(node)=>{
+        node.childNodes.forEach((n)=>{
+          if(n.nodeType===3){ out+=n.nodeValue||""; }
+          else if(n.nodeType===1){
+            if(n.classList&&n.classList.contains("bug-mention")){ out+="[UI: "+(n.getAttribute("data-label")||"")+"]"; }
+            else if(n.tagName==="BR"){ out+="\n"; }
+            else if(n.tagName==="DIV"||n.tagName==="P"){ if(out && !/\n$/.test(out)) out+="\n"; walk(n); if(!/\n$/.test(out)) out+="\n"; }
+            else { walk(n); }
+          }
+        });
+      };
+      walk(ed);
+      return out.replace(/ /g," ").replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim();
+    }
+    function bugGetUiMentions(){
+      const ed=document.getElementById("bugDesc"); if(!ed) return [];
+      const out=[];
+      ed.querySelectorAll(".bug-mention").forEach((ch)=>{ const mid=ch.getAttribute("data-mid"); const meta=mid&&bugUiMentionsMap[mid]; out.push(meta||{label:ch.getAttribute("data-label")||"",partial:true}); });
+      return out;
+    }
+    function bugRemoveUiMention(id){
+      const ed=document.getElementById("bugDesc"); if(!ed||!id) return;
+      const ch=ed.querySelector('.bug-mention[data-mid="'+id+'"]'); if(ch&&ch.parentNode) ch.parentNode.removeChild(ch);
+    }
+    function bugSyncAffectedArea(){
+      const a=document.getElementById("bugArea"); if(!a) return;
+      const labels=bugGetUiMentions().map((m)=>m&&m.label).filter(Boolean);
+      a.value=labels.join(", ");
+    }
+    function ensureBugUiPicker(){
+      if(!document.getElementById("bugUiPickHighlight")){
+        const hl=document.createElement("div"); hl.id="bugUiPickHighlight"; hl.className="bug-ui-pick-highlight"; document.body.appendChild(hl);
+      }
+      if(!document.getElementById("bugUiPickBar")){
+        const bar=document.createElement("div"); bar.id="bugUiPickBar"; bar.className="bug-ui-pick-bar"; bar.textContent="Click menciona · Ctrl+click interactúa · Esc cancela"; document.body.appendChild(bar);
+      }
+    }
+    function bugUiIsOwn(el){
+      if(!el||!el.closest) return true;
+      return !!el.closest("#bugUiPickHighlight,#bugUiPickBar,#bugModalOverlay,#bugAnnotOverlay,#bugAssistOverlay,#bugTimerBar");
+    }
+    function bugUiElLabel(el){
+      if(!el) return "";
+      let t=(el.getAttribute&&(el.getAttribute("aria-label")||el.getAttribute("title")))||"";
+      if(!t){ t=String(el.textContent||"").replace(/\s+/g," ").trim(); }
+      if(!t && el.id) t=el.id;
+      if(!t) t=String(el.tagName||"").toLowerCase();
+      return String(t).slice(0,60);
+    }
+    function bugUiBreadcrumb(el){
+      const out=[]; let cur=el;
+      while(cur && cur!==document.body && cur.nodeType===1){
+        if(cur.tagName==="DETAILS"){
+          const sm=cur.querySelector(":scope > summary");
+          if(sm){ const lbl=String(sm.textContent||"").replace(/\s+/g," ").trim(); if(lbl) out.unshift(lbl.slice(0,40)); }
+        }
+        cur=cur.parentElement;
+      }
+      return out;
+    }
+    function bugUiHuman(el){
+      const bc=bugUiBreadcrumb(el); const lbl=bugUiElLabel(el);
+      const parts=bc.slice();
+      if(lbl && (!parts.length || String(parts[parts.length-1]).toLowerCase()!==String(lbl).toLowerCase())) parts.push(lbl);
+      return parts.join(" > ") || lbl || String(el&&el.tagName||"").toLowerCase();
+    }
+    function bugUiCssPath(el){
+      const segs=[]; let cur=el, depth=0;
+      while(cur && cur.nodeType===1 && depth<5){
+        let seg=String(cur.tagName||"").toLowerCase();
+        if(cur.id){ segs.unshift("#"+cur.id); break; }
+        let cls=""; try{ cls=(typeof cur.className==="string")?cur.className:(cur.getAttribute&&cur.getAttribute("class")||""); }catch(e){}
+        const list=String(cls||"").trim().split(/\s+/).filter(Boolean).slice(0,2);
+        if(list.length) seg+="."+list.join(".");
+        const parent=cur.parentElement;
+        if(parent){ const idx=Array.prototype.indexOf.call(parent.children,cur)+1; if(idx>0) seg+=":nth-child("+idx+")"; }
+        segs.unshift(seg); cur=cur.parentElement; depth++;
+      }
+      return segs.join(" > ");
+    }
+    function bugUiTargetMeta(el){
+      if(!el) return null;
+      let cls=""; try{ cls=(typeof el.className==="string")?el.className:(el.getAttribute&&el.getAttribute("class")||""); }catch(e){}
+      let rect=null; try{ const r=el.getBoundingClientRect(); rect={x:Math.round(r.left),y:Math.round(r.top),w:Math.round(r.width),h:Math.round(r.height)}; }catch(e){}
+      return {
+        label:bugUiHuman(el),
+        tagName:String(el.tagName||"").toLowerCase(),
+        id:el.id||"",
+        className:String(cls||"").slice(0,160),
+        ariaLabel:(el.getAttribute&&el.getAttribute("aria-label"))||"",
+        title:(el.getAttribute&&el.getAttribute("title"))||"",
+        text:String(el.textContent||"").replace(/\s+/g," ").trim().slice(0,80),
+        cssPath:bugUiCssPath(el),
+        breadcrumb:bugUiBreadcrumb(el),
+        rect:rect,
+        ts:new Date().toISOString()
+      };
+    }
+    function bugUiMoveHighlight(x,y){
+      const el=document.elementFromPoint(x,y);
+      const hl=document.getElementById("bugUiPickHighlight"); if(!hl) return;
+      if(!el || bugUiIsOwn(el)){ hl.style.display="none"; return; }
+      let r=null; try{ r=el.getBoundingClientRect(); }catch(e){}
+      if(!r){ hl.style.display="none"; return; }
+      hl.style.display="block"; hl.style.left=r.left+"px"; hl.style.top=r.top+"px"; hl.style.width=r.width+"px"; hl.style.height=r.height+"px";
+    }
+    function bugUiOnMove(ev){ if(!bugUiPicking) return; bugUiMoveHighlight(ev.clientX,ev.clientY); }
+    function bugUiOnClick(ev){
+      if(!bugUiPicking) return;
+      // Ctrl/Meta + click: interactuar con la UI real (abrir details, enfocar inputs, desplegar)
+      // sin seleccionar y SIN salir del modo selector. No se bloquea el evento.
+      if(ev.ctrlKey||ev.metaKey){ return; }
+      // Click normal: bloquea la acción real del elemento y lo menciona en la descripción.
+      ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      const el=document.elementFromPoint(ev.clientX,ev.clientY);
+      if(!el || bugUiIsOwn(el)) return; // ignora elementos propios; sigue en modo selección
+      try{
+        const meta=bugUiTargetMeta(el);
+        bugLastUiTarget=meta;
+        bugInsertUiMention(meta);   // inserta un chip en la posición del cursor de la descripción
+        bugSyncAffectedArea();      // resumen compatible en el campo interno bugArea
+        recordUserAction("bugReport.uiPick",{label:meta&&meta.label,tag:meta&&meta.tagName});
+      }catch(e){ recordError("bugReport.uiPick",e); }
+      bugUiPickEnd();
+      setTimeout(()=>{ const ed=document.getElementById("bugDesc"); if(ed){ try{ ed.focus(); }catch(e){} bugDescRestoreSelection(); } },20);
+    }
+    function bugUiOnKey(ev){ if(!bugUiPicking) return; if(ev.key==="Escape"||ev.key==="Esc"){ ev.preventDefault(); ev.stopPropagation(); bugUiPickEnd(); } }
+    function bugUiPickStart(){
+      try{
+        ensureBugUiPicker();
+        if(bugUiPicking) return;
+        bugUiPicking=true;
+        const btn=document.getElementById("bugAreaPick"); if(btn) btn.classList.add("is-active");
+        // El modal deja de bloquear la selección de los elementos del panel detrás.
+        hideBugModalNow();
+        const bar=document.getElementById("bugUiPickBar"); if(bar) bar.style.display="block";
+        document.addEventListener("mousemove",bugUiOnMove,true);
+        document.addEventListener("click",bugUiOnClick,true);
+        document.addEventListener("keydown",bugUiOnKey,true);
+        recordUserAction("bugReport.uiPickStart",{});
+      }catch(e){ recordError("bugReport.uiPickStart",e); }
+    }
+    function bugUiPickEnd(){
+      bugUiPicking=false;
+      document.removeEventListener("mousemove",bugUiOnMove,true);
+      document.removeEventListener("click",bugUiOnClick,true);
+      document.removeEventListener("keydown",bugUiOnKey,true);
+      const hl=document.getElementById("bugUiPickHighlight"); if(hl) hl.style.display="none";
+      const bar=document.getElementById("bugUiPickBar"); if(bar) bar.style.display="none";
+      const btn=document.getElementById("bugAreaPick"); if(btn) btn.classList.remove("is-active");
+      showBugModalNow(); // vuelve a mostrar el modal (campo ya rellenado si hubo selección)
     }
 
     function ensureBugModal(){
@@ -4536,9 +4996,11 @@
         +'<div class="bug-modal-head"><span class="bug-modal-title">Bug Report</span></div>'
         +'<div class="bug-modal-row">'
         +'<input type="text" id="bugTitle" class="bug-input" placeholder="Título" maxlength="200" autocomplete="off">'
+        +'<button type="button" id="bugAreaPick" class="bug-area-pick" title="Identificar elemento de la interfaz" aria-label="Identificar elemento de la interfaz"><svg viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6z"/></svg></button>'
         +'<button type="button" id="bugShotBtn" class="bug-shot-btn" title="Captura asistida" aria-label="Captura asistida"><svg viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button>'
         +'</div>'
-        +'<textarea id="bugDesc" class="bug-textarea" placeholder="Descripción"></textarea>'
+        +'<div id="bugDesc" class="bug-desc-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción" data-ph="Descripción (usa el cursor azul para insertar menciones de la interfaz)"></div>'
+        +'<input type="hidden" id="bugArea">'
         +'<div id="bugThumbs" class="bug-thumbs"></div>'
         +'<div id="bugNote" class="bug-note" style="display:none;"></div>'
         +'<div class="bug-modal-actions">'
@@ -4577,6 +5039,15 @@
       document.getElementById("bugAssistPasteClose").onclick=()=>exitAssistToModal();
       document.getElementById("bugCancel").onclick=()=>closeBugModal();
       document.getElementById("bugSend").onclick=()=>onBugSend();
+      const areaPick=document.getElementById("bugAreaPick"); if(areaPick) areaPick.onclick=()=>bugUiPickStart();
+      // Editor de descripción enriquecido: guardado de selección y borrado de chips por su cruz.
+      const ed=document.getElementById("bugDesc");
+      if(ed){
+        ed.addEventListener("keyup",bugDescSaveSelection);
+        ed.addEventListener("mouseup",bugDescSaveSelection);
+        ed.addEventListener("mousedown",(ev)=>{ const x=ev.target&&ev.target.closest&&ev.target.closest(".bug-mention-x"); if(x){ ev.preventDefault(); const chip=x.closest(".bug-mention"); if(chip){ const mid=chip.getAttribute("data-mid"); if(mid) bugRemoveUiMention(mid); bugSyncAffectedArea(); } } });
+        document.addEventListener("selectionchange",()=>{ try{ const sel=window.getSelection(); if(sel&&sel.rangeCount){ const r=sel.getRangeAt(0); if(bugDescInEditor(r.startContainer)) bugDescSavedRange=r.cloneRange(); } }catch(e){} });
+      }
       const paste=document.getElementById("bugAssistPaste");
       paste.addEventListener("paste",(ev)=>onBugPaste(ev));
       // Nunca conservar texto/HTML dentro del recuadro (la imagen se procesa aparte).
@@ -4615,7 +5086,10 @@
       recordUserAction("bugReportOpen",{});
       bugDraftShots=[];
       const t=document.getElementById("bugTitle"); if(t) t.value="";
-      const d=document.getElementById("bugDesc"); if(d) d.value="";
+      const d=document.getElementById("bugDesc"); if(d) d.innerHTML="";
+      const a=document.getElementById("bugArea"); if(a) a.value="";
+      bugUiMentionsMap={}; bugDescSavedRange=null;
+      bugLastUiTarget=null; if(typeof bugUiPicking!=="undefined" && bugUiPicking) bugUiPickEnd();
       clearInterval(bugTimerInterval); bugTimerInterval=null;
       closePasteZone(); hideTimerBar(); hideBugNote(); renderBugThumbs();
       showBugModalNow();
@@ -4718,11 +5192,13 @@
 
     async function onBugSend(){
       const title=String((document.getElementById("bugTitle")||{}).value||"").trim();
-      const desc=String((document.getElementById("bugDesc")||{}).value||"").trim();
+      const desc=bugSerializeDescription();
+      const uiMentions=bugGetUiMentions();
+      const affectedArea=uiMentions.map((m)=>m&&m.label).filter(Boolean).join(", ")||String((document.getElementById("bugArea")||{}).value||"").trim();
       if(!title&&!desc){ showBugNote("Escribe al menos un título o una descripción."); return; }
-      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!desc,shots:bugDraftShots.length});
+      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!desc,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!bugLastUiTarget});
       let snapshot={}; try{ snapshot=await collectDebugSnapshot(); }catch(e){ recordError("bugReport.snapshot",e); snapshot={snapshotError:String(e&&e.message||e)}; }
-      const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:new Date().toISOString(), version:SCRIPT_VERSION, title, description:desc, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), snapshot };
+      const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:new Date().toISOString(), version:SCRIPT_VERSION, title, description:desc, affectedArea, uiMentions, uiTarget:bugLastUiTarget||undefined, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), snapshot };
       let reports=loadBugReports(); reports.push(report);
       if(reports.length>BUG_MAX_REPORTS) reports=reports.slice(reports.length-BUG_MAX_REPORTS);
       let ok=saveBugReports(reports);
@@ -4759,9 +5235,11 @@
             const sn=String(si+1).padStart(3,"0");
             const path="images/report_"+rn+"_image_"+sn+"."+extForMime(s&&s.mime);
             if(s&&s.dataUrl){ try{ files.push({name:path,data:dataUrlToBytes(s.dataUrl)}); }catch(e){ recordError("bugReport.zipImage",e); } }
-            return { id:s&&s.id, ts:s&&s.ts, source:s&&s.source, origMime:s&&s.origMime, origSize:s&&s.origSize, mime:s&&s.mime, size:s&&s.size, w:s&&s.w, h:s&&s.h, file:path };
+            return { id:s&&s.id, ts:s&&s.ts, source:s&&s.source, origMime:s&&s.origMime, origSize:s&&s.origSize, mime:s&&s.mime, size:s&&s.size, w:s&&s.w, h:s&&s.h, file:path,
+              annotated:!!(s&&s.annotated), annotationTs:s&&s.annotationTs, annotationCount:s&&s.annotationCount, annotationTypes:s&&s.annotationTypes,
+              originalW:s&&s.originalW, originalH:s&&s.originalH, originalMime:s&&s.originalMime, originalSize:s&&s.originalSize };
           });
-          return { id:r.id, ts:r.ts, version:r.version, title:r.title, description:r.description, images, snapshot:r.snapshot };
+          return { id:r.id, ts:r.ts, version:r.version, title:r.title, description:r.description, affectedArea:r.affectedArea, uiMentions:r.uiMentions||[], uiTarget:r.uiTarget, images, snapshot:r.snapshot };
         });
         files.push({name:"bug_reports.txt",data:enc.encode("﻿"+buildBugReportsText(reports))});
         files.push({name:"bug_reports.json",data:enc.encode(safeJsonDeep(jsonReports,2))});

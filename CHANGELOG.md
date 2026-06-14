@@ -3,6 +3,30 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v9.0.0] — 2026-06-14
+
+Versión mayor que consolida la **Fase 5 del Bug Report** (editor de anotaciones, selector visual de elementos de la interfaz y menciones inline) sobre la base estable de la serie v8.14. Recoge el trabajo interno v8.14.1 → v8.14.4. Publicado como incremento mayor `X` por la ampliación funcional del Bug Report. Verificación estática (`node --check` del JS inline, `git diff --check`); **no probado en el visor de Trimble**.
+
+### Añadido — Bug Report avanzado (Fase 5)
+
+* **Selector visual de elementos de la interfaz**: botón con icono de cursor azul en la fila superior del modal. Activa un modo en el que, con `document.elementFromPoint`, se resalta el elemento bajo el cursor (overlay con `pointer-events:none`) y una barra flotante guía la acción. El click identifica el elemento y captura metadatos técnicos (`tagName`, `id`, `className`, `aria-label`, `title`, texto corto, ruta CSS aproximada, breadcrumb de `details/summary` y bounding rect).
+* **Menciones/chips de UI dentro de la descripción**: la descripción pasa de `textarea` a un editor `contenteditable` que permite insertar el elemento seleccionado como un chip inline (estilo token gris, con cruz de borrado) en la posición del cursor. Los chips se borran con su cruz o con Backspace/Delete. La descripción se serializa a texto plano con marcadores `[UI: …]` y se guarda además `uiMentions[]` con los metadatos completos.
+* **Ctrl+click (y Meta+click) para interactuar sin seleccionar** durante el modo selector: permite abrir/cerrar `details`, desplegar grupos o enfocar campos sin mencionarlos y sin salir del modo selector.
+* **Editor de anotaciones de capturas**: las miniaturas son clicables para abrir un editor sobre lienzo con herramientas flecha, rectángulo, círculo, texto, mano libre, deshacer, limpiar, cancelar y guardar. Al guardar, las anotaciones se integran en la imagen y se registran metadatos (`annotated`, `annotationTs`, `annotationCount`, `annotationTypes`, `annotationColors`, `annotationWidths`) conservando metadatos mínimos del original sin duplicar el peso en `localStorage`.
+* **Selector de color y grosor de anotación**: paleta compacta inspirada en Recortes de Windows + color personalizado (`input type="color"`) y slider de grosor (1–18 px, por defecto 4) con previsualización de trazo en vivo; rojo como color inicial.
+* **Campo "Zona / Herramienta afectada"** gestionado internamente (resumen de menciones), con `affectedArea` compatible.
+
+### Mejorado / Corregido
+
+* Miniaturas clicables para anotar con halo azul al hover/foco y halo persistente cuando la captura ya está anotada; el botón de eliminar miniatura mantiene su comportamiento (no abre el editor).
+* Redimensionado vertical del cuadro de descripción restaurado (`resize:vertical`) sobre el nuevo editor enriquecido.
+* TXT/JSON/ZIP del Bug Report amplían los metadatos: `uiTarget` (último elemento), `uiMentions[]` (menciones usadas) y datos de anotación por captura; el TXT incluye una sección legible de menciones UI. Compatibilidad con reportes antiguos sin estos campos.
+
+### Organización del repositorio
+
+* `.gitignore` ampliado para no versionar carpetas locales de trabajo (`.claude/`, `gpt_code/`), temporales (`.tmp_*`) ni descargas del Bug Report/Debug (`DEO_bug_reports*.zip`, `DEO_bug_reports*.txt`, `DEO_debug*.txt`).
+* Copia histórica versionada en `old_code/index_v9.0.0.html`. Sin mover `index.html` ni `manifest.json` de la raíz; iconos de raíz y de `assets/` conservados según el diseño documentado en `README.md`.
+
 ## [v8.14.0] — 2026-06-14
 
 Versión estable que consolida las mejoras de **Bug Report / Debug** y un conjunto de correcciones y ajustes de UI en **Configurar vista** y **Quantity Surveyor**. Publicado como incremento `Y`. Verificación estática (`node --check` del JS inline, `git diff --check`); **no probado en el visor de Trimble**.
