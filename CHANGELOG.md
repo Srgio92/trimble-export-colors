@@ -3,6 +3,15 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.4.0 - 2026-06-15
+
+- Fase 8 parcial: añadida ventana Reported bugs en el panel Desarrollador.
+- Añadido botón visible de lista/checklist para abrir bugs reportados sin depender de Bug Report.
+- Añadida lista compacta de bugs con código, título, descripción breve, estado resuelto/no resuelto y comentario editable en detalles.
+- Añadido histórico de bugs resueltos con opción de reabrir bug.
+- Añadida persistencia local mediante localStorage y fusión defensiva con bugs predefinidos.
+- Añadida lista inicial con bugs/hotfixes de Fase 1, Fase 2, Fase 9 parcial, Fase 8 parcial y pendientes principales.
+
 ## v9.3.0 - 2026-06-15
 
 - Fase 2: mejora de Configurar vista y Actualizar vista.

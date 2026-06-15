@@ -218,6 +218,37 @@
     #debug.bug-report-pending { border-color:#dc2626; animation:bugPendingPulse 1.3s ease-in-out infinite; }
     @keyframes bugPendingPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(220,38,38,.55); } 50%{ box-shadow:0 0 0 5px rgba(220,38,38,0); } }
     @media (prefers-reduced-motion: reduce){ #debug.bug-report-pending{ animation:none; box-shadow:0 0 0 2px rgba(220,38,38,.5); } }
+    /* ===== Reported bugs (v9.4.0): botón siempre visible + ventana ligera de seguimiento de bugs ===== */
+    .reported-bugs-btn { background:transparent; border:1px solid #d1d5db; border-radius:4px; padding:3px 6px; margin-right:4px; cursor:pointer; line-height:0; color:#374151; vertical-align:middle; transition:transform .08s ease, border-color .15s ease, box-shadow .15s ease; }
+    .reported-bugs-btn:hover { border-color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; }
+    .reported-bugs-btn:active { transform:scale(.92); }
+    .reported-bugs-btn svg { display:block; stroke:currentColor; }
+    .rb-modal { width:360px; }
+    .rb-modal .bug-modal-head { cursor:default; }
+    .rb-head-btn { background:#fff; border:1px solid #d1d5db; border-radius:5px; width:24px; height:24px; padding:0; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:#374151; line-height:0; font-size:15px; transition:transform .08s ease, border-color .15s ease, box-shadow .15s ease; }
+    .rb-head-btn:hover { border-color:#1c7fd6; }
+    .rb-head-btn:active { transform:scale(.92); }
+    .rb-head-btn.is-on { border-color:#1c7fd6; color:#1c7fd6; box-shadow:0 0 0 1px #1c7fd6 inset; }
+    .rb-head-btn svg { display:block; stroke:currentColor; }
+    .rb-list { display:flex; flex-direction:column; gap:7px; margin-top:4px; }
+    .rb-empty { color:#6b7280; font-size:12px; padding:12px 2px; text-align:center; }
+    .rb-item { border:1px solid #e5e7eb; border-radius:8px; padding:7px 8px; background:#fafbfc; }
+    .rb-item.is-unresolved { border-left:3px solid #dc2626; }
+    .rb-line1 { font-size:12.5px; line-height:1.3; }
+    .rb-issue { color:#4b5563; font-size:11px; line-height:1.4; margin-top:2px; }
+    .rb-actions { display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap; }
+    .rb-btn { font-size:11px; padding:2px 8px; border:1px solid #d1d5db; border-radius:5px; background:#fff; color:#374151; cursor:pointer; transition:transform .08s ease, border-color .15s ease, color .15s ease; }
+    .rb-btn:hover { border-color:#1c7fd6; }
+    .rb-btn:active { transform:scale(.92); }
+    .rb-resolve:hover { border-color:#16a34a; color:#16a34a; }
+    .rb-unresolve:hover { border-color:#dc2626; color:#dc2626; }
+    .rb-toggle { margin-left:auto; min-width:24px; padding:2px 6px; font-weight:bold; }
+    .rb-details { margin-top:7px; padding-top:7px; border-top:1px dashed #e1e6ec; font-size:11px; color:#374151; display:flex; flex-direction:column; gap:3px; }
+    .rb-d-row span { color:#6b7280; }
+    .rb-comment-label { display:flex; flex-direction:column; gap:3px; margin-top:4px; font-size:11px; color:#6b7280; }
+    .rb-comment { width:100%; min-height:42px; resize:vertical; font:inherit; font-size:11px; padding:4px 6px; border:1px solid #d1d5db; border-radius:5px; box-sizing:border-box; }
+    .rb-comment-ro { font-size:11px; color:#374151; background:#f3f4f6; border-radius:5px; padding:4px 6px; margin-top:4px; white-space:pre-wrap; }
+    .rb-meta { font-size:10.5px; color:#6b7280; margin-top:4px; }
     /* ===== Modal Bug Report ===== */
     .bug-modal-overlay { position:fixed; inset:0; background:rgba(17,24,39,.45); display:flex; align-items:center; justify-content:center; z-index:9999; padding:12px; box-sizing:border-box; }
     .bug-modal { width:340px; max-width:100%; max-height:calc(100vh - 24px); overflow:auto; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.25); padding:12px; box-sizing:border-box; font-size:13px; color:#1f2937; }
@@ -1072,7 +1103,7 @@
   </details>
 
   <details open id="devPanel">
-    <summary class="dev-summary"><span class="dev-summary-text">Desarrollador</span><span class="debug-wrap"><button id="debug" type="button" data-tip="Crea un reporte de incidencia (Bug Report) con capturas, anotaciones y menciones de la interfaz." aria-label="Crear Bug Report" title="Crear Bug Report"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button><button id="bugDownloadBtn" class="bug-download-btn" type="button" title="Descargar reportes de incidencia" aria-label="Descargar reportes de incidencia" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7 10l5 5 5-5M5 20h14"/></svg></button></span></summary>
+    <summary class="dev-summary"><span class="dev-summary-text">Desarrollador</span><span class="debug-wrap"><button id="reportedBugsBtn" class="reported-bugs-btn" type="button" title="Reported bugs" aria-label="Reported bugs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><path d="M8.5 12l1.5 1.5 2.5-3M8.5 17h5"/></svg></button><button id="debug" type="button" data-tip="Crea un reporte de incidencia (Bug Report) con capturas, anotaciones y menciones de la interfaz." aria-label="Crear Bug Report" title="Crear Bug Report"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 7V4M9 4.5l1.2 1.2M15 4.5l-1.2 1.2M4 11h4M16 11h4M4 16h4M16 16h4M4.5 20l3.5-2.2M19.5 20l-3.5-2.2"/></svg></button><button id="bugDownloadBtn" class="bug-download-btn" type="button" title="Descargar reportes de incidencia" aria-label="Descargar reportes de incidencia" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7 10l5 5 5-5M5 20h14"/></svg></button></span></summary>
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
@@ -1090,7 +1121,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.3.0";
+    const SCRIPT_VERSION = "v9.4.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -4923,6 +4954,7 @@
       window.addEventListener("scroll",closeAllFloatingSuggests,true);
       const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
       const bugDownloadBtn=document.getElementById("bugDownloadBtn"); if(bugDownloadBtn) bugDownloadBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); downloadBugReports(); });
+      const reportedBugsBtn=document.getElementById("reportedBugsBtn"); if(reportedBugsBtn) reportedBugsBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); try{ openReportedBugs(); }catch(err){ recordError("reportedBugs.open",err); log("ERROR Reported bugs: "+(err&&err.message?err.message:err)); } });
       updateDebugButtonState();
       const globalRefresh=document.getElementById("globalViewerRefresh"); if(globalRefresh) globalRefresh.onclick=()=>refreshViewerDataGlobal();
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
@@ -6110,11 +6142,169 @@
       }
     }
 
+    // ===================== REPORTED BUGS (v9.4.0): lista de trabajo ligera en Desarrollador =====================
+    const REPORTED_BUGS_KEY="deo.reportedBugs.v1";
+    const REPORTED_BUGS_DEFAULTS=[
+      { id:"BUG-001", phase:"Fase 1", title:"Vista activa no carga correctamente", issue:"El selector de Vista activa podía revertir valores, requerir varios refresh y fallar con respuestas incompletas de la API.", hotfix:"Se añadió una capa resiliente de vistas con caché normalizada, lectura defensiva de vista activa y carga robusta de Actualizar vista.", expected:"Seleccionar una vista debe cargar Actualizar vista sin mezclar campos ni requerir varios refresh.", detectedVersion:"v9.1.0", fixedVersion:"v9.2.0", status:"active", comment:"" },
+      { id:"BUG-002", phase:"Fase 2", title:"Parser de vista asignaba texto libre a Ubicación", issue:"Cuando el nombre de la vista no tenía formato canónico, texto libre como 'vista rest rest' podía acabar rellenando Ubicación.", hotfix:"Se corrigió el fallback del parser para enviar texto libre no canónico a Actuación o dejar campos inseguros vacíos.", expected:"El campo Ubicación no debe rellenarse con texto libre no reconocido.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-003", phase:"Fase 2", title:"Crear o actualizar vista permitía campos incompletos", issue:"Era posible crear o actualizar vistas con campos obligatorios vacíos o fecha inválida.", hotfix:"Se añadió validación obligatoria de Código, Ubicación, Nivel, Ejes, Capítulo, Actuación, Fecha y Autor.", expected:"La herramienta debe bloquear el guardado y marcar en rojo los campos inválidos.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-004", phase:"Fase 2", title:"Compartir con aceptaba texto libre inexistente", issue:"El campo Compartir con permitía convertir texto libre como 'rc' en chip aunque no correspondiera a un usuario o grupo real.", hotfix:"Se endureció la entrada para aceptar solo personas o grupos reales procedentes de sugerencias/caché.", expected:"Solo deben crearse chips válidos a partir de coincidencias reales.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-005", phase:"Fase 2", title:"Etiquetas y compartidos no estaban confirmados por la API", issue:"La herramienta podía mostrar éxito aunque la API no confirmara realmente etiquetas o compartidos.", hotfix:"Se añadió verificación defensiva posterior al guardado y mensajes de confirmación/no confirmación.", expected:"La herramienta no debe afirmar éxito si la API no confirma el dato.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-006", phase:"Fase 2", title:"Sugerencias flotantes se descolocaban al hacer scroll", issue:"Los menús flotantes de sugerencias podían quedar desalineados al desplazar el panel.", hotfix:"Se cerraron las sugerencias flotantes al hacer scroll.", expected:"No deben quedar popups flotantes descolocados.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-007", phase:"Fase 9 parcial", title:"Botón global sin estado claro de datos obsoletos", issue:"El botón global de actualización no indicaba de forma clara cuándo los datos del visor no estaban cargados u obsoletos.", hotfix:"Se añadió halo azul discreto cuando los datos están pendientes de actualización.", expected:"El halo debe aparecer con datos obsoletos y desaparecer tras actualizar correctamente.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-008", phase:"Fase 9 parcial", title:"Ayuda del panel Desarrollador ocupaba texto innecesario", issue:"La fila de ayuda mostraba el texto 'Ayuda', ocupando espacio visual innecesario.", hotfix:"Se eliminó el texto visible y se dejó solo el botón '?'.", expected:"El panel Desarrollador debe mostrar solo el botón de ayuda.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
+      { id:"BUG-009", phase:"Fase 8 parcial", title:"Falta una lista de trabajo para bugs reportados", issue:"No existía una ventana ligera para controlar qué bugs/hotfixes estaban pendientes, resueltos o no resueltos.", hotfix:"Se añade la ventana Reported bugs con lista activa, histórico y reapertura de bugs.", expected:"El usuario debe poder revisar bugs, marcarlos como resueltos/no resueltos y reabrirlos desde histórico.", detectedVersion:"v9.3.0", fixedVersion:"v9.4.0", status:"active", comment:"" },
+      { id:"BUG-010", phase:"Pendiente", title:"Importar GUID con codigo_revision RFI", issue:"Importar registro solo procesa revisado_deo TRUE y no aplica color específico a GUID con codigo_revision RFI.", hotfix:"", expected:"Los GUID con RFI deben poder importarse con color seleccionable, magenta por defecto, sin prevalecer sobre rojo DEO.", detectedVersion:"v9.1.0", fixedVersion:"", status:"unresolved", comment:"" },
+      { id:"BUG-011", phase:"Pendiente", title:"Exportación masiva aborta por confirmación de vistas", issue:"La exportación masiva puede fallar si la API no confirma correctamente la vista activa.", hotfix:"", expected:"Debe exportar en modo permisivo, generar informe por vista y no abortar todo el lote por una vista no confirmada.", detectedVersion:"v9.1.0", fixedVersion:"", status:"unresolved", comment:"" },
+      { id:"BUG-012", phase:"Pendiente", title:"Selección cercanos necesita modo solo con atajo", issue:"El atajo actual no separa claramente modo automático, modo solo con atajo y ejecución puntual.", hotfix:"", expected:"Debe existir modo automático y modo solo con atajo sin doble ejecución.", detectedVersion:"v9.1.0", fixedVersion:"", status:"unresolved", comment:"" },
+      { id:"BUG-013", phase:"Pendiente", title:"Mostrar parámetros no separa etiquetas live, guardadas e inspector", issue:"La herramienta no refleja completamente el concepto original de etiquetas live temporales y etiquetas guardadas.", hotfix:"", expected:"Debe separar inspector, etiquetas live y etiquetas guardadas.", detectedVersion:"v9.1.0", fixedVersion:"", status:"unresolved", comment:"" },
+      { id:"BUG-014", phase:"Pendiente", title:"Excluir IFC anidado y colores nativos IFC/Tekla", issue:"La exclusión de IFC y la detección de colores nativos IFC/Tekla siguen siendo incompletas.", hotfix:"", expected:"Debe mejorar el diagnóstico de IFC anidado y ampliar Color Probe para colores/materiales nativos si la API lo permite.", detectedVersion:"v9.1.0", fixedVersion:"", status:"unresolved", comment:"" }
+    ];
+    const REPORTED_BUGS_DEFAULT_IDS=new Set(REPORTED_BUGS_DEFAULTS.map((b)=>b.id));
+    let reportedBugsState=[];
+    let reportedBugsView="active"; // "active" | "history"
+    function reportedStatusOk(s){ return s==="active"||s==="resolved"||s==="unresolved"; }
+    // Fusiona defaults con el estado guardado por id: conserva comentarios/estados del usuario y añade bugs nuevos del código.
+    function loadReportedBugs(){
+      const saved={};
+      try{
+        const raw=localStorage.getItem(REPORTED_BUGS_KEY);
+        if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)){ for(const b of arr){ if(b&&b.id) saved[b.id]=b; } } }
+      }catch(e){ recordError("loadReportedBugs",e); log("Reported bugs: estado local no válido; se restauran valores por defecto."); }
+      reportedBugsState=REPORTED_BUGS_DEFAULTS.map((def)=>{
+        const s=saved[def.id]||{};
+        return Object.assign({},def,{
+          status: reportedStatusOk(s.status)?s.status:def.status,
+          comment: typeof s.comment==="string"?s.comment:(def.comment||""),
+          checkedAt: s.checkedAt||null,
+          resolvedAt: s.resolvedAt||null,
+          reopenedAt: s.reopenedAt||null
+        });
+      });
+      // Conserva bugs manuales guardados que no estén en los defaults (futuro: alta manual de bugs).
+      for(const id in saved){
+        if(REPORTED_BUGS_DEFAULT_IDS.has(id)) continue;
+        const s=saved[id];
+        if(s&&s.id&&s.title) reportedBugsState.push(Object.assign({phase:"",issue:"",hotfix:"",expected:"",detectedVersion:"",fixedVersion:"",status:"active",comment:""},s));
+      }
+      return reportedBugsState;
+    }
+    function saveReportedBugs(){
+      try{
+        const slim=reportedBugsState.map((b)=> REPORTED_BUGS_DEFAULT_IDS.has(b.id)
+          ? { id:b.id, status:b.status, comment:b.comment||"", checkedAt:b.checkedAt||null, resolvedAt:b.resolvedAt||null, reopenedAt:b.reopenedAt||null }
+          : { id:b.id, phase:b.phase, title:b.title, issue:b.issue, hotfix:b.hotfix, expected:b.expected, detectedVersion:b.detectedVersion, fixedVersion:b.fixedVersion, status:b.status, comment:b.comment||"", checkedAt:b.checkedAt||null, resolvedAt:b.resolvedAt||null, reopenedAt:b.reopenedAt||null }
+        );
+        localStorage.setItem(REPORTED_BUGS_KEY,JSON.stringify(slim));
+      }catch(e){ recordError("saveReportedBugs",e); }
+    }
+    function reportedBugById(id){ return reportedBugsState.find((b)=>b.id===id)||null; }
+    // Resumen ligero (solo recuentos) para el debug; no incluye contenido pesado.
+    function reportedBugsSummary(){
+      if(!reportedBugsState.length) loadReportedBugs();
+      const total=reportedBugsState.length;
+      const active=reportedBugsState.filter((b)=>b.status==="active").length;
+      const unresolved=reportedBugsState.filter((b)=>b.status==="unresolved").length;
+      const resolved=reportedBugsState.filter((b)=>b.status==="resolved").length;
+      const withComment=reportedBugsState.filter((b)=>String(b.comment||"").trim()).length;
+      return { total, active, unresolved, resolved, withComment };
+    }
+    function rbResolve(id){ const b=reportedBugById(id); if(!b) return; b.status="resolved"; b.resolvedAt=new Date().toISOString(); saveReportedBugs(); renderReportedBugs(); }
+    function rbUnresolve(id){ const b=reportedBugById(id); if(!b) return; b.status="unresolved"; b.checkedAt=new Date().toISOString(); saveReportedBugs(); renderReportedBugs(); }
+    function rbReopen(id){ const b=reportedBugById(id); if(!b) return; b.status="unresolved"; b.reopenedAt=new Date().toISOString(); saveReportedBugs(); renderReportedBugs(); }
+    function rbFmtDate(iso){ if(!iso) return ""; try{ return new Date(iso).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}); }catch(e){ return ""; } }
+    function rbDetailRow(label,value){
+      const row=document.createElement("div"); row.className="rb-d-row";
+      const s=document.createElement("span"); s.textContent=label+": ";
+      row.appendChild(s); row.appendChild(document.createTextNode(String(value||"—")));
+      return row;
+    }
+    function rbMakeItem(b){
+      const item=document.createElement("div");
+      item.className="rb-item"+(b.status==="unresolved"&&reportedBugsView==="active"?" is-unresolved":"");
+      item.dataset.id=b.id;
+      const main=document.createElement("div"); main.className="rb-item-main";
+      const l1=document.createElement("div"); l1.className="rb-line1";
+      const strong=document.createElement("strong"); strong.textContent=b.id+" — "+b.title; l1.appendChild(strong); main.appendChild(l1);
+      const issue=document.createElement("div"); issue.className="rb-issue"; issue.textContent=b.issue||""; main.appendChild(issue);
+      item.appendChild(main);
+      if(reportedBugsView==="history"){
+        if(String(b.comment||"").trim()){ const c=document.createElement("div"); c.className="rb-comment-ro"; c.textContent="💬 "+b.comment; main.appendChild(c); }
+        const metaBits=[]; const d=rbFmtDate(b.resolvedAt); if(d) metaBits.push("Resuelto: "+d); if(b.fixedVersion) metaBits.push(b.fixedVersion);
+        if(metaBits.length){ const m=document.createElement("div"); m.className="rb-meta"; m.textContent=metaBits.join(" · "); main.appendChild(m); }
+        const actions=document.createElement("div"); actions.className="rb-actions";
+        const reopen=document.createElement("button"); reopen.type="button"; reopen.className="rb-btn rb-reopen"; reopen.textContent="Reabrir bug";
+        reopen.onclick=()=>rbReopen(b.id); actions.appendChild(reopen); item.appendChild(actions);
+        return item;
+      }
+      // Lista activa: Resuelto / No resuelto / + detalles
+      const actions=document.createElement("div"); actions.className="rb-actions";
+      const resolve=document.createElement("button"); resolve.type="button"; resolve.className="rb-btn rb-resolve"; resolve.textContent="Resuelto"; resolve.onclick=()=>rbResolve(b.id);
+      const unres=document.createElement("button"); unres.type="button"; unres.className="rb-btn rb-unresolve"; unres.textContent="No resuelto"; unres.onclick=()=>rbUnresolve(b.id);
+      const toggle=document.createElement("button"); toggle.type="button"; toggle.className="rb-btn rb-toggle"; toggle.textContent="+"; toggle.title="Ver detalles"; toggle.setAttribute("aria-label","Ver detalles");
+      actions.appendChild(resolve); actions.appendChild(unres); actions.appendChild(toggle); item.appendChild(actions);
+      const details=document.createElement("div"); details.className="rb-details"; details.hidden=true;
+      details.appendChild(rbDetailRow("Fase",b.phase));
+      details.appendChild(rbDetailRow("Hotfix aplicado",b.hotfix));
+      details.appendChild(rbDetailRow("Comportamiento esperado",b.expected));
+      details.appendChild(rbDetailRow("Versión detectada",b.detectedVersion));
+      details.appendChild(rbDetailRow("Versión corregida",b.fixedVersion));
+      const cLabel=document.createElement("label"); cLabel.className="rb-comment-label"; cLabel.appendChild(document.createTextNode("Comentario"));
+      const ta=document.createElement("textarea"); ta.className="rb-comment"; ta.value=b.comment||""; ta.placeholder="Notas internas…";
+      ta.addEventListener("input",()=>{ const cur=reportedBugById(b.id); if(cur) cur.comment=ta.value; });
+      ta.addEventListener("change",()=>{ const cur=reportedBugById(b.id); if(cur) cur.comment=ta.value; saveReportedBugs(); });
+      cLabel.appendChild(ta); details.appendChild(cLabel);
+      item.appendChild(details);
+      toggle.onclick=()=>{ details.hidden=!details.hidden; toggle.textContent=details.hidden?"+":"−"; toggle.title=details.hidden?"Ver detalles":"Ocultar detalles"; };
+      return item;
+    }
+    function renderReportedBugs(){
+      const list=document.getElementById("reportedBugsList"); if(!list) return;
+      const histBtn=document.getElementById("reportedBugsHistoryBtn");
+      if(histBtn){ const on=reportedBugsView==="history"; histBtn.classList.toggle("is-on",on); const t=on?"Ver lista activa":"Ver histórico de resueltos"; histBtn.title=t; histBtn.setAttribute("aria-label",t); }
+      const items=reportedBugsView==="history"
+        ? reportedBugsState.filter((b)=>b.status==="resolved")
+        : reportedBugsState.filter((b)=>b.status!=="resolved");
+      list.innerHTML="";
+      if(!items.length){ const e=document.createElement("div"); e.className="rb-empty"; e.textContent=reportedBugsView==="history"?"No hay bugs resueltos todavía.":"No hay bugs en la lista activa."; list.appendChild(e); return; }
+      for(const b of items) list.appendChild(rbMakeItem(b));
+    }
+    function ensureReportedBugsModal(){
+      if(document.getElementById("reportedBugsOverlay")) return;
+      const ov=document.createElement("div"); ov.id="reportedBugsOverlay"; ov.className="bug-modal-overlay rb-overlay"; ov.style.display="none";
+      ov.innerHTML=''
+        +'<div class="bug-modal rb-modal" role="dialog" aria-label="Reported bugs" aria-modal="true">'
+        +'<div class="bug-modal-head">'
+        +'<button id="reportedBugsHistoryBtn" class="rb-head-btn" type="button" title="Ver histórico de resueltos" aria-label="Ver histórico de resueltos"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v6h6"/><path d="M3.5 9a9 9 0 1 1-1 4"/><path d="M12 8v5l3 2"/></svg></button>'
+        +'<span class="bug-modal-title">Reported bugs</span>'
+        +'<button id="reportedBugsClose" class="rb-head-btn" type="button" title="Cerrar" aria-label="Cerrar">×</button>'
+        +'</div>'
+        +'<div id="reportedBugsList" class="rb-list"></div>'
+        +'</div>';
+      document.body.appendChild(ov);
+      ov.addEventListener("mousedown",(ev)=>{ if(ev.target===ov) closeReportedBugs(); });
+      const hist=document.getElementById("reportedBugsHistoryBtn"); if(hist) hist.onclick=()=>{ reportedBugsView=(reportedBugsView==="history")?"active":"history"; renderReportedBugs(); };
+      const close=document.getElementById("reportedBugsClose"); if(close) close.onclick=()=>closeReportedBugs();
+      document.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape"){ const o=document.getElementById("reportedBugsOverlay"); if(o&&o.style.display!=="none") closeReportedBugs(); } });
+    }
+    function openReportedBugs(){
+      loadReportedBugs();
+      reportedBugsView="active";
+      ensureReportedBugsModal();
+      renderReportedBugs();
+      const ov=document.getElementById("reportedBugsOverlay"); if(ov) ov.style.display="flex";
+    }
+    function closeReportedBugs(){
+      saveReportedBugs();
+      const ov=document.getElementById("reportedBugsOverlay"); if(ov) ov.style.display="none";
+    }
+
     // ===================== DEBUG =====================
     async function exportDebug(){
       log("Generando debug...");
       const out=[]; const add=(title,data)=>{ out.push("\n\n==================== "+title+" ====================\n"); out.push(typeof data==="string"?data:safeJson(data,2)); };
       add("VERSION",{SCRIPT_VERSION,documentLastModified:document.lastModified,now:new Date().toString(),url:location.href,userAgent:navigator.userAgent});
+      try{ add("REPORTED BUGS (resumen)",reportedBugsSummary()); }catch(e){}
       add("LOG",logLines);
       try{ add("SNAPSHOT COMÚN (Fase 0: acciones, toolState, apiCapabilities, almacenamiento, identidad)",safeJsonDeep(await collectDebugSnapshot(),2)); }catch(e){ add("SNAPSHOT COMÚN ERROR",e.message); }
       try{ add("Object.keys(API)",Object.keys(API||{})); }catch(e){}
