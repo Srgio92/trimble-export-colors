@@ -3,6 +3,17 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.4.3 - 2026-06-16
+
+Consolida el trabajo interno v9.4.1 → v9.4.2 (nunca publicados) sobre la ventana Reported bugs y añade correcciones de interfaz del panel Desarrollador.
+
+- Reported bugs: corregido el botón de detalles "+/−" (el atributo `[hidden]` quedaba anulado por `display:flex`; ahora oculta/expande de verdad).
+- Reported bugs: persistencia del estado expandido entre re-render, orden con los no resueltos primero, toast con opción de deshacer al resolver, contador y etiqueta de modo en la cabecera, badge "No resuelto" y guardado de comentario con retardo.
+- Reported bugs: lectura de localStorage más defensiva (validación por ítem y migración de pendientes guardados sin evidencia) y resumen ligero en el debug sin mutar el estado de la interfaz; modal con CSS propio desacoplado de Bug Report y foco accesible.
+- Botón Reported bugs: ya no es fijo; aparece al pasar el ratón (deslizando hacia la izquierda) alineado con Bug Report.
+- Panel Desarrollador: el botón de ayuda "?" pasa a la misma línea de "Última modificación del archivo", alineado a la derecha.
+- Botón global "Actualizar datos del visor": el halo azul solo aparece durante la carga inicial de datos del modelo y parpadea como el halo rojo de Bug Report; el giro de flechas se activa también en esa carga inicial.
+
 ## v9.4.0 - 2026-06-15
 
 - Fase 8 parcial: añadida ventana Reported bugs en el panel Desarrollador.
