@@ -211,8 +211,13 @@
     /* ===== Modal Bug Report ===== */
     .bug-modal-overlay { position:fixed; inset:0; background:rgba(17,24,39,.45); display:flex; align-items:center; justify-content:center; z-index:9999; padding:12px; box-sizing:border-box; }
     .bug-modal { width:340px; max-width:100%; max-height:calc(100vh - 24px); overflow:auto; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.25); padding:12px; box-sizing:border-box; font-size:13px; color:#1f2937; }
-    .bug-modal-head { display:flex; justify-content:flex-end; margin-bottom:8px; }
+    /* Cabecera arrastrable con tono gris diferenciador (v9.1.0). */
+    .bug-modal-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:-12px -12px 8px; padding:7px 12px; background:#eef1f5; border-bottom:1px solid #e1e6ec; border-radius:10px 10px 0 0; cursor:move; user-select:none; touch-action:none; }
     .bug-modal-title { font-weight:bold; font-size:14px; }
+    .bug-modal-drag-hint { color:#9aa3af; font-size:14px; letter-spacing:1px; }
+    .bug-modal.is-dragging { box-shadow:0 16px 44px rgba(0,0,0,.34); }
+    .bug-btn-clear { margin-right:auto; color:#b91c1c; border-color:#f0c9c9; }
+    .bug-btn-clear:hover { border-color:#dc2626; box-shadow:0 0 0 1px #dc2626 inset; background:#fff5f5; }
     .bug-modal-row { display:flex; gap:6px; align-items:center; }
     .bug-input { flex:1; min-width:0; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; box-sizing:border-box; }
     .bug-input::placeholder, .bug-textarea::placeholder { color:#9ca3af; }
@@ -444,7 +449,9 @@
     #selInspectorBody { border-top:1px solid #e5e7eb; margin-top:6px; padding-top:6px; }
     #selInspector .insp-type { margin-top:0; }
     #selInspector .insp-title { font-weight:normal; }
-    #selInspector .insp-line { margin-left:14px; }
+    /* v9.1.0 (Trabajo 5/#19): líneas de parámetro alineadas al extremo izquierdo del título (sin sangría). */
+    #selInspector .insp-line { margin-left:0; }
+    #selInspector .insp-title, #selInspector .insp-line { padding-left:0; }
     .insp-config-note { color:#6b7280; font-size:11px; margin:0 0 2px; }
     /* #6 Icono de edición tipo lápiz que escribe */
     .writing-icon { width:20px; height:20px; overflow:visible; }
@@ -464,6 +471,9 @@
     #viewTemplateTool input.tpl-code-locked { letter-spacing:.2px; }
     /* #13 Error codes / Custom codes alineados: misma estructura de fila */
     #csvCodesRows .toggle-line { margin:6px 0; }
+    /* v9.1.0: disposición compacta en una sola fila. */
+    .csv-codes-compact { display:flex; flex-wrap:wrap; align-items:center; gap:6px 22px; }
+    .csv-codes-compact .toggle-line { margin:4px 0; }
     /* #14/#15 Exportación masiva: lista de vistas seleccionables (mismo estilo que la lista IFC) */
     .mass-views-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0 4px; }
     .mass-views-count { font-size:11px; color:#374151; font-weight:bold; }
@@ -508,9 +518,16 @@
     /* Fila "Registro de consola": texto a la izquierda, ? a la derecha. */
     .dev-log-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .dev-log-summary .io-help-btn { float: none; margin-left: 0; }
+    /* Fila de ayuda independiente dentro de Desarrollador (debajo de Última modificación). */
+    .dev-help-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 2px 0 6px; }
+    .dev-help-row .param-help-btn { float: none; }
+    .dev-help-label { font-size: 11px; color: #6b7280; }
     /* Buscador global de "Vista activa" en Configurar vista */
     .av-search { margin: 0 0 10px; }
-    .av-search-label { display: block; font-size: 11px; color: #4b5563; margin-bottom: 3px; font-weight: bold; }
+    .av-search-labelrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+    .av-search-label { display: block; font-size: 11px; color: #4b5563; font-weight: bold; }
+    .av-search-count { font-size: 11px; color: #6b7280; }
+    .av-search-go, .av-search-sort, .av-search-refresh { flex: 0 0 auto; }
     .av-search-row { display: flex; align-items: center; gap: 6px; }
     .av-search-inputwrap { position: relative; flex: 1; min-width: 0; }
     .av-search-input { width: 100%; box-sizing: border-box; height: 30px; padding: 4px 8px; border: 1px solid #cfd6df; border-radius: 6px; font-size: 12px; }
@@ -889,12 +906,13 @@
         <div class="tool-body">
 
           <div id="activeViewSearch" class="av-search">
-            <label class="av-search-label" for="activeViewSearchInput">Vista activa</label>
+            <div class="av-search-labelrow"><label class="av-search-label" for="activeViewSearchInput">Vista activa</label><span id="activeViewSearchCount" class="av-search-count"></span></div>
             <div class="av-search-row">
               <div class="av-search-inputwrap">
                 <input type="text" id="activeViewSearchInput" class="av-search-input" placeholder="Buscar vista…" autocomplete="off">
                 <div id="activeViewSearchSuggest" class="av-search-suggest" style="display:none;"></div>
               </div>
+              <button type="button" id="activeViewSearchGo" class="icon-btn av-search-go" title="Ir a la vista seleccionada" aria-label="Ir a la vista seleccionada"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
               <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Alternar orden (Trimble / alfabético)" aria-label="Alternar orden de vistas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg></button>
               <button type="button" id="activeViewSearchRefresh" class="icon-btn av-search-refresh" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
             </div>
@@ -989,9 +1007,9 @@
               </div>
             </div>
           </details>
-          <div id="csvCodesRows">
+          <div id="csvCodesRows" class="csv-codes-compact">
             <div class="toggle-line" data-tip="Escribe un aviso en codigo_revision cuando no se encuentre el código RFI en el nombre de la vista.">
-              <label class="switch"><input type="checkbox" id="errorCodes"><span class="slider"></span></label>
+              <label class="switch"><input type="checkbox" id="errorCodes" checked><span class="slider"></span></label>
               <label class="txt" for="errorCodes">Error codes</label>
             </div>
             <div class="toggle-line" data-tip="Usa el texto introducido como código de revisión manual.">
@@ -999,7 +1017,7 @@
               <label class="txt" for="customCodes">Custom codes</label>
             </div>
           </div>
-          <div class="row"><input type="text" id="customCodesText" placeholder="Código de revisión manual" disabled style="width:95%;"></div>
+          <div class="row" id="customCodesRow" style="display:none;"><input type="text" id="customCodesText" placeholder="Código de revisión manual" style="width:95%;"></div>
           <div class="toggle-line" data-tip="Selecciona vistas y genera un ZIP con un CSV por vista.">
             <label class="switch"><input type="checkbox" id="extendedExport"><span class="slider"></span></label>
             <label class="txt" for="extendedExport">Exportación masiva</label>
@@ -1024,7 +1042,6 @@
         <summary class="subtitle">Importar registro<button type="button" id="importHelpBtn" class="param-help-btn io-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
         <div class="tool-body">
           <div id="importHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Importa un CSV o ZIP generado por esta extensión.</li><li>Solo aplica filas con <code>revisado_deo = TRUE</code>.</li><li>Localiza los GUID revisados y los pinta en rojo como revisión DEO.</li><li>Las filas no revisadas se ignoran para evitar cambios accidentales.</li></ul></div>
-          <div class="hint">Importa un registro CSV o ZIP generado por la extensión. Solo se aplican las filas marcadas como revisadas (<code>revisado_deo = TRUE</code>): se localizan sus GUID y se colorean en rojo como revisión DEO. Las demás filas se ignoran para evitar cambios no deseados.</div>
           <div class="row io-actions">
             <button id="importBtn" data-tip="Selecciona uno o varios CSV, o un ZIP con CSV dentro.">Importar registro</button>
             <button id="importCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button>
@@ -1046,10 +1063,11 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
+      <div class="dev-help-row"><button type="button" id="devHelpBtn" class="param-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button><span class="dev-help-label">Ayuda</span></div>
+      <div id="devHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Muestra la versión, la fecha y el registro de consola.</li><li><strong>Bug Report</strong> permite crear reportes con capturas, anotaciones y menciones de la interfaz.</li><li>El botón de descarga (al pasar el ratón sobre el botón Bug Report) se activa cuando existen reportes guardados.</li></ul></div>
       <details class="tool">
-        <summary class="subtitle dev-log-summary"><span>Registro de consola</span><button type="button" id="devHelpBtn" class="param-help-btn io-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
+        <summary class="subtitle">Registro de consola</summary>
         <div class="tool-body">
-          <div id="devHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Muestra la versión, la fecha y el registro de consola.</li><li><strong>Bug Report</strong> permite crear reportes con capturas, anotaciones y menciones de la interfaz.</li><li>El botón de descarga se activa cuando existen reportes pendientes.</li></ul></div>
           <pre id="log"></pre>
         </div>
       </details>
@@ -1059,7 +1077,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.0.5";
+    const SCRIPT_VERSION = "v9.1.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -3809,7 +3827,17 @@
       if(!curId && curName){ const m=activeViewSearchViews.find((v)=>v.name===curName); if(m) curId=m.id; }
       if(curId && activeViewSearchViews.some((v)=>v.id===curId)) activeViewSearchSelectedId=curId;
       else if(activeViewSearchSelectedId && !activeViewSearchViews.some((v)=>v.id===activeViewSearchSelectedId)) activeViewSearchSelectedId="";
-      avSetInputToSelected();
+      avSetInputToSelected(); avUpdateCount();
+    }
+    function avUpdateCount(){ const el=document.getElementById("activeViewSearchCount"); if(el) el.textContent=activeViewSearchViews.length?(activeViewSearchViews.length+" vista(s)"):""; }
+    // "Ir a vista": activa la vista cuyo nombre coincide exactamente con el texto, o el único filtrado, o la seleccionada.
+    function avGoToTypedView(){
+      const inp=document.getElementById("activeViewSearchInput"); const term=String(inp?inp.value:"").trim();
+      let target=null;
+      if(term){ target=activeViewSearchViews.find((v)=>v.name.toLowerCase()===term.toLowerCase()); if(!target){ const f=activeViewSearchViews.filter((v)=>v.name.toLowerCase().includes(term.toLowerCase())); if(f.length===1) target=f[0]; } }
+      if(!target && activeViewSearchSelectedId) target=activeViewSearchViews.find((v)=>v.id===activeViewSearchSelectedId);
+      if(!target){ log("Vista activa: escribe o elige una vista de la lista antes de pulsar 'Ir a vista'."); return; }
+      avSelectView(target);
     }
     async function avSelectView(v){
       avHideSuggest();
@@ -3834,6 +3862,8 @@
         inp.addEventListener("blur",()=>{ setTimeout(avHideSuggest,150); });
         inp.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape"){ avHideSuggest(); avSetInputToSelected(); inp.blur(); } });
       }
+      const go=document.getElementById("activeViewSearchGo"); if(go) go.addEventListener("click",(ev)=>{ ev.preventDefault(); avGoToTypedView(); });
+      if(inp) inp.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); avGoToTypedView(); } });
       const sort=document.getElementById("activeViewSearchSort"); if(sort) sort.addEventListener("click",(ev)=>{ ev.preventDefault(); avToggleSort(); });
       const refresh=document.getElementById("activeViewSearchRefresh"); if(refresh) refresh.addEventListener("click",async (ev)=>{ ev.preventDefault(); await loadActiveViewSearchViews(); renderActiveViewSuggest(""); log("Vista activa: lista actualizada ("+activeViewSearchViews.length+" vistas)."); });
     }
@@ -3901,6 +3931,7 @@
     const NEAR_SC_EN_KEY="deo.nearShortcut.enabled.v1";
     const NEAR_SC_COMBO_KEY="deo.nearShortcut.combo.v1";
     let nearShortcutEnabled=true, nearShortcutCombo="Alt+C", nearShortcutRecording=false;
+    let lastNearShortcutDiag=null; // diagnóstico del último evento de atajo (para Bug Report/debug)
     function loadNearShortcut(){ try{ const e=localStorage.getItem(NEAR_SC_EN_KEY); if(e!==null) nearShortcutEnabled=(e==="1"||e==="true"); const c=localStorage.getItem(NEAR_SC_COMBO_KEY); if(c) nearShortcutCombo=c; }catch(e){} }
     function saveNearShortcut(){ try{ localStorage.setItem(NEAR_SC_EN_KEY,nearShortcutEnabled?"1":"0"); localStorage.setItem(NEAR_SC_COMBO_KEY,nearShortcutCombo); }catch(e){ recordError("nearShortcut.save",e); } }
     // Normaliza un evento de teclado a {mods:[...], key, str}. Devuelve null si solo hay modificador o tecla Meta (sistema).
@@ -3941,13 +3972,31 @@
       return false;
     }
     function onNearShortcutKeydown(ev){
-      if(nearShortcutRecording || !nearShortcutEnabled) return;
-      if(nearShortcutBlocked()) return;
-      const c=nearComboFromEvent(ev); if(!c || c.str!==nearShortcutCombo) return;
+      // Dedup: el mismo KeyboardEvent llega por window y document (capture); procesar una sola vez.
+      if(ev.__nearHandled) return; ev.__nearHandled=true;
+      if(nearShortcutRecording) return;
+      const c=nearComboFromEvent(ev);
+      const blocked=nearShortcutBlocked();
+      const matched=!!(c && nearShortcutEnabled && !blocked && c.str===nearShortcutCombo);
+      // Diagnóstico: solo registramos eventos con algún modificador o que casen el combo (evita ruido).
+      if(c && (ev.altKey||ev.ctrlKey||ev.metaKey || c.str===nearShortcutCombo)){
+        lastNearShortcutDiag={ ts:new Date().toISOString(), receivedKey:ev.key, alt:!!ev.altKey, ctrl:!!ev.ctrlKey, shift:!!ev.shiftKey, meta:!!ev.metaKey, combo:c.str, configured:nearShortcutCombo, enabled:!!nearShortcutEnabled, focusTag:(document.activeElement&&document.activeElement.tagName)||"", blocked:blocked, blockedReason:(blocked?nearShortcutBlockReason():""), matched:matched, executed:false };
+      }
+      if(!matched) return;
       ev.preventDefault();
       const t=document.getElementById("nearToggle"); if(!t) return;
       setNearEnabled(!t.checked,"shortcut");
-      log("Selección cercanos: "+(t.checked?"activado":"desactivado")+" por atajo "+nearShortcutCombo+".");
+      if(lastNearShortcutDiag) lastNearShortcutDiag.executed=true;
+      log("Selección cercanos: atajo "+nearShortcutCombo+" -> "+(t.checked?"ON":"OFF")+".");
+    }
+    function nearShortcutBlockReason(){
+      const ae=document.activeElement;
+      if(ae){ const tag=(ae.tagName||"").toUpperCase(); if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||ae.isContentEditable) return "foco en campo de texto ("+tag.toLowerCase()+(ae.isContentEditable?"/editable":"")+")"; }
+      const ov=document.getElementById("bugModalOverlay"); if(ov&&ov.style.display!=="none") return "modal Bug Report abierto";
+      const ao=document.getElementById("bugAnnotOverlay"); if(ao&&ao.style.display!=="none") return "editor de anotaciones abierto";
+      const po=document.getElementById("bugAssistOverlay"); if(po&&po.style.display!=="none") return "zona de pegado abierta";
+      if(typeof bugUiPicking!=="undefined" && bugUiPicking) return "modo selector UI activo";
+      return "";
     }
     function startNearShortcutRecording(){
       if(nearShortcutRecording) return;
@@ -3974,7 +4023,9 @@
       const edit=document.getElementById("nearShortcutEdit"); if(edit) edit.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); startNearShortcutRecording(); });
       const reset=document.getElementById("nearShortcutReset"); if(reset) reset.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(nearShortcutRecording) return; nearShortcutCombo="Alt+C"; saveNearShortcut(); nearShortcutLabel(); log("Selección cercanos: atajo restaurado a Alt+C."); });
       nearShortcutLabel();
+      // Escucha en window y document en fase capture (algunos entornos/iframe entregan a uno u otro); dedup por ev.__nearHandled.
       document.addEventListener("keydown",onNearShortcutKeydown,true);
+      window.addEventListener("keydown",onNearShortcutKeydown,true);
     }
     function syncIncludeUiState(){
       const on=document.getElementById("includeToggle").checked;
@@ -4178,7 +4229,12 @@
     // v8.10.6: gris alineado con la paleta nativa Trimble (#a8abb4 ∈ QUICK_PALETTE). Magenta (#ec00b6) y rojo
     // (#fc0d1b) se conservan: están en REVISION_CODE_COLORS/REVIEWED_DEO_COLORS y son los marcadores exactos
     // que el CSV usa para codigo_revision/revisado_deo; cambiarlos rompería la exportación.
-    const QUICK_COLORS={ qcGray:{r:168,g:171,b:180,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{r:252,g:13,b:27,a:255} };
+    // v9.1.0 (Trabajo 9): el rojo de Acciones rápidas ES intencionadamente el rojo SEMÁNTICO DEO (revisado_deo),
+    // no un rojo decorativo. NO es arbitrario: pinta objetos como "revisión DEO" para que la exportación los marque.
+    // Si se quisiera un rojo visual distinto al de Trimble, habría que: (a) definir un nuevo color, (b) añadirlo a
+    // REVIEWED_DEO_COLORS y confirmar el rojo Trimble exacto. Mientras no se confirme ese valor, se mantiene #fc0d1b.
+    const DEO_REVIEWED_RED={r:252,g:13,b:27,a:255}; // #FC0D1B — rojo semántico DEO (revisado_deo)
+    const QUICK_COLORS={ qcGray:{r:168,g:171,b:180,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{...DEO_REVIEWED_RED} };
     const QUICK_CUSTOM_COLORS_KEY="deo.quickCustomColors.v1";
     const QUICK_PALETTE=["#b91b5f","#f04b1f","#fff72b","#0b7d45","#4357bd","#1f2230","#ec00b6","#ee7200","#e8c23a","#009688","#7184cf","#6b6b7a","#e10600","#ff8726","#bac72a","#47c7c5","#a997da","#a8abb4","#ff151d","#f39200","#70ad47","#0099d6","#d898d9","#c9ccd4","#e76f61","#f4b51e","#2fc34a","#456cdf","#b54fd6","#eef0f5"];
     let quickCustomColors=[], quickColorEditMode=false;
@@ -4563,7 +4619,13 @@
         viewerRefreshBusy=false;
       }
     }
+    // Trabajo 10: cierra las sugerencias flotantes al hacer scroll (evita cajas desalineadas).
+    function closeAllFloatingSuggests(){
+      try{ document.querySelectorAll(".tpl-suggest").forEach((s)=>{ if(s.style.display!=="none") s.style.display="none"; }); }catch(e){}
+      try{ if(typeof avHideSuggest==="function") avHideSuggest(); }catch(e){}
+    }
     function wireUI(){
+      window.addEventListener("scroll",closeAllFloatingSuggests,true);
       const debugBtn=document.getElementById("debug"); if(debugBtn) debugBtn.addEventListener("click",(ev)=>ev.stopPropagation());
       const bugDownloadBtn=document.getElementById("bugDownloadBtn"); if(bugDownloadBtn) bugDownloadBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); downloadBugReports(); });
       updateDebugButtonState();
@@ -4577,8 +4639,9 @@
       wireParamSummarySwitch("boltsSummarySwitch","boltsToggle");
       wireParamSummarySwitch("weldsSummarySwitch","weldsToggle");
 
-      const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText");
-      custom.addEventListener("change",()=>{ customText.disabled=!custom.checked; if(!custom.checked) customText.value=""; });
+      const custom=document.getElementById("customCodes"); const customText=document.getElementById("customCodesText"); const customRow=document.getElementById("customCodesRow");
+      const syncCustomRow=()=>{ const on=custom.checked; if(customRow) customRow.style.display=on?"block":"none"; if(customText){ customText.disabled=!on; if(!on) customText.value=""; } };
+      custom.addEventListener("change",syncCustomRow); syncCustomRow();
 
       // Exportación masiva (#14/#15): panel con lista de vistas seleccionables + contador + cancelar inline.
       const ext=document.getElementById("extendedExport"); const massPanel=document.getElementById("massViewsPanel"); const massCount=document.getElementById("massViewsCount");
@@ -4699,8 +4762,9 @@
       updateCsvColumnSelect();
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; const massive=document.getElementById("extendedExport").checked; recordUserAction("exportStart",{massive}); try{ if(massive) await exportMassive(); else await exportActiveView(); recordUserAction("exportEnd",{massive,ok:true}); }catch(err){ recordError("export",err); log("ERROR: "+err.message); recordUserAction("exportEnd",{massive,ok:false}); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
-      // Botón principal = Bug Report: abre el modal. La descarga vive en el botón secundario (hover).
-      document.getElementById("debug").onclick=(ev)=>{ if(ev){ ev.stopPropagation(); } try{ openBugModal(); }catch(err){ recordError("bugReport.open",err); log("ERROR Bug Report: "+err.message); } };
+      // Botón principal = Bug Report: abre el modal. preventDefault evita que el click sobre el <summary> colapse
+      // el panel Desarrollador (causa del parpadeo al abrir). La descarga vive en el botón secundario (hover).
+      document.getElementById("debug").onclick=(ev)=>{ if(ev){ ev.stopPropagation(); ev.preventDefault(); } try{ openBugModal(); }catch(err){ recordError("bugReport.open",err); log("ERROR Bug Report: "+err.message); } };
       document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
       document.getElementById("importFile").onchange=async (ev)=>{ const files=[...(ev.target.files||[])]; ev.target.value=""; if(!files.length) return; if(opRunning) return; opRunning=true; cancelRequested=false; showImportCancel(true); try{ const expanded=await expandImportInputs(files); if(!expanded.length){ log("No se han encontrado CSV para importar (revisa el ZIP o los archivos)."); setProgress("Sin CSV que importar."); return; } await importCsvFiles(expanded); }catch(err){ recordError("import",err); log("ERROR IMPORT: "+err.message); }finally{ opRunning=false; showImportCancel(false); showCancel(false); } };
     }
@@ -4716,6 +4780,14 @@
     function loadBugReports(){ try{ const raw=localStorage.getItem(BUG_REPORTS_KEY); if(!raw) return []; const arr=JSON.parse(raw); return Array.isArray(arr)?arr:[]; }catch(e){ recordError("bugReport.load",e); return []; } }
     function saveBugReports(arr){ try{ localStorage.setItem(BUG_REPORTS_KEY,JSON.stringify(arr)); return true; }catch(e){ recordError("bugReport.save",e); return false; } }
     function bugReportsCount(){ return loadBugReports().length; }
+    // Estado "ya descargado" PERSISTENTE por id de reporte (no basta una variable de sesión): así, al recargar,
+    // el halo no vuelve si no hay reportes nuevos. Las descargas siguen siendo ilimitadas (no se borra nada).
+    const BUG_DOWNLOADED_KEY="deo.bugReports.downloadedIds.v1";
+    function loadDownloadedIds(){ try{ const r=localStorage.getItem(BUG_DOWNLOADED_KEY); const a=r?JSON.parse(r):[]; return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+    function saveDownloadedIds(ids){ try{ localStorage.setItem(BUG_DOWNLOADED_KEY,JSON.stringify(ids||[])); }catch(e){ recordError("bugReport.downloadedIds.save",e); } }
+    function bugReportsPendingCount(){ const dl=new Set(loadDownloadedIds()); return loadBugReports().filter((r)=>!dl.has(r&&r.id)).length; }
+    function markAllReportsDownloaded(){ const set=new Set(loadDownloadedIds()); for(const r of loadBugReports()){ if(r&&r.id) set.add(r.id); } saveDownloadedIds([...set]); }
+    function clearAllBugReports(){ saveBugReports([]); saveDownloadedIds([]); }
 
     // Snapshot de estado reutilizable (también separable para el debug grande si se desea).
     async function collectDebugSnapshot(){
@@ -4878,8 +4950,38 @@
         const html=document.documentElement?document.documentElement.outerHTML:"";
         return { version:SCRIPT_VERSION, documentLastModified:document.lastModified, url:location.href, userAgent:navigator.userAgent, htmlLength:html.length, htmlHash:simpleHash32(html) };
       });
+      // Diagnóstico del atajo de Selección cercanos (Trabajo 3).
+      grab("nearShortcut",()=>({ enabled:(typeof nearShortcutEnabled!=="undefined"?nearShortcutEnabled:undefined), combo:(typeof nearShortcutCombo!=="undefined"?nearShortcutCombo:undefined), lastDiag:(typeof lastNearShortcutDiag!=="undefined"?lastNearShortcutDiag:undefined) }));
+      // Color Probe dirigido (Trabajo 6): solo en el snapshot (no ralentiza la app de forma continua).
+      try{ snap.colorProbe=await runColorProbe(); }catch(e){ snap.colorProbe={error:String(e&&e.message||e)}; }
 
       return snap;
+    }
+    // ===================== COLOR_PROBE_DIAG (Trabajo 6) =====================
+    // Diagnóstico dirigido de colores nativos Tekla/IFC: total de getColoredObjects() + propiedades del primer
+    // objeto seleccionado (busca claves color/material/style/appearance/presentation/render). No promete leer
+    // colores nativos si la API no los expone; deja constancia de la limitación.
+    async function runColorProbe(){
+      const diag={ ts:new Date().toISOString() };
+      try{ const groups=await API.viewer.getColoredObjects(); let total=0; for(const g of (groups||[])) total+=((g.objects||[]).length); diag.coloredObjectsTotal=total; diag.coloredGroups=(groups||[]).length; }
+      catch(e){ diag.coloredObjectsError=e&&e.message; }
+      let sel=[]; try{ sel=await safeGetSelection(); }catch(e){}
+      diag.selectionCount=sel.length;
+      if(!sel.length){ diag.note="Sin selección: solo se reporta el total de getColoredObjects()."; return diag; }
+      const s=sel[0]; diag.firstSelected={modelId:s.modelId,runtimeId:s.runtimeId};
+      try{
+        const pr=await API.viewer.getObjectProperties(s.modelId,[s.runtimeId]); const p=pr&&pr[0];
+        const keys=[], colorish=[];
+        const walk=(obj,prefix,depth)=>{ if(!obj||typeof obj!=="object"||depth>3) return; for(const k of Object.keys(obj)){ const kk=prefix?prefix+"."+k:k; const v=obj[k]; if(/colou?r|material|style|appearance|presentation|render/i.test(k)) colorish.push({key:kk,value:(typeof v==="object"?JSON.stringify(v).slice(0,80):String(v).slice(0,80))}); if(keys.length<120) keys.push(kk); if(v&&typeof v==="object") walk(v,kk,depth+1); } };
+        walk(p,"",0);
+        diag.firstSelectedKeys=keys.slice(0,120);
+        diag.colorRelatedKeys=colorish.slice(0,40);
+        let normalized=null;
+        for(const c of colorish){ try{ const an=analyzeColor(c.value); if(an&&an.valid){ normalized={from:c.key,normalizedColor:an.normalizedColor}; break; } }catch(e){} }
+        diag.normalizedFromProps=normalized;
+        if(!colorish.length){ diag.limitation="La API no expone color nativo IFC/Tekla para este objeto; solo se detectan colores de presentación aplicados por la extensión/visor."; }
+      }catch(e){ diag.propsError=e&&e.message; }
+      return diag;
     }
 
     function extForMime(m){ m=String(m||""); if(/png/i.test(m)) return "png"; if(/webp/i.test(m)) return "webp"; if(/gif/i.test(m)) return "gif"; if(/jpe?g/i.test(m)) return "jpg"; return "img"; }
@@ -4914,6 +5016,26 @@
       lines.push("Versión: "+SCRIPT_VERSION);
       lines.push("Generado: "+new Date().toISOString());
       lines.push("Total de reportes: "+reports.length);
+      // ----- RESUMEN (v9.1.0) -----
+      try{
+        const dl=new Set(loadDownloadedIds());
+        const pend=reports.filter((r)=>!dl.has(r&&r.id)).length;
+        const tools={}; reports.forEach((r)=>{ const a=String(r.affectedArea||"").split(",")[0].trim(); const k=a||"(sin zona)"; tools[k]=(tools[k]||0)+1; });
+        const toolList=Object.keys(tools).sort((a,b)=>tools[b]-tools[a]).slice(0,12).map((k)=>k+" ("+tools[k]+")");
+        let shots=0; reports.forEach((r)=>{ shots+=((r.screenshots||[]).length); });
+        const errs=new Set(); reports.forEach((r)=>{ const e=r.snapshot&&r.snapshot.errors; if(Array.isArray(e)) e.forEach((x)=>{ const m=(x&&(x.where||x.message||x.msg))||String(x); if(m) errs.add(String(m).slice(0,80)); }); });
+        const last=reports[reports.length-1]||{}; const snap=last.snapshot||{};
+        const av=snap.activeView||snap.currentView||(snap.view&&(snap.view.name));
+        const lastSel=snap.lastNonEmptySelection;
+        lines.push("");
+        lines.push("===== RESUMEN =====");
+        lines.push("Reportes: "+reports.length+" · No descargados (pendientes): "+pend);
+        lines.push("Capturas totales: "+shots);
+        lines.push("Herramientas afectadas: "+(toolList.length?toolList.join(" · "):"(no indicadas)"));
+        lines.push("Errores JS únicos: "+(errs.size?[...errs].slice(0,8).join(" | "):"0"));
+        if(av) lines.push("Última vista activa (último reporte): "+(typeof av==="string"?av:JSON.stringify(av)).slice(0,120));
+        if(lastSel&&lastSel.count) lines.push("Última selección no vacía (último reporte): "+lastSel.count+" objeto(s).");
+      }catch(e){ lines.push("(resumen no disponible: "+(e&&e.message||e)+")"); }
       lines.push("");
       lines.push("ÍNDICE:");
       reports.forEach((r,i)=>{ lines.push("  "+(i+1)+". ["+(r.ts||"")+"] "+(r.title||"(sin título)")); });
@@ -5262,11 +5384,26 @@
       }
       return out;
     }
+    // Sube desde un elemento genérico (span/svg/path/texto) al control significativo más cercano.
+    function bugUiSignificantEl(el){
+      if(!el||el.nodeType!==1) return el;
+      const ctrl=el.closest&&el.closest("button,input,select,textarea,a[href],summary,[role='button'],[role='textbox']");
+      if(ctrl) return ctrl;
+      if(el.id) return el;
+      const cont=el.closest&&el.closest("[id],details.tool,.tool,.param-group,.tpl-fold,details");
+      return cont||el;
+    }
     function bugUiHuman(el){
-      const bc=bugUiBreadcrumb(el); const lbl=bugUiElLabel(el);
-      const parts=bc.slice();
-      if(lbl && (!parts.length || String(parts[parts.length-1]).toLowerCase()!==String(lbl).toLowerCase())) parts.push(lbl);
-      return parts.join(" > ") || lbl || String(el&&el.tagName||"").toLowerCase();
+      const parts=bugUiBreadcrumb(el).slice();
+      let fieldLabel="";
+      try{ if(el.labels && el.labels.length) fieldLabel=String(el.labels[0].textContent||"").replace(/\s+/g," ").trim(); }catch(e){}
+      if(!fieldLabel){ const lab=el.closest&&el.closest("label"); if(lab) fieldLabel=String(lab.textContent||"").replace(/\s+/g," ").trim(); }
+      const ownLabel=bugUiElLabel(el); const idPart=el.id||"";
+      const push=(v)=>{ v=String(v||"").trim().slice(0,40); if(v && (!parts.length || String(parts[parts.length-1]).toLowerCase()!==v.toLowerCase())) parts.push(v); };
+      if(fieldLabel && fieldLabel.toLowerCase()!==idPart.toLowerCase()) push(fieldLabel);
+      else if(!idPart) push(ownLabel);
+      if(idPart) push(idPart);
+      return parts.join(" > ") || ownLabel || String(el&&el.tagName||"").toLowerCase();
     }
     function bugUiCssPath(el){
       const segs=[]; let cur=el, depth=0;
@@ -5284,6 +5421,7 @@
     }
     function bugUiTargetMeta(el){
       if(!el) return null;
+      el=bugUiSignificantEl(el); // no guardar span/svg/path genéricos: subir al control significativo
       let cls=""; try{ cls=(typeof el.className==="string")?el.className:(el.getAttribute&&el.getAttribute("class")||""); }catch(e){}
       let rect=null; try{ const r=el.getBoundingClientRect(); rect={x:Math.round(r.left),y:Math.round(r.top),w:Math.round(r.width),h:Math.round(r.height)}; }catch(e){}
       return {
@@ -5360,7 +5498,7 @@
       const ov=document.createElement("div"); ov.id="bugModalOverlay"; ov.className="bug-modal-overlay"; ov.style.display="none";
       ov.innerHTML=''
         +'<div class="bug-modal" role="dialog" aria-label="Bug Report" aria-modal="true">'
-        +'<div class="bug-modal-head"><span class="bug-modal-title">Bug Report</span></div>'
+        +'<div class="bug-modal-head" id="bugModalHead" title="Arrastra para mover"><span class="bug-modal-title">Bug Report</span><span class="bug-modal-drag-hint" aria-hidden="true">⠿</span></div>'
         +'<div class="bug-modal-row">'
         +'<input type="text" id="bugTitle" class="bug-input" placeholder="Título" maxlength="200" autocomplete="off">'
         +'<button type="button" id="bugAreaPick" class="bug-area-pick" title="Identificar elemento de la interfaz" aria-label="Identificar elemento de la interfaz"><svg viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6z"/></svg></button>'
@@ -5371,6 +5509,7 @@
         +'<div id="bugThumbs" class="bug-thumbs"></div>'
         +'<div id="bugNote" class="bug-note" style="display:none;"></div>'
         +'<div class="bug-modal-actions">'
+        +'<button type="button" id="bugClearBtn" class="bug-btn bug-btn-clear" title="Borra los reportes guardados (pide confirmación)" style="display:none;">Limpiar reportes</button>'
         +'<button type="button" id="bugCancel" class="bug-btn bug-btn-cancel">Cancelar</button>'
         +'<button type="button" id="bugSend" class="bug-btn bug-btn-send">Enviar</button>'
         +'</div>'
@@ -5406,7 +5545,9 @@
       document.getElementById("bugAssistPasteClose").onclick=()=>exitAssistToModal();
       document.getElementById("bugCancel").onclick=()=>closeBugModal();
       document.getElementById("bugSend").onclick=()=>onBugSend();
+      const clearBtn=document.getElementById("bugClearBtn"); if(clearBtn) clearBtn.onclick=()=>onBugClearReports();
       const areaPick=document.getElementById("bugAreaPick"); if(areaPick) areaPick.onclick=()=>bugUiPickStart();
+      wireBugModalDrag();
       // Editor de descripción enriquecido: guardado de selección y borrado de chips por su cruz.
       const ed=document.getElementById("bugDesc");
       if(ed){
@@ -5459,13 +5600,52 @@
       bugLastUiTarget=null; if(typeof bugUiPicking!=="undefined" && bugUiPicking) bugUiPickEnd();
       clearInterval(bugTimerInterval); bugTimerInterval=null;
       closePasteZone(); hideTimerBar(); hideBugNote(); renderBugThumbs();
+      resetBugModalPosition(); updateDebugButtonState();
       showBugModalNow();
       setTimeout(()=>{ const ti=document.getElementById("bugTitle"); if(ti) ti.focus(); },30);
     }
+    function onBugClearReports(){
+      const n=bugReportsCount(); if(!n){ showBugNote("No hay reportes guardados."); return; }
+      let ok=false; try{ ok=window.confirm("¿Borrar "+n+" reporte(s) guardado(s)? Esta acción no se puede deshacer."); }catch(e){ ok=false; }
+      if(!ok) return;
+      clearAllBugReports(); updateDebugButtonState();
+      showBugNote("Reportes borrados ("+n+").");
+      log("Bug Report: "+n+" reporte(s) guardado(s) borrado(s) por el usuario; estado de descarga reiniciado.");
+    }
+    // Permite arrastrar el modal Bug Report desde su cabecera (gris).
+    function wireBugModalDrag(){
+      const head=document.getElementById("bugModalHead"); const modal=head?head.closest(".bug-modal"):null; if(!head||!modal) return;
+      let dragging=false, sx=0, sy=0, ox=0, oy=0;
+      head.addEventListener("pointerdown",(ev)=>{
+        if(ev.button!==0) return;
+        dragging=true; modal.classList.add("is-dragging");
+        const r=modal.getBoundingClientRect();
+        modal.style.position="fixed"; modal.style.margin="0"; modal.style.left=r.left+"px"; modal.style.top=r.top+"px";
+        sx=ev.clientX; sy=ev.clientY; ox=r.left; oy=r.top;
+        try{ head.setPointerCapture(ev.pointerId); }catch(e){}
+        ev.preventDefault();
+      });
+      head.addEventListener("pointermove",(ev)=>{
+        if(!dragging) return;
+        const nx=Math.max(0,Math.min(window.innerWidth-60,ox+(ev.clientX-sx)));
+        const ny=Math.max(0,Math.min(window.innerHeight-30,oy+(ev.clientY-sy)));
+        modal.style.left=nx+"px"; modal.style.top=ny+"px";
+      });
+      const end=(ev)=>{ if(!dragging) return; dragging=false; modal.classList.remove("is-dragging"); try{ head.releasePointerCapture(ev.pointerId); }catch(e){} };
+      head.addEventListener("pointerup",end); head.addEventListener("pointercancel",end);
+    }
+    function resetBugModalPosition(){ const m=document.querySelector("#bugModalOverlay .bug-modal"); if(m){ m.style.position=""; m.style.left=""; m.style.top=""; m.style.margin=""; } }
     function closeBugModal(){
       clearInterval(bugTimerInterval); bugTimerInterval=null;
       closePasteZone(); hideTimerBar();
-      hideBugModalNow(); bugDraftShots=[];
+      hideBugModalNow();
+      // Borrador limpio al cerrar/cancelar: título, zona, descripción, menciones, capturas y selección UI.
+      bugDraftShots=[];
+      const t=document.getElementById("bugTitle"); if(t) t.value="";
+      const d=document.getElementById("bugDesc"); if(d) d.innerHTML="";
+      const a=document.getElementById("bugArea"); if(a) a.value="";
+      bugUiMentionsMap={}; bugDescSavedRange=null; bugLastUiTarget=null;
+      hideBugNote();
     }
 
     // ===== Captura asistida: temporizador + pegado manual (sin captura automática de pantalla) =====
@@ -5578,24 +5758,24 @@
         if(!ok){ showBugNote("No se pudo guardar el reporte. Descarga el debug manualmente."); return; }
       }
       closeBugModal();
-      bugReportsAcknowledged=false; // nuevo reporte: el halo rojo vuelve a indicar pendiente de descarga
+      // El nuevo reporte (id nuevo) no está en los descargados -> bugReportsPendingCount() vuelve a ser >0 (halo rojo).
       updateDebugButtonState();
     }
 
-    // true tras descargar los reportes en esta sesión: detiene el halo pero NO borra los reportes (re-descarga posible).
-    let bugReportsAcknowledged=false;
     function updateDebugButtonState(){
       const btn=document.getElementById("debug");           // botón principal Bug Report (icono bug)
       const dl=document.getElementById("bugDownloadBtn");   // botón secundario de descarga (hover)
+      const clr=document.getElementById("bugClearBtn");     // botón limpiar reportes (en el modal)
       const n=bugReportsCount();
+      const pending=bugReportsPendingCount();               // PERSISTENTE: reportes aún no descargados
       // Botón principal: siempre abre Bug Report; halo rojo solo si hay reportes sin descargar.
-      if(btn) btn.classList.toggle("bug-report-pending", n>0 && !bugReportsAcknowledged);
-      // Botón secundario de descarga: presente (revelable por hover) solo si hay reportes; oculto si no.
-      // Rojo (is-pending) mientras no se haya descargado; neutro/negro tras descargar, pero sigue disponible.
+      if(btn) btn.classList.toggle("bug-report-pending", pending>0);
+      // Botón secundario de descarga: visible (revelable por hover) si hay reportes; rojo si hay pendientes, neutro si todos descargados.
       if(dl){
-        if(n>0){ dl.hidden=false; dl.classList.toggle("is-pending", !bugReportsAcknowledged); dl.title="Descargar "+n+" reporte(s) de incidencia"+(bugReportsAcknowledged?" (re-descarga disponible)":""); dl.setAttribute("aria-label","Descargar reportes de incidencia ("+n+")"); }
+        if(n>0){ dl.hidden=false; dl.classList.toggle("is-pending", pending>0); dl.title="Descargar "+n+" reporte(s) de incidencia"+(pending>0?(" ("+pending+" sin descargar)"):" (re-descarga disponible)"); dl.setAttribute("aria-label","Descargar reportes de incidencia ("+n+")"); }
         else { dl.hidden=true; dl.classList.remove("is-pending"); }
       }
+      if(clr) clr.style.display=(n>0)?"inline-flex":"none";
     }
 
     async function downloadBugReports(){
@@ -5622,15 +5802,15 @@
         files.push({name:"bug_reports.json",data:enc.encode(safeJsonDeep(jsonReports,2))});
         const blob=zipStore(files); // se construye el blob ANTES de tocar el almacenamiento
         downloadBlob("DEO_bug_reports_"+SCRIPT_VERSION+"_"+stamp+".zip",blob);
-        // No se borran los reportes: se conservan para una posible segunda descarga; solo se detiene el halo.
-        bugReportsAcknowledged=true; updateDebugButtonState();
-        log("Bug reports (ZIP) descargados ("+reports.length+"). Se conservan en memoria para re-descarga; no se borran automáticamente.");
+        // No se borran los reportes: re-descarga ilimitada. Se marca el estado "descargado" de forma PERSISTENTE.
+        markAllReportsDownloaded(); updateDebugButtonState();
+        log("Bug reports (ZIP) descargados ("+reports.length+"). Conservados para re-descarga; estado 'descargado' persistido.");
       }catch(e){
         recordError("bugReport.zip",e);
         // Fallback: TXT plano si el ZIP falla. Tampoco se borran los reportes.
         downloadText("DEO_bug_reports_"+SCRIPT_VERSION+"_"+stamp+".txt",buildBugReportsText(reports),"text/plain");
-        bugReportsAcknowledged=true; updateDebugButtonState();
-        log("Bug reports (TXT fallback) descargados ("+reports.length+"). Se conservan para re-descarga.");
+        markAllReportsDownloaded(); updateDebugButtonState();
+        log("Bug reports (TXT fallback) descargados ("+reports.length+"). Conservados para re-descarga.");
       }
     }
 

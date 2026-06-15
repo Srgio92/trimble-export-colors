@@ -3,6 +3,60 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## [v9.1.0] — 2026-06-15
+
+Versión de corrección dirigida a partir del análisis del **Bug Report v9.0.5** (19 incidencias reales). Consolida además el trabajo interno v9.0.1 → v9.0.5 (hotfix ocultos, sliders Mostrar parámetros, Fase 2 exportación masiva, atajo Selección cercanos, buscador global de vistas, rediseño de botones Bug Report/Debug). Verificación estática (`node --check` del JS inline, `git diff --check`, sin IDs duplicados); **no probado en el visor de Trimble**.
+
+### Bug Report
+
+* **Estado "descargado" persistente**: nueva clave `deo.bugReports.downloadedIds.v1`. El halo rojo solo aparece si hay reportes **no descargados**; al recargar la extensión no reaparece si no hay reportes nuevos. Descargas ilimitadas (no se borra nada). El botón de descarga queda rojo si hay pendientes y neutro/negro tras descargar, pero sigue disponible por hover.
+* **Modal limpio**: el formulario (título, zona, descripción, menciones UI, capturas y selección) se vacía al abrir y al cerrar/cancelar. Corregido el **parpadeo al abrir** (el click sobre `#debug` ya no colapsa el panel Desarrollador: `preventDefault`).
+* **Limpiar reportes**: botón "Limpiar reportes" en el modal con confirmación; borra `localStorage` de reportes y el estado de descarga, oculta el botón de descarga y quita el halo. Nunca automático.
+* **Modal arrastrable** desde una cabecera con tono gris diferenciador.
+* **Selector UI mejorado**: `uiTarget` sube del `span/svg/path` genérico al control significativo (button/input/select/summary/details.tool/id más cercano). Etiqueta legible tipo `Configurar vista > Vista activa > activeViewSearchInput` o `Desarrollador > … > devHelpBtn`.
+* **Resumen en el TXT**: cabecera con versión, fecha, nº de reportes, pendientes no descargados, herramientas afectadas, nº de capturas, errores JS únicos, última vista activa y última selección no vacía. Se mantiene `bug_reports.json` + imágenes separadas.
+
+### Selección cercanos
+
+* **Diagnóstico de atajo** `lastNearShortcutDiag` (evento recibido, combo, switch ON/OFF, foco, bloqueo y motivo, match, ejecución, timestamp), incluido en Bug Report/debug.
+* Listener de `keydown` en **window y document** en fase capture, con dedup por evento (sin doble ejecución). Log claro `Selección cercanos: atajo Alt+C -> ON/OFF`. Si el entorno/iframe no entrega el evento, el diagnóstico lo evidencia.
+
+### Configurar vista
+
+* Buscador global "Vista activa": **contador de vistas cargadas**, botón **"Ir a vista"** (y Enter) que activa la vista escrita/seleccionada con `verifyActiveView`, lista completa al foco, filtrado al escribir, embudo de orden Trimble/alfabético. Sincroniza el selector interno oculto de "Actualizar vista".
+
+### Mostrar parámetros / Inspector
+
+* Líneas de parámetro del inspector **alineadas al extremo izquierdo** del título (sin sangría).
+
+### Color Probe (Tekla/IFC)
+
+* Diagnóstico dirigido `runColorProbe()` en el snapshot: total de `getColoredObjects()`, modelos/selección, propiedades y claves color/material/style/appearance/presentation/render del primer objeto, intento de normalización con `analyzeColor()` y, si no hay color nativo, mensaje claro de limitación de la API. No se ejecuta de forma continua (solo al generar Bug Report/debug).
+
+### Exportar / Importar registro
+
+* **Importar**: eliminado el párrafo de ayuda permanente (basta el botón `?`).
+* **Exportar**: `Error codes` **ON por defecto**; el input de código manual (`Custom codes`) solo aparece si se activa; disposición compacta de ambos toggles. La exportación sin RFI con Error codes ON sigue marcando `ERROR (...)` trazable (sin abortar).
+
+### Desarrollador
+
+* El botón de ayuda `?` se saca del summary de "Registro de consola" y pasa a una fila propia (debajo de "Última modificación"); ya no abre/cierra el registro.
+
+### Acciones rápidas
+
+* Documentado que el rojo de Acciones rápidas (`#fc0d1b`) es el **rojo semántico DEO** (`revisado_deo`), no decorativo; constante `DEO_REVIEWED_RED`. No se altera para no romper `REVIEWED_DEO_COLORS`/importación (pendiente confirmar el rojo Trimble exacto).
+
+### UI menor
+
+* Sugerencias de Compartir con / Etiquetas / buscador de vistas se **cierran al hacer scroll** (evita cajas flotantes desalineadas).
+
+### Pendiente (documentado, no implementado en esta versión)
+
+* Editor de anotaciones: selección/mover/borrar por anotación y edición de texto (se mantiene dibujar + limpiar).
+* Mostrar parámetros: perfil efectivo unificado `getEffectiveParamProfile`, "capítulo" de defaults, coincidencia config↔inspector y bug de "Name" mostrando product name (herramienta protegida; requiere pruebas en Trimble).
+* Guardar reportes en una carpeta del repositorio GitHub: **inviable** desde una extensión de navegador sin backend (los reportes viven en `localStorage` y se descargan como ZIP).
+* Suavizado de la geometría de pestaña y reordenación de botones de captura según imágenes adjuntas (requieren las capturas).
+
 ## [v9.0.0] — 2026-06-14
 
 Versión mayor que consolida la **Fase 5 del Bug Report** (editor de anotaciones, selector visual de elementos de la interfaz y menciones inline) sobre la base estable de la serie v8.14. Recoge el trabajo interno v8.14.1 → v8.14.4. Publicado como incremento mayor `X` por la ampliación funcional del Bug Report. Verificación estática (`node --check` del JS inline, `git diff --check`); **no probado en el visor de Trimble**.
