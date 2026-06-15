@@ -3,6 +3,18 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.3.0 - 2026-06-15
+
+- Fase 2: mejora de Configurar vista y Actualizar vista.
+- Añadida validación obligatoria de Código, Ubicación, Nivel, Ejes, Capítulo, Actuación, Fecha y Autor antes de crear o actualizar vistas.
+- Corregido el fallback del parser de nombre de vista para evitar asignar texto libre no canónico a Ubicación.
+- Endurecida la entrada de Compartir con para evitar chips de usuarios o grupos inexistentes.
+- Añadida verificación defensiva posterior al guardado para compartidos y etiquetas, evitando mensajes de éxito no confirmados por la API.
+- Mejorada la lectura de etiquetas desde el detalle completo de la vista cuando la API expone esa información.
+- Cerradas sugerencias flotantes al hacer scroll para evitar menús descolocados.
+- Mejorados los mensajes visibles de carga/error en Actualizar vista.
+- Aplicados ajustes menores de UI: estado visual del botón global de actualización y limpieza de la ayuda del panel Desarrollador.
+
 ## v9.2.0 - 2026-06-15
 
 - Publicación de test de la Fase 1: núcleo de vistas, selector global de Vista activa y carga robusta de Actualizar vista.

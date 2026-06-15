@@ -150,7 +150,17 @@
     .quant-copy-btn:active, .quant-clear-btn:active, .quick-color-btn:active, .quick-edit-btn:active { transform:scale(.92); }
     .quant-clear-row { display:flex; justify-content:flex-end; margin-top:6px; }
     .quant-clear-btn { width:30px; height:24px; padding:2px 5px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:none; }
-    #tplUpdateParseInfo { display:none !important; }
+    /* v9.3.0: mensajes de Actualizar vista visibles pero no permanentes (se colapsan si están vacíos). */
+    #tplUpdateParseInfo { margin:2px 0 6px; font-size:11px; color:#555; line-height:1.4; }
+    #tplUpdateParseInfo:empty { display:none; }
+    /* v9.3.0: marca de campo obligatorio inválido (borde/halo rojo) sin alterar el layout. */
+    .tpl-field-invalid { outline:2px solid #dc2626 !important; outline-offset:1px; border-radius:6px; }
+    input.tpl-field-invalid { border-color:#dc2626 !important; }
+    .tpl-token-box.is-invalid { outline:2px solid #dc2626; outline-offset:1px; border-radius:6px; }
+    .tpl-validation-msg { display:none; color:#b91c1c; font-size:11px; font-weight:bold; margin:4px 0 0; }
+    .tpl-validation-msg.is-visible { display:block; }
+    .tpl-inline-msg { display:none; color:#b91c1c; font-size:10.5px; margin-top:3px; }
+    .tpl-inline-msg.is-visible { display:block; }
     #viewTemplateTool .template-grid { gap: 9px 10px; align-items:end; }
     #viewTemplateTool .tpl-short { grid-column: span 4; }
     #viewTemplateTool .tpl-medium { grid-column: span 6; }
@@ -504,6 +514,8 @@
     .global-refresh-float:disabled { cursor: default; opacity: .85; }
     .global-refresh-float svg { width: 22px; height: 22px; display: block; fill: #111827; pointer-events: none; }
     .global-refresh-float.is-refreshing svg { animation: globalRefreshSpin .75s linear infinite; transform-origin: 50% 50%; }
+    /* v9.3.0: estado visual discreto cuando los datos del visor no están cargados/están obsoletos. */
+    .global-refresh-float.is-stale:not(.is-refreshing) { border-color:#1c7fd6; box-shadow:0 0 0 2px rgba(28,127,214,.45), 0 2px 8px rgba(0,0,0,.10); }
     @keyframes globalRefreshSpin { to { transform: rotate(360deg); } }
     /* Botón ? de ayuda en Mostrar parámetros: solo visible cuando el details está abierto, alineado a la derecha del summary. */
     .param-help-btn { float: right; width: 20px; height: 20px; min-width: 20px; padding: 0; border: 1px solid #cfd6df; border-radius: 50%; background: #fff; font-size: 11px; font-weight: bold; line-height: 1; display: inline-flex; align-items: center; justify-content: center; margin-top: -1px; cursor: pointer; }
@@ -521,7 +533,6 @@
     /* Fila de ayuda independiente dentro de Desarrollador (debajo de Última modificación). */
     .dev-help-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 2px 0 6px; }
     .dev-help-row .param-help-btn { float: none; }
-    .dev-help-label { font-size: 11px; color: #6b7280; }
     /* Buscador global de "Vista activa" en Configurar vista */
     .av-search { margin: 0 0 10px; }
     .av-search-labelrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
@@ -940,10 +951,11 @@
                   <div class="template-field tpl-medium tpl-autofit tpl-label-field"><label for="cvNew_labelsEntry" id="cvNew_labelsLabel">Etiquetas (0)</label><div class="tpl-token-box tpl-label-box" id="cvNew_labelsBox"><div id="cvNew_labelsTokens" class="tpl-tokens"></div><input type="text" id="cvNew_labelsEntry" placeholder="Añadir etiquetas" autocomplete="off"></div><input type="hidden" id="cvNew_labels" value=""><div id="cvNew_labelsSuggest" class="tpl-suggest"></div></div>
                 </div>
                 <div class="template-line template-line-share">
-                  <div class="template-field tpl-full tpl-share-field"><label for="cvNew_shareEntry" id="cvNew_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvNew_shareBox"><div id="cvNew_shareTokens" class="tpl-tokens"></div><input type="text" id="cvNew_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvNew_share" value=""><div id="cvNew_shareSuggest" class="tpl-suggest"></div></div>
+                  <div class="template-field tpl-full tpl-share-field"><label for="cvNew_shareEntry" id="cvNew_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvNew_shareBox"><div id="cvNew_shareTokens" class="tpl-tokens"></div><input type="text" id="cvNew_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvNew_share" value=""><div id="cvNew_shareSuggest" class="tpl-suggest"></div><div class="tpl-inline-msg" id="cvNew_shareMsg"></div></div>
                 </div>
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplNew_preview">(sin nombre)</span></div>
+              <div class="tpl-validation-msg" id="tplNew_validationMsg"></div>
               <div class="row"><button id="cvCreateBtn">Crear nueva vista</button></div>
             </div>
           </details>
@@ -976,10 +988,11 @@
                   <div class="template-field tpl-medium tpl-autofit tpl-label-field"><label for="cvUpd_labelsEntry" id="cvUpd_labelsLabel">Etiquetas (0)</label><div class="tpl-token-box tpl-label-box" id="cvUpd_labelsBox"><div id="cvUpd_labelsTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_labelsEntry" placeholder="Añadir etiquetas" autocomplete="off"></div><input type="hidden" id="cvUpd_labels" value=""><div id="cvUpd_labelsSuggest" class="tpl-suggest"></div></div>
                 </div>
                 <div class="template-line template-line-share">
-                  <div class="template-field tpl-full tpl-share-field"><label for="cvUpd_shareEntry" id="cvUpd_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvUpd_shareBox"><div id="cvUpd_shareTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvUpd_share" value=""><div id="cvUpd_shareSuggest" class="tpl-suggest"></div></div>
+                  <div class="template-field tpl-full tpl-share-field"><label for="cvUpd_shareEntry" id="cvUpd_shareLabel">Compartir con (0)</label><div class="tpl-token-box" id="cvUpd_shareBox"><div id="cvUpd_shareTokens" class="tpl-tokens"></div><input type="text" id="cvUpd_shareEntry" placeholder="Añadir personas o grupos" autocomplete="off"></div><input type="hidden" id="cvUpd_share" value=""><div id="cvUpd_shareSuggest" class="tpl-suggest"></div><div class="tpl-inline-msg" id="cvUpd_shareMsg"></div></div>
                 </div>
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplUpd_preview">(sin nombre)</span></div>
+              <div class="tpl-validation-msg" id="tplUpd_validationMsg"></div>
               <div class="row"><button id="cvUpdateBtn">Actualizar vista</button></div>
             </div>
           </details>
@@ -1063,7 +1076,7 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta" id="devUpdated"></div>
-      <div class="dev-help-row"><button type="button" id="devHelpBtn" class="param-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button><span class="dev-help-label">Ayuda</span></div>
+      <div class="dev-help-row"><button type="button" id="devHelpBtn" class="param-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></div>
       <div id="devHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Muestra la versión, la fecha y el registro de consola.</li><li><strong>Bug Report</strong> permite crear reportes con capturas, anotaciones y menciones de la interfaz.</li><li>El botón de descarga (al pasar el ratón sobre el botón Bug Report) se activa cuando existen reportes guardados.</li></ul></div>
       <details class="tool">
         <summary class="subtitle">Registro de consola</summary>
@@ -1077,7 +1090,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.2.0";
+    const SCRIPT_VERSION = "v9.3.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -3484,8 +3497,14 @@
       const segs=mainPart.split(",").map((x)=>x.trim()).filter(Boolean);
       if(segs.length>=4){ out.location=segs[0]; out.level=segs[1]; out.axes=segs[2]; out.element=segs.slice(3).join(", "); }
       else if(segs.length===3){ out.location=segs[0]; out.level=segs[1]; out.axes=segs[2]; }
-      else if(segs.length===2){ out.location=segs[0]; if(/^N\d/i.test(segs[1])) out.level=segs[1]; else out.element=segs[1]; }
-      else if(segs.length===1){ if(out.task) out.element=segs[0]; else out.location=segs[0]; }
+      else {
+        // v9.3.0: con estructura insuficiente no se asigna Ubicación/Ejes a la fuerza. Solo se detecta lo inequívoco
+        // (Nivel Nxx); el texto libre restante va preferentemente a Actuación y no a Ubicación.
+        const rest=[];
+        for(const seg of segs){ if(!out.level && /^N\d/i.test(seg)) out.level=seg; else rest.push(seg); }
+        const free=rest.join(", ").trim();
+        if(free){ if(out.task) out.element=out.element||free; else out.task=free; }
+      }
       // Si aún no hay actuación, intenta detectar títulos con separadores alternativos usados en vistas antiguas.
       if(!out.task){
         const alt=s.split(/\s+[|–—]\s+/).map((x)=>x.trim()).filter(Boolean);
@@ -3617,7 +3636,33 @@
       const box=cvShareTokensEl(scope); if(!box) return; box.innerHTML="";
       arr.forEach((v,idx)=>{ const chip=document.createElement("span"); chip.className="tpl-token"; chip.title=v; chip.tabIndex=0; const txt=document.createElement("span"); txt.textContent=shareTokenLabel(v); const rm=document.createElement("button"); rm.type="button"; rm.textContent="×"; rm.title="Quitar"; rm.onclick=()=>{ (cvShareTokenState[scope]||[]).splice(idx,1); cvRenderShareTokens(scope); }; chip.addEventListener("keydown",(ev)=>{ if(ev.key==="Backspace"||ev.key==="Delete"){ ev.preventDefault(); (cvShareTokenState[scope]||[]).splice(idx,1); cvRenderShareTokens(scope); const inp=cvShareEntryEl(scope); if(inp) inp.focus(); } }); chip.appendChild(txt); chip.appendChild(rm); box.appendChild(chip); });
     }
-    function cvAddShareToken(scope,v){ const token=String(v||"").trim(); if(!token) return; cvSetShareTokens(scope,cvGetShareTokens(scope).concat([token])); const input=cvShareEntryEl(scope); if(input) input.value=""; cvHideShareSuggest(scope); }
+    // v9.3.0: resuelve un texto a un miembro real (coincidencia exacta por nombre/email, o única por inclusión). Sin inventar.
+    function cvFindMember(term){
+      const t=String(term||"").trim().toLowerCase(); if(!t) return null;
+      const exact=templateProjectMembers.find((m)=>(m.email||"").toLowerCase()===t||(m.name||"").toLowerCase()===t);
+      if(exact) return exact;
+      const partial=templateProjectMembers.filter((m)=>(m.email||"").toLowerCase().includes(t)||(m.name||"").toLowerCase().includes(t));
+      return partial.length===1?partial[0]:null;
+    }
+    function cvFlagShareInvalid(scope,text){
+      const box=document.getElementById(scope+"_shareBox"); if(box) box.classList.add("is-invalid");
+      const msg=document.getElementById(scope+"_shareMsg"); if(msg){ msg.textContent=text||"Sin coincidencia."; msg.classList.add("is-visible"); }
+    }
+    function cvClearShareInvalid(scope){
+      const box=document.getElementById(scope+"_shareBox"); if(box) box.classList.remove("is-invalid");
+      const msg=document.getElementById(scope+"_shareMsg"); if(msg){ msg.classList.remove("is-visible"); msg.textContent=""; }
+    }
+    // v9.3.0: solo se aceptan personas/grupos reales (sugerencias/caché). El texto libre sin coincidencia se rechaza en rojo.
+    function cvAddShareToken(scope,v){
+      const raw=String(v||"").trim(); if(!raw) return;
+      const m=cvFindMember(raw);
+      if(!m){ cvFlagShareInvalid(scope,"Sin coincidencia: elige una persona o grupo de la lista."); return; }
+      const token=m.email||m.name; if(!token){ cvFlagShareInvalid(scope,"Sin coincidencia válida."); return; }
+      cvSetShareTokens(scope,cvGetShareTokens(scope).concat([token]));
+      const input=cvShareEntryEl(scope); if(input) input.value="";
+      cvClearShareInvalid(scope);
+      cvHideShareSuggest(scope);
+    }
     function cvActiveUserDomain(){ try{ const u=templateCurrentUser||{}; const email=String(u.email||u.username||"").toLowerCase(); const at=email.indexOf("@"); return at>=0?email.slice(at+1):""; }catch(e){ return ""; } }
     // Orden: 1) coincidencia directa (empieza por el término), 2) mismo dominio del usuario activo, 3) resto alfabético.
     function cvShareSuggestions(scope,q){
@@ -3640,12 +3685,13 @@
     }
     function cvWireShareAutocomplete(scope){
       const input=cvShareEntryEl(scope); if(!input) return;
-      input.addEventListener("input",()=>cvShowShareSuggest(scope));
+      input.addEventListener("input",()=>{ cvClearShareInvalid(scope); cvShowShareSuggest(scope); });
       input.addEventListener("focus",()=>cvShowShareSuggest(scope));
       input.addEventListener("keydown",(ev)=>{ if((ev.key==="Backspace"||ev.key==="Delete") && String(input.value||"")===""){ const arr=cvShareTokenState[scope]||[]; if(arr.length){ ev.preventDefault(); arr.pop(); cvRenderShareTokens(scope); cvHideShareSuggest(scope); } return; } if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_shareSuggest .tpl-suggest-item"); const sug=cvShareSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddShareToken(scope,input.value); } else if(ev.key==="Escape") cvHideShareSuggest(scope); });
       input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddShareToken(scope,input.value); cvHideShareSuggest(scope); },180); });
       window.addEventListener("resize",()=>cvPositionShareSuggest(scope));
-      window.addEventListener("scroll",()=>{ const sug=cvShareSuggestEl(scope); if(sug&&sug.style.display!=="none") cvPositionShareSuggest(scope); },true);
+      // v9.3.0: al hacer scroll se cierra la sugerencia (no se reposiciona) para evitar popups descolocados.
+      window.addEventListener("scroll",()=>cvHideShareSuggest(scope),true);
       cvRenderShareTokens(scope);
     }
 
@@ -3710,7 +3756,8 @@
       input.addEventListener("keydown",(ev)=>{ if((ev.key==="Backspace"||ev.key==="Delete") && String(input.value||"")===""){ const arr=cvLabelTokenState[scope]||[]; if(arr.length){ ev.preventDefault(); arr.pop(); cvRenderLabelTokens(scope); cvHideLabelSuggest(scope); } return; } if(ev.key==="Enter"||ev.key===","||ev.key===";"){ ev.preventDefault(); const first=document.querySelector("#"+scope+"_labelsSuggest .tpl-suggest-item"); const sug=cvLabelsSuggestEl(scope); if(first&&sug&&sug.style.display!=="none") first.dispatchEvent(new MouseEvent("mousedown")); else cvAddLabelToken(scope,input.value); } else if(ev.key==="Escape") cvHideLabelSuggest(scope); });
       input.addEventListener("blur",()=>{ setTimeout(()=>{ if(String(input.value||"").trim()) cvAddLabelToken(scope,input.value); cvHideLabelSuggest(scope); },180); });
       window.addEventListener("resize",()=>cvPositionLabelSuggest(scope));
-      window.addEventListener("scroll",()=>{ const sug=cvLabelsSuggestEl(scope); if(sug&&sug.style.display!=="none") cvPositionLabelSuggest(scope); },true);
+      // v9.3.0: al hacer scroll se cierra la sugerencia (no se reposiciona) para evitar popups descolocados.
+      window.addEventListener("scroll",()=>cvHideLabelSuggest(scope),true);
       cvRenderLabelTokens(scope);
     }
     function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
@@ -3787,6 +3834,73 @@
     }
     // ===================== CONFIGURAR VISTA (v8.10.1): Crear / Actualizar simplificados =====================
     // Cada flujo tiene Descripción/título + Autor + Compartir con + Etiquetas. Título = descripción al guardar.
+    // v9.3.0: validación obligatoria de campos antes de Crear/Actualizar vista (borde/halo rojo + mensaje, bloquea guardado).
+    const CV_REQUIRED_FIELDS=[["code","Código"],["location","Ubicación"],["level","Nivel"],["axes","Ejes"],["element","Capítulo"],["task","Actuación"],["date","Fecha"],["author","Autor"]];
+    function cvFieldFlagEl(scope,field){
+      if(field==="code"){ const el=tplEl(scope,"code"); return el?el.closest(".tpl-code-control"):null; }
+      if(field==="level"){ const el=document.getElementById(scope+"_level"); return el?el.closest(".tpl-level-control"):null; }
+      if(field==="date"){ const el=document.getElementById(scope+"_date"); return el?el.closest(".tpl-date-control"):null; }
+      return tplEl(scope,field);
+    }
+    function cvClearValidation(scope){
+      for(const [f] of CV_REQUIRED_FIELDS){ const el=cvFieldFlagEl(scope,f); if(el) el.classList.remove("tpl-field-invalid"); }
+      const msg=document.getElementById(scope+"_validationMsg"); if(msg){ msg.classList.remove("is-visible"); msg.textContent=""; }
+    }
+    function cvValidateScope(scope){
+      const vals=getScopeValues(scope);
+      const missing=[];
+      for(const [f,label] of CV_REQUIRED_FIELDS){
+        const ok=!!String(vals[f]||"").trim();
+        let lbl=label;
+        if(f==="date" && !ok && String(getTplRawValue(scope,"date")||"").trim()) lbl="Fecha inválida";
+        const el=cvFieldFlagEl(scope,f);
+        if(ok){ if(el) el.classList.remove("tpl-field-invalid"); }
+        else { if(el) el.classList.add("tpl-field-invalid"); missing.push(lbl); }
+      }
+      const msg=document.getElementById(scope+"_validationMsg");
+      if(missing.length){
+        const text="Campos obligatorios pendientes: "+missing.join(", ")+".";
+        if(msg){ msg.textContent=text; msg.classList.add("is-visible"); }
+        setProgress(text);
+        return {ok:false,missing};
+      }
+      if(msg){ msg.classList.remove("is-visible"); msg.textContent=""; }
+      return {ok:true};
+    }
+    // v9.3.0: limpia el rojo del campo editado en cuanto el usuario lo corrige.
+    function wireScopeValidationClear(scope){
+      const fold=document.getElementById(scope==="tplNew"?"tplFoldCreate":"tplFoldUpdate"); if(!fold) return;
+      fold.addEventListener("input",(e)=>{
+        const t=e.target; if(!t||!t.closest) return;
+        const f=t.closest(".tpl-field-invalid"); if(f) f.classList.remove("tpl-field-invalid");
+        if(!fold.querySelector(".tpl-field-invalid")){ const msg=document.getElementById(scope+"_validationMsg"); if(msg){ msg.classList.remove("is-visible"); msg.textContent=""; } }
+      },true);
+    }
+    // v9.3.0: tras guardar relee la vista y confirma compartidos/etiquetas, sin afirmar éxito no confirmado por la API.
+    function cvExtractViewId(res){
+      if(!res) return "";
+      if(typeof res==="string") return res;
+      if(typeof res==="object") return String(res.id||res.viewId||res.guid||"");
+      return "";
+    }
+    async function cvVerifyAfterSave(viewId, reqShare, reqLabels){
+      const out={shareMsg:"",labelMsg:""};
+      if(!viewId) return out;
+      let det=null; try{ det=await getViewDetailResilient(viewId); }catch(e){ recordError("cvVerifyAfterSave",e); }
+      if(!det||!det.ok) return out;
+      const view=det.view;
+      if(reqLabels&&reqLabels.length){
+        const got=parseTemplateList(cvViewTags(view)).map((x)=>x.toLowerCase());
+        const all=reqLabels.every((l)=>got.includes(String(l).toLowerCase()));
+        out.labelMsg=all?"Etiquetas confirmadas.":"Etiquetas no confirmadas por la API.";
+      }
+      if(reqShare&&reqShare.length){
+        const got=parseTemplateList(cvViewPeople(view)).map((x)=>x.toLowerCase());
+        const all=reqShare.every((s)=>got.includes(String(s).toLowerCase()));
+        out.shareMsg=all?"Compartición confirmada.":"Compartición no confirmada por la API.";
+      }
+      return out;
+    }
     function cvBuildSpec(desc,author,share,labels){
       const spec={name:desc,description:desc};
       if(author) spec.author=author;
@@ -3799,9 +3913,15 @@
       if(!Array.isArray(cands)) return "";
       return cands.map((x)=> typeof x==="string"?x:((x&&(x.email||x.name||x.displayName||x.id))||"") ).filter(Boolean).join(", ");
     }
+    // v9.3.0: lee etiquetas desde el detalle completo. Prueba claves reales (tags/labels) y, si están vacías, metadata.
+    // Solo se extraen nombres legibles; los IDs sueltos (tagIds/labelIds) no se convierten en nombres inventados.
     function cvViewTags(view){
-      const cands=view&&(view.tags||view.labels);
-      if(Array.isArray(cands)) return cands.map((x)=> typeof x==="string"?x:((x&&(x.name||x.label||x.value))||"") ).filter(Boolean).join(", ");
+      if(!view||typeof view!=="object") return "";
+      let cands=view.tags||view.labels;
+      if((!cands||(Array.isArray(cands)&&!cands.length)) && view.metadata && typeof view.metadata==="object"){
+        cands=view.metadata.tags||view.metadata.labels||cands;
+      }
+      if(Array.isArray(cands)) return cands.map((x)=> typeof x==="string"?x:((x&&(x.name||x.label||x.value||x.title))||"") ).filter(Boolean).join(", ");
       return String(cands||"");
     }
     function cvViewAuthor(view){
@@ -3826,6 +3946,8 @@
     async function cvCreateView(){
       if(!API||!API.view||!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
       ensureCreateAutoFields(); tplAutosizeAll(document.getElementById("tplFoldCreate"));
+      const val=cvValidateScope("tplNew");
+      if(!val.ok){ log("Crear vista: campos obligatorios pendientes ("+val.missing.join(", ")+")."); return; }
       const desc=templateNameFromValues(getScopeValues("tplNew"));
       if(!desc){ setProgress("Completa al menos un campo para generar el título de la vista."); log("Crear vista: falta nombre generado."); return; }
       const author=String((tplEl("tplNew","author")||{}).value||"").trim();
@@ -3835,10 +3957,15 @@
       try{
         setProgress("Creando vista con el estado actual del visor...");
         const spec=cvBuildSpec(desc,author,share,labels);
-        try{ await API.view.createView(spec); }
-        catch(metaErr){ recordError("cvCreateView.metaSpec",metaErr); log("Crear vista: la API no aceptó metadatos; se crea solo con título/descripción."); await API.view.createView({name:desc,description:desc}); }
-        log("Vista creada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."); setProgress("Vista creada: "+desc);
+        let created=null;
+        try{ created=await API.view.createView(spec); }
+        catch(metaErr){ recordError("cvCreateView.metaSpec",metaErr); log("Crear vista: la API no aceptó metadatos; se crea solo con título/descripción."); created=await API.view.createView({name:desc,description:desc}); }
+        const newId=cvExtractViewId(created);
         await populateUpdateViews();
+        const verify=await cvVerifyAfterSave(newId,share,labels);
+        const tail=[verify.shareMsg,verify.labelMsg].filter(Boolean).join(" ");
+        log("Vista creada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."+(tail?" "+tail:""));
+        setProgress("Vista guardada: "+desc+(tail?". "+tail:""));
       }catch(e){ recordError("cvCreateView",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error creando vista."); }
       finally{ if(btn) btn.disabled=false; }
     }
@@ -3846,19 +3973,26 @@
       const sel=document.getElementById("updateViewSelect"); if(!sel||!sel.value){ setProgress("Selecciona una vista para actualizar."); return; }
       if(!API.view||!API.view.updateView){ log("La API no permite actualizar vistas en este entorno."); setProgress("No disponible."); return; }
       ensureScopeAutoFields("tplUpd"); tplAutosizeAll(document.getElementById("tplFoldUpdate"));
+      const val=cvValidateScope("tplUpd");
+      if(!val.ok){ log("Actualizar vista: campos obligatorios pendientes ("+val.missing.join(", ")+")."); return; }
       const desc=templateNameFromValues(getScopeValues("tplUpd")); if(!desc){ setProgress("Falta nombre de vista generado."); return; }
       const author=String((tplEl("tplUpd","author")||{}).value||"").trim();
       const share=cvGetShareTokens("cvUpd");
       const labels=cvGetLabelTokens("cvUpd");
+      const viewId=sel.value;
       const btn=document.getElementById("cvUpdateBtn"); if(btn) btn.disabled=true;
       try{
         setProgress("Actualizando estado de la vista seleccionada...");
-        await API.view.updateView({id:sel.value}); // captura el estado actual del visor
-        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(sel.value); }catch(e){ recordError("cvUpdateView.getView",e); }
-        if(spec && typeof spec==="object"){ Object.assign(spec,cvBuildSpec(desc,author,share,labels)); spec.id=sel.value; await API.view.updateView(spec); }
-        else { await API.view.updateView(Object.assign({id:sel.value},cvBuildSpec(desc,author,share,labels))); }
-        log("Vista actualizada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."); setProgress("Vista actualizada: "+desc);
-        const keep=sel.value; await populateUpdateViews(); if([...sel.options].some((o)=>String(o.value)===String(keep))) sel.value=keep;
+        await API.view.updateView({id:viewId}); // captura el estado actual del visor
+        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(viewId); }catch(e){ recordError("cvUpdateView.getView",e); }
+        if(spec && typeof spec==="object"){ Object.assign(spec,cvBuildSpec(desc,author,share,labels)); spec.id=viewId; await API.view.updateView(spec); }
+        else { await API.view.updateView(Object.assign({id:viewId},cvBuildSpec(desc,author,share,labels))); }
+        const verify=await cvVerifyAfterSave(viewId,share,labels);
+        const tail=[verify.shareMsg,verify.labelMsg].filter(Boolean).join(" ");
+        log("Vista actualizada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."+(tail?" "+tail:""));
+        setProgress("Vista guardada: "+desc+(tail?". "+tail:""));
+        const info=document.getElementById("tplUpdateParseInfo"); if(info) info.textContent="Vista guardada."+(tail?" "+tail:"");
+        const keep=viewId; await populateUpdateViews(); if([...sel.options].some((o)=>String(o.value)===String(keep))) sel.value=keep;
       }catch(e){ recordError("cvUpdateView",e); log("ERROR actualizando vista: "+(e&&e.message?e.message:e)); setProgress("Error al actualizar la vista."); }
       finally{ if(btn) btn.disabled=false; }
     }
@@ -3933,6 +4067,7 @@
       const people=cvViewPeople(view); cvSetShareTokens("cvUpd",parseTemplateList(people));
       const tags=cvViewTags(view); cvSetLabelTokens("cvUpd",parseTemplateList(tags));
       updateScopePreview("tplUpd");
+      cvClearValidation("tplUpd"); // datos frescos: limpia marcas rojas de una validación anterior
       log("Actualizar vista cargada: "+name);
       return {ok:true,name};
     }
@@ -3984,7 +4119,7 @@
         else { log("Vista activa: no se pudo enviar el cambio ("+(res.reason||"")+")."); setProgress("No se pudo activar la vista."); }
         return;
       }
-      if(res.confirmed){ activeViewSearchLastConfirmedId=target.id; log("Vista activa confirmada por "+(res.by||"id")+": "+target.name); setProgress("Vista activa: "+target.name); }
+      if(res.confirmed){ activeViewSearchLastConfirmedId=target.id; setViewerDataStale(true); log("Vista activa confirmada por "+(res.by||"id")+": "+target.name); setProgress("Vista activa: "+target.name); }
       else { log("Cambio de vista enviado, pero la API no lo confirmó todavía."); setProgress("Cambio enviado; la API no lo confirmó aún."); }
     }
     // Seleccionar una sugerencia NO activa la vista: solo fija selección y carga "Actualizar vista".
@@ -4038,6 +4173,7 @@
       // v8.10.2: solo los dos flujos vigentes (tplNew/tplUpd). El antiguo scope tplCfg ("Datos comunes")
       // ya no existe en la UI; su wiring se elimina para no hacer llamadas API innecesarias.
       for(const scope of ["tplNew","tplUpd"]) wireTemplateScope(scope);
+      wireScopeValidationClear("tplNew"); wireScopeValidationClear("tplUpd");
       cvWireShareAutocomplete("cvNew"); cvWireShareAutocomplete("cvUpd");
       cvWireLabelAutocomplete("cvNew"); cvWireLabelAutocomplete("cvUpd");
       const createBtn=document.getElementById("cvCreateBtn"); if(createBtn) createBtn.onclick=()=>cvCreateView();
@@ -4732,6 +4868,8 @@
     // (exclusiones, selección, perfiles). Sin estados visibles persistentes: el icono gira mientras trabaja y
     // el botón se deshabilita para ignorar clics duplicados (no dispara refrescos simultáneos).
     let viewerRefreshBusy=false;
+    // v9.3.0: estado visual discreto del botón global cuando los datos del visor no están cargados/están obsoletos.
+    function setViewerDataStale(on){ const btn=document.getElementById("globalViewerRefresh"); if(btn) btn.classList.toggle("is-stale",!!on); }
     async function refreshViewerDataGlobal(){
       if(viewerRefreshBusy) return;
       const btn=document.getElementById("globalViewerRefresh");
@@ -4765,6 +4903,7 @@
         // Presentación/vista activa y selección dependientes del visor.
         scheduleSelectionInspector();
         scheduleProcessSelection();
+        setViewerDataStale(false);
         log("Datos del visor actualizados (botón global).");
         setProgress("Datos del visor actualizados.");
       }catch(e){
@@ -4911,6 +5050,7 @@
       API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
       log("Conectado a Trimble Connect.\nCódigo de versión: "+SCRIPT_VERSION);
       setProgress("Conectado a Trimble Connect.");
+      setViewerDataStale(true); // datos del visor aún no consolidados: halo discreto invita a Actualizar datos del visor
       // v8.11.1: wireUI corre antes de la conexión (API=null), por lo que la lista de modelos quedó vacía.
       // Tras conectar, repoblar resuelve los alias reales y limpia ids persistidos huérfanos (reconcile).
       try{ await populateExcludeModels(); }catch(e){ recordError("postConnect.populateExcludeModels",e); }
