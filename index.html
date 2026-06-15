@@ -1077,7 +1077,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.1.0";
+    const SCRIPT_VERSION = "v9.2.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1429,8 +1429,87 @@
     }
 
     // ===================== VISTA / CARPETAS =====================
-    async function getCurrentViewSpecWithRetry(){ let cv=null; for(let a=1;a<=6;a++){ try{ cv=await API.view.getCurrentView(); if(cv&&(cv.name||cv.description||cv.id)){ if(cv.id&&!cv.name){ try{ const all=await API.view.getViews(); const m=(all||[]).find((v)=>v.id===cv.id); if(m){cv.name=cv.name||m.name; cv.description=cv.description||m.description;} }catch(e){} } return cv; } }catch(e){ recordError("getCurrentView",e); } if(a<6){ log("La vista activa aún no está lista... intento "+a+"/6"); await sleep(700);} } return cv; }
+    // v9.1.1: delega en la capa resiliente (backoff + sin spam de log + tolera que getCurrentView lance).
+    async function getCurrentViewSpecWithRetry(){ const r=await getActiveViewResilient({silent:true}); return r.ok?(r.view||(r.normalized&&r.normalized.raw)||null):null; }
     function viewFullName(v){ return v?(v.name||v.description||""):""; }
+    // ===================== CAPA CENTRAL DE VISTAS (v9.1.1) =====================
+    // Caché única de vistas para buscador, "Actualizar vista" y export. Defensiva ante getViews()/
+    // getCurrentView() lentos, parciales o que lanzan (TypeError interno de la API de Trimble).
+    let viewsCache=[];               // [{id,name,description,raw}]
+    let viewsCacheBuiltAt=0;
+    let viewsCacheLoading=null;      // promesa en curso: evita llamadas concurrentes a getViews()
+    let lastActiveViewDiagnostics=null;
+    let viewFormLoadSeq=0;           // token anti-mezcla al cargar el formulario de "Actualizar vista"
+    function normalizeViewEntry(v){
+      if(!v||typeof v!=="object") return null;
+      const id=String(v.id||v.viewId||"");
+      if(!id) return null;
+      return { id, name:readableViewName(v)||"Vista sin nombre", description:String(v.description||""), raw:v };
+    }
+    async function loadViewsCache(force=false){
+      if(!force && viewsCacheLoading) return viewsCacheLoading;   // deduplica llamadas concurrentes
+      const p=(async ()=>{
+        if(!(API&&API.view&&typeof API.view.getViews==="function")){ recordError("loadViewsCache",new Error("API.view.getViews no disponible")); return viewsCache; }
+        let raw=null;
+        try{ raw=await API.view.getViews(); }
+        catch(e){ recordError("loadViewsCache.getViews",e); log("Aviso: no se pudieron leer las vistas del proyecto."); return viewsCache; }
+        if(!Array.isArray(raw)){ recordError("loadViewsCache",new Error("getViews no devolvió un array")); log("Aviso: respuesta de vistas no válida."); return viewsCache; }
+        const norm=raw.map(normalizeViewEntry).filter(Boolean);
+        viewsCache=norm; viewsCacheBuiltAt=Date.now();
+        activeViewSearchViews=norm.map((v)=>({id:v.id,name:v.name}));
+        templateViewsCache=norm.map((v)=>v.raw);
+        avUpdateCount();
+        log("Vistas cargadas: "+norm.length);
+        return norm;
+      })();
+      viewsCacheLoading=p;
+      try{ return await p; } finally{ if(viewsCacheLoading===p) viewsCacheLoading=null; }
+    }
+    async function getActiveViewResilient(options={}){
+      const maxAttempts=options.attempts||6;
+      const delays=[200,400,700,1000,1400,1800];
+      if(!(API&&API.view&&typeof API.view.getCurrentView==="function")){
+        lastActiveViewDiagnostics={ts:new Date().toISOString(),attempts:0,ok:false,reason:"getCurrentView no disponible",source:"none"};
+        return {ok:false,reason:"getCurrentView no disponible",attempts:0,lastError:null};
+      }
+      let attempts=0, lastError=null, cur=null;
+      for(let a=0;a<maxAttempts;a++){
+        attempts=a+1;
+        try{ cur=await API.view.getCurrentView(); if(cur&&(cur.id||cur.name||cur.description)) break; cur=null; }
+        catch(e){ lastError=e; recordError("getActiveViewResilient",e); cur=null; }
+        if(a<maxAttempts-1) await sleep(delays[a]||1800);
+      }
+      if(!cur){
+        const reason="la vista activa no estuvo lista tras "+attempts+" intento(s)";
+        lastActiveViewDiagnostics={ts:new Date().toISOString(),attempts,ok:false,reason,lastError:lastError&&lastError.message,source:"getCurrentView"};
+        if(!options.silent) log("getCurrentView no disponible tras "+attempts+" intentos: "+(lastError?(lastError.message||lastError):"sin datos"));
+        return {ok:false,reason,attempts,lastError};
+      }
+      let completedFromCache=false;
+      const curId=String(cur.id||cur.viewId||"");
+      if(curId && (!cur.name||!cur.description)){
+        try{ await loadViewsCache(false); const m=viewsCache.find((v)=>v.id===curId); if(m){ if(!cur.name) cur.name=m.name; if(!cur.description) cur.description=m.description; completedFromCache=true; } }catch(e){}
+      }
+      const normalized=normalizeViewEntry(cur)||{id:curId,name:readableViewName(cur)||"Vista sin nombre",description:String(cur.description||""),raw:cur};
+      lastActiveViewDiagnostics={ts:new Date().toISOString(),attempts,ok:true,view:{id:normalized.id,name:normalized.name},completedFromCache,source:"getCurrentView"};
+      if(!options.silent) log("Vista activa leída: "+(normalized.name||"(sin nombre)"));
+      return {ok:true,view:cur,normalized,attempts,source:"getCurrentView",completedFromCache};
+    }
+    async function getViewDetailResilient(viewId){
+      const id=String(viewId||""); if(!id) return {ok:false,reason:"viewId vacío"};
+      let cached=viewsCache.find((v)=>v.id===id);
+      if(!cached){ try{ await loadViewsCache(false); }catch(e){} cached=viewsCache.find((v)=>v.id===id); }
+      if(API&&API.view&&typeof API.view.getView==="function"){
+        let detail=null;
+        try{ detail=await API.view.getView(id); }catch(e){ recordError("getViewDetailResilient.getView",e); }
+        if(detail&&typeof detail==="object"){
+          const normalized=normalizeViewEntry(detail)||cached||{id,name:"Vista sin nombre",description:"",raw:detail};
+          return {ok:true,view:detail,normalized,source:"getView(id)"};
+        }
+      }
+      if(cached) return {ok:true,view:cached.raw,normalized:cached,source:"cache"};
+      return {ok:false,reason:"vista no encontrada"};
+    }
     const FOLDER_KEYS=["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection"];
     function detectFolder(view){ if(!view||typeof view!=="object") return ""; for(const k of Object.keys(view)){ if(FOLDER_KEYS.includes(k.toLowerCase())){ const val=view[k]; if(val==null||val==="") continue; if(typeof val!=="object") return String(val); if(Array.isArray(val)){ const first=val.find((x)=>x); if(first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); } else return String(val.name||val.title||val.groupName||val.id||""); } } return ""; }
     // ----- Grupos de vistas: caché interna para metadatos heredados de vistas (no usada por exportación masiva) -----
@@ -1647,21 +1726,30 @@
     function showImportCancel(on){ const el=document.getElementById("importCancel"); if(el) el.style.display=on?"inline-block":"none"; }
     // Cambio de vista activa: la API no documenta un único método; se prueban los candidatos conocidos.
     async function activateViewById(viewId){
+      const id=String(viewId||"");
+      if(!id) return {ok:false,reason:"viewId vacío"};
+      if(!(API&&API.view)) return {ok:false,reason:"API.view no disponible"};
       const cands=["setView","selectView","setCurrentView","activateView","applyView","goToView"];
-      for(const m of cands){ const fn=API&&API.view&&API.view[m]; if(typeof fn==="function"){ try{ await fn.call(API.view,viewId); return m; }catch(e){ recordError("activateView."+m,e); } } }
-      return null;
+      let lastErr=null;
+      for(const m of cands){ const fn=API.view[m]; if(typeof fn==="function"){ try{ await fn.call(API.view,id); return {ok:true,method:m}; }catch(e){ lastErr=e; recordError("activateView."+m,e); } } }
+      return {ok:false,reason:lastErr?("error al activar vista: "+(lastErr.message||lastErr)):"la API no expone un método para activar vistas"};
     }
     // Confirma que la vista activa coincide realmente con la pedida (por id, o por nombre con tolerancia).
+    // v9.1.1: reintenta con espera corta usando la capa resiliente; nunca lanza; NO es bloqueo del input.
     async function verifyActiveView(view){
-      await sleep(250);
-      let cur=null; try{ cur=await API.view.getCurrentView(); }catch(e){ recordError("verifyActiveView.get",e); return {ok:false,reason:"no se pudo leer la vista activa"}; }
-      if(!cur) return {ok:false,reason:"vista activa no disponible"};
+      const want=view||{};
       const nm=(s)=>String(s||"").toLowerCase().replace(/\s+/g," ").trim();
-      const curId=String(cur.id||cur.viewId||"");
-      if(view.id && curId && curId===String(view.id)) return {ok:true,by:"id"};
-      const curName=nm(readableViewName(cur)||""), wantName=nm(view.name||"");
-      if(wantName && curName && curName===wantName) return {ok:true,by:"nombre"};
-      return {ok:false,reason:"la vista activa no coincide (id/nombre)",curId,curName:readableViewName(cur)||""};
+      const delays=[250,500,800]; let attemptsTotal=0, cur=null;
+      for(let i=0;i<delays.length;i++){
+        await sleep(delays[i]);
+        const r=await getActiveViewResilient({silent:true,attempts:2});
+        attemptsTotal+=r.attempts||0;
+        if(!r.ok){ if(i===delays.length-1) return {confirmed:false,reason:r.reason||"no se pudo leer la vista activa",attempts:attemptsTotal,currentView:null}; continue; }
+        cur=r.normalized;
+        if(want.id && cur.id && String(cur.id)===String(want.id)) return {confirmed:true,by:"id",attempts:attemptsTotal,currentView:cur};
+        if(want.name && cur.name && nm(cur.name)===nm(want.name)) return {confirmed:true,by:"name",attempts:attemptsTotal,currentView:cur};
+      }
+      return {confirmed:false,reason:"la vista activa no coincide (id/nombre)",attempts:attemptsTotal,currentView:cur};
     }
     // ===================== EXPORTACIÓN MASIVA: SELECCIÓN DE VISTAS (v8.10.7) =====================
     let massViews=[]; const massViewsSelected=new Set(); let massViewsSortAlpha=false; let massExportCancel=false;
@@ -1728,7 +1816,7 @@
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
       const chosen=massViews.filter((v)=>massViewsSelected.has(v.id));
       if(!chosen.length){ log("Exportación masiva: no hay vistas seleccionadas. No se inicia la exportación."); setProgress("Selecciona al menos una vista para exportar."); return; }
-      const switcher=await activateViewById(chosen[0].id);
+      const _swAct=await activateViewById(chosen[0].id); const switcher=_swAct.ok?_swAct.method:null;
       lastMassExport={ selectedCount:chosen.length, totalViews:massViews.length, lastMethod:(switcher||"no disponible"), lastStatus:"EN CURSO", lastFailedView:"", zipFilesCount:0, ts:new Date().toISOString() };
       // Sin método de cambio de vista no se puede garantizar la vista de cada CSV: abortar para no exportar datos engañosos.
       if(!switcher){
@@ -1750,7 +1838,7 @@
           let switched=false; try{ await API.view[switcher](v.id); switched=true; }catch(e){ recordError("exportMassive.switch",e); }
           if(!switched){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al activar la vista (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           const vr=await verifyActiveView(v);
-          if(!vr.ok){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO de verificación de vista ("+(vr.reason||"")+"); no se exporta para evitar datos de vista equivocada."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          if(!vr.confirmed){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO de verificación de vista ("+(vr.reason||"")+"); no se exporta para evitar datos de vista equivocada."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           let entries=null; try{ entries=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("exportMassive.colors",e); }
           if(!Array.isArray(entries)){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al leer colores (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           if(!entries.length){ emptyViews++; report.push("- "+v.name+": sin objetos coloreados (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
@@ -3655,8 +3743,13 @@
     }
     async function populateUpdateViews(){
       const sel=document.getElementById("updateViewSelect"); if(!sel||!API||!API.view) return; const previous=sel.value; sel.innerHTML='<option value="">Cargando vistas...</option>';
-      try{ templateViewsCache=await API.view.getViews()||[]; templateViewsCache=templateViewsCache.slice().sort((a,b)=>readableViewName(a).localeCompare(readableViewName(b),"es")); sel.innerHTML=""; const ph=document.createElement("option"); ph.value=""; ph.textContent="Selecciona vista..."; sel.appendChild(ph); for(const v of templateViewsCache){ const o=document.createElement("option"); o.value=v.id||""; o.textContent=readableViewName(v)||"Vista sin nombre"; sel.appendChild(o); } if(previous&&templateViewsCache.some((v)=>String(v.id)===String(previous))) sel.value=previous; }
-      catch(e){ recordError("populateUpdateViews",e); sel.innerHTML='<option value="">Error al leer vistas</option>'; }
+      try{
+        await loadViewsCache(false);
+        const ordered=viewsCache.slice().sort((a,b)=>a.name.localeCompare(b.name,"es"));
+        sel.innerHTML=""; const ph=document.createElement("option"); ph.value=""; ph.textContent="Selecciona vista..."; sel.appendChild(ph);
+        for(const v of ordered){ const o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); }
+        if(previous && viewsCache.some((v)=>v.id===String(previous))) sel.value=previous;
+      }catch(e){ recordError("populateUpdateViews",e); sel.innerHTML='<option value="">Error al leer vistas</option>'; }
     }
     function loadSelectedViewForUpdate(){
       const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo"); if(!sel||!sel.value) return;
@@ -3719,30 +3812,16 @@
       return humanizeAuthorString(raw);
     }
     function cvSet(id,val){ const el=document.getElementById(id); if(el) el.value=val||""; }
+    // v9.1.1: el llenado real del formulario vive en loadViewIntoUpdateForm(); este es el puente del <select> oculto.
     function cvLoadSelectedView(){
-      const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo");
+      const sel=document.getElementById("updateViewSelect");
       if(!sel||!sel.value){ return; }
-      const view=(templateViewsCache||[]).find((v)=>String(v.id)===String(sel.value));
-      if(!view){ if(info) info.textContent=""; return; }
-      const name=readableViewName(view);
-      const parsed=parseViewName(name);
-      if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
-      else { setScopeValues("tplUpd",{}); if(info) info.textContent="No se pudo descomponer automáticamente el título existente."; }
-      const author=cvViewAuthor(view); if(author){ const a=tplEl("tplUpd","author"); if(a){ a.value=normalizeTplValue("author",author); tplAutosizeInput(a); updateScopePreview("tplUpd"); } }
-      tplAutosizeAll(document.getElementById("tplFoldUpdate"));
-      const people=cvViewPeople(view); cvSetShareTokens("cvUpd",parseTemplateList(people));
-      const tags=cvViewTags(view); cvSetLabelTokens("cvUpd",parseTemplateList(tags));
-      log("Actualizar vista: leída '"+name+"' — compartidos:"+(people?people.split(",").length:0)+", etiquetas:"+(tags?tags.split(",").length:0)+".");
+      loadViewIntoUpdateForm(sel.value,{fromSelect:true});
     }
     async function cvPreloadCurrentView(){
-      const sel=document.getElementById("updateViewSelect"); const info=document.getElementById("tplUpdateParseInfo");
-      if(!sel||!API||!API.view) return;
-      let current=null; try{ current=await getCurrentViewSpecWithRetry(); }catch(e){ recordError("cvPreloadCurrentView",e); }
-      if(!current){ if(info) info.textContent="No hay vista guardada activa cargada."; return; }
-      let id=current.id||current.viewId||""; const name=readableViewName(current);
-      if(!id && name){ const m=(templateViewsCache||[]).find((v)=>readableViewName(v)===name); if(m) id=m.id; }
-      if(id && (templateViewsCache||[]).some((v)=>String(v.id)===String(id))){ sel.value=id; cvLoadSelectedView(); }
-      else if(info) info.textContent=name?("La vista actual no aparece en la lista: "+name):"La vista actual no aparece en la lista.";
+      if(!API||!API.view) return;
+      await loadViewsCache(false);
+      await cvSyncActiveViewIntoForm();
     }
     async function cvCreateView(){
       if(!API||!API.view||!API.view.createView){ log("La API no permite crear vistas en este entorno."); setProgress("No disponible."); return; }
@@ -3795,13 +3874,24 @@
       }
       ensureCreateDate();
       cvRenderShareTokens("cvNew"); cvRenderShareTokens("cvUpd"); cvRenderLabelTokens("cvNew"); cvRenderLabelTokens("cvUpd");
-      await populateUpdateViews();
-      await cvPreloadCurrentView();
-      try{ await loadActiveViewSearchViews(); }catch(e){ recordError("loadActiveViewSearchViews",e); }
+      await loadViewsCache(true);          // lista de vistas fresca y fiable (getViews); rellena buscador + contador
+      await populateUpdateViews();         // reconstruye el <select> oculto desde la caché
+      await cvSyncActiveViewIntoForm();    // lee la vista activa de forma resiliente y carga "Actualizar vista"
       await autoExpandViewFlow();
     }
+    // v9.1.1: al abrir "Actualizar vista" (tplFoldUpdate). Usa la selección del buscador o la vista activa.
+    async function cvOnOpenUpdateFold(){
+      await loadViewsCache(false);
+      await populateUpdateViews();
+      if(activeViewSearchSelectedId && viewsCache.some((v)=>v.id===activeViewSearchSelectedId)){
+        await loadViewIntoUpdateForm(activeViewSearchSelectedId,{fromFold:true});
+      } else {
+        await cvSyncActiveViewIntoForm();
+        if(!activeViewSearchSelectedId){ const info=document.getElementById("tplUpdateParseInfo"); if(info && !String(info.textContent||"").trim()) info.textContent="Selecciona una vista en el buscador superior."; }
+      }
+    }
     // ===================== Buscador global de "Vista activa" (Configurar vista, v9.0.5) =====================
-    let activeViewSearchViews=[], activeViewSearchSelectedId="", activeViewSearchSortAlpha=false;
+    let activeViewSearchViews=[], activeViewSearchSelectedId="", activeViewSearchPendingId="", activeViewSearchLastConfirmedId="", activeViewSearchSortAlpha=false;
     function avSearchOrderedViews(){ const list=activeViewSearchViews.slice(); if(activeViewSearchSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es")); return list; }
     function avSetInputToSelected(){ const inp=document.getElementById("activeViewSearchInput"); if(!inp) return; const v=activeViewSearchViews.find((x)=>x.id===activeViewSearchSelectedId); inp.value=v?v.name:""; }
     function avHideSuggest(){ const box=document.getElementById("activeViewSearchSuggest"); if(box) box.style.display="none"; }
@@ -3818,54 +3908,120 @@
       });
       box.style.display="block";
     }
-    async function loadActiveViewSearchViews(){
-      if(!API||!API.view||!API.view.getViews) return;
-      let views=[]; try{ views=await API.view.getViews()||[]; }catch(e){ recordError("activeViewSearch.getViews",e); }
-      activeViewSearchViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre"})).filter((v)=>v.id);
-      let cur=null; try{ cur=await getCurrentViewSpecWithRetry(); }catch(e){}
-      let curId=cur?String(cur.id||cur.viewId||""):""; const curName=cur?(readableViewName(cur)||""):"";
-      if(!curId && curName){ const m=activeViewSearchViews.find((v)=>v.name===curName); if(m) curId=m.id; }
-      if(curId && activeViewSearchViews.some((v)=>v.id===curId)) activeViewSearchSelectedId=curId;
-      else if(activeViewSearchSelectedId && !activeViewSearchViews.some((v)=>v.id===activeViewSearchSelectedId)) activeViewSearchSelectedId="";
-      avSetInputToSelected(); avUpdateCount();
+    // Carga (sin mezclar estados) los datos de una vista en el formulario "Actualizar vista".
+    async function loadViewIntoUpdateForm(viewId, options={}){
+      const id=String(viewId||"");
+      const info=document.getElementById("tplUpdateParseInfo");
+      if(!id){ if(info) info.textContent="Selecciona una vista en el buscador superior."; return {ok:false,reason:"viewId vacío"}; }
+      const seq=++viewFormLoadSeq;
+      if(info) info.textContent="Cargando vista…";
+      const det=await getViewDetailResilient(id);
+      if(seq!==viewFormLoadSeq) return {ok:false,reason:"carga sustituida"};   // hay una carga más reciente: no mezclar
+      if(!det.ok){ if(info) info.textContent="No se pudo cargar la vista seleccionada."; log("Actualizar vista: no se pudo cargar ("+(det.reason||"")+")."); return {ok:false,reason:det.reason}; }
+      const view=det.view; const name=(det.normalized&&det.normalized.name)||readableViewName(view)||"Vista sin nombre";
+      const sel=document.getElementById("updateViewSelect");
+      if(sel){
+        if(![...sel.options].some((o)=>String(o.value)===id)){ try{ await populateUpdateViews(); }catch(e){} }
+        if(seq!==viewFormLoadSeq) return {ok:false,reason:"carga sustituida"};
+        if([...sel.options].some((o)=>String(o.value)===id)) sel.value=id;
+      }
+      const parsed=parseViewName(name);
+      if(parsed){ setScopeValues("tplUpd",parsed); if(info) info.textContent="Vista leída correctamente."; }
+      else { setScopeValues("tplUpd",{}); if(info) info.textContent="No se pudo descomponer automáticamente el título existente."; }
+      const author=cvViewAuthor(view); if(author){ const a=tplEl("tplUpd","author"); if(a){ a.value=normalizeTplValue("author",author); tplAutosizeInput(a); } }
+      tplAutosizeAll(document.getElementById("tplFoldUpdate"));
+      const people=cvViewPeople(view); cvSetShareTokens("cvUpd",parseTemplateList(people));
+      const tags=cvViewTags(view); cvSetLabelTokens("cvUpd",parseTemplateList(tags));
+      updateScopePreview("tplUpd");
+      log("Actualizar vista cargada: "+name);
+      return {ok:true,name};
+    }
+    // Activa una vista candidata y la verifica SIN bloquear: si no se confirma, no revierte el input.
+    async function setActiveViewCandidate(viewId, options={}){
+      const id=String(viewId||""); if(!id) return {ok:false,sent:false,reason:"viewId vacío"};
+      const cached=viewsCache.find((v)=>v.id===id);
+      const name=cached?cached.name:id;
+      const act=await activateViewById(id);
+      if(!act.ok) return {ok:false,sent:false,reason:act.reason||"sin método de activación",name};
+      log("Cambio de vista enviado con "+act.method+": "+name);
+      const ver=await verifyActiveView(cached?{id,name}:{id});
+      if(ver.confirmed) return {ok:true,sent:true,confirmed:true,method:act.method,by:ver.by,attempts:ver.attempts,name};
+      return {ok:true,sent:true,confirmed:false,method:act.method,reason:ver.reason,attempts:ver.attempts,name};
+    }
+    // Lee la vista activa de forma resiliente y la refleja en buscador + "Actualizar vista" (sin romper si falla).
+    async function cvSyncActiveViewIntoForm(){
+      const info=document.getElementById("tplUpdateParseInfo");
+      const r=await getActiveViewResilient();
+      if(!r.ok){ if(info && !String(info.textContent||"").trim()) info.textContent="Selecciona una vista en el buscador superior."; return; }
+      const norm=r.normalized;
+      let match=viewsCache.find((v)=>v.id===norm.id);
+      if(!match && norm.name) match=viewsCache.find((v)=>v.name===norm.name);
+      if(match){
+        activeViewSearchSelectedId=match.id; activeViewSearchLastConfirmedId=match.id; activeViewSearchPendingId="";
+        avSetInputToSelected();
+        await loadViewIntoUpdateForm(match.id,{fromActive:true});
+      } else {
+        const inp=document.getElementById("activeViewSearchInput"); if(inp) inp.value=norm.name||"";
+        if(info) info.textContent=norm.name?("La vista activa no aparece en la lista: "+norm.name):"Selecciona una vista en el buscador superior.";
+      }
     }
     function avUpdateCount(){ const el=document.getElementById("activeViewSearchCount"); if(el) el.textContent=activeViewSearchViews.length?(activeViewSearchViews.length+" vista(s)"):""; }
-    // "Ir a vista": activa la vista cuyo nombre coincide exactamente con el texto, o el único filtrado, o la seleccionada.
-    function avGoToTypedView(){
-      const inp=document.getElementById("activeViewSearchInput"); const term=String(inp?inp.value:"").trim();
-      let target=null;
-      if(term){ target=activeViewSearchViews.find((v)=>v.name.toLowerCase()===term.toLowerCase()); if(!target){ const f=activeViewSearchViews.filter((v)=>v.name.toLowerCase().includes(term.toLowerCase())); if(f.length===1) target=f[0]; } }
-      if(!target && activeViewSearchSelectedId) target=activeViewSearchViews.find((v)=>v.id===activeViewSearchSelectedId);
-      if(!target){ log("Vista activa: escribe o elige una vista de la lista antes de pulsar 'Ir a vista'."); return; }
-      avSelectView(target);
+    // Resuelve el texto escrito a una vista real (coincidencia exacta o único filtrado); null si no hay match claro.
+    function avResolveTyped(text){
+      const term=String(text||"").trim(); if(!term) return null;
+      let t=activeViewSearchViews.find((v)=>v.name.toLowerCase()===term.toLowerCase());
+      if(!t){ const f=activeViewSearchViews.filter((v)=>v.name.toLowerCase().includes(term.toLowerCase())); if(f.length===1) t=f[0]; }
+      return t||null;
     }
+    // "Ir a vista": requiere una vista REALMENTE seleccionada y la activa de forma no bloqueante.
+    async function avGoToView(){
+      const target=activeViewSearchSelectedId?activeViewSearchViews.find((v)=>v.id===activeViewSearchSelectedId):null;
+      if(!target){ log("Vista activa: selecciona una vista de la lista."); setProgress("Selecciona una vista de la lista."); return; }
+      setProgress("Activando vista: "+target.name+"…");
+      const res=await setActiveViewCandidate(target.id,{userAction:true});
+      if(!res.sent){
+        if(/no expone|no disponible|no permite/i.test(res.reason||"")){ log("La API no expone un método disponible para activar vistas."); setProgress("La API no permite activar vistas aquí."); }
+        else { log("Vista activa: no se pudo enviar el cambio ("+(res.reason||"")+")."); setProgress("No se pudo activar la vista."); }
+        return;
+      }
+      if(res.confirmed){ activeViewSearchLastConfirmedId=target.id; log("Vista activa confirmada por "+(res.by||"id")+": "+target.name); setProgress("Vista activa: "+target.name); }
+      else { log("Cambio de vista enviado, pero la API no lo confirmó todavía."); setProgress("Cambio enviado; la API no lo confirmó aún."); }
+    }
+    // Seleccionar una sugerencia NO activa la vista: solo fija selección y carga "Actualizar vista".
     async function avSelectView(v){
       avHideSuggest();
       if(!v||!v.id) return;
-      const method=await activateViewById(v.id);
-      if(!method){ log("Vista activa: la API no permite cambiar de vista en este entorno."); avSetInputToSelected(); return; }
-      const vr=await verifyActiveView(v);
-      if(!vr.ok){ log("Vista activa: no se pudo confirmar el cambio a '"+v.name+"' ("+(vr.reason||"")+")."); avSetInputToSelected(); return; }
-      activeViewSearchSelectedId=v.id;
+      activeViewSearchSelectedId=v.id; activeViewSearchPendingId="";
       const inp=document.getElementById("activeViewSearchInput"); if(inp) inp.value=v.name;
-      // Sincroniza la sección "Actualizar vista" (selector interno oculto) para que parsee la vista elegida.
-      const sel=document.getElementById("updateViewSelect");
-      if(sel){ if(![...sel.options].some((o)=>String(o.value)===String(v.id))){ try{ await populateUpdateViews(); }catch(e){} } if([...sel.options].some((o)=>String(o.value)===String(v.id))){ sel.value=v.id; try{ cvLoadSelectedView(); }catch(e){} } }
-      log("Vista activa: cambiada a '"+v.name+"' (verificada por "+vr.by+").");
+      log("Vista seleccionada: "+v.name);
+      await loadViewIntoUpdateForm(v.id,{fromSelect:true});
     }
     function avToggleSort(){ activeViewSearchSortAlpha=!activeViewSearchSortAlpha; const b=document.getElementById("activeViewSearchSort"); if(b) b.classList.toggle("funnel-active",activeViewSearchSortAlpha); const inp=document.getElementById("activeViewSearchInput"); renderActiveViewSuggest(inp?inp.value:""); }
+    // Refresca la lista de vistas conservando la selección si la vista sigue existiendo.
+    async function avOnRefresh(){
+      const prevId=activeViewSearchSelectedId;
+      await loadViewsCache(true);
+      try{ await populateUpdateViews(); }catch(e){}
+      if(prevId && viewsCache.some((v)=>v.id===prevId)) activeViewSearchSelectedId=prevId;
+      else if(prevId){ activeViewSearchSelectedId=""; log("Vista activa: la vista seleccionada ya no existe; selección limpiada."); }
+      avSetInputToSelected();
+      const inp=document.getElementById("activeViewSearchInput");
+      renderActiveViewSuggest(inp?inp.value:"");
+    }
     function initActiveViewSearch(){
       const inp=document.getElementById("activeViewSearchInput");
       if(inp){
-        inp.addEventListener("focus",()=>renderActiveViewSuggest(inp.value));
-        inp.addEventListener("input",()=>renderActiveViewSuggest(inp.value));
-        inp.addEventListener("blur",()=>{ setTimeout(avHideSuggest,150); });
-        inp.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape"){ avHideSuggest(); avSetInputToSelected(); inp.blur(); } });
+        inp.addEventListener("focus",()=>renderActiveViewSuggest(inp.value));   // muestra la lista completa con el input vacío
+        inp.addEventListener("input",()=>{ activeViewSearchPendingId=""; renderActiveViewSuggest(inp.value); });
+        inp.addEventListener("blur",()=>{ setTimeout(()=>{ avHideSuggest(); avSetInputToSelected(); },150); });
+        inp.addEventListener("keydown",(ev)=>{
+          if(ev.key==="Escape"){ avHideSuggest(); avSetInputToSelected(); inp.blur(); }
+          else if(ev.key==="Enter"){ ev.preventDefault(); const t=avResolveTyped(inp.value); if(t){ avSelectView(t); } else { log("Vista activa: no hay ninguna vista que coincida con el texto."); } }
+        });
       }
-      const go=document.getElementById("activeViewSearchGo"); if(go) go.addEventListener("click",(ev)=>{ ev.preventDefault(); avGoToTypedView(); });
-      if(inp) inp.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); avGoToTypedView(); } });
+      const go=document.getElementById("activeViewSearchGo"); if(go) go.addEventListener("click",(ev)=>{ ev.preventDefault(); avGoToView(); });
       const sort=document.getElementById("activeViewSearchSort"); if(sort) sort.addEventListener("click",(ev)=>{ ev.preventDefault(); avToggleSort(); });
-      const refresh=document.getElementById("activeViewSearchRefresh"); if(refresh) refresh.addEventListener("click",async (ev)=>{ ev.preventDefault(); await loadActiveViewSearchViews(); renderActiveViewSuggest(""); log("Vista activa: lista actualizada ("+activeViewSearchViews.length+" vistas)."); });
+      const refresh=document.getElementById("activeViewSearchRefresh"); if(refresh) refresh.addEventListener("click",async (ev)=>{ ev.preventDefault(); await avOnRefresh(); });
     }
     function wireTemplateScope(scope){
       for(const f of TEMPLATE_FIELDS){
@@ -3886,10 +4042,10 @@
       cvWireLabelAutocomplete("cvNew"); cvWireLabelAutocomplete("cvUpd");
       const createBtn=document.getElementById("cvCreateBtn"); if(createBtn) createBtn.onclick=()=>cvCreateView();
       const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",cvLoadSelectedView);
-      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await populateUpdateViews(); await cvPreloadCurrentView(); };
+      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await loadViewsCache(true); await populateUpdateViews(); await cvPreloadCurrentView(); };
       const updBtn=document.getElementById("cvUpdateBtn"); if(updBtn) updBtn.onclick=()=>cvUpdateView();
       const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open) await cvOnOpenConfigureView(); });
-      const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open){ await populateUpdateViews(); await cvPreloadCurrentView(); } });
+      const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open) await cvOnOpenUpdateFold(); });
       initActiveViewSearch();
     }
     // v8.10.0: al abrir Configurar vista, expande Actualizar si hay vista guardada activa; si no, Crear vista nueva.

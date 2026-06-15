@@ -3,6 +3,16 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.2.0 - 2026-06-15
+
+- Publicación de test de la Fase 1: núcleo de vistas, selector global de Vista activa y carga robusta de Actualizar vista.
+- Añadida una capa central defensiva para gestión de vistas, con caché normalizada, lectura resiliente de vista activa, detalle de vista y diagnóstico interno.
+- Mejorado el buscador global de Vista activa: lista completa al hacer foco, filtrado por texto, selección real de vista y sincronización con Actualizar vista.
+- Mejorado el botón Ir a vista para enviar el cambio de vista sin revertir falsamente el input cuando la API no confirma de forma inmediata.
+- Mejorada la carga de Actualizar vista para evitar mezcla de datos entre vistas y reducir la necesidad de refrescar varias veces.
+- Añadidas protecciones para evitar errores sobre respuestas incompletas de la API de vistas, especialmente usos de `.find`, `.map`, `.filter` o `.sort` sobre valores no válidos.
+- Adaptación mínima de funciones dependientes de activación/verificación de vistas para mantener compatibilidad.
+
 ## [v9.1.0] — 2026-06-15
 
 Versión de corrección dirigida a partir del análisis del **Bug Report v9.0.5** (19 incidencias reales). Consolida además el trabajo interno v9.0.1 → v9.0.5 (hotfix ocultos, sliders Mostrar parámetros, Fase 2 exportación masiva, atajo Selección cercanos, buscador global de vistas, rediseño de botones Bug Report/Debug). Verificación estática (`node --check` del JS inline, `git diff --check`, sin IDs duplicados); **no probado en el visor de Trimble**.
