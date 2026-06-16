@@ -278,10 +278,8 @@
     .bug-shot-btn:active { transform:scale(.92); }
     .bug-shot-btn svg { width:16px; height:16px; display:block; }
     .bug-textarea { width:100%; margin-top:8px; min-height:70px; max-height:260px; resize:vertical; overflow:auto; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; font-family:inherit; box-sizing:border-box; }
-    /* v9.5.0 (Bug Report v2.1): severidad, etiqueta y marca de campo obligatorio inválido. */
-    .bug-sev-row { margin-top:8px; }
+    /* v9.5.1: etiqueta de campo y marca de campo obligatorio inválido (Título/Descripción/Zona). */
     .bug-field-label { font-size:11px; color:#6b7280; white-space:nowrap; }
-    .bug-select { padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; box-sizing:border-box; background:#fff; }
     .bug-invalid { border-color:#dc2626 !important; box-shadow:0 0 0 1px #dc2626 inset !important; }
     .bug-thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
     .bug-thumb { position:relative; width:64px; height:48px; border:1px solid #d1d5db; border-radius:6px; overflow:hidden; background:#f3f4f6; }
@@ -1143,7 +1141,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.5.0";
+    const SCRIPT_VERSION = "v9.5.1";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1505,6 +1503,7 @@
     let viewsCacheBuiltAt=0;
     let viewsCacheLoading=null;      // promesa en curso: evita llamadas concurrentes a getViews()
     let lastActiveViewDiagnostics=null;
+    let lastViewActivationDiagnostics=null; // v9.5.1: diagnóstico del último intento de ABRIR/cambiar de vista
     let viewFormLoadSeq=0;           // token anti-mezcla al cargar el formulario de "Actualizar vista"
     function normalizeViewEntry(v){
       if(!v||typeof v!=="object") return null;
@@ -1791,31 +1790,79 @@
     function showExportCancel(on){ const el=document.getElementById("exportCancel"); if(el) el.style.display=on?"inline-block":"none"; }
     function showImportCancel(on){ const el=document.getElementById("importCancel"); if(el) el.style.display=on?"inline-block":"none"; }
     // Cambio de vista activa: la API no documenta un único método; se prueban los candidatos conocidos.
+    // v9.5.1: activación de vista REAL. NO se da por buena solo porque un método no lance error: tras cada intento
+    // (método × payload) se verifica con verifyActiveView. Se prioriza el payload string (compatible con consumidores
+    // que llaman API.view[método](idString), p.ej. exportación masiva). Devuelve objeto con diagnóstico, conservando
+    // .ok/.method para compatibilidad con consumidores previos.
     async function activateViewById(viewId){
       const id=String(viewId||"");
-      if(!id) return {ok:false,reason:"viewId vacío"};
-      if(!(API&&API.view)) return {ok:false,reason:"API.view no disponible"};
-      const cands=["setView","selectView","setCurrentView","activateView","applyView","goToView"];
-      let lastErr=null;
-      for(const m of cands){ const fn=API.view[m]; if(typeof fn==="function"){ try{ await fn.call(API.view,id); return {ok:true,method:m}; }catch(e){ lastErr=e; recordError("activateView."+m,e); } } }
-      return {ok:false,reason:lastErr?("error al activar vista: "+(lastErr.message||lastErr)):"la API no expone un método para activar vistas"};
+      const diag={ viewId:id, viewName:"", startedAt:new Date().toISOString(), finishedAt:null, methodsTried:[], payloadsTried:[], errors:{}, results:[], confirmedMethod:"", confirmedPayload:"", reason:"" };
+      const finish=(extra)=>{ diag.finishedAt=new Date().toISOString(); lastViewActivationDiagnostics=diag; return Object.assign({viewId:id,diagnostics:diag},extra); };
+      if(!id) return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:"viewId vacío"});
+      if(!(API&&API.view)) return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:"API.view no disponible"});
+      // 1) Detalle/caché de la vista para nombre y payloads ricos.
+      let det=null; try{ det=await getViewDetailResilient(id); }catch(e){ recordError("activateViewById.detail",e); }
+      const norm=(det&&det.ok&&det.normalized)||viewsCache.find((v)=>v.id===id)||null;
+      const viewName=(norm&&norm.name)||""; diag.viewName=viewName;
+      const want=norm?{id:norm.id,name:norm.name}:{id};
+      // 2) Payloads candidatos (string primero por compatibilidad), describiéndolos sin volcar objetos enormes.
+      const payloads=[]; const seen=new Set();
+      const pushPayload=(label,val)=>{ if(val===undefined||val===null||seen.has(label)) return; seen.add(label); payloads.push({label,val}); };
+      pushPayload("id:string", id);
+      pushPayload("{id}", {id});
+      if(det&&det.view&&typeof det.view==="object") pushPayload("view.raw", det.view);
+      if(norm&&norm.raw&&typeof norm.raw==="object" && norm.raw!==(det&&det.view)) pushPayload("normalized.raw", norm.raw);
+      // 3) Métodos disponibles de API.view.
+      const methodNames=["setView","selectView","setCurrentView","activateView","applyView","goToView"];
+      const available=methodNames.filter((m)=>typeof API.view[m]==="function");
+      diag.methodsTried=available.slice();
+      if(!available.length){ diag.reason="la API no expone un método para activar vistas"; return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:diag.reason,name:viewName}); }
+      let sentAny=false, lastError=null, lastMethod="";
+      // Payload por fuera, método por dentro: agota TODOS los métodos con el id-string antes de pasar a otro payload.
+      for(const p of payloads){
+        for(const m of available){
+          lastMethod=m; const tag=m+"("+p.label+")";
+          try{
+            await API.view[m].call(API.view, p.val);
+            sentAny=true; diag.payloadsTried.push(tag);
+            await sleep(180);
+            const ver=await verifyActiveView(want,{delays:[200,500]});
+            diag.results.push({method:m,payload:p.label,confirmed:!!ver.confirmed,by:ver.by||"",attempts:ver.attempts});
+            if(ver.confirmed){
+              diag.confirmedMethod=m; diag.confirmedPayload=p.label; diag.reason="confirmada";
+              return finish({ok:true,sent:true,confirmed:true,method:m,payloadLabel:p.label,by:ver.by,attempts:ver.attempts,name:viewName,verification:ver});
+            }
+          }catch(e){
+            lastError=e; diag.errors[tag]=String(e&&e.message||e); recordError("activateView."+m,e);
+          }
+        }
+      }
+      diag.reason = sentAny ? "enviado pero la API no confirmó el cambio de vista (ningún método/payload)" : (lastError?("error en todos los métodos: "+(lastError.message||lastError)):"la API no aceptó ningún método de activación");
+      return finish({ ok:false, sent:sentAny, confirmed:false, attempts:diag.results.length, method:diag.confirmedMethod||"", lastMethod, lastError:(lastError&&(lastError.message||String(lastError)))||null, name:viewName, reason:diag.reason });
     }
-    // Confirma que la vista activa coincide realmente con la pedida (por id, o por nombre con tolerancia).
+    // Confirma que la vista activa coincide realmente con la pedida (por id, por nombre o por description, con tolerancia).
     // v9.1.1: reintenta con espera corta usando la capa resiliente; nunca lanza; NO es bloqueo del input.
-    async function verifyActiveView(view){
+    // v9.5.1: acepta options.delays para verificación rápida durante la búsqueda; devuelve estructura diagnóstica
+    // (ok/matchedBy/expected/active) manteniendo confirmed/by/attempts/currentView por compatibilidad.
+    async function verifyActiveView(view, options={}){
       const want=view||{};
       const nm=(s)=>String(s||"").toLowerCase().replace(/\s+/g," ").trim();
-      const delays=[250,500,800]; let attemptsTotal=0, cur=null;
+      const wantId=String(want.id||(want.normalized&&want.normalized.id)||(want.raw&&(want.raw.id||want.raw.viewId))||"");
+      const wantName=String(want.name||(want.normalized&&want.normalized.name)||readableViewName(want.raw||want)||"");
+      const delays=Array.isArray(options.delays)&&options.delays.length?options.delays:[250,500,800];
+      let attemptsTotal=0, cur=null;
+      const result=(matchedBy)=>({ confirmed:true, ok:true, by:matchedBy, matchedBy, expected:{id:wantId,name:wantName}, active:{id:cur.id,name:cur.name}, attempts:attemptsTotal, currentView:cur, reason:"confirmada por "+matchedBy });
       for(let i=0;i<delays.length;i++){
         await sleep(delays[i]);
         const r=await getActiveViewResilient({silent:true,attempts:2});
         attemptsTotal+=r.attempts||0;
-        if(!r.ok){ if(i===delays.length-1) return {confirmed:false,reason:r.reason||"no se pudo leer la vista activa",attempts:attemptsTotal,currentView:null}; continue; }
+        if(!r.ok){ if(i===delays.length-1) return {confirmed:false,ok:false,by:"",matchedBy:"",expected:{id:wantId,name:wantName},active:null,attempts:attemptsTotal,currentView:null,reason:r.reason||"no se pudo leer la vista activa"}; continue; }
         cur=r.normalized;
-        if(want.id && cur.id && String(cur.id)===String(want.id)) return {confirmed:true,by:"id",attempts:attemptsTotal,currentView:cur};
-        if(want.name && cur.name && nm(cur.name)===nm(want.name)) return {confirmed:true,by:"name",attempts:attemptsTotal,currentView:cur};
+        if(wantId && cur.id && String(cur.id)===wantId) return result("id");
+        if(wantName && cur.name && nm(cur.name)===nm(wantName)) return result("name");
+        if(wantName && cur.description && nm(cur.description)===nm(wantName)) return result("description");
       }
-      return {confirmed:false,reason:"la vista activa no coincide (id/nombre)",attempts:attemptsTotal,currentView:cur};
+      return { confirmed:false, ok:false, by:"", matchedBy:"", expected:{id:wantId,name:wantName}, active:cur?{id:cur.id,name:cur.name}:null, attempts:attemptsTotal, currentView:cur, reason:"la vista activa no coincide (id/nombre/description)" };
     }
     // ===================== EXPORTACIÓN MASIVA: SELECCIÓN DE VISTAS (v8.10.7) =====================
     let massViews=[]; const massViewsSelected=new Set(); let massViewsSortAlpha=false; let massExportCancel=false;
@@ -4180,15 +4227,22 @@
     }
     // Activa una vista candidata y la verifica SIN bloquear: si no se confirma, no revierte el input.
     async function setActiveViewCandidate(viewId, options={}){
-      const id=String(viewId||""); if(!id) return {ok:false,sent:false,reason:"viewId vacío"};
+      const id=String(viewId||""); if(!id) return {ok:false,sent:false,confirmed:false,reason:"viewId vacío"};
       const cached=viewsCache.find((v)=>v.id===id);
       const name=cached?cached.name:id;
+      // v9.5.1: activateViewById ya prueba métodos/payloads y VERIFICA internamente; usamos su confirmación directa.
       const act=await activateViewById(id);
-      if(!act.ok) return {ok:false,sent:false,reason:act.reason||"sin método de activación",name};
-      log("Cambio de vista enviado con "+act.method+": "+name);
-      const ver=await verifyActiveView(cached?{id,name}:{id});
-      if(ver.confirmed) return {ok:true,sent:true,confirmed:true,method:act.method,by:ver.by,attempts:ver.attempts,name};
-      return {ok:true,sent:true,confirmed:false,method:act.method,reason:ver.reason,attempts:ver.attempts,name};
+      if(act.confirmed){
+        log("Vista activa confirmada con "+act.method+" ("+(act.by||"id")+"): "+name);
+        try{ await loadViewIntoUpdateForm(id,{fromActive:true}); }catch(e){ recordError("setActiveViewCandidate.loadForm",e); }
+        return {ok:true,sent:true,confirmed:true,method:act.method,by:act.by,attempts:act.attempts,name};
+      }
+      if(act.sent){
+        log("Cambio de vista enviado con "+(act.lastMethod||"?")+" pero la API no lo confirmó: "+name);
+        return {ok:true,sent:true,confirmed:false,method:act.lastMethod||act.method||"",reason:act.reason||"No se pudo confirmar la apertura de la vista desde la API de Trimble.",attempts:act.attempts,name};
+      }
+      log("No se pudo activar la vista (ningún método disponible/aceptado): "+name);
+      return {ok:false,sent:false,confirmed:false,reason:act.reason||"sin método de activación",name};
     }
     // Lee la vista activa de forma resiliente y la refleja en buscador + "Actualizar vista" (sin romper si falla).
     async function cvSyncActiveViewIntoForm(){
@@ -5324,6 +5378,10 @@
         counterText:String((document.getElementById("massViewsCount")||{}).textContent||""),
         lastMassExport:(typeof lastMassExport!=="undefined"?lastMassExport:undefined)
       }));
+      addTool("viewActivation",()=>({
+        lastActivation:(typeof lastViewActivationDiagnostics!=="undefined"?lastViewActivationDiagnostics:undefined),
+        lastActiveViewRead:(typeof lastActiveViewDiagnostics!=="undefined"?lastActiveViewDiagnostics:undefined)
+      }));
       addTool("viewTemplate",()=>({
         create:(typeof getScopeValues==="function"?getScopeValues("tplNew"):undefined),
         update:(typeof getScopeValues==="function"?getScopeValues("tplUpd"):undefined),
@@ -5508,9 +5566,10 @@
         lines.push("\n--- Título ---\n"+(r.title||"(vacío)"));
         lines.push("\n--- Descripción ---\n"+(r.description||"(vacío)"));
         lines.push("\n--- Zona/Herramienta afectada ---\n"+(r.affectedArea||"(no indicada)"));
-        lines.push("\n--- Severidad ---\n"+(r.severity||"(no indicada)"));
-        lines.push("\n--- Comportamiento esperado ---\n"+(r.expected||"(vacío)"));
-        lines.push("\n--- Comportamiento obtenido ---\n"+(r.actual||"(vacío)"));
+        // v9.5.1: severidad/esperado/obtenido solo se imprimen si hay contenido real (reportes antiguos).
+        if(String(r.severity||"").trim()) lines.push("\n--- Severidad ---\n"+r.severity);
+        if(String(r.expected||"").trim()) lines.push("\n--- Comportamiento esperado ---\n"+r.expected);
+        if(String(r.actual||"").trim()) lines.push("\n--- Comportamiento obtenido ---\n"+r.actual);
         const mentions=r.uiMentions||[];
         if(mentions.length){
           lines.push("\n--- Menciones UI ("+mentions.length+") ---");
@@ -5967,9 +6026,6 @@
         +'<button type="button" id="bugShotBtn" class="bug-shot-btn" title="Captura asistida" aria-label="Captura asistida"><svg viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button>'
         +'</div>'
         +'<div id="bugDesc" class="bug-desc-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción" data-ph="Descripción (usa el cursor azul para insertar menciones de la interfaz)"></div>'
-        +'<div class="bug-modal-row bug-sev-row"><label class="bug-field-label" for="bugSeverity">Severidad</label><select id="bugSeverity" class="bug-select"><option value="">Selecciona…</option><option value="Baja">Baja</option><option value="Media">Media</option><option value="Alta">Alta</option><option value="Crítica">Crítica</option></select></div>'
-        +'<textarea id="bugExpected" class="bug-textarea" placeholder="Comportamiento esperado"></textarea>'
-        +'<textarea id="bugActual" class="bug-textarea" placeholder="Comportamiento obtenido"></textarea>'
         +'<input type="hidden" id="bugArea">'
         +'<div id="bugThumbs" class="bug-thumbs"></div>'
         +'<div id="bugNote" class="bug-note" style="display:none;"></div>'
@@ -6014,7 +6070,7 @@
       const areaPick=document.getElementById("bugAreaPick"); if(areaPick) areaPick.onclick=()=>bugUiPickStart();
       // v9.5.0: limpia la marca de campo obligatorio inválido al corregirlo (sin alert).
       const clearInvalid=(el)=>{ if(el) el.classList.remove("bug-invalid"); };
-      ["bugTitle","bugSeverity","bugExpected","bugActual"].forEach((id)=>{ const el=document.getElementById(id); if(el){ el.addEventListener("input",()=>clearInvalid(el)); el.addEventListener("change",()=>clearInvalid(el)); } });
+      const titleInv=document.getElementById("bugTitle"); if(titleInv){ titleInv.addEventListener("input",()=>clearInvalid(titleInv)); titleInv.addEventListener("change",()=>clearInvalid(titleInv)); }
       const edInv=document.getElementById("bugDesc"); if(edInv) edInv.addEventListener("input",()=>{ clearInvalid(edInv); const ap=document.getElementById("bugAreaPick"); if(ap) clearInvalid(ap); });
       wireBugModalDrag();
       // Editor de descripción enriquecido: guardado de selección y borrado de chips por su cruz.
@@ -6120,10 +6176,8 @@
     }
     // v9.5.0: reinicia los campos de Bug Report v2.1 (severidad/esperado/obtenido) y limpia marcas de inválido.
     function bugResetExtraFields(){
-      const sev=document.getElementById("bugSeverity"); if(sev) sev.value="";
-      const exp=document.getElementById("bugExpected"); if(exp) exp.value="";
-      const act=document.getElementById("bugActual"); if(act) act.value="";
-      ["bugTitle","bugDesc","bugSeverity","bugExpected","bugActual","bugAreaPick"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.classList.remove("bug-invalid"); });
+      // v9.5.1: severidad/esperado/obtenido retirados; solo se limpian marcas de inválido de los campos vigentes.
+      ["bugTitle","bugDesc","bugAreaPick"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.classList.remove("bug-invalid"); });
     }
     // v9.5.0: resumen de anotaciones por captura (a partir de los metadatos ya presentes en cada screenshot).
     function bugCollectAnnotations(shots){
@@ -6225,24 +6279,19 @@
       const descriptionHtml=String((document.getElementById("bugDesc")||{}).innerHTML||"");
       const uiMentions=bugGetUiMentions();
       const affectedArea=uiMentions.map((m)=>m&&m.label).filter(Boolean).join(", ")||String((document.getElementById("bugArea")||{}).value||"").trim();
-      const severity=String((document.getElementById("bugSeverity")||{}).value||"").trim();
-      const expected=String((document.getElementById("bugExpected")||{}).value||"").trim();
-      const actual=String((document.getElementById("bugActual")||{}).value||"").trim();
-      // v9.5.0: validación mínima obligatoria (sin alert). Marca campos inválidos con clase local del Bug Report.
+      // v9.5.1: validación mínima obligatoria (Título, Descripción, Zona/herramienta). Severidad/esperado/obtenido retirados.
       const invalid=[];
       const mark=(id,bad,label)=>{ const el=document.getElementById(id); if(el) el.classList.toggle("bug-invalid",!!bad); if(bad) invalid.push(label); };
       mark("bugTitle",!title,"Título");
       mark("bugDesc",!descriptionText,"Descripción");
       mark("bugAreaPick",!affectedArea,"Zona/herramienta afectada");
-      mark("bugSeverity",!severity,"Severidad");
-      mark("bugExpected",!expected,"Comportamiento esperado");
-      mark("bugActual",!actual,"Comportamiento obtenido");
       if(invalid.length){ showBugNote("Completa los campos obligatorios: "+invalid.join(", ")+"."); return; }
-      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!descriptionText,severity,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!bugLastUiTarget});
+      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!descriptionText,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!bugLastUiTarget});
       let snapshot={}; try{ snapshot=await collectDebugSnapshot(); }catch(e){ recordError("bugReport.snapshot",e); snapshot={snapshotError:String(e&&e.message||e)}; }
       const nowIso=new Date().toISOString();
+      // severity/expected/actual se conservan vacíos por compatibilidad defensiva con reportes antiguos (no se piden ni validan).
       const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:nowIso, createdAt:nowIso, version:SCRIPT_VERSION, scriptVersion:SCRIPT_VERSION,
-        title, description:descriptionText, descriptionText, descriptionHtml, affectedArea, severity, expected, actual,
+        title, description:descriptionText, descriptionText, descriptionHtml, affectedArea, severity:"", expected:"", actual:"",
         uiMentions, uiTarget:bugLastUiTarget||undefined, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), annotations:bugCollectAnnotations(bugDraftShots),
         knownErrors:KNOWN_ERRORS, reportedBugsSummary:getReportedBugsSummarySafe(), reportedBugsFull:getReportedBugsSnapshot(), snapshot };
       let reports=loadBugReports(); reports.push(report);
