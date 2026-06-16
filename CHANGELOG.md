@@ -3,6 +3,12 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.5.4 - 2026-06-16
+
+- Mejoras de UI en varias herramientas, manteniendo el estilo compacto y los controles existentes.
+- Mejorada la lectura y apertura de vistas para hacer más robusto el flujo de cambio/carga de vista en Trimble Connect.
+- Ajustes en Selección cercanos, incluyendo cambios de comportamiento sobre la selección actual.
+
 ## v9.5.0 - 2026-06-16
 
 - Fase 8 (Bug Report v2.1): validación obligatoria de Título, Descripción, Zona/herramienta afectada, Severidad, Comportamiento esperado y Comportamiento obtenido antes de guardar el reporte (marcas rojas locales, sin alert).
