@@ -278,6 +278,11 @@
     .bug-shot-btn:active { transform:scale(.92); }
     .bug-shot-btn svg { width:16px; height:16px; display:block; }
     .bug-textarea { width:100%; margin-top:8px; min-height:70px; max-height:260px; resize:vertical; overflow:auto; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; font-family:inherit; box-sizing:border-box; }
+    /* v9.5.0 (Bug Report v2.1): severidad, etiqueta y marca de campo obligatorio inválido. */
+    .bug-sev-row { margin-top:8px; }
+    .bug-field-label { font-size:11px; color:#6b7280; white-space:nowrap; }
+    .bug-select { padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; box-sizing:border-box; background:#fff; }
+    .bug-invalid { border-color:#dc2626 !important; box-shadow:0 0 0 1px #dc2626 inset !important; }
     .bug-thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
     .bug-thumb { position:relative; width:64px; height:48px; border:1px solid #d1d5db; border-radius:6px; overflow:hidden; background:#f3f4f6; }
     .bug-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -719,6 +724,10 @@
             <button type="button" id="nearShortcutEdit" class="near-shortcut-btn" title="Personalizar atajo (pulsa y graba una combinación)" aria-label="Personalizar atajo"><span id="nearShortcutCombo">Alt+C</span></button>
             <button type="button" id="nearShortcutReset" class="near-shortcut-reset" title="Restaurar atajo por defecto (Alt+C)" aria-label="Restaurar atajo por defecto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg></button>
           </div>
+          <div class="toggle-line" id="nearShortcutOnlyLine" data-tip="Solo ejecuta Selección cercanos al pulsar el atajo; no procesa la selección automáticamente.">
+            <label class="switch"><input type="checkbox" id="nearShortcutOnlyToggle"><span class="slider"></span></label>
+            <label class="txt" for="nearShortcutOnlyToggle">Solo con atajo</label>
+          </div>
           <div class="toggle-line" id="nearCustomLine" data-tip="Ajusta la sensibilidad del criterio por defecto.">
             <label class="switch"><input type="checkbox" id="nearCustom"><span class="slider"></span></label>
             <label class="txt" for="nearCustom">Configurar sensibilidad</label>
@@ -1082,6 +1091,7 @@
           </div>
           <div id="massViewsPanel" style="display:none;">
             <div class="hint" id="extendedExportHint" style="margin:4px 0 6px;">Marca las vistas a exportar. Se genera un único ZIP con un CSV por vista seleccionada.</div>
+            <div class="toggle-line" id="massStrictLine" data-tip="Permisivo: omite vistas con fallo y continúa. Estricto: si una vista falla, aborta toda la exportación masiva."><label class="switch"><input type="checkbox" id="massStrictMode"><span class="slider"></span></label><label class="txt" for="massStrictMode">Modo estricto</label></div>
             <div class="mass-views-head">
               <button type="button" id="massViewsToggleAll" class="link-btn">Seleccionar todas</button>
               <div class="mass-views-actions">
@@ -1133,7 +1143,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.4.3";
+    const SCRIPT_VERSION = "v9.5.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1827,9 +1837,15 @@
       const sortBtn=document.getElementById("massViewsSort"); if(sortBtn) sortBtn.classList.toggle("funnel-active",massViewsSortAlpha);
       updateMassViewsCount(); updateMassToggleAllLabel();
     }
-    async function populateMassViews(){
+    // v9.5.0: modo estricto/permisivo de la exportación masiva, persistido en localStorage.
+    const MASS_STRICT_KEY="deo.massExport.strict.v1";
+    function loadMassStrict(){ try{ const cb=document.getElementById("massStrictMode"); if(cb){ const v=localStorage.getItem(MASS_STRICT_KEY); cb.checked=(v==="1"||v==="true"); } }catch(e){} }
+    function saveMassStrict(){ try{ const cb=document.getElementById("massStrictMode"); if(cb) localStorage.setItem(MASS_STRICT_KEY,cb.checked?"1":"0"); }catch(e){ recordError("massStrict.save",e); } }
+    function massStrictEnabled(){ const cb=document.getElementById("massStrictMode"); return !!(cb&&cb.checked); }
+    // v9.5.0: reutiliza la capa resiliente de vistas (loadViewsCache) en lugar de un getViews() propio.
+    async function populateMassViews(force){
       const cont=document.getElementById("massViewsList"); if(cont) cont.textContent="Leyendo vistas del proyecto...";
-      let views=[]; try{ views=await API.view.getViews()||[]; }catch(e){ recordError("populateMassViews",e); }
+      let views=[]; try{ await loadViewsCache(!!force); views=viewsCache.slice(); }catch(e){ recordError("populateMassViews",e); }
       const prevSel=new Set(massViewsSelected);
       massViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre"})).filter((v)=>v.id);
       const validIds=new Set(massViews.map((v)=>v.id));
@@ -1872,8 +1888,9 @@
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
       const chosen=massViews.filter((v)=>massViewsSelected.has(v.id));
       if(!chosen.length){ log("Exportación masiva: no hay vistas seleccionadas. No se inicia la exportación."); setProgress("Selecciona al menos una vista para exportar."); return; }
+      const strict=massStrictEnabled();
       const _swAct=await activateViewById(chosen[0].id); const switcher=_swAct.ok?_swAct.method:null;
-      lastMassExport={ selectedCount:chosen.length, totalViews:massViews.length, lastMethod:(switcher||"no disponible"), lastStatus:"EN CURSO", lastFailedView:"", zipFilesCount:0, ts:new Date().toISOString() };
+      lastMassExport={ selectedCount:chosen.length, totalViews:massViews.length, mode:(strict?"estricto":"permisivo"), lastMethod:(switcher||"no disponible"), lastStatus:"EN CURSO", lastFailedView:"", zipFilesCount:0, ts:new Date().toISOString() };
       // Sin método de cambio de vista no se puede garantizar la vista de cada CSV: abortar para no exportar datos engañosos.
       if(!switcher){
         log("Exportación masiva ABORTADA: la API no expone método para cambiar de vista; no se generan CSV para evitar exportar la misma vista repetida.");
@@ -1884,7 +1901,7 @@
       showExportCancel(true);
       const enc=new TextEncoder(); const eta=makeEta(chosen.length); let lastEta=NaN;
       const zipFiles=[]; const usedNames=new Set();
-      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Vistas seleccionadas: "+chosen.length,"Método cambio de vista: "+switcher,""];
+      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Modo: "+(strict?"estricto (aborta al primer fallo)":"permisivo (omite vistas con fallo)"),"Vistas seleccionadas: "+chosen.length,"Método cambio de vista: "+switcher,""];
       let okViews=0, emptyViews=0, failViews=0, totalRows=0, aborted=false;
       try{
         for(let i=0;i<chosen.length;i++){
@@ -1892,11 +1909,11 @@
           const v=chosen[i];
           setProgress("Exportando "+(i+1)+"/"+chosen.length+" vistas · ETA "+fmtClock(lastEta));
           let switched=false; try{ await API.view[switcher](v.id); switched=true; }catch(e){ recordError("exportMassive.switch",e); }
-          if(!switched){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al activar la vista (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          if(!switched){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al activar la vista (omitida)."); if(strict){ aborted=true; report.push("  Modo estricto: exportación abortada tras el fallo."); break; } const t=eta.tick(); lastEta=t.etaSec; continue; }
           const vr=await verifyActiveView(v);
-          if(!vr.confirmed){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO de verificación de vista ("+(vr.reason||"")+"); no se exporta para evitar datos de vista equivocada."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          if(!vr.confirmed){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO de verificación de vista ("+(vr.reason||"")+"); no se exporta para evitar datos de vista equivocada."); if(strict){ aborted=true; report.push("  Modo estricto: exportación abortada tras el fallo."); break; } const t=eta.tick(); lastEta=t.etaSec; continue; }
           let entries=null; try{ entries=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("exportMassive.colors",e); }
-          if(!Array.isArray(entries)){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al leer colores (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
+          if(!Array.isArray(entries)){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al leer colores (omitida)."); if(strict){ aborted=true; report.push("  Modo estricto: exportación abortada tras el fallo."); break; } const t=eta.tick(); lastEta=t.etaSec; continue; }
           if(!entries.length){ emptyViews++; report.push("- "+v.name+": sin objetos coloreados (omitida)."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           const revisionBase=computeRevisionBase(v.name);
           const rows=await buildRows(entries,revisionBase,v.name,wantGuid);
@@ -2169,7 +2186,7 @@
 
         // Conjunto de vecinos DESEADO, recalculado desde cero solo a partir de las semillas reales.
         const desiredMap=new Map();
-        if(document.getElementById("nearToggle").checked && genuineSeeds.length>0){
+        if(nearAutoActive() && genuineSeeds.length>0){
           const factor=getNearCalibrationFactor();
           const seedsByModel=new Map(); for(const o of genuineSeeds) addToMapSet(seedsByModel,o.modelId,[o.runtimeId]);
           for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set],factor); addToMapSet(desiredMap,modelId,neighbors); }
@@ -2191,12 +2208,17 @@
         for(const k of desiredKeys){ if(!currentKeySet.has(k) && !removeKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(addMap,m,[id]); } }
         // A quitar: lo que la herramienta había añadido y ya no se desea, más lo seleccionado que cae en exclusión/filtro.
         const removeFromSel=new Map();
-        for(const k of toolAddedKeys){ if(!desiredKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
+        // v9.5.0: en modo "solo con atajo" NO se retiran los vecinos añadidos por el atajo (no auto-reconciliar).
+        if(nearAutoActive()){
+          for(const k of toolAddedKeys){ if(!desiredKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
+        }
         for(const k of removeKeys){ if(currentKeySet.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
 
         const addCount=mapSetCount(addMap), removeCount=mapSetCount(removeFromSel);
-        // toolAddedKeys final = vecinos deseados que no han sido excluidos.
-        const newToolKeys=new Set([...desiredKeys].filter((k)=>!removeKeys.has(k)));
+        // toolAddedKeys final: en automático = vecinos deseados no excluidos; en solo-atajo = se conservan los ya añadidos (sin los excluidos).
+        const newToolKeys=nearAutoActive()
+          ? new Set([...desiredKeys].filter((k)=>!removeKeys.has(k)))
+          : new Set([...toolAddedKeys].filter((k)=>!removeKeys.has(k)));
         if(addCount===0 && removeCount===0){ toolAddedKeys=newToolKeys; return; }
         suppressSelectionUntil=Date.now()+650;
         if(addCount>0){ try{ await API.viewer.setSelection(mapSetToSelector(addMap),"add"); }catch(e){ recordError("setSelection.add",e); } }
@@ -2220,6 +2242,48 @@
       suppressSelectionUntil=Date.now()+650;
       try{ await API.viewer.setSelection(mapSetToSelector(map),"remove"); }catch(e){ recordError("removeToolAdded",e); }
       toolAddedKeys=new Set();
+    }
+    // v9.5.0: ¿la herramienta procesa la selección automáticamente? (ON y NO en modo "solo con atajo").
+    function nearAutoActive(){ const t=document.getElementById("nearToggle"); return !!(t&&t.checked&&!nearSoloShortcut); }
+    // v9.5.0: ejecución PUNTUAL de Selección cercanos sobre la selección actual (modo solo atajo / bajo demanda).
+    // Solo AÑADE vecinos una vez; respeta selBusy y fija suppressSelectionUntil para no reentrar en processSelection.
+    async function runNearSelectionOnceFromCurrentSelection(source){
+      const src=source||"manual";
+      if(!API||!API.viewer){ log("Selección cercanos ("+src+"): visor no disponible."); return; }
+      if(selBusy){ selectionDirty=true; log("Selección cercanos ("+src+"): ocupado; se reintentará."); return; }
+      selBusy=true;
+      try{
+        const current=await safeGetSelection();
+        if(!current.length){ log("Selección cercanos ("+src+"): no hay selección actual."); return; }
+        const currentKeySet=new Set(current.map(keyOf));
+        const genuineSeeds=current.filter((o)=>!toolAddedKeys.has(keyOf(o)));
+        if(!genuineSeeds.length){ log("Selección cercanos ("+src+"): la selección ya es la añadida por la herramienta."); return; }
+        const factor=getNearCalibrationFactor();
+        const desiredMap=new Map();
+        const seedsByModel=new Map(); for(const o of genuineSeeds) addToMapSet(seedsByModel,o.modelId,[o.runtimeId]);
+        for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set],factor); addToMapSet(desiredMap,modelId,neighbors); }
+        for(const o of genuineSeeds){ if(desiredMap.has(o.modelId)) desiredMap.get(o.modelId).delete(o.runtimeId); }
+        const desiredKeys=new Set(); for(const [m,s] of desiredMap.entries()) for(const id of s) desiredKeys.add(m+":"+id);
+        // Exclusión / filtros sobre la selección proyectada (semillas + vecinos deseados).
+        const projected=genuineSeeds.slice();
+        for(const [m,s] of desiredMap.entries()) for(const id of s) projected.push({modelId:m,runtimeId:id});
+        const removeMap=new Map();
+        for(const [m,s] of (await computeExcludedRemovals(projected)).entries()) addToMapSet(removeMap,m,[...s]);
+        for(const [m,s] of (await computeIncludeRemovals(projected)).entries()) addToMapSet(removeMap,m,[...s]);
+        const removeKeys=new Set(); for(const [m,s] of removeMap.entries()) for(const id of s) removeKeys.add(m+":"+id);
+        const addMap=new Map();
+        for(const k of desiredKeys){ if(!currentKeySet.has(k) && !removeKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(addMap,m,[id]); } }
+        const addCount=mapSetCount(addMap);
+        const newToolKeys=new Set(toolAddedKeys);
+        for(const k of desiredKeys){ if(!removeKeys.has(k)) newToolKeys.add(k); }
+        if(addCount>0){
+          suppressSelectionUntil=Date.now()+700; // evita que el listener automático reentre por nuestra propia adición
+          try{ await API.viewer.setSelection(mapSetToSelector(addMap),"add"); }catch(e){ recordError("nearOnce.add",e); }
+        }
+        toolAddedKeys=newToolKeys;
+        log("Selección cercanos ("+src+"): "+addCount+" vecino(s) añadido(s) sobre "+genuineSeeds.length+" semilla(s).");
+      }catch(e){ recordError("runNearSelectionOnceFromCurrentSelection",e); log("Selección cercanos ("+src+"): "+(e&&e.message?e.message:e)); }
+      finally{ selBusy=false; if(selectionDirty){ selectionDirty=false; if(nearAutoActive()) scheduleProcessSelection(); } }
     }
 
     // ===================== OCULTOS (#3) =====================
@@ -4250,7 +4314,7 @@
     }
 
     // ===================== COLORES / VALORES UI =====================
-    function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; updateNearPercentLabel(); }
+    function syncNearUiState(){ const nearOn=document.getElementById("nearToggle").checked; const nearCustom=document.getElementById("nearCustom"); const active=nearOn&&nearCustom.checked; const config=document.getElementById("nearConfig"); const customLine=document.getElementById("nearCustomLine"); const hint=document.getElementById("nearDefaultHint"); nearCustom.disabled=!nearOn; if(customLine) customLine.classList.toggle("is-disabled",!nearOn); const pct=document.getElementById("nearPercent"); if(pct) pct.disabled=!active; if(config) config.classList.toggle("disabled-area",!active); if(hint) hint.style.display=nearCustom.checked?"none":"block"; const onlyTg=document.getElementById("nearShortcutOnlyToggle"); if(onlyTg) onlyTg.disabled=!nearOn; const onlyLine=document.getElementById("nearShortcutOnlyLine"); if(onlyLine) onlyLine.classList.toggle("is-disabled",!nearOn); updateNearPercentLabel(); }
     // Flujo común de activar/desactivar Selección cercanos (UI y atajo de teclado comparten esta vía).
     async function setNearEnabled(on, source){
       const t=document.getElementById("nearToggle"); if(!t) return;
@@ -4265,10 +4329,11 @@
     // ===================== Atajo de teclado para "Selección cercanos" =====================
     const NEAR_SC_EN_KEY="deo.nearShortcut.enabled.v1";
     const NEAR_SC_COMBO_KEY="deo.nearShortcut.combo.v1";
-    let nearShortcutEnabled=true, nearShortcutCombo="Alt+C", nearShortcutRecording=false;
+    const NEAR_SC_ONLY_KEY="deo.nearShortcut.onlyMode.v1"; // v9.5.0: modo "solo con atajo"
+    let nearShortcutEnabled=true, nearShortcutCombo="Alt+C", nearShortcutRecording=false, nearSoloShortcut=false;
     let lastNearShortcutDiag=null; // diagnóstico del último evento de atajo (para Bug Report/debug)
-    function loadNearShortcut(){ try{ const e=localStorage.getItem(NEAR_SC_EN_KEY); if(e!==null) nearShortcutEnabled=(e==="1"||e==="true"); const c=localStorage.getItem(NEAR_SC_COMBO_KEY); if(c) nearShortcutCombo=c; }catch(e){} }
-    function saveNearShortcut(){ try{ localStorage.setItem(NEAR_SC_EN_KEY,nearShortcutEnabled?"1":"0"); localStorage.setItem(NEAR_SC_COMBO_KEY,nearShortcutCombo); }catch(e){ recordError("nearShortcut.save",e); } }
+    function loadNearShortcut(){ try{ const e=localStorage.getItem(NEAR_SC_EN_KEY); if(e!==null) nearShortcutEnabled=(e==="1"||e==="true"); const c=localStorage.getItem(NEAR_SC_COMBO_KEY); if(c) nearShortcutCombo=c; const o=localStorage.getItem(NEAR_SC_ONLY_KEY); if(o!==null) nearSoloShortcut=(o==="1"||o==="true"); }catch(e){} }
+    function saveNearShortcut(){ try{ localStorage.setItem(NEAR_SC_EN_KEY,nearShortcutEnabled?"1":"0"); localStorage.setItem(NEAR_SC_COMBO_KEY,nearShortcutCombo); localStorage.setItem(NEAR_SC_ONLY_KEY,nearSoloShortcut?"1":"0"); }catch(e){ recordError("nearShortcut.save",e); } }
     // Normaliza un evento de teclado a {mods:[...], key, str}. Devuelve null si solo hay modificador o tecla Meta (sistema).
     function nearComboFromEvent(ev){
       if(ev.metaKey) return null;
@@ -4320,9 +4385,16 @@
       if(!matched) return;
       ev.preventDefault();
       const t=document.getElementById("nearToggle"); if(!t) return;
-      setNearEnabled(!t.checked,"shortcut");
-      if(lastNearShortcutDiag) lastNearShortcutDiag.executed=true;
-      log("Selección cercanos: atajo "+nearShortcutCombo+" -> "+(t.checked?"ON":"OFF")+".");
+      if(t.checked && nearSoloShortcut){
+        // Modo solo atajo: ejecución puntual sobre la selección actual; NO alterna ON/OFF.
+        runNearSelectionOnceFromCurrentSelection("shortcut");
+        if(lastNearShortcutDiag) lastNearShortcutDiag.executed=true;
+        log("Selección cercanos: atajo "+nearShortcutCombo+" -> ejecución puntual (solo atajo).");
+      } else {
+        setNearEnabled(!t.checked,"shortcut");
+        if(lastNearShortcutDiag) lastNearShortcutDiag.executed=true;
+        log("Selección cercanos: atajo "+nearShortcutCombo+" -> "+(t.checked?"ON":"OFF")+".");
+      }
     }
     function nearShortcutBlockReason(){
       const ae=document.activeElement;
@@ -4357,6 +4429,8 @@
       if(scToggle){ scToggle.checked=nearShortcutEnabled; scToggle.addEventListener("change",()=>{ nearShortcutEnabled=scToggle.checked; saveNearShortcut(); log("Selección cercanos: atajo de teclado "+(nearShortcutEnabled?("activado ("+nearShortcutCombo+")"):"desactivado")+"."); }); }
       const edit=document.getElementById("nearShortcutEdit"); if(edit) edit.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); startNearShortcutRecording(); });
       const reset=document.getElementById("nearShortcutReset"); if(reset) reset.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(nearShortcutRecording) return; nearShortcutCombo="Alt+C"; saveNearShortcut(); nearShortcutLabel(); log("Selección cercanos: atajo restaurado a Alt+C."); });
+      const onlyTg=document.getElementById("nearShortcutOnlyToggle");
+      if(onlyTg){ onlyTg.checked=nearSoloShortcut; onlyTg.addEventListener("change",()=>{ nearSoloShortcut=onlyTg.checked; saveNearShortcut(); syncNearUiState(); log("Selección cercanos: "+(nearSoloShortcut?"modo SOLO ATAJO (no procesa selección automáticamente)":"modo automático")+"."); if(!nearSoloShortcut) scheduleProcessSelection(); }); }
       nearShortcutLabel();
       // Escucha en window y document en fase capture (algunos entornos/iframe entregan a uno u otro); dedup por ev.__nearHandled.
       document.addEventListener("keydown",onNearShortcutKeydown,true);
@@ -4984,8 +5058,10 @@
       // Exportación masiva (#14/#15): panel con lista de vistas seleccionables + contador + cancelar inline.
       const ext=document.getElementById("extendedExport"); const massPanel=document.getElementById("massViewsPanel"); const massCount=document.getElementById("massViewsCount");
       let massLoaded=false;
-      if(ext) ext.addEventListener("change",async ()=>{ const on=ext.checked; if(massPanel) massPanel.style.display=on?"block":"none"; if(massCount) massCount.style.display=on?"inline-block":"none"; if(on&&!massLoaded){ massLoaded=true; await populateMassViews(); } });
-      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=()=>{ massLoaded=true; populateMassViews(); };
+      loadMassStrict();
+      const massStrict=document.getElementById("massStrictMode"); if(massStrict) massStrict.addEventListener("change",()=>{ saveMassStrict(); log("Exportación masiva: modo "+(massStrict.checked?"ESTRICTO (aborta al primer fallo)":"permisivo (omite vistas con fallo)")+"."); });
+      if(ext) ext.addEventListener("change",async ()=>{ const on=ext.checked; if(massPanel) massPanel.style.display=on?"block":"none"; if(massCount) massCount.style.display=on?"inline-block":"none"; if(on&&!massLoaded){ massLoaded=true; await populateMassViews(false); } });
+      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=()=>{ massLoaded=true; populateMassViews(true); };
       const massSort=document.getElementById("massViewsSort"); if(massSort) massSort.onclick=()=>{ massViewsSortAlpha=!massViewsSortAlpha; renderMassViewsList(); };
       const massToggleAll=document.getElementById("massViewsToggleAll"); if(massToggleAll) massToggleAll.onclick=()=>{ if(massViews.length&&massViewsSelected.size===massViews.length){ massViewsSelected.clear(); } else { massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); } renderMassViewsList(); };
       const exportCancelBtn=document.getElementById("exportCancel"); if(exportCancelBtn) exportCancelBtn.onclick=()=>{ massExportCancel=true; setProgress("Cancelando exportación..."); };
@@ -5120,6 +5196,45 @@
     const BUG_MAX_REPORTS=20, BUG_MAX_SHOTS=5, BUG_IMG_MAX_SIDE=1280, BUG_JPEG_Q=0.75;
     let bugDraftShots=[];
     let bugTimerInterval=null;
+    // v9.5.0 (Bug Report v2.1): errores conocidos del proyecto, adjuntos a cada reporte para dar contexto al lector.
+    const KNOWN_ERRORS=[
+      "getCurrentView TypeError: Cannot read properties of undefined (reading 'find')",
+      "Vista activa no lista a tiempo: requiere lectura resiliente con reintentos",
+      "Exportación masiva puede fallar por verificación estricta de la vista activa",
+      "Etiquetas 3D pueden no renderizarse en vistas guardadas",
+      "Colores Tekla/IFC nativos pueden no detectarse (la API solo expone color de presentación)",
+      "Selección ocultos pudo ocultar el modelo en versiones anteriores",
+      "Mostrar parámetros tuvo problemas de sliders/orden/redibujado",
+      "Selección cercanos requiere separación entre modo automático y modo solo atajo",
+      "Excluir IFC no excluye todos los elementos anidados"
+    ];
+    // v9.5.0: lectura/resumen PUROS de Reported bugs (no mutan estado de la UI), para el reporte y el ZIP.
+    function getReportedBugsSnapshot(){ try{ return buildReportedBugsStateFromStorage({logErrors:false}); }catch(e){ recordError("getReportedBugsSnapshot",e); return []; } }
+    function getReportedBugsSummarySafe(){
+      const snap=getReportedBugsSnapshot();
+      return { total:snap.length,
+        active:snap.filter((b)=>b.status==="active").length,
+        unresolved:snap.filter((b)=>b.status==="unresolved").length,
+        resolved:snap.filter((b)=>b.status==="resolved").length,
+        withComments:snap.filter((b)=>String(b.comment||"").trim()).length };
+    }
+    function formatReportedBugsTxt(){
+      const snap=getReportedBugsSnapshot(); const s=getReportedBugsSummarySafe();
+      const L=[]; L.push("DEO Reported bugs"); L.push("Versión: "+SCRIPT_VERSION); L.push("Generado: "+new Date().toISOString());
+      L.push("Total: "+s.total+" · Activos: "+s.active+" · No resueltos: "+s.unresolved+" · Resueltos: "+s.resolved+" · Con comentario: "+s.withComments);
+      const groups=[["unresolved","NO RESUELTOS"],["active","ACTIVOS"],["resolved","RESUELTOS"]];
+      for(const [st,label] of groups){
+        const items=snap.filter((b)=>b.status===st);
+        L.push(""); L.push("===== "+label+" ("+items.length+") =====");
+        for(const b of items){
+          L.push("- "+b.id+" — "+(b.title||"")+(b.phase?(" ["+b.phase+"]"):""));
+          if(b.issue) L.push("    Incidencia: "+b.issue);
+          if(b.detectedVersion||b.fixedVersion) L.push("    Detectada: "+(b.detectedVersion||"?")+" · Corregida: "+(b.fixedVersion||"—"));
+          if(String(b.comment||"").trim()) L.push("    Comentario: "+b.comment);
+        }
+      }
+      return L.join("\n");
+    }
 
     function loadBugReports(){ try{ const raw=localStorage.getItem(BUG_REPORTS_KEY); if(!raw) return []; const arr=JSON.parse(raw); return Array.isArray(arr)?arr:[]; }catch(e){ recordError("bugReport.load",e); return []; } }
     function saveBugReports(arr){ try{ localStorage.setItem(BUG_REPORTS_KEY,JSON.stringify(arr)); return true; }catch(e){ recordError("bugReport.save",e); return false; } }
@@ -5295,7 +5410,7 @@
         return { version:SCRIPT_VERSION, documentLastModified:document.lastModified, url:location.href, userAgent:navigator.userAgent, htmlLength:html.length, htmlHash:simpleHash32(html) };
       });
       // Diagnóstico del atajo de Selección cercanos (Trabajo 3).
-      grab("nearShortcut",()=>({ enabled:(typeof nearShortcutEnabled!=="undefined"?nearShortcutEnabled:undefined), combo:(typeof nearShortcutCombo!=="undefined"?nearShortcutCombo:undefined), lastDiag:(typeof lastNearShortcutDiag!=="undefined"?lastNearShortcutDiag:undefined) }));
+      grab("nearShortcut",()=>({ enabled:(typeof nearShortcutEnabled!=="undefined"?nearShortcutEnabled:undefined), combo:(typeof nearShortcutCombo!=="undefined"?nearShortcutCombo:undefined), soloMode:(typeof nearSoloShortcut!=="undefined"?nearSoloShortcut:undefined), lastDiag:(typeof lastNearShortcutDiag!=="undefined"?lastNearShortcutDiag:undefined) }));
       // Color Probe dirigido (Trabajo 6): solo en el snapshot (no ralentiza la app de forma continua).
       try{ snap.colorProbe=await runColorProbe(); }catch(e){ snap.colorProbe={error:String(e&&e.message||e)}; }
 
@@ -5393,6 +5508,9 @@
         lines.push("\n--- Título ---\n"+(r.title||"(vacío)"));
         lines.push("\n--- Descripción ---\n"+(r.description||"(vacío)"));
         lines.push("\n--- Zona/Herramienta afectada ---\n"+(r.affectedArea||"(no indicada)"));
+        lines.push("\n--- Severidad ---\n"+(r.severity||"(no indicada)"));
+        lines.push("\n--- Comportamiento esperado ---\n"+(r.expected||"(vacío)"));
+        lines.push("\n--- Comportamiento obtenido ---\n"+(r.actual||"(vacío)"));
         const mentions=r.uiMentions||[];
         if(mentions.length){
           lines.push("\n--- Menciones UI ("+mentions.length+") ---");
@@ -5849,6 +5967,9 @@
         +'<button type="button" id="bugShotBtn" class="bug-shot-btn" title="Captura asistida" aria-label="Captura asistida"><svg viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button>'
         +'</div>'
         +'<div id="bugDesc" class="bug-desc-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción" data-ph="Descripción (usa el cursor azul para insertar menciones de la interfaz)"></div>'
+        +'<div class="bug-modal-row bug-sev-row"><label class="bug-field-label" for="bugSeverity">Severidad</label><select id="bugSeverity" class="bug-select"><option value="">Selecciona…</option><option value="Baja">Baja</option><option value="Media">Media</option><option value="Alta">Alta</option><option value="Crítica">Crítica</option></select></div>'
+        +'<textarea id="bugExpected" class="bug-textarea" placeholder="Comportamiento esperado"></textarea>'
+        +'<textarea id="bugActual" class="bug-textarea" placeholder="Comportamiento obtenido"></textarea>'
         +'<input type="hidden" id="bugArea">'
         +'<div id="bugThumbs" class="bug-thumbs"></div>'
         +'<div id="bugNote" class="bug-note" style="display:none;"></div>'
@@ -5891,6 +6012,10 @@
       document.getElementById("bugSend").onclick=()=>onBugSend();
       const clearBtn=document.getElementById("bugClearBtn"); if(clearBtn) clearBtn.onclick=()=>onBugClearReports();
       const areaPick=document.getElementById("bugAreaPick"); if(areaPick) areaPick.onclick=()=>bugUiPickStart();
+      // v9.5.0: limpia la marca de campo obligatorio inválido al corregirlo (sin alert).
+      const clearInvalid=(el)=>{ if(el) el.classList.remove("bug-invalid"); };
+      ["bugTitle","bugSeverity","bugExpected","bugActual"].forEach((id)=>{ const el=document.getElementById(id); if(el){ el.addEventListener("input",()=>clearInvalid(el)); el.addEventListener("change",()=>clearInvalid(el)); } });
+      const edInv=document.getElementById("bugDesc"); if(edInv) edInv.addEventListener("input",()=>{ clearInvalid(edInv); const ap=document.getElementById("bugAreaPick"); if(ap) clearInvalid(ap); });
       wireBugModalDrag();
       // Editor de descripción enriquecido: guardado de selección y borrado de chips por su cruz.
       const ed=document.getElementById("bugDesc");
@@ -5940,6 +6065,7 @@
       const t=document.getElementById("bugTitle"); if(t) t.value="";
       const d=document.getElementById("bugDesc"); if(d) d.innerHTML="";
       const a=document.getElementById("bugArea"); if(a) a.value="";
+      bugResetExtraFields();
       bugUiMentionsMap={}; bugDescSavedRange=null;
       bugLastUiTarget=null; if(typeof bugUiPicking!=="undefined" && bugUiPicking) bugUiPickEnd();
       clearInterval(bugTimerInterval); bugTimerInterval=null;
@@ -5988,8 +6114,20 @@
       const t=document.getElementById("bugTitle"); if(t) t.value="";
       const d=document.getElementById("bugDesc"); if(d) d.innerHTML="";
       const a=document.getElementById("bugArea"); if(a) a.value="";
+      bugResetExtraFields();
       bugUiMentionsMap={}; bugDescSavedRange=null; bugLastUiTarget=null;
       hideBugNote();
+    }
+    // v9.5.0: reinicia los campos de Bug Report v2.1 (severidad/esperado/obtenido) y limpia marcas de inválido.
+    function bugResetExtraFields(){
+      const sev=document.getElementById("bugSeverity"); if(sev) sev.value="";
+      const exp=document.getElementById("bugExpected"); if(exp) exp.value="";
+      const act=document.getElementById("bugActual"); if(act) act.value="";
+      ["bugTitle","bugDesc","bugSeverity","bugExpected","bugActual","bugAreaPick"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.classList.remove("bug-invalid"); });
+    }
+    // v9.5.0: resumen de anotaciones por captura (a partir de los metadatos ya presentes en cada screenshot).
+    function bugCollectAnnotations(shots){
+      return (shots||[]).filter((s)=>s&&s.annotated).map((s)=>({ id:s.id, ts:s.annotationTs||null, count:s.annotationCount||0, types:s.annotationTypes||[] }));
     }
 
     // ===== Captura asistida: temporizador + pegado manual (sin captura automática de pantalla) =====
@@ -6083,13 +6221,30 @@
 
     async function onBugSend(){
       const title=String((document.getElementById("bugTitle")||{}).value||"").trim();
-      const desc=bugSerializeDescription();
+      const descriptionText=bugSerializeDescription();   // texto real aunque haya chips/menciones
+      const descriptionHtml=String((document.getElementById("bugDesc")||{}).innerHTML||"");
       const uiMentions=bugGetUiMentions();
       const affectedArea=uiMentions.map((m)=>m&&m.label).filter(Boolean).join(", ")||String((document.getElementById("bugArea")||{}).value||"").trim();
-      if(!title&&!desc){ showBugNote("Escribe al menos un título o una descripción."); return; }
-      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!desc,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!bugLastUiTarget});
+      const severity=String((document.getElementById("bugSeverity")||{}).value||"").trim();
+      const expected=String((document.getElementById("bugExpected")||{}).value||"").trim();
+      const actual=String((document.getElementById("bugActual")||{}).value||"").trim();
+      // v9.5.0: validación mínima obligatoria (sin alert). Marca campos inválidos con clase local del Bug Report.
+      const invalid=[];
+      const mark=(id,bad,label)=>{ const el=document.getElementById(id); if(el) el.classList.toggle("bug-invalid",!!bad); if(bad) invalid.push(label); };
+      mark("bugTitle",!title,"Título");
+      mark("bugDesc",!descriptionText,"Descripción");
+      mark("bugAreaPick",!affectedArea,"Zona/herramienta afectada");
+      mark("bugSeverity",!severity,"Severidad");
+      mark("bugExpected",!expected,"Comportamiento esperado");
+      mark("bugActual",!actual,"Comportamiento obtenido");
+      if(invalid.length){ showBugNote("Completa los campos obligatorios: "+invalid.join(", ")+"."); return; }
+      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!descriptionText,severity,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!bugLastUiTarget});
       let snapshot={}; try{ snapshot=await collectDebugSnapshot(); }catch(e){ recordError("bugReport.snapshot",e); snapshot={snapshotError:String(e&&e.message||e)}; }
-      const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:new Date().toISOString(), version:SCRIPT_VERSION, title, description:desc, affectedArea, uiMentions, uiTarget:bugLastUiTarget||undefined, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), snapshot };
+      const nowIso=new Date().toISOString();
+      const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:nowIso, createdAt:nowIso, version:SCRIPT_VERSION, scriptVersion:SCRIPT_VERSION,
+        title, description:descriptionText, descriptionText, descriptionHtml, affectedArea, severity, expected, actual,
+        uiMentions, uiTarget:bugLastUiTarget||undefined, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), annotations:bugCollectAnnotations(bugDraftShots),
+        knownErrors:KNOWN_ERRORS, reportedBugsSummary:getReportedBugsSummarySafe(), reportedBugsFull:getReportedBugsSnapshot(), snapshot };
       let reports=loadBugReports(); reports.push(report);
       if(reports.length>BUG_MAX_REPORTS) reports=reports.slice(reports.length-BUG_MAX_REPORTS);
       let ok=saveBugReports(reports);
@@ -6140,10 +6295,25 @@
               annotated:!!(s&&s.annotated), annotationTs:s&&s.annotationTs, annotationCount:s&&s.annotationCount, annotationTypes:s&&s.annotationTypes,
               originalW:s&&s.originalW, originalH:s&&s.originalH, originalMime:s&&s.originalMime, originalSize:s&&s.originalSize };
           });
-          return { id:r.id, ts:r.ts, version:r.version, title:r.title, description:r.description, affectedArea:r.affectedArea, uiMentions:r.uiMentions||[], uiTarget:r.uiTarget, images, snapshot:r.snapshot };
+          return { id:r.id, ts:r.ts, createdAt:r.createdAt, version:r.version, scriptVersion:r.scriptVersion, title:r.title,
+            description:r.description, descriptionText:r.descriptionText, descriptionHtml:r.descriptionHtml,
+            affectedArea:r.affectedArea, severity:r.severity, expected:r.expected, actual:r.actual,
+            uiMentions:r.uiMentions||[], uiTarget:r.uiTarget, annotations:r.annotations||[],
+            knownErrors:r.knownErrors, reportedBugsSummary:r.reportedBugsSummary, images, snapshot:r.snapshot };
         });
         files.push({name:"bug_reports.txt",data:enc.encode("﻿"+buildBugReportsText(reports))});
         files.push({name:"bug_reports.json",data:enc.encode(safeJsonDeep(jsonReports,2))});
+        // v9.5.0: lista completa de Reported bugs (seguimiento) + resumen, junto al TXT/imágenes existentes.
+        let rbSnapshot=[], rbSummary={total:0,active:0,unresolved:0,resolved:0,withComments:0};
+        try{ rbSnapshot=getReportedBugsSnapshot(); rbSummary=getReportedBugsSummarySafe(); }catch(e){ recordError("bugReport.reportedBugs",e); }
+        files.push({name:"reported_bugs.json",data:enc.encode(safeJsonDeep(rbSnapshot,2))});
+        files.push({name:"reported_bugs.txt",data:enc.encode("﻿"+formatReportedBugsTxt())});
+        files.push({name:"reported_bugs_summary.json",data:enc.encode(safeJsonDeep(rbSummary,2))});
+        // Manifest del ZIP: lista de contenidos + la misma información de resumen de Reported bugs.
+        const zipManifest={ tool:"DEO Tools", kind:"bug_reports", scriptVersion:SCRIPT_VERSION, generatedAt:new Date().toISOString(),
+          reportsCount:reports.length, knownErrorsCount:KNOWN_ERRORS.length, reportedBugsSummary:rbSummary,
+          files:files.map((f)=>f.name).concat(["manifest.json"]) };
+        files.push({name:"manifest.json",data:enc.encode(safeJsonDeep(zipManifest,2))});
         const blob=zipStore(files); // se construye el blob ANTES de tocar el almacenamiento
         downloadBlob("DEO_bug_reports_"+SCRIPT_VERSION+"_"+stamp+".zip",blob);
         // No se borran los reportes: re-descarga ilimitada. Se marca el estado "descargado" de forma PERSISTENTE.

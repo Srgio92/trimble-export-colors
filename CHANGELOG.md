@@ -3,6 +3,15 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.5.0 - 2026-06-16
+
+- Fase 8 (Bug Report v2.1): validación obligatoria de Título, Descripción, Zona/herramienta afectada, Severidad, Comportamiento esperado y Comportamiento obtenido antes de guardar el reporte (marcas rojas locales, sin alert).
+- Bug Report: nuevos campos Severidad (Baja/Media/Alta/Crítica), Comportamiento esperado y Comportamiento obtenido; se conserva el editor enriquecido de descripción, capturas, pegado, anotaciones y menciones UI.
+- Bug Report: la estructura guardada incluye descriptionText, descriptionHtml, severity, expected, actual, annotations, knownErrors, reportedBugsSummary, reportedBugsFull, createdAt y scriptVersion; añadida la constante KNOWN_ERRORS con errores conocidos del proyecto.
+- ZIP de Bug Report: incorpora reported_bugs.json, reported_bugs.txt y reported_bugs_summary.json (lista completa de Reported bugs fusionando defaults y localStorage) más un manifest.json del ZIP, junto al TXT, imágenes y JSON existentes; el resumen de Reported bugs se calcula sin mutar el estado de la interfaz.
+- Fase 4 (Exportación masiva robusta): modo permisivo por defecto (omite vistas con fallo y entrega ZIP parcial con informe) y nuevo modo estricto opcional (aborta al primer fallo), persistido en localStorage; informe _informe.txt ampliado con el modo usado; reutiliza la capa resiliente de vistas (loadViewsCache). La exportación simple no cambia.
+- Fase 5 (Selección cercanos): nuevo switch "Solo con atajo" persistente; en ese modo no se procesa la selección automáticamente y el atajo ejecuta una sola vez runNearSelectionOnceFromCurrentSelection sobre la selección actual, respetando supresión/ocupación y sin reentrar ni duplicar ejecuciones; el modo automático se mantiene igual.
+
 ## v9.4.3 - 2026-06-16
 
 Consolida el trabajo interno v9.4.1 → v9.4.2 (nunca publicados) sobre la ventana Reported bugs y añade correcciones de interfaz del panel Desarrollador.
