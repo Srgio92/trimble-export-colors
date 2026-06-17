@@ -780,7 +780,7 @@
           <div class="color-list-row">
             <div id="excludeModels" class="model-exclude-list"></div>
             <div class="model-list-actions">
-              <button id="excludeModelsSort" class="funnel-btn" type="button" title="Orden: establecido en Trimble" aria-label="Alternar orden alfabético"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
+              <button id="excludeModelsSort" class="funnel-btn" type="button" title="Orden: establecido en Trimble" aria-label="Orden: establecido en Trimble"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
               <button id="excludeModelsRefresh" class="icon-btn refresh-right" title="Actualizar modelos" aria-label="Actualizar modelos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
             </div>
           </div>
@@ -991,7 +991,7 @@
                 <div id="activeViewSearchSuggest" class="av-search-suggest" style="display:none;"></div>
               </div>
               <button type="button" id="activeViewSearchGo" class="icon-btn av-search-go" title="Ir a la vista seleccionada" aria-label="Ir a la vista seleccionada"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-              <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Alternar orden (Trimble / alfabético)" aria-label="Alternar orden de vistas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg></button>
+              <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Orden: establecido en Trimble" aria-label="Orden: establecido en Trimble"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg></button>
               <button type="button" id="activeViewSearchRefresh" class="icon-btn av-search-refresh" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
             </div>
           </div>
@@ -1088,7 +1088,7 @@
               <div class="mass-views-head">
                 <button type="button" id="massViewsToggleAll" class="link-btn">Seleccionar todas</button>
                 <div class="mass-views-actions">
-                  <button type="button" id="massViewsSort" class="funnel-btn" title="Orden alfabético" aria-label="Orden alfabético"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
+                  <button type="button" id="massViewsSort" class="funnel-btn" title="Orden: establecido en Trimble" aria-label="Orden: establecido en Trimble"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
                   <button type="button" id="massViewsRefresh" class="icon-btn" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
                 </div>
               </div>
@@ -1184,7 +1184,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.5.5";
+    const SCRIPT_VERSION = "v9.5.7";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1552,7 +1552,45 @@
       if(!v||typeof v!=="object") return null;
       const id=String(v.id||v.viewId||"");
       if(!id) return null;
-      return { id, name:readableViewName(v)||"Vista sin nombre", description:String(v.description||""), raw:v };
+      return { id, name:readableViewName(v)||"Vista sin nombre", description:String(v.description||""), createdOn:readViewDateValue(v,"created"), modifiedOn:readViewDateValue(v,"modified"), raw:v };
+    }
+    const naturalCollator=new Intl.Collator("es",{numeric:true,sensitivity:"base"});
+    function naturalTextCompare(a,b){ return naturalCollator.compare(String(a||""),String(b||"")); }
+    function readViewDateValue(v,kind){
+      if(!v||typeof v!=="object") return "";
+      const created=["createdOn","createdAt","creationDate","created","dateCreated","createdDate"];
+      const modified=["modifiedOn","modifiedAt","updatedOn","updatedAt","lastModified","modified","dateModified","modifiedDate"];
+      const keys=(kind==="modified"?modified:created);
+      for(const k of keys){ if(v[k]!=null&&v[k]!=="") return v[k]; }
+      return "";
+    }
+    function dateSortValue(v,kind){
+      const raw=(kind==="modified"?(v&&v.modifiedOn):(v&&v.createdOn))||"";
+      if(!raw) return Number.NEGATIVE_INFINITY;
+      const n=Date.parse(raw);
+      if(Number.isFinite(n)) return n;
+      const s=String(raw).trim();
+      const m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
+      if(m){
+        const y=Number(m[3].length===2?("20"+m[3]):m[3]);
+        const d=new Date(y,Number(m[2])-1,Number(m[1]),Number(m[4]||0),Number(m[5]||0)).getTime();
+        if(Number.isFinite(d)) return d;
+      }
+      return Number.NEGATIVE_INFINITY;
+    }
+    function sortViewsForMode(list,mode){
+      const out=list.slice();
+      if(mode==="name") out.sort((a,b)=>naturalTextCompare(a.name,b.name));
+      else if(mode==="created") out.sort((a,b)=>(dateSortValue(b,"created")-dateSortValue(a,"created"))||naturalTextCompare(a.name,b.name));
+      else if(mode==="modified") out.sort((a,b)=>(dateSortValue(b,"modified")-dateSortValue(a,"modified"))||naturalTextCompare(a.name,b.name));
+      return out;
+    }
+    function cycleViewSortMode(mode){ return mode==="trimble"?"name":(mode==="name"?"created":(mode==="created"?"modified":"trimble")); }
+    function viewSortModeLabel(mode){
+      if(mode==="name") return "nombre (orden natural)";
+      if(mode==="created") return "fecha de creación";
+      if(mode==="modified") return "fecha de modificación";
+      return "establecido en Trimble";
     }
     async function loadViewsCache(force=false){
       if(!force && viewsCacheLoading) return viewsCacheLoading;   // deduplica llamadas concurrentes
@@ -1564,7 +1602,7 @@
         if(!Array.isArray(raw)){ recordError("loadViewsCache",new Error("getViews no devolvió un array")); log("Aviso: respuesta de vistas no válida."); return viewsCache; }
         const norm=raw.map(normalizeViewEntry).filter(Boolean);
         viewsCache=norm; viewsCacheBuiltAt=Date.now();
-        activeViewSearchViews=norm.map((v)=>({id:v.id,name:v.name}));
+        activeViewSearchViews=norm.map((v)=>({id:v.id,name:v.name,createdOn:v.createdOn,modifiedOn:v.modifiedOn}));
         templateViewsCache=norm.map((v)=>v.raw);
         avUpdateCount();
         log("Vistas cargadas: "+norm.length);
@@ -1994,7 +2032,7 @@
       return { confirmed:false, ok:false, by:"", matchedBy:"", expected:{id:wantId,name:wantName}, active:cur?{id:cur.id,name:cur.name}:null, attempts:attemptsTotal, currentView:cur, reason:"la vista activa no coincide (id/nombre/description)" };
     }
     // ===================== EXPORTACIÓN MASIVA: SELECCIÓN DE VISTAS (v8.10.7) =====================
-    let massViews=[]; const massViewsSelected=new Set(); let massViewsSortAlpha=false; let massExportCancel=false;
+    let massViews=[]; const massViewsSelected=new Set(); let massViewsSortMode="trimble"; let massViewsSortAlpha=false; let massExportCancel=false;
     let massSelectionInitialized=false;   // true tras la primera carga (para preservar selección manual al refrescar)
     let lastMassExport=null;              // resumen ligero para debug/Bug Report
     function updateMassViewsCount(){ const el=document.getElementById("massViewsCount"); if(el) el.textContent=massViewsSelected.size+"/"+massViews.length+" vistas"; }
@@ -2002,7 +2040,7 @@
     function renderMassViewsList(){
       const cont=document.getElementById("massViewsList"); if(!cont) return; cont.innerHTML="";
       if(!massViews.length){ cont.textContent="No hay vistas disponibles. Pulsa actualizar."; updateMassViewsCount(); updateMassToggleAllLabel(); return; }
-      const list=massViews.slice(); if(massViewsSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+      const list=sortViewsForMode(massViews,massViewsSortMode);
       for(const v of list){
         const row=document.createElement("label"); row.className="mass-view-row"; row.title=v.name;
         const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=massViewsSelected.has(v.id);
@@ -2010,7 +2048,8 @@
         const span=document.createElement("span"); span.className="mass-view-name"; span.textContent=v.name;
         row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
       }
-      const sortBtn=document.getElementById("massViewsSort"); if(sortBtn) sortBtn.classList.toggle("funnel-active",massViewsSortAlpha);
+      massViewsSortAlpha=massViewsSortMode!=="trimble";
+      const sortBtn=document.getElementById("massViewsSort"); if(sortBtn){ sortBtn.classList.toggle("funnel-active",massViewsSortAlpha); const label=viewSortModeLabel(massViewsSortMode); sortBtn.title="Orden: "+label; sortBtn.setAttribute("aria-label","Orden: "+label); }
       updateMassViewsCount(); updateMassToggleAllLabel();
     }
     // v9.5.0: modo estricto/permisivo de la exportación masiva, persistido en localStorage.
@@ -2023,7 +2062,7 @@
       const cont=document.getElementById("massViewsList"); if(cont) cont.textContent="Leyendo vistas del proyecto...";
       let views=[]; try{ await loadViewsCache(!!force); views=viewsCache.slice(); }catch(e){ recordError("populateMassViews",e); }
       const prevSel=new Set(massViewsSelected);
-      massViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre"})).filter((v)=>v.id);
+      massViews=views.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre",createdOn:v.createdOn||readViewDateValue(v.raw||v,"created"),modifiedOn:v.modifiedOn||readViewDateValue(v.raw||v,"modified")})).filter((v)=>v.id);
       const validIds=new Set(massViews.map((v)=>v.id));
       if(massSelectionInitialized && prevSel.size){
         // Conservar la selección manual; descartar las vistas que ya no existen.
@@ -4267,10 +4306,13 @@
       }
     }
     // ===================== Buscador global de "Vista activa" (Configurar vista, v9.0.5) =====================
-    let activeViewSearchViews=[], activeViewSearchSelectedId="", activeViewSearchPendingId="", activeViewSearchLastConfirmedId="", activeViewSearchSortAlpha=false;
-    function avSearchOrderedViews(){ const list=activeViewSearchViews.slice(); if(activeViewSearchSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es")); return list; }
+    let activeViewSearchViews=[], activeViewSearchSelectedId="", activeViewSearchPendingId="", activeViewSearchLastConfirmedId="", activeViewSearchSortMode="trimble", activeViewSuggestPointerInside=false;
+    function avSearchOrderedViews(){ return sortViewsForMode(activeViewSearchViews,activeViewSearchSortMode); }
     function avSetInputToSelected(){ const inp=document.getElementById("activeViewSearchInput"); if(!inp) return; const v=activeViewSearchViews.find((x)=>x.id===activeViewSearchSelectedId); inp.value=v?v.name:""; }
     function avHideSuggest(){ const box=document.getElementById("activeViewSearchSuggest"); if(box) box.style.display="none"; }
+    function avSearchRoot(){ return document.getElementById("activeViewSearch"); }
+    function avShouldKeepSuggestOpen(){ const root=avSearchRoot(); return !!(root&&root.contains(document.activeElement))||activeViewSuggestPointerInside; }
+    function avMaybeHideSuggest(){ setTimeout(()=>{ if(avShouldKeepSuggestOpen()) return; avHideSuggest(); avSetInputToSelected(); },120); }
     function renderActiveViewSuggest(filter){
       const box=document.getElementById("activeViewSearchSuggest"); if(!box) return;
       const term=String(filter||"").trim().toLowerCase();
@@ -4385,7 +4427,8 @@
       log("Vista seleccionada: "+v.name);
       await loadViewIntoUpdateForm(v.id,{fromSelect:true});
     }
-    function avToggleSort(){ activeViewSearchSortAlpha=!activeViewSearchSortAlpha; const b=document.getElementById("activeViewSearchSort"); if(b) b.classList.toggle("funnel-active",activeViewSearchSortAlpha); const inp=document.getElementById("activeViewSearchInput"); renderActiveViewSuggest(inp?inp.value:""); }
+    function avToggleSort(){ activeViewSearchSortMode=cycleViewSortMode(activeViewSearchSortMode); avUpdateSortButton(); const inp=document.getElementById("activeViewSearchInput"); renderActiveViewSuggest(inp?inp.value:""); }
+    function avUpdateSortButton(){ const b=document.getElementById("activeViewSearchSort"); if(!b) return; const on=activeViewSearchSortMode!=="trimble"; const label=viewSortModeLabel(activeViewSearchSortMode); b.classList.toggle("funnel-active",on); b.title="Orden: "+label; b.setAttribute("aria-label","Orden: "+label); }
     // Refresca la lista de vistas conservando la selección si la vista sigue existiendo.
     async function avOnRefresh(){
       const prevId=activeViewSearchSelectedId;
@@ -4399,15 +4442,27 @@
     }
     function initActiveViewSearch(){
       const inp=document.getElementById("activeViewSearchInput");
+      const box=document.getElementById("activeViewSearchSuggest");
+      avUpdateSortButton();
       if(inp){
         inp.addEventListener("focus",()=>renderActiveViewSuggest(inp.value));   // muestra la lista completa con el input vacío
         inp.addEventListener("input",()=>{ activeViewSearchPendingId=""; renderActiveViewSuggest(inp.value); });
-        inp.addEventListener("blur",()=>{ setTimeout(()=>{ avHideSuggest(); avSetInputToSelected(); },150); });
+        inp.addEventListener("blur",()=>avMaybeHideSuggest());
         inp.addEventListener("keydown",(ev)=>{
           if(ev.key==="Escape"){ avHideSuggest(); avSetInputToSelected(); inp.blur(); }
           else if(ev.key==="Enter"){ ev.preventDefault(); const t=avResolveTyped(inp.value); if(t){ avSelectView(t); } else { log("Vista activa: no hay ninguna vista que coincida con el texto."); } }
         });
       }
+      if(box){
+        box.addEventListener("pointerenter",()=>{ activeViewSuggestPointerInside=true; });
+        box.addEventListener("pointerleave",()=>{ activeViewSuggestPointerInside=false; avMaybeHideSuggest(); });
+        box.addEventListener("mousedown",(ev)=>{ ev.stopPropagation(); });
+      }
+      document.addEventListener("mousedown",(ev)=>{
+        const root=avSearchRoot();
+        if(root&&root.contains(ev.target)) return;
+        activeViewSuggestPointerInside=false; avHideSuggest(); avSetInputToSelected();
+      });
       const go=document.getElementById("activeViewSearchGo"); if(go) go.addEventListener("click",(ev)=>{ ev.preventDefault(); avGoToView(); });
       const sort=document.getElementById("activeViewSearchSort"); if(sort) sort.addEventListener("click",(ev)=>{ ev.preventDefault(); avToggleSort(); });
       const refresh=document.getElementById("activeViewSearchRefresh"); if(refresh) refresh.addEventListener("click",async (ev)=>{ ev.preventDefault(); await avOnRefresh(); });
@@ -4753,7 +4808,7 @@
       cont.innerHTML="";
       if(!models.length){ cont.textContent="No hay modelos abiertos en el visor."; return; }
       const list=models.slice();
-      if(excludeModelsSortAlpha) list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+      if(excludeModelsSortAlpha) list.sort((a,b)=>naturalTextCompare(a.name,b.name));
       for(const m of list){
         const aliases=(m.aliases||[m.id]).map(String);
         const row=document.createElement("label"); row.className="model-exclude-row"; row.title=m.name+" ("+m.id+")";
@@ -4769,7 +4824,7 @@
         row.appendChild(cb); row.appendChild(span); cont.appendChild(row);
       }
       const sortBtn=document.getElementById("excludeModelsSort");
-      if(sortBtn){ sortBtn.classList.toggle("funnel-active",excludeModelsSortAlpha); sortBtn.title="Orden: "+(excludeModelsSortAlpha?"alfabético":"establecido en Trimble"); }
+      if(sortBtn){ sortBtn.classList.toggle("funnel-active",excludeModelsSortAlpha); sortBtn.title="Orden: "+(excludeModelsSortAlpha?"alfabético natural":"establecido en Trimble"); sortBtn.setAttribute("aria-label",sortBtn.title); }
     }
 
     // ===================== ACCIONES RÁPIDAS =====================
@@ -5171,7 +5226,6 @@
     // Trabajo 10: cierra las sugerencias flotantes al hacer scroll (evita cajas desalineadas).
     function closeAllFloatingSuggests(){
       try{ document.querySelectorAll(".tpl-suggest").forEach((s)=>{ if(s.style.display!=="none") s.style.display="none"; }); }catch(e){}
-      try{ if(typeof avHideSuggest==="function") avHideSuggest(); }catch(e){}
     }
     function wireUI(){
       window.addEventListener("scroll",closeAllFloatingSuggests,true);
@@ -5200,7 +5254,7 @@
       const massStrict=document.getElementById("massStrictMode"); if(massStrict) massStrict.addEventListener("change",()=>{ saveMassStrict(); log("Exportación masiva: modo "+(massStrict.checked?"ESTRICTO (aborta al primer fallo)":"permisivo (omite vistas con fallo)")+"."); });
       if(ext) ext.addEventListener("change",async ()=>{ const on=ext.checked; if(massPanel) massPanel.style.display=on?"block":"none"; if(massCount) massCount.style.display=on?"inline-block":"none"; if(on&&!massLoaded){ massLoaded=true; await populateMassViews(false); } });
       const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=()=>{ massLoaded=true; populateMassViews(true); };
-      const massSort=document.getElementById("massViewsSort"); if(massSort) massSort.onclick=()=>{ massViewsSortAlpha=!massViewsSortAlpha; renderMassViewsList(); };
+      const massSort=document.getElementById("massViewsSort"); if(massSort) massSort.onclick=()=>{ massViewsSortMode=cycleViewSortMode(massViewsSortMode); renderMassViewsList(); };
       const massToggleAll=document.getElementById("massViewsToggleAll"); if(massToggleAll) massToggleAll.onclick=()=>{ if(massViews.length&&massViewsSelected.size===massViews.length){ massViewsSelected.clear(); } else { massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); } renderMassViewsList(); };
       const exportCancelBtn=document.getElementById("exportCancel"); if(exportCancelBtn) exportCancelBtn.onclick=()=>{ massExportCancel=true; setProgress("Cancelando exportación..."); };
       const importCancelBtn=document.getElementById("importCancel"); if(importCancelBtn) importCancelBtn.onclick=()=>{ cancelRequested=true; setProgress("Cancelando importación..."); };
@@ -5459,6 +5513,7 @@
         extendedExport:tg("extendedExport"),
         viewsCount:(typeof massViews!=="undefined"?massViews.length:undefined),
         selected:(typeof massViewsSelected!=="undefined"?[...massViewsSelected]:undefined),
+        sortMode:(typeof massViewsSortMode!=="undefined"?massViewsSortMode:undefined),
         sortAlpha:(typeof massViewsSortAlpha!=="undefined"?massViewsSortAlpha:undefined),
         counterText:String((document.getElementById("massViewsCount")||{}).textContent||""),
         lastMassExport:(typeof lastMassExport!=="undefined"?lastMassExport:undefined)
