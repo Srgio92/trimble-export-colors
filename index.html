@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -68,13 +68,14 @@
     .qs-refresh { width: 28px; min-width: 28px; height: 26px; padding: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
     @media (max-width: 330px) { .quick-select-grid { grid-template-columns: 28px minmax(0, 1fr); } .quick-select-grid .qs-value { grid-column: 2; } }
 
-    .switch { position: relative; display: inline-block; width: 38px; height: 20px; vertical-align: middle; }
+    .switch { position: relative; display: inline-block; flex:0 0 38px; width: 38px; height: 20px; margin-left:auto; vertical-align: middle; cursor:pointer; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; inset: 0; background: #c4c9d1; border-radius: 20px; transition: .2s; }
+    .slider { position: absolute; inset: 0; background: #c4c9d1; border-radius: 20px; transition: .2s; cursor:pointer; }
     .slider:before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
     .switch input:checked + .slider { background: #1c7fd6; }
     .switch input:checked + .slider:before { transform: translateX(18px); }
     .switch input:disabled + .slider { background: #d1d5db; cursor: not-allowed; }
+    .switch input:focus-visible + .slider { outline:2px solid #1c7fd6; outline-offset:2px; }
     .toggle-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
     .toggle-line label.txt { cursor: pointer; }
     .toggle-line.is-disabled { color: #9ca3af; }
@@ -400,7 +401,7 @@
     .range-row input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
     .range-row input[type="range"]::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
     .range-row input[type="range"]::-webkit-slider-thumb { margin-top: -5px; }
-    .floating-tip { position: fixed; max-width: 260px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
+    .floating-tip { position: fixed; max-width: 320px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; white-space: pre-line; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
 
     /* Plantillas de vista */
     .tpl-block { border: 1px solid #ececec; border-radius: 6px; background: #fbfbfb; padding: 8px 10px; margin: 8px 0; }
@@ -553,6 +554,8 @@
     .io-option { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #eef0f3; border-radius:8px; background:#fafafa; padding:6px 8px; }
     .io-option-main { min-width:0; }
     .io-option-title { font-size:12px; font-weight:bold; color:#374151; }
+    .io-title-swatch { display:inline-block; width:11px; height:11px; min-width:11px; min-height:11px; box-sizing:border-box; border:1px solid rgba(17,24,39,.28); border-radius:3px; margin-left:6px; vertical-align:-1px; background:var(--swatch); }
+    .io-title-swatch + .io-title-swatch { margin-left:4px; }
     .io-option-sub { font-size:10.5px; color:#6b7280; line-height:1.3; margin-top:1px; }
     .io-secondary-area { margin-top:7px; }
     .io-primary-actions { display:flex; gap:8px; align-items:center; margin-top:9px; }
@@ -561,6 +564,7 @@
     .io-primary-btn:hover:not(:disabled) { background:#1769b4; border-color:#1769b4; box-shadow:none; }
     .io-inline-input { width:100%; border:1px solid #cfd6df; background:#fff; border-radius:8px; height:30px; padding:4px 7px; box-sizing:border-box; }
     .io-import-drop { border:1px dashed #cfd6df; border-radius:10px; background:#fafafa; padding:10px; font-size:11px; color:#6b7280; line-height:1.4; margin-bottom:8px; }
+    .io-switch-grid + .io-import-drop { margin-top:8px; }
     .io-card .cols-details { margin:0; border-radius:8px; }
 
 
@@ -939,9 +943,9 @@
             <button type="button" id="quickColorEdit" class="quick-edit-btn" title="Editar colores personalizados" aria-label="Editar colores personalizados"><svg class="writing-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="writing-trace" d="M10.9 17.25 H17.7"/><g class="writing-pencil"><path class="writing-pencil-outline" d="M7.2 16.2 L7.52 14.96 L14.66 7.82 Q15.12 7.36 15.58 7.82 Q16.04 8.28 15.58 8.74 L8.44 15.88 Z"/></g></svg></button>
           </div>
           <div class="quick-color-row" id="quickColorRow">
-            <button type="button" class="quick-color-btn quick-default" id="qcGray" title="Gris neutro" aria-label="Gris neutro"><span class="qc-swatch" style="background:#a8abb4;"></span></button>
-            <button type="button" class="quick-color-btn quick-default" id="qcMagenta" title="Magenta" aria-label="Magenta"><span class="qc-swatch" style="background:#ec00b6;"></span></button>
-            <button type="button" class="quick-color-btn quick-default" id="qcRed" title="Rojo" aria-label="Rojo"><span class="qc-swatch" style="background:#fc0d1b;"></span></button>
+            <button type="button" class="quick-color-btn quick-default" id="qcGray" title="Gris Trimble #AEAEB739" aria-label="Gris Trimble"><span class="qc-swatch" style="background:#AEAEB7;"></span></button>
+            <button type="button" class="quick-color-btn quick-default" id="qcMagenta" title="Magenta Trimble #EC00B639" aria-label="Magenta Trimble"><span class="qc-swatch" style="background:#EC00B6;"></span></button>
+            <button type="button" class="quick-color-btn quick-default" id="qcRed" title="Rojo Trimble #FC0D1B39" aria-label="Rojo Trimble"><span class="qc-swatch" style="background:#FC0D1B;"></span></button>
             <span id="quickCustomColors" class="quick-custom-colors"></span>
             <button type="button" class="quick-color-btn quick-add-color" id="qcAddColor" title="Añadir color" aria-label="Añadir color"><span class="qc-add-plus">+</span></button>
           </div>
@@ -1144,11 +1148,27 @@
       <details class="tool" id="importTool">
         <summary class="subtitle">Importar registro<button type="button" id="importHelpBtn" class="param-help-btn io-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></summary>
         <div class="tool-body">
-          <div id="importHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Importa un CSV o ZIP generado por esta extensión.</li><li>Solo aplica filas con <code>revisado_deo = TRUE</code>.</li><li>Localiza los GUID revisados y los pinta en rojo como revisión DEO.</li><li>Las filas no revisadas se ignoran para evitar cambios accidentales.</li></ul></div>
+          <div id="importHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Importa un CSV o ZIP generado por esta extensión.</li><li><code>revisado_deo = TRUE</code> pinta rojo oficial y siempre tiene prioridad.</li><li>Opcionalmente, <code>codigo_revision</code> pinta magenta oficial cuando el GUID no está en rojo.</li><li>La opción de duplicados marca repeticiones entre vistas con colores de diagnóstico.</li></ul></div>
           <div class="io-card">
             <div class="io-card-title">Archivo de registro</div>
             <div class="io-card-desc">Selecciona uno o varios CSV, o un ZIP generado por la herramienta.</div>
-            <div class="io-import-drop">Formatos admitidos: <strong>CSV</strong> y <strong>ZIP</strong>. La importación solo aplica filas revisadas por DEO.</div>
+            <div class="io-switch-grid">
+              <div class="io-option" data-tip="Pinta en magenta oficial los GUID con codigo_revision, salvo que estén revisados en rojo.">
+                <div class="io-option-main">
+                  <div class="io-option-title">Alcance de RFI<span class="io-title-swatch" style="--swatch:rgba(236,0,182,.224);" title="#EC00B639"></span></div>
+                  <div class="io-option-sub">Aplica color a los objetos con RFI</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="importRfiMagenta" checked><span class="slider"></span></label>
+              </div>
+              <div class="io-option" data-tip="Modifica el color de duplicados: Color 1 modifica duplicados DEO&#10;Color 2 modifica duplicados RFI">
+                <div class="io-option-main">
+                  <div class="io-option-title">Mostrar duplicados<span class="io-title-swatch" style="--swatch:rgba(255,253,56,.224);" title="Color 1 #FFFD3839"></span><span class="io-title-swatch" style="--swatch:rgba(120,134,203,.224);" title="Color 2 #7886CB39"></span></div>
+                  <div class="io-option-sub">Modifica el color de duplicados</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="importShowDuplicates"><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="io-import-drop">Formatos admitidos: <strong>CSV</strong> y <strong>ZIP</strong>. La importación aplica rojo DEO y, si está activo, magenta RFI.</div>
             <div class="io-primary-actions">
               <button id="importBtn" class="io-primary-btn" data-tip="Selecciona uno o varios CSV, o un ZIP con CSV dentro.">Importar registro</button>
               <button id="importCancel" class="btn-cancel-inline" style="display:none;">Cancelar</button>
@@ -1184,11 +1204,35 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.5.7";
+    const SCRIPT_VERSION = "v9.5.14";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
-    const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
-    const REVIEWED_DEO_COLORS = new Set(["#FC0D1BFF","#D50002FF","#E67C73FF"]);
+    const TRIMBLE_OFFICIAL_COLORS = {
+      red: {hex:"#FC0D1B39", rgba:{r:252,g:13,b:27,a:57}},
+      magenta: {hex:"#EC00B639", rgba:{r:236,g:0,b:182,a:57}},
+      gray: {hex:"#AEAEB739", rgba:{r:174,g:174,b:183,a:57}}
+    };
+    const RED_COLOR_EXACTS = new Set([
+      "#FC0D1B39","#FC0D1BFF",
+      "#D5000239","#D50002FF",
+      "#E67C7339","#E67C73FF",
+      "#E1060039","#E10600FF",
+      "#FF151D39","#FF151DFF",
+      "#E76F6139","#E76F61FF",
+      "#F04B1F39","#F04B1FFF"
+    ]);
+    const MAGENTA_COLOR_EXACTS = new Set([
+      "#EC00B639","#EC00B6FF",
+      "#AD145739","#AD1457FF",
+      "#B85AD039","#B85AD0FF",
+      "#DCA1DC39","#DCA1DCFF",
+      "#B91B5F39","#B91B5FFF",
+      "#B54FD639","#B54FD6FF",
+      "#D898D939","#D898D9FF",
+      "#A997DA39","#A997DAFF"
+    ]);
+    const REVISION_CODE_COLORS = new Set([...MAGENTA_COLOR_EXACTS,...RED_COLOR_EXACTS]);
+    const REVIEWED_DEO_COLORS = new Set([...RED_COLOR_EXACTS]);
     const HIDDEN_MARK_COLOR = {r:255,g:255,b:255,a:255};
     const HIDDEN_MARK_COLOR_SHOWN = {r:255,g:255,b:255,a:128}; // blanco con alfa 50% para el visor
     const HIDDEN_MARK_OPACITY = 50; // escala 0-100 del Workspace API
@@ -1373,7 +1417,39 @@
       return { valid:true, legible:true, coerced:coerced, text:typeof color==="string"?color:safeJson(color), normalizedColor:"#"+hex2(r)+hex2(g)+hex2(b)+hex2(a), cssColor:"rgba("+r+","+g+","+b+","+(a/255).toFixed(3)+")", swatchCss:"rgb("+r+","+g+","+b+")", rgba:{r,g,b,a} };
     }
     function normalizeColor(c){ return analyzeColor(c).normalizedColor; }
-    function looksRed(c){ const a=analyzeColor(c); return a.valid && a.rgba.r>140 && a.rgba.g<95 && a.rgba.b<95; }
+    function rgbHue(r,g,b){
+      r/=255; g/=255; b/=255;
+      const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+      if(d===0) return {h:0,s:0,v:max};
+      let h=0;
+      if(max===r) h=((g-b)/d)%6;
+      else if(max===g) h=(b-r)/d+2;
+      else h=(r-g)/d+4;
+      h*=60; if(h<0) h+=360;
+      return {h,s:max===0?0:d/max,v:max};
+    }
+    function colorDistance(a,b){
+      const dr=(a.r||0)-(b.r||0), dg=(a.g||0)-(b.g||0), db=(a.b||0)-(b.b||0);
+      return Math.sqrt(dr*dr+dg*dg+db*db);
+    }
+    function isNearColorTargets(rgba,targets,maxDistance){ return targets.some((t)=>colorDistance(rgba,t)<=maxDistance); }
+    function isRedColor(c){
+      const a=analyzeColor(c); if(!a.valid) return false;
+      const n=a.normalizedColor; if(REVIEWED_DEO_COLORS.has(n)) return true;
+      const {r,g,b}=a.rgba, hsv=rgbHue(r,g,b);
+      const redTargets=[TRIMBLE_OFFICIAL_COLORS.red.rgba,{r:213,g:0,b:2},{r:230,g:124,b:115},{r:225,g:6,b:0},{r:255,g:21,b:29},{r:231,g:111,b:97},{r:240,g:75,b:31}];
+      return isNearColorTargets(a.rgba,redTargets,72) || (r>=165 && g<=125 && b<=120 && (hsv.h<=18 || hsv.h>=345) && hsv.s>=0.35);
+    }
+    function isMagentaColor(c){
+      const a=analyzeColor(c); if(!a.valid) return false;
+      const n=a.normalizedColor; if(MAGENTA_COLOR_EXACTS.has(n)) return true;
+      const {r,g,b}=a.rgba, hsv=rgbHue(r,g,b);
+      const magentaTargets=[TRIMBLE_OFFICIAL_COLORS.magenta.rgba,{r:173,g:20,b:87},{r:184,g:90,b:208},{r:220,g:161,b:220},{r:185,g:27,b:95},{r:181,g:79,b:214},{r:216,g:152,b:217},{r:169,g:151,b:218}];
+      return (hsv.s>=0.18 && isNearColorTargets(a.rgba,magentaTargets,78)) || (r>=135 && b>=85 && g<=135 && hsv.h>=285 && hsv.h<=342 && hsv.s>=0.22);
+    }
+    function isRevisionCodeColor(c){ return isMagentaColor(c)||isRedColor(c); }
+    function isReviewedDeoColor(c){ return isRedColor(c); }
+    function looksRed(c){ return isRedColor(c); }
 
     // ===================== GUID IFC =====================
     const IFC_CHARS="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
@@ -1877,7 +1953,7 @@
           if(propertyCols.length) propsMap=await getPropertiesCached(modelId,batch.map((e)=>e.objectRuntimeId));
           for(let j=0;j<batch.length;j++){
             const e=batch[j]; const cn=e.normalizedColor;
-            const row={guidIfc:wantGuid?toIfcGuid(guids[j]):"",color:e.color,revisionCode:REVISION_CODE_COLORS.has(cn)?revisionBase:"",reviewedDeo:REVIEWED_DEO_COLORS.has(cn)?"TRUE":"FALSE",viewName,modelId:e.modelId,objectRuntimeId:e.objectRuntimeId};
+            const row={guidIfc:wantGuid?toIfcGuid(guids[j]):"",color:e.color,revisionCode:isRevisionCodeColor(cn)?revisionBase:"",reviewedDeo:isReviewedDeoColor(cn)?"TRUE":"FALSE",viewName,modelId:e.modelId,objectRuntimeId:e.objectRuntimeId};
             if(propertyCols.length){ const props=propsMap.get(e.objectRuntimeId)||{}; for(const col of propertyCols) row[col.key]=getPropertyValueForCsv(props,col.propertyName); }
             rows.push(row);
           }
@@ -1971,12 +2047,17 @@
       const methodNames=["setView","selectView","setCurrentView","activateView","applyView","goToView"];
       const available=methodNames.filter((m)=>typeof API.view[m]==="function");
       diag.methodsTried=available.slice();
+      const payloadAllowed=(method,label)=>{
+        if(method==="selectView") return label==="id:string";
+        return true;
+      };
       if(!available.length){ diag.reason="la API no expone un método para activar vistas"; return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:diag.reason,name:viewName}); }
       let sentAny=false, lastError=null, lastMethod="", metaConfirmed=false, lastVisual=null;
       // Payload por fuera, método por dentro: agota todos los métodos de un payload antes de pasar al siguiente.
       for(const p of payloads){
         for(const m of available){
           lastMethod=m; const tag=m+"("+p.label+")";
+          if(!payloadAllowed(m,p.label)){ diag.results.push({method:m,payload:p.label,skipped:true,reason:"payload no compatible"}); continue; }
           try{
             await API.view[m].call(API.view, p.val);
             sentAny=true; diag.payloadsTried.push(tag);
@@ -2030,6 +2111,27 @@
         if(wantName && cur.description && nm(cur.description)===nm(wantName)) return result("description");
       }
       return { confirmed:false, ok:false, by:"", matchedBy:"", expected:{id:wantId,name:wantName}, active:cur?{id:cur.id,name:cur.name}:null, attempts:attemptsTotal, currentView:cur, reason:"la vista activa no coincide (id/nombre/description)" };
+    }
+    async function recoverLateActivatedView(view,act){
+      if(!(act&&act.sent)) return null;
+      const want={id:String(view&&view.id||""),name:String(view&&view.name||"")};
+      const ver=await verifyActiveView(want,{delays:[900,1400,2200,3200]});
+      if(!ver.confirmed) return null;
+      const cached=viewsCache.find((v)=>v.id===want.id)||null;
+      const expectVisual=viewHasSavedVisualState(cached&&cached.raw);
+      const visual=await waitForAppliedViewVisualState(expectVisual,[500,900,1400]);
+      if(!visual.ok) return {ok:false,confirmed:false,reason:visual.reason||"presentación/colores no aplicados",verification:ver,visualVerification:visual};
+      return {ok:true,sent:true,confirmed:true,metaConfirmed:true,recovered:true,visualExpected:expectVisual,visualOk:true,method:(act.method||act.lastMethod||"activateViewById"),payloadLabel:act.payloadLabel||"",by:ver.by||"late",attempts:(act.attempts||0)+(ver.attempts||0),name:want.name,reason:"confirmación tardía",verification:ver,visualVerification:visual};
+    }
+    async function getColoredObjectEntriesForExportView(){
+      let entries=await getColoredObjectEntriesWithRetry();
+      if(entries.length) return entries;
+      for(let a=0;a<4;a++){
+        await sleep(1000);
+        try{ entries=await getColoredObjectEntries(); }catch(e){ recordError("exportMassive.colors.retry",e); entries=[]; }
+        if(entries.length) return entries;
+      }
+      return entries;
     }
     // ===================== EXPORTACIÓN MASIVA: SELECCIÓN DE VISTAS (v8.10.7) =====================
     let massViews=[]; const massViewsSelected=new Set(); let massViewsSortMode="trimble"; let massViewsSortAlpha=false; let massExportCancel=false;
@@ -2118,6 +2220,15 @@
           let act=null;
           try{ act=await activateViewById(v.id); }
           catch(e){ recordError("exportMassive.activateViewById",e); act={ok:false,sent:false,confirmed:false,reason:(e&&e.message?e.message:String(e))}; }
+          if(!(act&&act.confirmed) && act&&act.sent){
+            const recovered=await recoverLateActivatedView(v,act);
+            if(recovered&&recovered.confirmed){
+              act=recovered;
+              report.push("- "+v.name+": confirmación tardía aceptada ("+(act.by||"?")+").");
+            } else if(recovered&&recovered.reason) {
+              act.reason=recovered.reason;
+            }
+          }
           if(!(act&&act.confirmed)){
             failViews++;
             lastMassExport.lastFailedView=v.name;
@@ -2129,7 +2240,7 @@
             const t=eta.tick(); lastEta=t.etaSec; continue;
           }
           lastMassExport.lastMethod=(act.method||"activateViewById")+(act.payloadLabel?(" / "+act.payloadLabel):"");
-          let entries=null; try{ entries=await getColoredObjectEntriesWithRetry(); }catch(e){ recordError("exportMassive.colors",e); }
+          let entries=null; try{ entries=await getColoredObjectEntriesForExportView(); }catch(e){ recordError("exportMassive.colors",e); }
           if(!Array.isArray(entries)){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al leer colores (omitida). Vista activada con "+(act.method||"?")+"("+(act.payloadLabel||"?")+")."); if(strict){ aborted=true; report.push("  Modo estricto: exportación abortada tras el fallo."); break; } const t=eta.tick(); lastEta=t.etaSec; continue; }
           if(!entries.length){ emptyViews++; report.push("- "+v.name+": sin objetos coloreados (omitida). Vista activada con "+(act.method||"?")+"("+(act.payloadLabel||"?")+")."); const t=eta.tick(); lastEta=t.etaSec; continue; }
           const revisionBase=computeRevisionBase(v.name);
@@ -2162,7 +2273,10 @@
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
-    const IMPORT_REVIEWED_RED = {r:252,g:13,b:27,a:255};
+    const IMPORT_REVIEWED_RED = {...TRIMBLE_OFFICIAL_COLORS.red.rgba};
+    const IMPORT_REVISION_MAGENTA = {...TRIMBLE_OFFICIAL_COLORS.magenta.rgba};
+    const IMPORT_DUPLICATE_MAGENTA = {r:120,g:134,b:203,a:57}; // #7886CB39
+    const IMPORT_DUPLICATE_RED = {r:255,g:253,b:56,a:57}; // #FFFD3839
     function isReviewedTrue(v){ return ["TRUE","VERDADERO","1","YES","SI","SÍ"].includes(String(v||"").trim().toUpperCase()); }
     function headerIndex(header,names,contains){
       for(const n of names){ const i=header.findIndex((h)=>h===n); if(i>=0) return i; }
@@ -2190,6 +2304,63 @@
       }
       return result;
     }
+    async function resolveImportGuidItemsInto(guidItems,targetMap,modelIds,label){
+      const resolvedGuids=new Set(); let resolvedRuntimeObjects=0;
+      const guidEntries=[...guidItems.entries()];
+      if(guidEntries.length){
+        for(let m=0;m<modelIds.length;m++){
+          if(cancelRequested) break;
+          const modelId=modelIds[m];
+          const pending=guidEntries.filter(([raw])=>!resolvedGuids.has(raw));
+          if(pending.length===0) break;
+          const allCandidates=[]; pending.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
+          const ridByCandidate=await convertRuntimeIdsSafe(modelId,allCandidates);
+          const ids=[];
+          for(const [rawGuid,variants] of pending){
+            const rid=variants.map((v)=>ridByCandidate.get(v)).find((x)=>x!=null);
+            if(rid!=null){ ids.push(Number(rid)); resolvedGuids.add(rawGuid); }
+          }
+          if(ids.length){ addToMapSet(targetMap,modelId,ids); resolvedRuntimeObjects+=ids.length; }
+          setProgress("Importando "+label+": modelo "+(m+1)+"/"+modelIds.length+". GUID resueltos: "+resolvedGuids.size+"/"+guidItems.size);
+          await sleep(0);
+        }
+      }
+      return {resolvedGuids,resolvedRuntimeObjects};
+    }
+    function hasRevisionCodeValue(v){ return String(v||"").trim()!==""; }
+    function removeMapSetEntries(targetMap,removeMap){
+      for(const [modelId,removeSet] of removeMap.entries()){
+        const targetSet=targetMap.get(modelId); if(!targetSet) continue;
+        for(const id of removeSet) targetSet.delete(id);
+        if(targetSet.size===0) targetMap.delete(modelId);
+      }
+    }
+    function importIdentityKey(guid,modelId,rid){
+      const raw=String(guid||"").trim();
+      if(raw){ const uuid=toExternalUuid(raw); return "guid:"+(uuid||toIfcGuid(raw)||raw).toLowerCase(); }
+      if(modelId && Number.isFinite(rid)) return "runtime:"+String(modelId)+":"+String(rid);
+      return "";
+    }
+    function addImportTarget(targetMap,targetGuidItems,modelId,rid,guid){
+      if(modelId && Number.isFinite(rid)){ addToMapSet(targetMap,modelId,[rid]); return "direct"; }
+      if(guid){ addGuidImportCandidate(targetGuidItems,guid); return "guid"; }
+      return "";
+    }
+    async function paintImportMap(targetMap,state,label){
+      let painted=0;
+      for(const [modelId,set] of targetMap.entries()){
+        if(cancelRequested) break;
+        const ids=[...set];
+        for(let i=0;i<ids.length;i+=500){
+          const chunk=ids.slice(i,i+500);
+          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:chunk}]},state); painted+=chunk.length; }
+          catch(e){ recordError("import.apply."+label,e); log("Error pintando "+label+" en "+modelId+": "+(e&&e.message?e.message:e)); }
+          setProgress("Importando: pintados "+painted+" objeto(s) en "+label+"...");
+          await sleep(0);
+        }
+      }
+      return painted;
+    }
     // v8.10.7 (#16): expande la selección del usuario a una lista uniforme de "archivos" {name,text()}.
     // Acepta CSV sueltos, varios CSV y ZIP (extrae los CSV internos, ignora lo demás).
     async function expandImportInputs(files){
@@ -2208,10 +2379,19 @@
       return out;
     }
     async function importCsvFiles(files){
-      clearLog(); setProgress("Importando revisados DEO: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV solo revisado_deo TRUE ("+files.length+" archivo/s)");
+      const importRfiMagenta=(document.getElementById("importRfiMagenta")||{}).checked!==false;
+      const importShowDuplicates=!!((document.getElementById("importShowDuplicates")||{}).checked);
+      clearLog(); setProgress("Importando colores DEO: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV revisado_deo TRUE"+(importRfiMagenta?" y codigo_revision":"")+" ("+files.length+" archivo/s)");
       const directMap=new Map();
       const guidItems=new Map();
-      let rowsRead=0, trueRows=0, directRows=0, guidRows=0, skippedRows=0;
+      const revisionMap=new Map();
+      const revisionGuidItems=new Map();
+      const duplicateRedMap=new Map();
+      const duplicateRedGuidItems=new Map();
+      const duplicateMagentaMap=new Map();
+      const duplicateMagentaGuidItems=new Map();
+      const importSeenKeys=new Map();
+      let rowsRead=0, trueRows=0, revisionRows=0, directRows=0, guidRows=0, revisionDirectRows=0, revisionGuidRows=0, duplicateRedRows=0, duplicateMagentaRows=0, skippedRows=0;
 
       // v8.10.7 (#16/#17): contador de archivos + ETA media móvil + cancelación limpia durante la lectura.
       const readEta=makeEta(files.length); let lastReadEta=NaN;
@@ -2223,32 +2403,52 @@
         if(lines.length<2){ log(file.name+": vacío."); continue; }
         const header=parseCsvLine(lines[0]).map((h)=>h.trim().toLowerCase());
         const ri=headerIndex(header,["revisado_deo","reviewed_deo"],null);
+        const ci=headerIndex(header,["codigo_revision","revision_code"],["revision"]);
         const gi=headerIndex(header,["guid_ifc","guid","ifc_guid"],["guid"]);
         const mi=headerIndex(header,["modelid","model_id"],null);
         const oi=headerIndex(header,["objectruntimeid","object_runtime_id","runtimeid","runtime_id"],null);
-        if(ri<0){ log(file.name+": no hay columna revisado_deo. Omitido."); continue; }
+        if(ri<0 && ci<0){ log(file.name+": no hay columna revisado_deo ni codigo_revision. Omitido."); continue; }
         if(gi<0 && (mi<0 || oi<0)){ log(file.name+": no se encontró GUID ni modelId/objectRuntimeId. Omitido."); continue; }
-        let fileTrue=0;
+        let fileTrue=0, fileRevision=0;
         for(let i=1;i<lines.length;i++){
           const cells=parseCsvLine(lines[i]); rowsRead++;
-          if(!isReviewedTrue(cells[ri])){ skippedRows++; continue; }
-          trueRows++; fileTrue++;
+          const reviewed=ri>=0 && isReviewedTrue(cells[ri]);
+          const hasRevision=importRfiMagenta && ci>=0 && hasRevisionCodeValue(cells[ci]);
+          if(!reviewed && !hasRevision){ skippedRows++; continue; }
           const modelId=mi>=0?String(cells[mi]||"").trim():"";
           const rid=oi>=0?Number(String(cells[oi]||"").trim()):NaN;
-          if(modelId && Number.isFinite(rid)){ addToMapSet(directMap,modelId,[rid]); directRows++; continue; }
           const guid=gi>=0?String(cells[gi]||"").trim():"";
-          if(guid){ addGuidImportCandidate(guidItems,guid); guidRows++; }
+          const identityKey=importIdentityKey(guid,modelId,rid);
+          const seen=identityKey?(importSeenKeys.get(identityKey)||{red:0,magenta:0}):{red:0,magenta:0};
+          let targetMap=reviewed?directMap:revisionMap;
+          let targetGuidItems=reviewed?guidItems:revisionGuidItems;
+          if(reviewed){ trueRows++; fileTrue++; } else { revisionRows++; fileRevision++; }
+          if(reviewed){
+            seen.red++;
+            if(importShowDuplicates && seen.red>1){ targetMap=duplicateRedMap; targetGuidItems=duplicateRedGuidItems; duplicateRedRows++; }
+          } else {
+            if(seen.red>0){ skippedRows++; if(identityKey) importSeenKeys.set(identityKey,seen); continue; }
+            seen.magenta++;
+            if(importShowDuplicates && seen.magenta>1){ targetMap=duplicateMagentaMap; targetGuidItems=duplicateMagentaGuidItems; duplicateMagentaRows++; }
+          }
+          if(identityKey) importSeenKeys.set(identityKey,seen);
+          const kind=addImportTarget(targetMap,targetGuidItems,modelId,rid,guid);
+          if(kind==="direct"){ if(reviewed) directRows++; else revisionDirectRows++; }
+          else if(kind==="guid"){ if(reviewed) guidRows++; else revisionGuidRows++; }
           else skippedRows++;
         }
-        log(file.name+": "+fileTrue+" fila(s) revisado_deo TRUE.");
+        log(file.name+": "+fileTrue+" fila(s) revisado_deo TRUE; "+fileRevision+" fila(s) codigo_revision.");
         const tEnd=readEta.tick(); lastReadEta=tEnd.etaSec;
       }
 
-      if(trueRows===0){ log("No hay filas con revisado_deo = TRUE. No se importa ningún color."); setProgress("Sin revisados DEO TRUE."); return; }
+      if(trueRows===0 && revisionRows===0){ log("No hay filas con revisado_deo = TRUE ni codigo_revision. No se importa ningun color."); setProgress("Sin colores DEO para importar."); return; }
       showImportCancel(true); setProgress("Importando revisados DEO: resolviendo modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
       try{ const colored=await API.viewer.getColoredObjects(); for(const g of colored||[]) if(g.modelId) modelIds.push(g.modelId); }catch(e){}
       for(const modelId of directMap.keys()) modelIds.push(modelId);
+      for(const modelId of revisionMap.keys()) modelIds.push(modelId);
+      for(const modelId of duplicateRedMap.keys()) modelIds.push(modelId);
+      for(const modelId of duplicateMagentaMap.keys()) modelIds.push(modelId);
       modelIds=[...new Set(modelIds)];
       if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showImportCancel(false); return; }
 
@@ -2274,28 +2474,67 @@
         }
       }
 
-      let paintedRed=0;
-      const redState={color:{...IMPORT_REVIEWED_RED},opacity:100,visible:true}; // opacidad en escala 0-100 del API
-      for(const [modelId,set] of directMap.entries()){
-        if(cancelRequested) break;
-        const ids=[...set];
-        for(let i=0;i<ids.length;i+=500){
-          const chunk=ids.slice(i,i+500);
-          try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:chunk}]},redState); paintedRed+=chunk.length; }
-          catch(e){ recordError("import.apply.red",e); log("Error pintando rojo en "+modelId+": "+(e&&e.message?e.message:e)); }
-          setProgress("Importando revisados DEO: pintados "+paintedRed+" objeto(s)...");
+      const resolvedRevisionGuids=new Set(); let resolvedRevisionRuntimeObjects=0;
+      const revisionGuidEntries=[...revisionGuidItems.entries()];
+      if(revisionGuidEntries.length){
+        for(let m=0;m<modelIds.length;m++){
+          if(cancelRequested) break;
+          const modelId=modelIds[m];
+          const pending=revisionGuidEntries.filter(([raw])=>!resolvedRevisionGuids.has(raw));
+          if(pending.length===0) break;
+          const allCandidates=[]; pending.forEach(([,variants])=>variants.forEach((v)=>allCandidates.push(v)));
+          const ridByCandidate=await convertRuntimeIdsSafe(modelId,allCandidates);
+          const ids=[];
+          for(const [rawGuid,variants] of pending){
+            const rid=variants.map((v)=>ridByCandidate.get(v)).find((x)=>x!=null);
+            if(rid!=null){ ids.push(Number(rid)); resolvedRevisionGuids.add(rawGuid); }
+          }
+          if(ids.length){ addToMapSet(revisionMap,modelId,ids); resolvedRevisionRuntimeObjects+=ids.length; }
+          setProgress("Importando codigo_revision: modelo "+(m+1)+"/"+modelIds.length+". GUID resueltos: "+resolvedRevisionGuids.size+"/"+revisionGuidItems.size);
           await sleep(0);
         }
+      }
+      const duplicateRedResolve=await resolveImportGuidItemsInto(duplicateRedGuidItems,duplicateRedMap,modelIds,"duplicados rojos");
+      const duplicateMagentaResolve=await resolveImportGuidItemsInto(duplicateMagentaGuidItems,duplicateMagentaMap,modelIds,"duplicados magenta");
+      removeMapSetEntries(revisionMap,directMap);
+
+      let paintedMagenta=0;
+      if(!cancelRequested && mapSetCount(revisionMap)>0){
+        const magentaState={color:{...IMPORT_REVISION_MAGENTA},opacity:100,visible:true};
+        paintedMagenta=await paintImportMap(revisionMap,magentaState,"magenta");
+      }
+      let paintedDuplicateMagenta=0;
+      if(!cancelRequested && mapSetCount(duplicateMagentaMap)>0){
+        const duplicateMagentaState={color:{...IMPORT_DUPLICATE_MAGENTA},opacity:100,visible:true};
+        paintedDuplicateMagenta=await paintImportMap(duplicateMagentaMap,duplicateMagentaState,"duplicado magenta");
+      }
+      let paintedRed=0;
+      if(!cancelRequested && mapSetCount(directMap)>0){
+        const redState={color:{...IMPORT_REVIEWED_RED},opacity:100,visible:true};
+        paintedRed=await paintImportMap(directMap,redState,"rojo");
+      }
+      let paintedDuplicateRed=0;
+      if(!cancelRequested && mapSetCount(duplicateRedMap)>0){
+        const duplicateRedState={color:{...IMPORT_DUPLICATE_RED},opacity:100,visible:true};
+        paintedDuplicateRed=await paintImportMap(duplicateRedMap,duplicateRedState,"duplicado rojo");
       }
       // Además se deja seleccionados los GUID revisados para control visual inmediato.
       if(paintedRed>0){ try{ suppressSelectionUntil=Date.now()+900; await API.viewer.setSelection(mapSetToSelector(directMap),"set"); }catch(e){ recordError("import.selectReviewed",e); } }
       showImportCancel(false);
-      log("Filas leídas: "+rowsRead+". Filas revisado_deo TRUE: "+trueRows+". Directas modelId/runtimeId: "+directRows+". Por GUID: "+guidRows+". Omitidas/no TRUE: "+skippedRows+".");
+      log("Filas leídas: "+rowsRead+". Revisado_deo TRUE: "+trueRows+". Codigo_revision: "+revisionRows+". Directas rojo: "+directRows+". Directas magenta: "+revisionDirectRows+". Por GUID rojo: "+guidRows+". Por GUID magenta: "+revisionGuidRows+". Duplicados rojo: "+duplicateRedRows+". Duplicados magenta: "+duplicateMagentaRows+". Omitidas/sin color: "+skippedRows+".");
       const unresolved=[...guidItems.keys()].filter((g)=>!resolvedGuids.has(g));
+      const unresolvedRevision=[...revisionGuidItems.keys()].filter((g)=>!resolvedRevisionGuids.has(g));
+      const unresolvedDuplicateRed=[...duplicateRedGuidItems.keys()].filter((g)=>!duplicateRedResolve.resolvedGuids.has(g));
+      const unresolvedDuplicateMagenta=[...duplicateMagentaGuidItems.keys()].filter((g)=>!duplicateMagentaResolve.resolvedGuids.has(g));
       log("GUID resueltos: "+resolvedGuids.size+". GUID no encontrados: "+unresolved.length+". Runtime resueltos por GUID: "+resolvedRuntimeObjects+".");
+      log("GUID codigo_revision resueltos: "+resolvedRevisionGuids.size+". GUID codigo_revision no encontrados: "+unresolvedRevision.length+". Runtime codigo_revision resueltos por GUID: "+resolvedRevisionRuntimeObjects+".");
+      if(importShowDuplicates) log("GUID duplicados rojos resueltos: "+duplicateRedResolve.resolvedGuids.size+". No encontrados: "+unresolvedDuplicateRed.length+". Runtime duplicados rojos: "+duplicateRedResolve.resolvedRuntimeObjects+". GUID duplicados magenta resueltos: "+duplicateMagentaResolve.resolvedGuids.size+". No encontrados: "+unresolvedDuplicateMagenta.length+". Runtime duplicados magenta: "+duplicateMagentaResolve.resolvedRuntimeObjects+".");
       if(unresolved.length) log("GUID no encontrados (muestra de "+Math.min(10,unresolved.length)+"): "+unresolved.slice(0,10).join(", "));
-      log("Objetos seleccionados y pintados en rojo por revisado_deo TRUE: "+paintedRed+".");
-      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+paintedRed+" revisados DEO pintados en rojo.");
+      if(unresolvedRevision.length) log("GUID codigo_revision no encontrados (muestra de "+Math.min(10,unresolvedRevision.length)+"): "+unresolvedRevision.slice(0,10).join(", "));
+      if(unresolvedDuplicateRed.length) log("GUID duplicados rojos no encontrados (muestra de "+Math.min(10,unresolvedDuplicateRed.length)+"): "+unresolvedDuplicateRed.slice(0,10).join(", "));
+      if(unresolvedDuplicateMagenta.length) log("GUID duplicados magenta no encontrados (muestra de "+Math.min(10,unresolvedDuplicateMagenta.length)+"): "+unresolvedDuplicateMagenta.slice(0,10).join(", "));
+      log("Objetos pintados: rojo oficial "+paintedRed+", magenta oficial "+paintedMagenta+", duplicado rojo "+paintedDuplicateRed+", duplicado magenta "+paintedDuplicateMagenta+".");
+      setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+paintedRed+" rojo, "+paintedMagenta+" magenta, "+paintedDuplicateRed+" dup rojo, "+paintedDuplicateMagenta+" dup magenta.");
     }
 
     // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
@@ -4835,14 +5074,20 @@
     // no un rojo decorativo. NO es arbitrario: pinta objetos como "revisión DEO" para que la exportación los marque.
     // Si se quisiera un rojo visual distinto al de Trimble, habría que: (a) definir un nuevo color, (b) añadirlo a
     // REVIEWED_DEO_COLORS y confirmar el rojo Trimble exacto. Mientras no se confirme ese valor, se mantiene #fc0d1b.
-    const DEO_REVIEWED_RED={r:252,g:13,b:27,a:255}; // #FC0D1B — rojo semántico DEO (revisado_deo)
-    const QUICK_COLORS={ qcGray:{r:168,g:171,b:180,a:255}, qcMagenta:{r:236,g:0,b:182,a:255}, qcRed:{...DEO_REVIEWED_RED} };
+    const DEO_REVIEWED_RED={...TRIMBLE_OFFICIAL_COLORS.red.rgba}; // #FC0D1B39 - rojo semantico DEO (revisado_deo)
+    const QUICK_COLORS={ qcGray:{...TRIMBLE_OFFICIAL_COLORS.gray.rgba}, qcMagenta:{...TRIMBLE_OFFICIAL_COLORS.magenta.rgba}, qcRed:{...TRIMBLE_OFFICIAL_COLORS.red.rgba} };
     const QUICK_CUSTOM_COLORS_KEY="deo.quickCustomColors.v1";
-    const QUICK_PALETTE=["#b91b5f","#f04b1f","#fff72b","#0b7d45","#4357bd","#1f2230","#ec00b6","#ee7200","#e8c23a","#009688","#7184cf","#6b6b7a","#e10600","#ff8726","#bac72a","#47c7c5","#a997da","#a8abb4","#ff151d","#f39200","#70ad47","#0099d6","#d898d9","#c9ccd4","#e76f61","#f4b51e","#2fc34a","#456cdf","#b54fd6","#eef0f5"];
+    const QUICK_PALETTE=[
+      "#AD145780","#F4511E39","#FFFD3839","#0A804339","#3F51B539","#1B1A2739",
+      "#EC00B639","#EF6C0039","#E4C44239","#01968839","#7886CB39","#6A697739",
+      "#D5000239","#FD8B2539","#C0CA3339","#50D0CB39","#B39DDB39","#AEAEB739",
+      "#FC0D1B39","#F0930039","#7CB34239","#029BE539","#DCA1DC39","#D0D0D739",
+      "#E67C7339","#F7BF2539","#3CCB3E39","#446DDE39","#B85AD039","#F3F3F739"
+    ];
     let quickCustomColors=[], quickColorEditMode=false;
     function loadQuickCustomColors(){ try{ const a=JSON.parse(localStorage.getItem(QUICK_CUSTOM_COLORS_KEY)||"[]"); quickCustomColors=Array.isArray(a)?a.filter((c)=>/^#[0-9a-fA-F]{8}$/.test(c)).slice(0,18):[]; }catch(e){ quickCustomColors=[]; } }
     function saveQuickCustomColors(){ try{ localStorage.setItem(QUICK_CUSTOM_COLORS_KEY,JSON.stringify(quickCustomColors)); }catch(e){ recordError("saveQuickCustomColors",e); } }
-    function hexToColorObj(hex,alpha){ const h=String(hex||"").replace("#",""); if(h.length<6) return {r:0,g:0,b:0,a:255}; return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a:alpha==null?255:Number(alpha)}; }
+    function hexToColorObj(hex,alpha){ const h=String(hex||"").replace("#",""); if(h.length<6) return {r:0,g:0,b:0,a:255}; const a=(alpha==null&&h.length>=8)?parseInt(h.slice(6,8),16):(alpha==null?255:Number(alpha)); return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a}; }
     function colorObjToHex(c){ return "#"+hex2(c.r)+hex2(c.g)+hex2(c.b)+hex2(c.a==null?255:c.a); }
     function renderQuickCustomColors(){
       const cont=document.getElementById("quickCustomColors"), row=document.getElementById("quickColorRow"); if(!cont) return;
@@ -4856,7 +5101,7 @@
     }
     function buildQuickPalette(){
       const pal=document.getElementById("quickColorPalette"); if(!pal||pal.childElementCount) return;
-      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; b.style.background=hex; b.title=hex; b.onclick=()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(hex,alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
+      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; const a=analyzeColor(hex); b.style.background=a.swatchCss||hex; b.title=hex; b.onclick=()=>{ const c=colorObjToHex(hexToColorObj(hex)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
     }
     function showQuickColorPopover(){
       const pop=document.getElementById("quickColorPopover"), anchor=document.getElementById("qcAddColor"); if(!pop||!anchor) return;
@@ -5364,10 +5609,8 @@
       // v9.4.3: carga inicial de datos del modelo → halo azul parpadeante + giro de flechas en el botón global.
       setGlobalRefreshLoading(true);
       try{
-        // v8.11.1: wireUI corre antes de la conexión (API=null), por lo que la lista de modelos quedó vacía.
-        // Tras conectar, repoblar resuelve los alias reales y limpia ids persistidos huérfanos (reconcile).
-        try{ await populateExcludeModels(); }catch(e){ recordError("postConnect.populateExcludeModels",e); }
         await initTemplateTool();
+        await refreshViewerDataGlobal();
         updateCsvColumnSelect();
       } finally {
         setGlobalRefreshLoading(false);
@@ -5393,6 +5636,7 @@
       "getCurrentView TypeError: Cannot read properties of undefined (reading 'find')",
       "Vista activa no lista a tiempo: requiere lectura resiliente con reintentos",
       "Exportación masiva puede fallar por verificación estricta de la vista activa",
+      "Exportación masiva podía omitir vistas por confirmación tardía de Trimble",
       "Abrir vista puede confirmar id/nombre sin aplicar presentación/colores guardados",
       "Etiquetas 3D pueden no renderizarse en vistas guardadas",
       "Colores Tekla/IFC nativos pueden no detectarse (la API solo expone color de presentación)",
@@ -6529,12 +6773,13 @@
       { id:"BUG-007", phase:"Fase 9 parcial", title:"Botón global sin estado claro de datos obsoletos", issue:"El botón global no indicaba datos obsoletos.", hotfix:"Se añadió halo azul discreto cuando los datos están pendientes de actualización.", expected:"El halo debe aparecer con datos obsoletos y desaparecer tras actualizar correctamente.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
       { id:"BUG-008", phase:"Fase 9 parcial", title:"Ayuda del panel Desarrollador ocupaba texto innecesario", issue:"La ayuda mostraba texto visible innecesario.", hotfix:"Se eliminó el texto visible y se dejó solo el botón '?'.", expected:"El panel Desarrollador debe mostrar solo el botón de ayuda.", detectedVersion:"v9.2.0", fixedVersion:"v9.3.0", status:"active", comment:"" },
       { id:"BUG-009", phase:"Fase 8 parcial", title:"Falta una lista de trabajo para bugs reportados", issue:"No existía una ventana ligera de seguimiento de bugs.", hotfix:"Se añade la ventana Reported bugs con lista activa, histórico y reapertura de bugs.", expected:"El usuario debe poder revisar bugs, marcarlos como resueltos/no resueltos y reabrirlos desde histórico.", detectedVersion:"v9.3.0", fixedVersion:"v9.4.0", status:"active", comment:"" },
-      { id:"BUG-010", phase:"Pendiente", title:"Importar GUID con codigo_revision RFI", issue:"Importar registro no aplica color RFI por GUID.", hotfix:"", expected:"Los GUID con RFI deben poder importarse con color seleccionable, magenta por defecto, sin prevalecer sobre rojo DEO.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
+      { id:"BUG-010", phase:"Corregido v9.5.10", title:"Importar GUID con codigo_revision RFI", issue:"Importar registro no aplicaba color RFI por GUID ni marcaba duplicados.", hotfix:"Importacion opcional de codigo_revision con magenta oficial #EC00B639, jerarquia rojo > magenta y duplicados #FFFD3839/#7886CB39.", expected:"Los GUID con RFI deben importarse en magenta por defecto, no pisar rojo DEO y poder mostrar duplicados.", detectedVersion:"v9.1.0", fixedVersion:"v9.5.10", status:"fixed", comment:"" },
       { id:"BUG-011", phase:"Pendiente", title:"Exportación masiva aborta por confirmación de vistas", issue:"Exportación masiva puede abortar por confirmación de vista.", hotfix:"", expected:"Debe exportar en modo permisivo, generar informe por vista y no abortar todo el lote por una vista no confirmada.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
       { id:"BUG-012", phase:"Pendiente", title:"Selección cercanos necesita modo solo con atajo", issue:"El atajo no separa claramente modo automático y ejecución puntual.", hotfix:"", expected:"Debe existir modo automático y modo solo con atajo sin doble ejecución.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
       { id:"BUG-013", phase:"Pendiente", title:"Mostrar parámetros no separa etiquetas live, guardadas e inspector", issue:"Mostrar parámetros mezcla conceptos de etiquetas e inspector.", hotfix:"", expected:"Debe separar inspector, etiquetas live y etiquetas guardadas.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
       { id:"BUG-014", phase:"Pendiente", title:"Excluir IFC anidado y colores nativos IFC/Tekla", issue:"Excluir IFC y colores nativos siguen incompletos.", hotfix:"", expected:"Debe mejorar el diagnóstico de IFC anidado y ampliar Color Probe para colores/materiales nativos si la API lo permite.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
-      { id:"BUG-015", phase:"Fase 9 hotfix", title:"Abrir vista confirmaba id sin aplicar presentación", issue:"Abrir vista y exportación masiva podían aceptar una vista por id/nombre aunque Trimble no hubiera aplicado colores/presentación guardados.", hotfix:"Se prioriza el payload completo de la vista y se verifica presentación/colores cuando la vista declara estado visual.", expected:"Abrir vista y exportar deben usar la vista realmente aplicada o avisar si Trimble solo cambió metadatos.", detectedVersion:"v9.5.4", fixedVersion:"v9.5.5", status:"active", comment:"" }
+      { id:"BUG-015", phase:"Fase 9 hotfix", title:"Abrir vista confirmaba id sin aplicar presentación", issue:"Abrir vista y exportación masiva podían aceptar una vista por id/nombre aunque Trimble no hubiera aplicado colores/presentación guardados.", hotfix:"Se prioriza el payload completo de la vista y se verifica presentación/colores cuando la vista declara estado visual.", expected:"Abrir vista y exportar deben usar la vista realmente aplicada o avisar si Trimble solo cambió metadatos.", detectedVersion:"v9.5.4", fixedVersion:"v9.5.5", status:"active", comment:"" },
+      { id:"BUG-016", phase:"Fase 9 hotfix", title:"Exportación masiva omitía vistas por confirmación tardía", issue:"Trimble podía aplicar una vista segundos después de que activateViewById la hubiera marcado como no confirmada, dejando la exportación masiva sin CSV aunque la vista activa exportara bien justo después.", hotfix:"selectView solo recibe id:string, se añade recuperación tardía de vista activa y reintentos extra de lectura de colores antes de omitir.", expected:"La exportación masiva no debe descartar una vista que Trimble acaba aplicando con colores exportables.", detectedVersion:"v9.5.7", fixedVersion:"v9.5.8", status:"active", comment:"" }
     ];
     const REPORTED_BUGS_DEFAULT_IDS=new Set(REPORTED_BUGS_DEFAULTS.map((b)=>b.id));
     let reportedBugsState=[];
