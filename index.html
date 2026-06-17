@@ -77,10 +77,12 @@
     .switch input:disabled + .slider { background: #d1d5db; cursor: not-allowed; }
     .switch input:focus-visible + .slider { outline:2px solid #1c7fd6; outline-offset:2px; }
     .toggle-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+    .toggle-line > .switch { margin-left:0; }
     .toggle-line label.txt { cursor: pointer; }
     .toggle-line.is-disabled { color: #9ca3af; }
     /* Botón compacto del atajo de Selección cercanos (muestra la combinación; click para grabar). */
-    .near-shortcut-btn { margin-left: auto; min-width: 56px; height: 24px; padding: 0 10px; border: 1px solid #cfd6df; border-radius: 6px; background: #fff; color: #1f2937; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .near-shortcut-btn { margin-left: 0; min-width: 56px; height: 24px; padding: 0 10px; border: 1px solid #cfd6df; border-radius: 6px; background: #fff; color: #1f2937; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    #nearShortcutLine .near-shortcut-btn { margin-left:auto; }
     .near-shortcut-btn:hover { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; background: #f8fbff; }
     .near-shortcut-btn:active { transform: scale(.94); }
     .near-shortcut-btn.is-recording { border-color: #1c7fd6; background: #e8f2fd; box-shadow: 0 0 0 1px #1c7fd6 inset; }
@@ -554,14 +556,19 @@
     .io-option { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #eef0f3; border-radius:8px; background:#fafafa; padding:6px 8px; }
     .io-option-main { min-width:0; }
     .io-option-title { font-size:12px; font-weight:bold; color:#374151; }
-    .io-title-swatch { display:inline-block; width:11px; height:11px; min-width:11px; min-height:11px; box-sizing:border-box; border:1px solid rgba(17,24,39,.28); border-radius:3px; margin-left:6px; vertical-align:-1px; background:var(--swatch); }
+    .io-title-swatch { display:inline-block; width:11px; height:11px; min-width:11px; min-height:11px; box-sizing:border-box; border:1px solid rgba(17,24,39,.28); border-radius:3px; margin:0 0 0 6px; padding:0; vertical-align:-1px; background:var(--swatch); line-height:1; }
     .io-title-swatch + .io-title-swatch { margin-left:4px; }
+    .import-color-swatch { cursor:pointer; }
+    .import-color-swatch:hover, .import-color-swatch:focus-visible { outline:2px solid #1c7fd6; outline-offset:1px; }
     .io-option-sub { font-size:10.5px; color:#6b7280; line-height:1.3; margin-top:1px; }
     .io-secondary-area { margin-top:7px; }
     .io-primary-actions { display:flex; gap:8px; align-items:center; margin-top:9px; }
     .io-primary-actions button { flex:1; }
     .io-primary-btn { background:#1c7fd6; border-color:#1c7fd6; color:#fff; font-weight:bold; }
     .io-primary-btn:hover:not(:disabled) { background:#1769b4; border-color:#1769b4; box-shadow:none; }
+    .io-primary-btn:disabled { opacity:.75; cursor:default; }
+    .tpl-primary-actions { display:flex; gap:8px; align-items:center; margin-top:9px; }
+    .tpl-primary-actions button { flex:1; }
     .io-inline-input { width:100%; border:1px solid #cfd6df; background:#fff; border-radius:8px; height:30px; padding:4px 7px; box-sizing:border-box; }
     .io-import-drop { border:1px dashed #cfd6df; border-radius:10px; background:#fafafa; padding:10px; font-size:11px; color:#6b7280; line-height:1.4; margin-bottom:8px; }
     .io-switch-grid + .io-import-drop { margin-top:8px; }
@@ -1027,7 +1034,7 @@
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplNew_preview">(sin nombre)</span></div>
               <div class="tpl-validation-msg" id="tplNew_validationMsg"></div>
-              <div class="row"><button id="cvCreateBtn">Crear nueva vista</button></div>
+              <div class="row tpl-primary-actions"><button id="cvCreateBtn" class="io-primary-btn">Crear nueva vista</button></div>
             </div>
           </details>
 
@@ -1064,7 +1071,7 @@
               </div>
               <div class="template-preview"><strong>Nombre de vista</strong><span id="tplUpd_preview">(sin nombre)</span></div>
               <div class="tpl-validation-msg" id="tplUpd_validationMsg"></div>
-              <div class="row"><button id="cvUpdateBtn">Actualizar vista</button></div>
+              <div class="row tpl-primary-actions"><button id="cvUpdateBtn" class="io-primary-btn">Actualizar vista</button></div>
             </div>
           </details>
 
@@ -1155,14 +1162,14 @@
             <div class="io-switch-grid">
               <div class="io-option" data-tip="Pinta en magenta oficial los GUID con codigo_revision, salvo que estén revisados en rojo.">
                 <div class="io-option-main">
-                  <div class="io-option-title">Alcance de RFI<span class="io-title-swatch" style="--swatch:rgba(236,0,182,.224);" title="#EC00B639"></span></div>
+                  <div class="io-option-title">Alcance de RFI<button type="button" class="io-title-swatch import-color-swatch" data-import-color="revisionMagenta" style="--swatch:rgba(236,0,182,.224);" title="#EC00B639" aria-label="Cambiar color Alcance de RFI"></button></div>
                   <div class="io-option-sub">Aplica color a los objetos con RFI</div>
                 </div>
                 <label class="switch"><input type="checkbox" id="importRfiMagenta" checked><span class="slider"></span></label>
               </div>
               <div class="io-option" data-tip="Modifica el color de duplicados: Color 1 modifica duplicados DEO&#10;Color 2 modifica duplicados RFI">
                 <div class="io-option-main">
-                  <div class="io-option-title">Mostrar duplicados<span class="io-title-swatch" style="--swatch:rgba(255,253,56,.224);" title="Color 1 #FFFD3839"></span><span class="io-title-swatch" style="--swatch:rgba(120,134,203,.224);" title="Color 2 #7886CB39"></span></div>
+                  <div class="io-option-title">Mostrar duplicados<button type="button" class="io-title-swatch import-color-swatch" data-import-color="duplicateRed" style="--swatch:rgba(255,253,56,.224);" title="Color 1 #FFFD3839" aria-label="Cambiar Color 1 duplicados DEO"></button><button type="button" class="io-title-swatch import-color-swatch" data-import-color="duplicateMagenta" style="--swatch:rgba(120,134,203,.224);" title="Color 2 #7886CB39" aria-label="Cambiar Color 2 duplicados RFI"></button></div>
                   <div class="io-option-sub">Modifica el color de duplicados</div>
                 </div>
                 <label class="switch"><input type="checkbox" id="importShowDuplicates"><span class="slider"></span></label>
@@ -1204,7 +1211,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.5.14";
+    const SCRIPT_VERSION = "v9.5.16";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const TRIMBLE_OFFICIAL_COLORS = {
@@ -2277,6 +2284,53 @@
     const IMPORT_REVISION_MAGENTA = {...TRIMBLE_OFFICIAL_COLORS.magenta.rgba};
     const IMPORT_DUPLICATE_MAGENTA = {r:120,g:134,b:203,a:57}; // #7886CB39
     const IMPORT_DUPLICATE_RED = {r:255,g:253,b:56,a:57}; // #FFFD3839
+    const IMPORT_COLOR_CONFIG_KEY = "deo.importColors.v1";
+    const IMPORT_COLOR_LABELS = { revisionMagenta:"Alcance de RFI", duplicateRed:"Color 1 duplicados DEO", duplicateMagenta:"Color 2 duplicados RFI" };
+    const IMPORT_COLOR_DEFAULTS = {
+      revisionMagenta:{...IMPORT_REVISION_MAGENTA},
+      duplicateRed:{...IMPORT_DUPLICATE_RED},
+      duplicateMagenta:{...IMPORT_DUPLICATE_MAGENTA}
+    };
+    let importColorConfig = {
+      revisionMagenta:{...IMPORT_COLOR_DEFAULTS.revisionMagenta},
+      duplicateRed:{...IMPORT_COLOR_DEFAULTS.duplicateRed},
+      duplicateMagenta:{...IMPORT_COLOR_DEFAULTS.duplicateMagenta}
+    };
+    function getImportColor(key){ return {...(importColorConfig[key]||IMPORT_COLOR_DEFAULTS[key]||IMPORT_REVISION_MAGENTA)}; }
+    function updateImportColorSwatches(){
+      document.querySelectorAll("[data-import-color]").forEach((el)=>{
+        const key=el.getAttribute("data-import-color"), color=getImportColor(key), a=analyzeColor(color), hex=colorObjToHex(color);
+        el.style.setProperty("--swatch",a.cssColor||a.swatchCss||hex);
+        el.title=(IMPORT_COLOR_LABELS[key]||"Color")+" "+hex;
+        el.setAttribute("aria-label","Cambiar "+(IMPORT_COLOR_LABELS[key]||"color")+" ("+hex+")");
+      });
+    }
+    function saveImportColors(){
+      try{
+        const out={}; for(const k of Object.keys(IMPORT_COLOR_DEFAULTS)) out[k]=colorObjToHex(getImportColor(k));
+        localStorage.setItem(IMPORT_COLOR_CONFIG_KEY,JSON.stringify(out));
+      }catch(e){ recordError("saveImportColors",e); }
+    }
+    function loadImportColors(){
+      try{
+        const raw=localStorage.getItem(IMPORT_COLOR_CONFIG_KEY); if(raw){ const data=JSON.parse(raw); if(data&&typeof data==="object"){
+          for(const k of Object.keys(IMPORT_COLOR_DEFAULTS)){ const a=analyzeColor(data[k]); if(a.valid) importColorConfig[k]={...a.rgba}; }
+        } }
+      }catch(e){ recordError("loadImportColors",e); }
+      updateImportColorSwatches();
+    }
+    function setImportColorFromPalette(key,hex){
+      const a=analyzeColor(hex); if(!a.valid||!IMPORT_COLOR_DEFAULTS[key]) return;
+      importColorConfig[key]={...a.rgba};
+      saveImportColors(); updateImportColorSwatches();
+      log("Importar registro: "+(IMPORT_COLOR_LABELS[key]||key)+" cambiado a "+colorObjToHex(importColorConfig[key])+".");
+    }
+    function wireImportColorSwatches(){
+      loadImportColors();
+      document.querySelectorAll("[data-import-color]").forEach((el)=>{
+        el.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); showQuickColorPopover(el,{type:"importColor",key:el.getAttribute("data-import-color")}); });
+      });
+    }
     function isReviewedTrue(v){ return ["TRUE","VERDADERO","1","YES","SI","SÍ"].includes(String(v||"").trim().toUpperCase()); }
     function headerIndex(header,names,contains){
       for(const n of names){ const i=header.findIndex((h)=>h===n); if(i>=0) return i; }
@@ -2500,12 +2554,12 @@
 
       let paintedMagenta=0;
       if(!cancelRequested && mapSetCount(revisionMap)>0){
-        const magentaState={color:{...IMPORT_REVISION_MAGENTA},opacity:100,visible:true};
+        const magentaState={color:getImportColor("revisionMagenta"),opacity:100,visible:true};
         paintedMagenta=await paintImportMap(revisionMap,magentaState,"magenta");
       }
       let paintedDuplicateMagenta=0;
       if(!cancelRequested && mapSetCount(duplicateMagentaMap)>0){
-        const duplicateMagentaState={color:{...IMPORT_DUPLICATE_MAGENTA},opacity:100,visible:true};
+        const duplicateMagentaState={color:getImportColor("duplicateMagenta"),opacity:100,visible:true};
         paintedDuplicateMagenta=await paintImportMap(duplicateMagentaMap,duplicateMagentaState,"duplicado magenta");
       }
       let paintedRed=0;
@@ -2515,7 +2569,7 @@
       }
       let paintedDuplicateRed=0;
       if(!cancelRequested && mapSetCount(duplicateRedMap)>0){
-        const duplicateRedState={color:{...IMPORT_DUPLICATE_RED},opacity:100,visible:true};
+        const duplicateRedState={color:getImportColor("duplicateRed"),opacity:100,visible:true};
         paintedDuplicateRed=await paintImportMap(duplicateRedMap,duplicateRedState,"duplicado rojo");
       }
       // Además se deja seleccionados los GUID revisados para control visual inmediato.
@@ -5084,7 +5138,7 @@
       "#FC0D1B39","#F0930039","#7CB34239","#029BE539","#DCA1DC39","#D0D0D739",
       "#E67C7339","#F7BF2539","#3CCB3E39","#446DDE39","#B85AD039","#F3F3F739"
     ];
-    let quickCustomColors=[], quickColorEditMode=false;
+    let quickCustomColors=[], quickColorEditMode=false, quickPaletteTarget=null;
     function loadQuickCustomColors(){ try{ const a=JSON.parse(localStorage.getItem(QUICK_CUSTOM_COLORS_KEY)||"[]"); quickCustomColors=Array.isArray(a)?a.filter((c)=>/^#[0-9a-fA-F]{8}$/.test(c)).slice(0,18):[]; }catch(e){ quickCustomColors=[]; } }
     function saveQuickCustomColors(){ try{ localStorage.setItem(QUICK_CUSTOM_COLORS_KEY,JSON.stringify(quickCustomColors)); }catch(e){ recordError("saveQuickCustomColors",e); } }
     function hexToColorObj(hex,alpha){ const h=String(hex||"").replace("#",""); if(h.length<6) return {r:0,g:0,b:0,a:255}; const a=(alpha==null&&h.length>=8)?parseInt(h.slice(6,8),16):(alpha==null?255:Number(alpha)); return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a}; }
@@ -5101,13 +5155,14 @@
     }
     function buildQuickPalette(){
       const pal=document.getElementById("quickColorPalette"); if(!pal||pal.childElementCount) return;
-      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; const a=analyzeColor(hex); b.style.background=a.swatchCss||hex; b.title=hex; b.onclick=()=>{ const c=colorObjToHex(hexToColorObj(hex)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
+      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; const a=analyzeColor(hex); b.style.background=a.swatchCss||hex; b.title=hex; b.onclick=()=>{ if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,hex); hideQuickColorPopover(); return; } const c=colorObjToHex(hexToColorObj(hex)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
     }
-    function showQuickColorPopover(){
-      const pop=document.getElementById("quickColorPopover"), anchor=document.getElementById("qcAddColor"); if(!pop||!anchor) return;
+    function showQuickColorPopover(anchorEl,target){
+      quickPaletteTarget=target||null;
+      const pop=document.getElementById("quickColorPopover"), anchor=anchorEl||document.getElementById("qcAddColor"); if(!pop||!anchor) return;
       buildQuickPalette(); const r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+6)+"px"; pop.style.display="block";
     }
-    function hideQuickColorPopover(){ const pop=document.getElementById("quickColorPopover"); if(pop) pop.style.display="none"; }
+    function hideQuickColorPopover(){ quickPaletteTarget=null; const pop=document.getElementById("quickColorPopover"); if(pop) pop.style.display="none"; }
     const QUICK_PARAM_DEFAULTS={ qsParam1:"Assembly type", qsParam2:"Bolt standard" };
     const quickParamIndexCache=new Map();
     async function applyQuickColor(colorObj){
@@ -5370,7 +5425,7 @@
       const addColor=document.getElementById("qcAddColor"); if(addColor) addColor.onclick=(ev)=>{ ev.stopPropagation(); const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none") hideQuickColorPopover(); else showQuickColorPopover(); };
       const editColor=document.getElementById("quickColorEdit"); if(editColor) editColor.onclick=()=>{ quickColorEditMode=!quickColorEditMode; renderQuickCustomColors(); };
       // v8.10.7 (#9): sin botón Aceptar. Al elegir un color en el selector nativo se añade directamente (con la transparencia seleccionada).
-      const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
+      const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,c); hideQuickColorPopover(); return; } if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
       document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")) hideQuickColorPopover(); });
       // El bloque completo actúa como botón: click o Enter/Espacio ejecutan Quantity Surveyor; copiar/limpiar se excluyen.
       const quantBlock=document.getElementById("quantifyBlock");
@@ -5503,6 +5558,7 @@
       const massToggleAll=document.getElementById("massViewsToggleAll"); if(massToggleAll) massToggleAll.onclick=()=>{ if(massViews.length&&massViewsSelected.size===massViews.length){ massViewsSelected.clear(); } else { massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); } renderMassViewsList(); };
       const exportCancelBtn=document.getElementById("exportCancel"); if(exportCancelBtn) exportCancelBtn.onclick=()=>{ massExportCancel=true; setProgress("Cancelando exportación..."); };
       const importCancelBtn=document.getElementById("importCancel"); if(importCancelBtn) importCancelBtn.onclick=()=>{ cancelRequested=true; setProgress("Cancelando importación..."); };
+      wireImportColorSwatches();
 
       // Selección cercanos (#1): la sensibilidad es un radio absoluto; recalcula sin reiniciar el estado.
       const nearPercent=document.getElementById("nearPercent"); if(nearPercent){ nearPercent.addEventListener("input",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); nearPercent.addEventListener("change",()=>{ applyNearMagnet(); updateNearPercentLabel(); scheduleProcessSelection(); }); }
