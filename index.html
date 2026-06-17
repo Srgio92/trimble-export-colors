@@ -378,11 +378,12 @@
     .bug-annot-width { display:flex; align-items:center; gap:6px; font-size:11px; color:#4b5563; }
     .bug-annot-width input[type="range"] { width:96px; }
     .bug-annot-preview { border:1px solid #e5e7eb; border-radius:4px; background:#fff; display:block; }
-    /* Botón "seleccionar elemento de la interfaz" junto a Zona/Herramienta afectada */
+    /* Botón "seleccionar elemento de referencia" del Bug Reporter */
     .bug-area-row { display:flex; gap:6px; align-items:center; }
-    .bug-area-pick { width:30px; height:30px; min-width:30px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid #1c7fd6; border-radius:6px; cursor:pointer; line-height:0; transition:transform .08s ease, background .15s ease, box-shadow .15s ease; }
+    .bug-area-pick { width:30px; height:30px; min-width:30px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid #d1d5db; border-radius:6px; color:#111827; cursor:pointer; line-height:0; transition:transform .08s ease, color .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease; }
     .bug-area-pick:hover { background:#eaf3fd; box-shadow:0 0 0 1px #1c7fd6 inset; }
     .bug-area-pick:active { transform:scale(.92); }
+    .bug-area-pick.is-active, .bug-area-pick.has-target { color:#1c7fd6; border-color:#1c7fd6; }
     .bug-area-pick svg { width:16px; height:16px; display:block; }
     .bug-area-pick.is-active { background:#1c7fd6; }
     .bug-area-pick.is-active svg { stroke:#fff; }
@@ -398,10 +399,15 @@
     .field-label { min-width: 46px; font-weight: bold; color: #374151; }
     .tool-spacer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #f1f1f1; }
     .range-row input[type="range"] { flex: 1; min-width: 130px; }
+    #nearPercent { accent-color: #1c7fd6; }
+    #nearPercent.near-hot { accent-color: #dc2626; }
     #nearPercentLabel { min-width: 46px; text-align: right; font-weight: bold; }
+    #nearPercentLabel.near-hot { color:#dc2626; }
     .range-row { position: relative; }
     .range-row input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
     .range-row input[type="range"]::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 100%); height: 4px; border-radius: 2px; }
+    #nearPercent.near-hot::-webkit-slider-runnable-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 calc(66.666667% - 1px), #dc2626 calc(66.666667% - 1px), #dc2626 100%); }
+    #nearPercent.near-hot::-moz-range-track { background: linear-gradient(to right, #c4c9d1 0%, #c4c9d1 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% - 1px), #1c7fd6 calc(33.333333% + 1px), #c4c9d1 calc(33.333333% + 1px), #c4c9d1 calc(66.666667% - 1px), #dc2626 calc(66.666667% - 1px), #dc2626 100%); }
     .range-row input[type="range"]::-webkit-slider-thumb { margin-top: -5px; }
     .floating-tip { position: fixed; max-width: 320px; background: #1f2937; color: #fff; padding: 7px 9px; border-radius: 5px; font-size: 12px; line-height: 1.35; white-space: pre-line; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
 
@@ -747,7 +753,7 @@
           <span class="summary-switch" id="nearSummarySwitch"><label class="switch"><input type="checkbox" id="nearToggle"><span class="slider"></span></label></span>
         </summary>
         <div class="tool-body">
-          <div class="toggle-line" id="nearShortcutLine" data-tip="Atajo de teclado para activar/desactivar Selección cercanos.">
+          <div class="toggle-line" id="nearShortcutLine" data-tip="Con el atajo activo, Selección cercanos solo funciona mientras mantienes pulsada la combinación al seleccionar con click izquierdo.">
             <label class="switch"><input type="checkbox" id="nearShortcutToggle"><span class="slider"></span></label>
             <label class="txt" for="nearShortcutToggle">Atajo de teclado</label>
             <button type="button" id="nearShortcutEdit" class="near-shortcut-btn" title="Personalizar atajo (pulsa y graba una combinación)" aria-label="Personalizar atajo"><span id="nearShortcutCombo">Alt+C</span></button>
@@ -1211,7 +1217,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.5.16";
+    const SCRIPT_VERSION = "v9.5.23";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const TRIMBLE_OFFICIAL_COLORS = {
@@ -1245,8 +1251,11 @@
     const HIDDEN_MARK_OPACITY = 50; // escala 0-100 del Workspace API
     const CONTACT_TOLERANCE = 0.012;
     const CONTACT_VOLUME_MAX = 0.001;
+    const NEAR_SENSITIVITY_MAX_PERCENT = 300;
+    const NEAR_REACH_CAP = 80;
     const CANDIDATE_BBOX_BATCH = 400;
     const PROPS_BATCH = 60;
+    const NATIVE_COLOR_SCAN_CAP = 6000;
     const LOG_MAX_LINES = 160;
     const MAX_PARAM_MARKUPS = 200;
     // Offset vertical mínimo (mm) para que la etiqueta quede claramente por encima del objeto y no quede enterrada en vistas densas.
@@ -1898,8 +1907,226 @@
     function computeRevisionBase(viewName){ const customOn=document.getElementById("customCodes").checked; const customText=document.getElementById("customCodesText").value.trim(); const errorOn=document.getElementById("errorCodes").checked; if(customOn&&customText) return customText.toUpperCase(); const auto=extractRevisionCode(viewName); if(auto) return auto; if(errorOn) return "ERROR ("+(viewName?viewName:"VIEW_NAME_NOT_FOUND")+")"; return ""; }
 
     // ===================== OBJETOS COLOREADOS =====================
-    async function getColoredObjectEntries(){ const groups=await API.viewer.getColoredObjects(); const entries=[]; for(const g of groups||[]){ const modelId=g.modelId||""; for(const obj of (g.objects||[])){ const rid=Number(obj.id); const an=analyzeColor(obj.color); if(modelId&&Number.isFinite(rid)) entries.push({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,swatchCss:an.swatchCss,colorValid:an.valid}); } } return entries; }
-    async function getColoredObjectEntriesWithRetry(){ for(let a=1;a<=5;a++){ const e=await getColoredObjectEntries(); if(e.length>0) return e; await sleep(600);} return []; }
+    // Orden de lectura: color nativo expuesto por getObjects/getObjectProperties primero;
+    // getColoredObjects() queda como fallback para colores de presentacion/API.
+    let nativeColorCache=null, lastNativeColorDiag=null, lastColorDetectionDiag=null;
+    const NATIVE_COLOR_PATH_RE=/colou?r|appearance|render|presentation|surface|style|rgb|rgba|diffuse|ambient|specular|ifc.*style/i;
+    function colorDetectionCancelled(){ return (typeof cancelRequested!=="undefined"&&cancelRequested)||(typeof massExportCancel!=="undefined"&&massExportCancel); }
+    function runtimeIdFromViewerObject(obj){ return Number(typeof obj==="object"?(obj.id??obj.objectRuntimeId??obj.runtimeId):obj); }
+    function colorFromViewerObject(obj){
+      if(!obj||typeof obj!=="object") return null;
+      const keys=["color","colour","Color","Colour","appearanceColor","materialColor","surfaceColor","displayColor"];
+      for(const k of keys) if(obj[k]!=null) return obj[k];
+      return null;
+    }
+    function makeColorEntry(modelId,rid,raw,source,extra){
+      const an=analyzeColor(raw);
+      if(!modelId||!Number.isFinite(rid)) return null;
+      return Object.assign({modelId,objectRuntimeId:rid,color:an.valid?an.normalizedColor:an.text,normalizedColor:an.normalizedColor,cssColor:an.cssColor,swatchCss:an.swatchCss,colorValid:an.valid,colorSource:source},extra||{});
+    }
+    function makeValidColorEntry(modelId,rid,analysis,source,extra){
+      if(!analysis||!analysis.valid) return null;
+      return Object.assign({modelId,objectRuntimeId:rid,color:analysis.normalizedColor,normalizedColor:analysis.normalizedColor,cssColor:analysis.cssColor,swatchCss:analysis.swatchCss,colorValid:true,colorSource:source},extra||{});
+    }
+    function baseColorDetectionDiag(){
+      return {ts:new Date().toISOString(),source:"none",modelsChecked:0,objectsChecked:0,colorsFound:0,objectPropertiesColorCount:0,coloredObjectsColorCount:0,unsupportedNativeColorSuspected:false,getObjectsColorCount:0,scanCap:NATIVE_COLOR_SCAN_CAP,truncated:false,samples:[]};
+    }
+    async function getObjectsForColorScan(){
+      const attempts=[()=>API.viewer.getObjects(),()=>API.viewer.getObjects(undefined,{visible:true})];
+      let lastErr=null, emptyGroups=[];
+      for(const fn of attempts){
+        try{
+          const groups=await fn();
+          if(Array.isArray(groups)&&groups.length) return groups;
+          if(Array.isArray(groups)) emptyGroups=groups;
+        }catch(e){ lastErr=e; recordError("getObjectsForColorScan",e); }
+      }
+      if(lastErr) throw lastErr;
+      return emptyGroups;
+    }
+    function analyzeNativeColorCandidate(value,path){
+      const pathText=String(path||""), pathLooks=NATIVE_COLOR_PATH_RE.test(pathText);
+      if(value==null) return null;
+      if(Array.isArray(value)){
+        if(!pathLooks||value.length<3||value.length>4||value.slice(0,3).some((x)=>!Number.isFinite(Number(x)))) return null;
+        const an=analyzeColor(value); return an.valid?{analysis:an,source:pathText,value:safeJson(value)}:null;
+      }
+      if(typeof value==="object"){
+        const triplets=[["r","g","b","a"],["red","green","blue","alpha"],["R","G","B","A"],["Red","Green","Blue","Alpha"]];
+        for(const t of triplets){
+          if(value[t[0]]!=null&&value[t[1]]!=null&&value[t[2]]!=null){
+            const obj={r:value[t[0]],g:value[t[1]],b:value[t[2]],a:value[t[3]]==null?255:value[t[3]]};
+            const an=analyzeColor(obj); if(an.valid) return {analysis:an,source:pathText,value:safeJson(obj)};
+          }
+        }
+        return null;
+      }
+      const s=String(value).trim();
+      if(!s) return null;
+      let an=analyzeColor(s);
+      if(an.valid&&(pathLooks||/^#|rgba?\s*\(/i.test(s))) return {analysis:an,source:pathText,value:s.slice(0,120)};
+      const hex=s.match(pathLooks?/#?[0-9a-fA-F]{6,8}\b/:/#[0-9a-fA-F]{6,8}\b/);
+      if(hex){ an=analyzeColor(hex[0]); if(an.valid) return {analysis:an,source:pathText,value:s.slice(0,120)}; }
+      const rgb=s.match(/rgba?\s*\([^)]+\)/i);
+      if(rgb){ an=analyzeColor(rgb[0]); if(an.valid) return {analysis:an,source:pathText,value:s.slice(0,120)}; }
+      if(pathLooks){
+        const nums=s.match(/-?\d+(?:\.\d+)?/g)||[];
+        if(nums.length>=3&&nums.length<=4){
+          an=analyzeColor(nums.map(Number)); if(an.valid) return {analysis:an,source:pathText,value:s.slice(0,120)};
+        }
+        const n=Number(value);
+        if(Number.isInteger(n)&&n>0xFFFF&&n<=0xFFFFFFFF){
+          const h=n.toString(16).toUpperCase().padStart(n>0xFFFFFF?8:6,"0");
+          an=analyzeColor("#"+(h.length===8?h.slice(2)+h.slice(0,2):h));
+          if(an.valid) return {analysis:an,source:pathText,value:String(value)};
+        }
+      }
+      return null;
+    }
+    function extractNativeColorFromProps(props){
+      let hit=null;
+      const walk=(obj,path,depth)=>{
+        if(hit||obj==null||depth>7) return;
+        const direct=analyzeNativeColorCandidate(obj,path);
+        if(direct&&NATIVE_COLOR_PATH_RE.test(String(path||""))){ hit=direct; return; }
+        if(typeof obj!=="object") return;
+        if(Array.isArray(obj)){ for(let i=0;i<obj.length&&i<90&&!hit;i++) walk(obj[i],path?path+"."+i:String(i),depth+1); return; }
+        for(const k of Object.keys(obj)){
+          if(hit) break;
+          const v=obj[k], next=path?path+"."+k:k;
+          const nextLooks=NATIVE_COLOR_PATH_RE.test(next);
+          if(v&&typeof v==="object"){
+            const nested=analyzeNativeColorCandidate(v,next);
+            if(nested&&(nextLooks||nested.source)){ hit=nested; break; }
+            walk(v,next,depth+1);
+          } else if(nextLooks||(typeof v==="string"&&(/#[0-9a-fA-F]{6,8}\b|rgba?\s*\(/i.test(v)))){
+            const cand=analyzeNativeColorCandidate(v,next);
+            if(cand){ hit=cand; break; }
+          }
+        }
+      };
+      walk(props,"",0);
+      return hit;
+    }
+    function directObjectPropertyColor(props){
+      if(!props||typeof props!=="object") return null;
+      const keys=["color","colour","Color","Colour"];
+      for(const k of keys){
+        if(props[k]==null) continue;
+        const an=analyzeColor(props[k]);
+        if(an.valid) return {analysis:an,source:"ObjectProperties."+k,value:safeJson(props[k])};
+      }
+      return null;
+    }
+    async function getPresentationColorEntries(){
+      const groups=await API.viewer.getColoredObjects();
+      const entries=[];
+      for(const g of groups||[]){
+        const modelId=g.modelId||"";
+        for(const obj of (g.objects||[])){
+          const rid=Number(obj.id);
+          const entry=makeColorEntry(modelId,rid,obj.color,"coloredObjects",{colorProperty:"viewer.getColoredObjects().objects[].color"});
+          if(entry) entries.push(entry);
+        }
+      }
+      return entries;
+    }
+    async function getNativeColorEntriesFromProperties(force){
+      if(nativeColorCache&&!force) return nativeColorCache.entries;
+      const diag=baseColorDetectionDiag();
+      const entries=[], seen=new Set();
+      try{
+        const byModel=new Map(), groups=await getObjectsForColorScan();
+        for(const g of groups||[]){
+          const modelId=g.modelId||g.id||"";
+          if(!modelId) continue;
+          if(!byModel.has(modelId)) byModel.set(modelId,[]);
+          for(const obj of (g.objects||g.objectRuntimeIds||g.runtimeIds||[])){
+            const rid=runtimeIdFromViewerObject(obj);
+            if(!Number.isFinite(rid)) continue;
+            byModel.get(modelId).push(rid);
+            const raw=colorFromViewerObject(obj);
+            if(raw==null) continue;
+            const an=analyzeColor(raw);
+            if(!an.valid) continue;
+            const key=modelId+":"+rid;
+            if(seen.has(key)) continue;
+            seen.add(key);
+            entries.push(makeValidColorEntry(modelId,rid,an,"objectProperties",{colorProperty:"viewer.getObjects().objects[].color",nativeValue:safeJson(raw)}));
+            diag.objectPropertiesColorCount++; diag.getObjectsColorCount++;
+            if(diag.samples.length<12) diag.samples.push({modelId,objectRuntimeId:rid,color:an.normalizedColor,source:"viewer.getObjects().objects[].color",value:safeJson(raw)});
+          }
+        }
+        for(const [m,ids] of byModel.entries()) byModel.set(m,[...new Set(ids)]);
+        diag.modelsChecked=byModel.size;
+        let visibleTotal=0; for(const ids of byModel.values()) visibleTotal+=ids.length;
+        let remaining=NATIVE_COLOR_SCAN_CAP;
+        for(const [modelId,idsRaw] of byModel.entries()){
+          if(remaining<=0||colorDetectionCancelled()) break;
+          const ids=[...new Set(idsRaw.map(Number).filter(Number.isFinite))].slice(0,remaining);
+          remaining-=ids.length; diag.objectsChecked+=ids.length;
+          const idsToScan=ids.filter((rid)=>!seen.has(modelId+":"+rid));
+          for(let i=0;i<idsToScan.length;i+=PROPS_BATCH){
+            if(colorDetectionCancelled()) break;
+            const chunk=idsToScan.slice(i,i+PROPS_BATCH);
+            const propsMap=await getPropertiesCached(modelId,chunk);
+            for(const rid of chunk){
+              const key=modelId+":"+rid;
+              if(seen.has(key)) continue;
+              const props=propsMap.get(rid)||{};
+              const hit=directObjectPropertyColor(props)||extractNativeColorFromProps(props);
+              if(!hit) continue;
+              const an=hit.analysis;
+              seen.add(key);
+              entries.push(makeValidColorEntry(modelId,rid,an,"objectProperties",{colorProperty:hit.source,nativeValue:hit.value}));
+              diag.objectPropertiesColorCount++;
+              if(diag.samples.length<12) diag.samples.push({modelId,objectRuntimeId:rid,color:an.normalizedColor,source:hit.source,value:hit.value});
+            }
+            await sleep(0);
+          }
+        }
+        diag.colorsFound=entries.length;
+        diag.source=entries.length?"objectProperties":"none";
+        diag.truncated=diag.objectsChecked<visibleTotal;
+        diag.visibleObjectsTotal=visibleTotal;
+        diag.scannedObjects=diag.objectsChecked;
+        diag.coloredObjectsTotal=entries.length;
+        diag.unsupportedNativeColorSuspected=!entries.length&&diag.objectsChecked>0;
+      }catch(e){
+        diag.error=e&&e.message?e.message:String(e);
+        recordError("objectPropertiesColorDetection",e);
+      }
+      lastNativeColorDiag=diag; lastColorDetectionDiag=diag;
+      nativeColorCache={entries,ts:Date.now(),diag};
+      return entries;
+    }
+    async function getColoredObjectEntries(opts){
+      opts=opts||{};
+      const native=await getNativeColorEntriesFromProperties(!!opts.forceNative||!!opts.forceObjectProperties);
+      if(native.length&&!opts.includeColoredObjects) return native;
+      let presentation=[];
+      try{
+        presentation=await getPresentationColorEntries();
+      }catch(e){
+        recordError("coloredObjectsFallback",e);
+        if(lastColorDetectionDiag) lastColorDetectionDiag.coloredObjectsError=e&&e.message?e.message:String(e);
+      }
+      const validPresentation=presentation.filter((e)=>e.colorValid).length;
+      const diag=lastColorDetectionDiag||baseColorDetectionDiag();
+      diag.coloredObjectsColorCount=validPresentation;
+      diag.colorsFound=native.length+validPresentation;
+      diag.source=native.length?"objectProperties":(validPresentation?"coloredObjects":"none");
+      diag.unsupportedNativeColorSuspected=!native.length&&!validPresentation&&diag.objectsChecked>0;
+      lastNativeColorDiag=diag; lastColorDetectionDiag=diag;
+      if(native.length){
+        const seen=new Set(native.map((e)=>e.modelId+":"+e.objectRuntimeId));
+        return native.concat(presentation.filter((e)=>!seen.has(e.modelId+":"+e.objectRuntimeId)));
+      }
+      return presentation;
+    }
+    async function getColoredObjectEntriesWithRetry(){
+      return await getColoredObjectEntries();
+    }
     async function getCurrentColorMap(){ const map=new Map(); let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ colored=[]; } for(const c of colored) map.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor); return map; }
 
     // ===================== PROPIEDADES =====================
@@ -2413,6 +2640,7 @@
           await sleep(0);
         }
       }
+      if(painted>0){ nativeColorCache=null; lastNativeColorDiag=null; lastColorDetectionDiag=null; }
       return painted;
     }
     // v8.10.7 (#16): expande la selección del usuario a una lista uniforme de "archivos" {name,text()}.
@@ -2592,10 +2820,25 @@
     }
 
     // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
-    function getNearCalibrationFactor(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return 1; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return Number.isFinite(v)?Math.max(0,Math.min(3,v/100)):1; }
+    function clampNearPercent(v){ v=Number(v); if(!Number.isFinite(v)) return 100; return Math.max(0,Math.min(NEAR_SENSITIVITY_MAX_PERCENT,v)); }
+    function nearCurveValue(percent){
+      const p=clampNearPercent(percent);
+      let rawReach=1;
+      if(p<100){
+        const t=Math.min(0.999999,Math.max(0,(100-p)/100));
+        rawReach=1-(t*t)/(1-t);
+      } else if(p>100){
+        const t=Math.min(0.999999,Math.max(0,(p-100)/(NEAR_SENSITIVITY_MAX_PERCENT-100)));
+        rawReach=1+(t*t)/(1-t);
+      }
+      const reach=Math.max(0,Math.min(NEAR_REACH_CAP,rawReach));
+      return {percent:p,rawReach,reach,clamped:Math.abs(reach-rawReach)>0.0001};
+    }
+    function getNearSensitivityCurve(){ const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; const customEl=document.getElementById("nearCustom"); const customOn=nearOn&&customEl&&customEl.checked; if(!customOn) return {percent:100,rawReach:1,reach:1,clamped:false,defaultCurve:true}; const v=parseFloat(document.getElementById("nearPercent").value||"100"); return nearCurveValue(v); }
     // Efecto imán: cerca del 100% el slider se engancha al valor base.
     function applyNearMagnet(){ const el=document.getElementById("nearPercent"); if(!el) return; const v=parseFloat(el.value); if(Number.isFinite(v)&&v!==100&&Math.abs(v-100)<=10) el.value="100"; }
-    function updateNearPercentLabel(){ const el=document.getElementById("nearPercent"), lab=document.getElementById("nearPercentLabel"); if(el&&lab) lab.textContent=el.value+"%"; }
+    function updateNearPercentLabel(){ const el=document.getElementById("nearPercent"), lab=document.getElementById("nearPercentLabel"); if(!el||!lab) return; const v=clampNearPercent(el.value); const hot=v>200; lab.textContent=String(Math.round(v))+"%"; el.classList.toggle("near-hot",hot); lab.classList.toggle("near-hot",hot); }
+    function formatNearReach(n){ if(!Number.isFinite(n)) return n>0?"+inf":"-inf"; const a=Math.abs(n); if(a>=1000) return n.toExponential(1); return String(Math.round(n*100)/100); }
     function isFastenerOrWeld(propObj,bb,maxVolume){ const t=propsSearchText(propObj); const terms=["fastener","mechanical fastener","weld","welding","weld seam","soldadura","cordon","cordón","bolt","screw","nut","washer","anchor","perno","tornillo","tuerca","arandela","anclaje","varilla","stud"]; if(terms.some((x)=>t.includes(x))) return true; if(bb&&boxVolume(bb)<maxVolume) return true; return false; }
     async function assemblyCandidateIds(modelId,seedIds){
       const ids=new Set();
@@ -2609,17 +2852,18 @@
       if(ids.size===0){ try{ add(await API.viewer.getHierarchyChildren(modelId,seedIds,undefined,true)); }catch(e){} }
       return [...ids];
     }
-    async function computeNeighbors(modelId,seedIds,factor){
+    async function computeNeighbors(modelId,seedIds,curve){
       if(seedIds.length===0) return [];
-      if(factor<=0){ log("Selección cercanos: sensibilidad 0%, no se añaden objetos cercanos."); return []; }
+      const sensitivity=(curve&&typeof curve==="object")?curve:nearCurveValue(Number(curve)*100);
+      const reach=sensitivity.reach;
+      if(reach<=0){ log("Selección cercanos: sensibilidad "+Math.round(sensitivity.percent)+"%, alcance=0x; no se añaden objetos cercanos."); return []; }
       let seedBoxesRaw=[]; try{ seedBoxesRaw=await API.viewer.getObjectBoundingBoxes(modelId,seedIds); }catch(e){ recordError("computeNeighbors.seedBbox",e); return []; }
       const seedBoxes=(seedBoxesRaw||[]).map(bboxOf).filter(Boolean); if(seedBoxes.length===0) return [];
       const seedBox=unionBox(seedBoxes);
       const seedDiag=boxDiagonal(seedBox);
       // Radio ABSOLUTO de búsqueda: base de contacto + 4% de la diagonal de la semilla.
-      // <=100%: escala lineal (100% = comportamiento base). >100%: escala cuadrática para
-      // que el alcance máximo (300% -> 9x base) sea mucho mayor que el comportamiento anterior.
-      const reach = factor<=1 ? factor : factor*factor;
+      // v9.5.20: curva parabólica/asintótica. 100%=1x exacto; 0% tiende a -inf (se opera como 0x);
+      // el máximo tiende a +inf, limitado por NEAR_REACH_CAP para no saturar la API del visor.
       const margin=(CONTACT_TOLERANCE + seedDiag*0.04) * reach;
       const volMax=CONTACT_VOLUME_MAX * reach;
       const seedSet=new Set(seedIds);
@@ -2630,7 +2874,8 @@
       const propsMap=await getPropertiesCached(modelId,contact);
       const matches=[];
       for(const id of contact){ const prop=propsMap.get(id)||{}; if(isFastenerOrWeld(prop,bboxById.get(id),volMax)) matches.push(id); }
-      log("Selección cercanos: ensamblaje="+candidateIds.length+", en radio="+contact.length+", añadidos="+matches.length+", sensibilidad="+Math.round(factor*100)+"% ("+modelId+").");
+      const curveText=sensitivity.clamped?("alcance="+formatNearReach(sensitivity.rawReach)+"x -> cap "+formatNearReach(reach)+"x"):("alcance="+formatNearReach(reach)+"x");
+      log("Selección cercanos: ensamblaje="+candidateIds.length+", en radio="+contact.length+", añadidos="+matches.length+", sensibilidad="+Math.round(sensitivity.percent)+"%, "+curveText+" ("+modelId+").");
       return matches;
     }
 
@@ -2680,9 +2925,12 @@
     }
 
     // ===================== MOTOR DE SELECCIÓN =====================
-    function toolsActive(){ return !!(document.getElementById("nearToggle").checked||document.getElementById("excludeToggle").checked||document.getElementById("includeToggle").checked); }
+    function toolsActive(){ return !!(nearAutoActive()||document.getElementById("excludeToggle").checked||document.getElementById("includeToggle").checked); }
     async function processSelectionNow(){
-      if(!toolsActive()) return;
+      const nearActiveForRun=nearAutoActive();
+      const excludeActive=!!(document.getElementById("excludeToggle")&&document.getElementById("excludeToggle").checked);
+      const includeActive=!!(document.getElementById("includeToggle")&&document.getElementById("includeToggle").checked);
+      if(!(nearActiveForRun||excludeActive||includeActive)) return;
       if(selBusy){ selectionDirty=true; return; }
       // v8.11.1: si estamos en ventana de supresión, no se descarta el disparo: se reprograma pasada la ventana.
       if(Date.now()<suppressSelectionUntil){ clearTimeout(selectionTimer); selectionTimer=setTimeout(processSelectionNow,Math.max(suppressSelectionUntil-Date.now(),0)+60); return; }
@@ -2696,10 +2944,10 @@
 
         // Conjunto de vecinos DESEADO, recalculado desde cero solo a partir de las semillas reales.
         const desiredMap=new Map();
-        if(nearAutoActive() && genuineSeeds.length>0){
-          const factor=getNearCalibrationFactor();
+        if(nearActiveForRun && genuineSeeds.length>0){
+          const curve=getNearSensitivityCurve();
           const seedsByModel=new Map(); for(const o of genuineSeeds) addToMapSet(seedsByModel,o.modelId,[o.runtimeId]);
-          for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set],factor); addToMapSet(desiredMap,modelId,neighbors); }
+          for(const [modelId,set] of seedsByModel.entries()){ const neighbors=await computeNeighbors(modelId,[...set],curve); addToMapSet(desiredMap,modelId,neighbors); }
         }
         for(const o of genuineSeeds){ if(desiredMap.has(o.modelId)) desiredMap.get(o.modelId).delete(o.runtimeId); }
         const desiredKeys=new Set(); for(const [m,s] of desiredMap.entries()) for(const id of s) desiredKeys.add(m+":"+id);
@@ -2718,7 +2966,7 @@
         for(const k of desiredKeys){ if(!currentKeySet.has(k) && !removeKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(addMap,m,[id]); } }
         // A quitar: lo que la herramienta había añadido y ya no se desea, más lo seleccionado que cae en exclusión/filtro.
         const removeFromSel=new Map();
-        if(nearAutoActive()){
+        if(nearActiveForRun){
           for(const k of toolAddedKeys){ if(!desiredKeys.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
         }
         for(const k of removeKeys){ if(currentKeySet.has(k)){ const [m,id]=splitKey(k); addToMapSet(removeFromSel,m,[id]); } }
@@ -2749,8 +2997,9 @@
       try{ await API.viewer.setSelection(mapSetToSelector(map),"remove"); }catch(e){ recordError("removeToolAdded",e); }
       toolAddedKeys=new Set();
     }
-    // Selección cercanos procesa automáticamente cuando la herramienta principal está activa.
-    function nearAutoActive(){ const t=document.getElementById("nearToggle"); return !!(t&&t.checked); }
+    // Selección cercanos procesa automáticamente solo si el atajo no esta en modo puerta.
+    // Con "Atajo de teclado" activo, solo corre cuando el evento de selección llega con el combo pulsado.
+    function nearAutoActive(){ return nearToolCanProcessNow(); }
 
 
     // ===================== OCULTOS (#3) =====================
@@ -4817,26 +5066,59 @@
       if(t.checked!==on) t.checked=on;
       syncNearUiState();
       try{ recordUserAction("nearToggle",{on,source:source||"ui"}); }catch(e){}
-      if(on) scheduleProcessSelection();
+      if(on){
+        if(nearShortcutEnabled){ nearShortcutHeld=false; nearShortcutRunUntil=0; }
+        else scheduleProcessSelection();
+      }
       else await removeToolAddedFromSelection();
     }
 
     // ===================== Atajo de teclado para "Selección cercanos" =====================
     const NEAR_SC_EN_KEY="deo.nearShortcut.enabled.v1";
     const NEAR_SC_COMBO_KEY="deo.nearShortcut.combo.v1";
+    const NEAR_SC_RUN_MS=700;
     let nearShortcutEnabled=true, nearShortcutCombo="Alt+C", nearShortcutRecording=false;
+    let nearShortcutHeld=false, nearShortcutRunUntil=0;
     let lastNearShortcutDiag=null; // diagnóstico del último evento de atajo (para Bug Report/debug)
     function loadNearShortcut(){ try{ const e=localStorage.getItem(NEAR_SC_EN_KEY); if(e!==null) nearShortcutEnabled=(e==="1"||e==="true"); const c=localStorage.getItem(NEAR_SC_COMBO_KEY); if(c) nearShortcutCombo=c; localStorage.removeItem("deo.nearShortcut.onlyMode.v1"); }catch(e){} }
     function saveNearShortcut(){ try{ localStorage.setItem(NEAR_SC_EN_KEY,nearShortcutEnabled?"1":"0"); localStorage.setItem(NEAR_SC_COMBO_KEY,nearShortcutCombo); }catch(e){ recordError("nearShortcut.save",e); } }
+    function nearToolCanProcessNow(){
+      const t=document.getElementById("nearToggle");
+      if(!(t&&t.checked)) return false;
+      if(!nearShortcutEnabled) return true;
+      return Date.now()<=nearShortcutRunUntil;
+    }
+    function normalizeNearShortcutKey(key){
+      const map={" ":"Space","Spacebar":"Space","ArrowLeft":"Left","ArrowRight":"Right","ArrowUp":"Up","ArrowDown":"Down","Escape":"Esc","Esc":"Esc","Enter":"Enter","Tab":"Tab","Control":"Ctrl","Ctrl":"Ctrl"};
+      if(map[key]) return map[key];
+      if(/^[a-z]$/i.test(key)) return key.toUpperCase();
+      if(/^f\d{1,2}$/i.test(key)) return key.toUpperCase();
+      return String(key||"");
+    }
+    function nearShortcutComboSpec(){
+      const parts=String(nearShortcutCombo||"").split("+").filter(Boolean);
+      const key=parts.pop()||"";
+      return {mods:parts,key};
+    }
+    function nearShortcutKeyupReleasesCombo(ev){
+      const spec=nearShortcutComboSpec();
+      const k=normalizeNearShortcutKey(ev.key);
+      if(k===spec.key) return true;
+      return spec.mods.includes(k);
+    }
+    function nearShortcutHeldNow(){ return !!(nearShortcutEnabled&&nearShortcutHeld); }
+    function markNearShortcutSelectionGesture(){
+      if(!nearShortcutHeldNow()){ nearShortcutRunUntil=0; return false; }
+      nearShortcutRunUntil=Date.now()+NEAR_SC_RUN_MS;
+      if(lastNearShortcutDiag){ lastNearShortcutDiag.selectionGesture=true; lastNearShortcutDiag.mode="heldCombo+leftClick"; lastNearShortcutDiag.runUntil=nearShortcutRunUntil; lastNearShortcutDiag.executed=true; }
+      return true;
+    }
     // Normaliza un evento de teclado a {mods:[...], key, str}. Devuelve null si solo hay modificador o tecla Meta (sistema).
     function nearComboFromEvent(ev){
       if(ev.metaKey) return null;
       let key=ev.key; if(key==="Control"||key==="Alt"||key==="Shift"||key==="Meta") return null;
       const mods=[]; if(ev.ctrlKey) mods.push("Ctrl"); if(ev.altKey) mods.push("Alt"); if(ev.shiftKey) mods.push("Shift");
-      const map={" ":"Space","Spacebar":"Space","ArrowLeft":"Left","ArrowRight":"Right","ArrowUp":"Up","ArrowDown":"Down","Escape":"Esc","Esc":"Esc","Enter":"Enter","Tab":"Tab"};
-      if(map[key]) key=map[key];
-      else if(/^[a-z]$/i.test(key)) key=key.toUpperCase();
-      else if(/^f\d{1,2}$/i.test(key)) key=key.toUpperCase();
+      key=normalizeNearShortcutKey(key);
       return { mods, key, str:(mods.length?mods.join("+")+"+":"")+key };
     }
     // Reglas de validación de la combinación grabada (máx. dos teclas; rechaza reservadas/conflictivas).
@@ -4878,11 +5160,22 @@
       }
       if(!matched) return;
       ev.preventDefault();
-      const t=document.getElementById("nearToggle"); if(!t) return;
-      const next=!t.checked;
-      setNearEnabled(next,"shortcut");
-      if(lastNearShortcutDiag) lastNearShortcutDiag.executed=true;
-      log("Selección cercanos: atajo "+nearShortcutCombo+" -> "+(next?"ON":"OFF")+".");
+      if(ev.repeat) return;
+      nearShortcutHeld=true;
+      nearShortcutRunUntil=0;
+      if(lastNearShortcutDiag){ lastNearShortcutDiag.held=true; lastNearShortcutDiag.mode="heldCombo"; }
+    }
+    function onNearShortcutKeyup(ev){
+      if(nearShortcutRecording) return;
+      if(!nearShortcutHeld) return;
+      if(nearShortcutKeyupReleasesCombo(ev)){
+        nearShortcutHeld=false;
+        if(lastNearShortcutDiag){ lastNearShortcutDiag.releasedAt=new Date().toISOString(); lastNearShortcutDiag.held=false; }
+      }
+    }
+    function resetNearShortcutHeld(){
+      nearShortcutHeld=false;
+      nearShortcutRunUntil=0;
     }
     function nearShortcutBlockReason(){
       const ae=document.activeElement;
@@ -4914,13 +5207,17 @@
     function initNearShortcut(){
       loadNearShortcut();
       const scToggle=document.getElementById("nearShortcutToggle");
-      if(scToggle){ scToggle.checked=nearShortcutEnabled; scToggle.addEventListener("change",()=>{ nearShortcutEnabled=scToggle.checked; saveNearShortcut(); log("Selección cercanos: atajo de teclado "+(nearShortcutEnabled?("activado ("+nearShortcutCombo+")"):"desactivado")+"."); }); }
+      if(scToggle){ scToggle.checked=nearShortcutEnabled; scToggle.addEventListener("change",async()=>{ nearShortcutEnabled=scToggle.checked; resetNearShortcutHeld(); saveNearShortcut(); log("Selección cercanos: atajo de teclado "+(nearShortcutEnabled?("activado ("+nearShortcutCombo+", solo mientras está pulsado)"):"desactivado")+"."); const nearOn=document.getElementById("nearToggle")&&document.getElementById("nearToggle").checked; if(nearOn){ if(nearShortcutEnabled) await removeToolAddedFromSelection(); else scheduleProcessSelection(); } }); }
       const edit=document.getElementById("nearShortcutEdit"); if(edit) edit.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); startNearShortcutRecording(); });
       const reset=document.getElementById("nearShortcutReset"); if(reset) reset.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(nearShortcutRecording) return; nearShortcutCombo="Alt+C"; saveNearShortcut(); nearShortcutLabel(); log("Selección cercanos: atajo restaurado a Alt+C."); });
       nearShortcutLabel();
       // Escucha en window y document en fase capture (algunos entornos/iframe entregan a uno u otro); dedup por ev.__nearHandled.
       document.addEventListener("keydown",onNearShortcutKeydown,true);
       window.addEventListener("keydown",onNearShortcutKeydown,true);
+      document.addEventListener("keyup",onNearShortcutKeyup,true);
+      window.addEventListener("keyup",onNearShortcutKeyup,true);
+      window.addEventListener("blur",resetNearShortcutHeld,true);
+      document.addEventListener("visibilitychange",()=>{ if(document.hidden) resetNearShortcutHeld(); },true);
     }
     function syncIncludeUiState(){
       const on=document.getElementById("includeToggle").checked;
@@ -4975,20 +5272,30 @@
       row.appendChild(spacer); row.appendChild(sel); row.appendChild(rm); root.appendChild(row); return row;
     }
 
-    // v8.10.2: getColoredObjects() solo devuelve colores APLICADOS por presentación/herramientas.
-    // Los colores nativos del IFC/Tekla pueden no estar expuestos: si hay objetos en el visor pero 0 colores,
-    // NO se concluye "no hay colores"; se informa del límite de la API y se registra en COLOR_DIAG.
+    // v9.5.22: primero se leen colores expuestos por getObjects/getObjectProperties; getColoredObjects()
+    // queda como fallback para colores de presentación/API. Si ambos fallan, se diagnostica límite de API.
     let lastColorFallbackDiag=null;
-    async function populateColorCheckboxes(containerId,targetSet,emptyText){ const cont=document.getElementById(containerId); if(!cont) return; cont.innerHTML=""; let colored=[]; let coloredError=null; try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ coloredError=e.message; recordError("populateColors."+containerId,e); } const byColor=new Map(); let illegible=0; for(const c of colored){ if(!c.colorValid){ illegible++; continue; } if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.swatchCss||c.cssColor,count:0}); byColor.get(c.normalizedColor).count++; } const colors=[...byColor.keys()].sort();
+    async function populateColorCheckboxes(containerId,targetSet,emptyText){
+      const cont=document.getElementById(containerId); if(!cont) return;
+      cont.innerHTML="";
+      let colored=[], coloredError=null;
+      try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ coloredError=e.message; recordError("populateColors."+containerId,e); }
+      const byColor=new Map(); let illegible=0;
+      for(const c of colored){
+        if(!c.colorValid){ illegible++; continue; }
+        if(!byColor.has(c.normalizedColor)) byColor.set(c.normalizedColor,{css:c.swatchCss||c.cssColor,count:0,objectProperties:0,coloredObjects:0});
+        const item=byColor.get(c.normalizedColor); item.count++; if(c.colorSource==="objectProperties") item.objectProperties++; else if(c.colorSource==="coloredObjects") item.coloredObjects++;
+      }
+      const colors=[...byColor.keys()].sort();
       if(colors.length===0 && illegible===0){
         // Fallback diagnóstico: ¿hay objetos accesibles en el visor? Entonces el 0 es un límite de la API, no ausencia real.
-        const fb={containerId,getColoredObjectsTotal:colored.length,getColoredObjectsError:coloredError,visibleObjectsTotal:null,presentationProbe:null,reason:""};
+        const fb={containerId,colorEntriesTotal:colored.length,colorDetectionError:coloredError,visibleObjectsTotal:null,presentationProbe:null,colorDetectionProbe:lastColorDetectionDiag||lastNativeColorDiag,reason:""};
         let visibleTotal=0;
         try{ const mm=await getModelObjectsMap(); for(const ids of mm.values()) visibleTotal+=ids.length; fb.visibleObjectsTotal=visibleTotal; }catch(e){ fb.visibleObjectsError=e.message; }
         try{ if(API.viewer&&typeof API.viewer.getPresentation==="function"){ const pres=await API.viewer.getPresentation(); fb.presentationProbe=pres?String(safeJson(pres)).slice(0,300):null; } }catch(e){ fb.presentationProbeError=e.message; }
         if(visibleTotal>0){
-          fb.reason="Objetos accesibles ("+visibleTotal+") pero getColoredObjects=0: colores nativos IFC/Tekla no expuestos por la API.";
-          cont.textContent="No se han detectado colores modificados por presentación. Los colores nativos del IFC pueden no estar expuestos por getColoredObjects.";
+          fb.reason="Objetos accesibles ("+visibleTotal+") pero no hay colores legibles por propiedades ni por presentación/API.";
+          cont.textContent="No se han detectado colores por propiedades ni por presentación/API. Los colores nativos IFC/Tekla pueden no estar expuestos por la Workspace API.";
         } else {
           fb.reason="Sin objetos accesibles y sin colores: visor vacío o modelo sin cargar.";
           cont.textContent=emptyText||"No hay colores aplicados en el modelo.";
@@ -4996,7 +5303,18 @@
         lastColorFallbackDiag=fb;
         return;
       }
-      for(const col of colors){ const row=document.createElement("label"); row.title=col+" ("+byColor.get(col).count+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); }); const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=byColor.get(col).css; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } if(illegible>0){ const row=document.createElement("label"); row.title=COLOR_ILLEGIBLE_TEXT+" ("+illegible+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.disabled=true; const sw=document.createElement("span"); sw.className="swatch swatch-illegible"; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); } }
+      lastColorFallbackDiag=null;
+      for(const col of colors){
+        const meta=byColor.get(col);
+        const row=document.createElement("label");
+        row.title=col+" ("+meta.count+")"+(meta.objectProperties?" · propiedades: "+meta.objectProperties:"")+(meta.coloredObjects?" · presentación/API: "+meta.coloredObjects:"");
+        row.setAttribute("aria-label",row.title);
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=targetSet.has(col); cb.addEventListener("change",()=>{ if(cb.checked) targetSet.add(col); else targetSet.delete(col); scheduleProcessSelection(); });
+        const sw=document.createElement("span"); sw.className="swatch"; sw.style.background=meta.css;
+        row.appendChild(cb); row.appendChild(sw); cont.appendChild(row);
+      }
+      if(illegible>0){ const row=document.createElement("label"); row.title=COLOR_ILLEGIBLE_TEXT+" ("+illegible+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.disabled=true; const sw=document.createElement("span"); sw.className="swatch swatch-illegible"; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); }
+    }
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
     // ===================== EXCLUSIÓN POR MODELO/IFC (v8.10.0) =====================
@@ -5171,6 +5489,7 @@
       const byModel=new Map(); for(const o of sel) addToMapSet(byModel,o.modelId,[o.runtimeId]);
       let n=0;
       for(const [modelId,set] of byModel.entries()){ const ids=[...set]; try{ await API.viewer.setObjectState({modelObjectIds:[{modelId,objectRuntimeIds:ids}]},{color:{...colorObj},opacity:100,visible:true}); n+=ids.length; }catch(e){ recordError("applyQuickColor",e); } }
+      nativeColorCache=null; lastNativeColorDiag=null; lastColorDetectionDiag=null;
       log("Acciones rápidas: pintados "+n+" objeto(s)."); setProgress("Pintados: "+n+" objeto(s).");
     }
     function populateQuickParamSelect(selId,defaultParam){
@@ -5493,6 +5812,9 @@
         quickParamIndexCache.clear();
         propsCache.clear();
         lastColorFallbackDiag=null;
+        nativeColorCache=null;
+        lastNativeColorDiag=null;
+        lastColorDetectionDiag=null;
         // Modelos IFC cargados y colores de presentación.
         await populateExcludeModels();
         await populateExcludeColors();
@@ -5650,7 +5972,7 @@
       document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
     }
-    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ scheduleProcessSelection(); if(PARAM_USE_3D_MARKUPS) scheduleAllParamMarkups(); scheduleSelectionInspector(); } }
+    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ markNearShortcutSelectionGesture(); scheduleProcessSelection(); if(PARAM_USE_3D_MARKUPS) scheduleAllParamMarkups(); scheduleSelectionInspector(); } }
 
     async function main(){
       buildColumnsUI(); wireUI(); initTooltips();
@@ -5698,7 +6020,7 @@
       "Colores Tekla/IFC nativos pueden no detectarse (la API solo expone color de presentación)",
       "Selección ocultos pudo ocultar el modelo en versiones anteriores",
       "Mostrar parámetros tuvo problemas de sliders/orden/redibujado",
-      "Selección cercanos: el atajo de teclado debe activar/desactivar la herramienta principal sin modo solo atajo",
+      "Selección cercanos: el atajo de teclado exige combo mantenido durante el click desde v9.5.19",
       "Excluir IFC no excluye todos los elementos anidados"
     ];
     // v9.5.0: lectura/resumen PUROS de Reported bugs (no mutan estado de la UI), para el reporte y el ZIP.
@@ -5758,7 +6080,7 @@
       try{ selection=await safeGetSelection(); snap.selection={count:selection.length,first50:selection.slice(0,50)}; }catch(e){ snap.selectionError=e&&e.message; }
       try{ if(API&&API.view&&API.view.getCurrentView){ const v=await API.view.getCurrentView(); snap.activeView=v?{id:v.id,name:v.name,description:v.description}:null; } }catch(e){ snap.activeViewError=e&&e.message; }
       try{ snap.loadedModels=await getLoadedModelsList(); }catch(e){ snap.loadedModelsError=e&&e.message; }
-      try{ const colored=await getColoredObjectEntries(); const cs={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; cs[k]=(cs[k]||0)+1; } snap.colors={total:colored.length,uniqueColorsCount:Object.keys(cs).length,summary:cs}; }catch(e){ snap.colorsError=e&&e.message; }
+      try{ const colored=await getColoredObjectEntries(); const cs={}, sourceCounts={}; for(const c of colored){ const k=c.normalizedColor||"INVALID"; cs[k]=(cs[k]||0)+1; const src=c.colorSource||"unknown"; sourceCounts[src]=(sourceCounts[src]||0)+1; } snap.colors={total:colored.length,uniqueColorsCount:Object.keys(cs).length,summary:cs,sourceCounts,detection:lastColorDetectionDiag}; }catch(e){ snap.colorsError=e&&e.message; }
       grab("excluded",()=>({ ids:(typeof excludedModelIds!=="undefined"?[...excludedModelIds]:undefined), names:(typeof excludedModelNames!=="undefined"?[...excludedModelNames]:undefined) }));
       // Diagnósticos existentes ya almacenados como globales (si existen). No re-ejecuta el debug pesado.
       const diag={};
@@ -5771,6 +6093,8 @@
       d("quantification",()=>typeof lastQuantification!=="undefined"?lastQuantification:undefined);
       d("hidden",()=>typeof lastHiddenDiag!=="undefined"?lastHiddenDiag:undefined);
       d("colorFallback",()=>typeof lastColorFallbackDiag!=="undefined"?lastColorFallbackDiag:undefined);
+      d("colorDetection",()=>typeof lastColorDetectionDiag!=="undefined"?lastColorDetectionDiag:undefined);
+      d("nativeColorProbe",()=>typeof lastNativeColorDiag!=="undefined"?lastNativeColorDiag:undefined);
       snap.diagnostics=diag;
 
       // ===== Ampliaciones de diagnóstico (Fase 0) =====
@@ -5879,7 +6203,7 @@
           uiPicking:(typeof bugUiPicking!=="undefined"?!!bugUiPicking:undefined),
           position:(typeof getCaptureAssistPosition==="function"?getCaptureAssistPosition():undefined),
           draftThumbs:bugDraftShots.length, draftAnnotated:annotN, draftImagesBytes:shotBytes,
-          affectedArea:area||undefined, lastUiTarget:uiT,
+          affectedArea:area||undefined, referenceSaved:!!uiT, referenceElement:uiT, lastUiTarget:uiT,
           pendingReports:bugReportsCount(), pendingStoreBytes:pendingBytes
         };
       });
@@ -5908,35 +6232,37 @@
         return { version:SCRIPT_VERSION, documentLastModified:document.lastModified, url:location.href, userAgent:navigator.userAgent, htmlLength:html.length, htmlHash:simpleHash32(html) };
       });
       // Diagnóstico del atajo de Selección cercanos (Trabajo 3).
-      grab("nearShortcut",()=>({ enabled:(typeof nearShortcutEnabled!=="undefined"?nearShortcutEnabled:undefined), combo:(typeof nearShortcutCombo!=="undefined"?nearShortcutCombo:undefined), lastDiag:(typeof lastNearShortcutDiag!=="undefined"?lastNearShortcutDiag:undefined) }));
+      grab("nearShortcut",()=>({ enabled:(typeof nearShortcutEnabled!=="undefined"?nearShortcutEnabled:undefined), combo:(typeof nearShortcutCombo!=="undefined"?nearShortcutCombo:undefined), heldNow:(typeof nearShortcutHeldNow==="function"?nearShortcutHeldNow():undefined), runUntil:(typeof nearShortcutRunUntil!=="undefined"?nearShortcutRunUntil:undefined), runNow:(typeof nearToolCanProcessNow==="function"?nearToolCanProcessNow():undefined), lastDiag:(typeof lastNearShortcutDiag!=="undefined"?lastNearShortcutDiag:undefined) }));
       // Color Probe dirigido (Trabajo 6): solo en el snapshot (no ralentiza la app de forma continua).
       try{ snap.colorProbe=await runColorProbe(); }catch(e){ snap.colorProbe={error:String(e&&e.message||e)}; }
 
       return snap;
     }
     // ===================== COLOR_PROBE_DIAG (Trabajo 6) =====================
-    // Diagnóstico dirigido de colores nativos Tekla/IFC: total de getColoredObjects() + propiedades del primer
-    // objeto seleccionado (busca claves color/material/style/appearance/presentation/render). No promete leer
-    // colores nativos si la API no los expone; deja constancia de la limitación.
+    // Diagnóstico dirigido de colores nativos Tekla/IFC: propiedades/getObjects primero y getColoredObjects()
+    // como fallback de presentación/API; además inspecciona propiedades del primer objeto seleccionado.
+    // No promete leer colores nativos si la API no los expone; deja constancia de la limitación.
     async function runColorProbe(){
       const diag={ ts:new Date().toISOString() };
+      try{ await getNativeColorEntriesFromProperties(false); diag.colorDetectionSummary=lastColorDetectionDiag||lastNativeColorDiag; }
+      catch(e){ diag.objectPropertiesDetectionError=e&&e.message; }
       try{ const groups=await API.viewer.getColoredObjects(); let total=0; for(const g of (groups||[])) total+=((g.objects||[]).length); diag.coloredObjectsTotal=total; diag.coloredGroups=(groups||[]).length; }
       catch(e){ diag.coloredObjectsError=e&&e.message; }
       let sel=[]; try{ sel=await safeGetSelection(); }catch(e){}
       diag.selectionCount=sel.length;
-      if(!sel.length){ diag.note="Sin selección: solo se reporta el total de getColoredObjects()."; return diag; }
+      if(!sel.length){ diag.note="Sin selección: se reporta el resumen de propiedades/getObjects y el total de getColoredObjects()."; return diag; }
       const s=sel[0]; diag.firstSelected={modelId:s.modelId,runtimeId:s.runtimeId};
       try{
         const pr=await API.viewer.getObjectProperties(s.modelId,[s.runtimeId]); const p=pr&&pr[0];
         const keys=[], colorish=[];
-        const walk=(obj,prefix,depth)=>{ if(!obj||typeof obj!=="object"||depth>3) return; for(const k of Object.keys(obj)){ const kk=prefix?prefix+"."+k:k; const v=obj[k]; if(/colou?r|material|style|appearance|presentation|render/i.test(k)) colorish.push({key:kk,value:(typeof v==="object"?JSON.stringify(v).slice(0,80):String(v).slice(0,80))}); if(keys.length<120) keys.push(kk); if(v&&typeof v==="object") walk(v,kk,depth+1); } };
+        const walk=(obj,prefix,depth)=>{ if(!obj||typeof obj!=="object"||depth>3) return; for(const k of Object.keys(obj)){ const kk=prefix?prefix+"."+k:k; const v=obj[k]; if(/colou?r|material|style|appearance|presentation|render|rgb|rgba|diffuse|surface/i.test(k)) colorish.push({key:kk,value:(typeof v==="object"?safeJson(v).slice(0,120):String(v).slice(0,120))}); if(keys.length<120) keys.push(kk); if(v&&typeof v==="object") walk(v,kk,depth+1); } };
         walk(p,"",0);
         diag.firstSelectedKeys=keys.slice(0,120);
         diag.colorRelatedKeys=colorish.slice(0,40);
-        let normalized=null;
-        for(const c of colorish){ try{ const an=analyzeColor(c.value); if(an&&an.valid){ normalized={from:c.key,normalizedColor:an.normalizedColor}; break; } }catch(e){} }
-        diag.normalizedFromProps=normalized;
-        if(!colorish.length){ diag.limitation="La API no expone color nativo IFC/Tekla para este objeto; solo se detectan colores de presentación aplicados por la extensión/visor."; }
+        const nativeHit=directObjectPropertyColor(p)||extractNativeColorFromProps(p);
+        diag.normalizedFromProps=nativeHit?{from:nativeHit.source,value:nativeHit.value,normalizedColor:nativeHit.analysis.normalizedColor}:null;
+        diag.nativeScanSummary=lastColorDetectionDiag||lastNativeColorDiag;
+        if(!colorish.length&&!nativeHit){ diag.limitation="La API no expone color nativo IFC/Tekla para este objeto; solo se detectan colores de presentación aplicados por la extensión/visor."; }
       }catch(e){ diag.propsError=e&&e.message; }
       return diag;
     }
@@ -5977,7 +6303,7 @@
       try{
         const dl=new Set(loadDownloadedIds());
         const pend=reports.filter((r)=>!dl.has(r&&r.id)).length;
-        const tools={}; reports.forEach((r)=>{ const a=String(r.affectedArea||"").split(",")[0].trim(); const k=a||"(sin zona)"; tools[k]=(tools[k]||0)+1; });
+        const tools={}; reports.forEach((r)=>{ const ref=r.referenceElement||r.uiTarget||null; const a=String((ref&&ref.label)||r.affectedArea||"").split(",")[0].trim(); const k=a||"(sin referencia)"; tools[k]=(tools[k]||0)+1; });
         const toolList=Object.keys(tools).sort((a,b)=>tools[b]-tools[a]).slice(0,12).map((k)=>k+" ("+tools[k]+")");
         let shots=0; reports.forEach((r)=>{ shots+=((r.screenshots||[]).length); });
         const errs=new Set(); reports.forEach((r)=>{ const e=r.snapshot&&r.snapshot.errors; if(Array.isArray(e)) e.forEach((x)=>{ const m=(x&&(x.where||x.message||x.msg))||String(x); if(m) errs.add(String(m).slice(0,80)); }); });
@@ -5988,7 +6314,7 @@
         lines.push("===== RESUMEN =====");
         lines.push("Reportes: "+reports.length+" · No descargados (pendientes): "+pend);
         lines.push("Capturas totales: "+shots);
-        lines.push("Herramientas afectadas: "+(toolList.length?toolList.join(" · "):"(no indicadas)"));
+        lines.push("Referencias guardadas: "+(toolList.length?toolList.join(" · "):"(no indicadas)"));
         lines.push("Errores JS únicos: "+(errs.size?[...errs].slice(0,8).join(" | "):"0"));
         if(av) lines.push("Última vista activa (último reporte): "+(typeof av==="string"?av:JSON.stringify(av)).slice(0,120));
         if(lastSel&&lastSel.count) lines.push("Última selección no vacía (último reporte): "+lastSel.count+" objeto(s).");
@@ -6005,7 +6331,11 @@
         lines.push("URL: "+((r.snapshot&&r.snapshot.url)||""));
         lines.push("\n--- Título ---\n"+(r.title||"(vacío)"));
         lines.push("\n--- Descripción ---\n"+(r.description||"(vacío)"));
-        lines.push("\n--- Zona/Herramienta afectada ---\n"+(r.affectedArea||"(no indicada)"));
+        const ref=r.referenceElement||r.uiTarget||null;
+        lines.push("\n--- Elemento de referencia ---");
+        if(ref) lines.push((ref.label||"?")+" ["+(ref.tagName||"")+(ref.id?("#"+ref.id):"")+"]"+((ref.ariaLabel)?(" aria=\""+ref.ariaLabel+"\""):"")+(ref.cssPath?("\nRuta CSS: "+ref.cssPath):"")+(ref.rect?("\nRect: "+safeJson(ref.rect)):""));
+        else lines.push("(sin referencia guardada)");
+        if(r.affectedArea && (!ref || r.affectedArea!==ref.label)) lines.push("\n--- Zona/Herramienta afectada (compatibilidad) ---\n"+r.affectedArea);
         // v9.5.1: severidad/esperado/obtenido solo se imprimen si hay contenido real (reportes antiguos).
         if(String(r.severity||"").trim()) lines.push("\n--- Severidad ---\n"+r.severity);
         if(String(r.expected||"").trim()) lines.push("\n--- Comportamiento esperado ---\n"+r.expected);
@@ -6015,7 +6345,7 @@
           lines.push("\n--- Menciones UI ("+mentions.length+") ---");
           mentions.forEach((m,mi)=>{ lines.push("  "+(mi+1)+". "+((m&&m.label)||"?")+((m&&m.tagName)?(" ["+m.tagName+(m.id?("#"+m.id):"")+"]"):"")+((m&&m.cssPath)?(" · "+m.cssPath):"")); });
         }
-        if(r.uiTarget){ const u=r.uiTarget; lines.push("  Último elemento seleccionado: "+(u.label||"?")+" ["+(u.tagName||"")+(u.id?("#"+u.id):"")+"]"+((u.ariaLabel)?(" aria=\""+u.ariaLabel+"\""):"")+(u.cssPath?("\n  Ruta CSS: "+u.cssPath):"")); }
+        if(r.uiTarget && !ref){ const u=r.uiTarget; lines.push("  Último elemento seleccionado: "+(u.label||"?")+" ["+(u.tagName||"")+(u.id?("#"+u.id):"")+"]"+((u.ariaLabel)?(" aria=\""+u.ariaLabel+"\""):"")+(u.cssPath?("\n  Ruta CSS: "+u.cssPath):"")); }
         const shots=r.screenshots||[];
         const annotN=shots.filter((s)=>s&&s.annotated).length;
         lines.push("\n--- Capturas: "+shots.length+(annotN?(" (anotadas: "+annotN+")"):"")+" ---");
@@ -6246,8 +6576,8 @@
 
     // ===================== Selector visual de elemento de la interfaz (Bug Report) =====================
     // Activa un modo en el que el usuario hace click sobre cualquier elemento real del panel; se
-    // resalta bajo el cursor (overlay con pointer-events:none) y, al seleccionar, se rellena el campo
-    // "Zona / Herramienta afectada" y se guardan metadatos técnicos en bugLastUiTarget (report.uiTarget).
+    // resalta bajo el cursor (overlay con pointer-events:none) y, al seleccionar, guarda una referencia
+    // técnica en bugLastUiTarget (report.uiTarget/referenceElement) sin modificar la descripción.
     let bugUiPicking=false;
     let bugLastUiTarget=null;
     // ----- Descripción enriquecida: menciones/chips de elementos UI -----
@@ -6314,12 +6644,20 @@
       const labels=bugGetUiMentions().map((m)=>m&&m.label).filter(Boolean);
       a.value=labels.join(", ");
     }
+    function bugUpdateReferenceButton(){
+      const btn=document.getElementById("bugAreaPick"); if(!btn) return;
+      const has=!!bugLastUiTarget;
+      btn.classList.toggle("has-target",has);
+      btn.title=has?("Referencia guardada: "+(bugLastUiTarget.label||"elemento")+" · Click para reemplazar"):"Guardar elemento de referencia";
+      btn.setAttribute("aria-label",has?("Referencia guardada: "+(bugLastUiTarget.label||"elemento")):"Guardar elemento de referencia");
+      const a=document.getElementById("bugArea"); if(a) a.value=has?(bugLastUiTarget.label||""):"";
+    }
     function ensureBugUiPicker(){
       if(!document.getElementById("bugUiPickHighlight")){
         const hl=document.createElement("div"); hl.id="bugUiPickHighlight"; hl.className="bug-ui-pick-highlight"; document.body.appendChild(hl);
       }
       if(!document.getElementById("bugUiPickBar")){
-        const bar=document.createElement("div"); bar.id="bugUiPickBar"; bar.className="bug-ui-pick-bar"; bar.textContent="Click menciona · Ctrl+click interactúa · Esc cancela"; document.body.appendChild(bar);
+        const bar=document.createElement("div"); bar.id="bugUiPickBar"; bar.className="bug-ui-pick-bar"; bar.textContent="Click guarda referencia · Ctrl+click interactúa · Esc cancela"; document.body.appendChild(bar);
       }
     }
     function bugUiIsOwn(el){
@@ -6413,19 +6751,18 @@
       // Ctrl/Meta + click: interactuar con la UI real (abrir details, enfocar inputs, desplegar)
       // sin seleccionar y SIN salir del modo selector. No se bloquea el evento.
       if(ev.ctrlKey||ev.metaKey){ return; }
-      // Click normal: bloquea la acción real del elemento y lo menciona en la descripción.
+      // Click normal: bloquea la acción real del elemento y lo guarda como referencia del reporte.
       ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
       const el=document.elementFromPoint(ev.clientX,ev.clientY);
       if(!el || bugUiIsOwn(el)) return; // ignora elementos propios; sigue en modo selección
       try{
         const meta=bugUiTargetMeta(el);
         bugLastUiTarget=meta;
-        bugInsertUiMention(meta);   // inserta un chip en la posición del cursor de la descripción
-        bugSyncAffectedArea();      // resumen compatible en el campo interno bugArea
+        bugUpdateReferenceButton();
         recordUserAction("bugReport.uiPick",{label:meta&&meta.label,tag:meta&&meta.tagName});
       }catch(e){ recordError("bugReport.uiPick",e); }
       bugUiPickEnd();
-      setTimeout(()=>{ const ed=document.getElementById("bugDesc"); if(ed){ try{ ed.focus(); }catch(e){} bugDescRestoreSelection(); } },20);
+      setTimeout(()=>{ const ed=document.getElementById("bugDesc"); if(ed){ try{ ed.focus(); }catch(e){} } },20);
     }
     function bugUiOnKey(ev){ if(!bugUiPicking) return; if(ev.key==="Escape"||ev.key==="Esc"){ ev.preventDefault(); ev.stopPropagation(); bugUiPickEnd(); } }
     function bugUiPickStart(){
@@ -6451,6 +6788,7 @@
       const hl=document.getElementById("bugUiPickHighlight"); if(hl) hl.style.display="none";
       const bar=document.getElementById("bugUiPickBar"); if(bar) bar.style.display="none";
       const btn=document.getElementById("bugAreaPick"); if(btn) btn.classList.remove("is-active");
+      bugUpdateReferenceButton();
       showBugModalNow(); // vuelve a mostrar el modal (campo ya rellenado si hubo selección)
     }
 
@@ -6462,10 +6800,10 @@
         +'<div class="bug-modal-head" id="bugModalHead" title="Arrastra para mover"><span class="bug-modal-title">Bug Report</span><span class="bug-modal-drag-hint" aria-hidden="true">⠿</span></div>'
         +'<div class="bug-modal-row">'
         +'<input type="text" id="bugTitle" class="bug-input" placeholder="Título" maxlength="200" autocomplete="off">'
-        +'<button type="button" id="bugAreaPick" class="bug-area-pick" title="Identificar elemento de la interfaz" aria-label="Identificar elemento de la interfaz"><svg viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6z"/></svg></button>'
+        +'<button type="button" id="bugAreaPick" class="bug-area-pick" title="Guardar elemento de referencia" aria-label="Guardar elemento de referencia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6z"/></svg></button>'
         +'<button type="button" id="bugShotBtn" class="bug-shot-btn" title="Captura asistida" aria-label="Captura asistida"><svg viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button>'
         +'</div>'
-        +'<div id="bugDesc" class="bug-desc-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción" data-ph="Descripción (usa el cursor azul para insertar menciones de la interfaz)"></div>'
+        +'<div id="bugDesc" class="bug-desc-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción" data-ph="Descripción"></div>'
         +'<input type="hidden" id="bugArea">'
         +'<div id="bugThumbs" class="bug-thumbs"></div>'
         +'<div id="bugNote" class="bug-note" style="display:none;"></div>'
@@ -6511,7 +6849,7 @@
       // v9.5.0: limpia la marca de campo obligatorio inválido al corregirlo (sin alert).
       const clearInvalid=(el)=>{ if(el) el.classList.remove("bug-invalid"); };
       const titleInv=document.getElementById("bugTitle"); if(titleInv){ titleInv.addEventListener("input",()=>clearInvalid(titleInv)); titleInv.addEventListener("change",()=>clearInvalid(titleInv)); }
-      const edInv=document.getElementById("bugDesc"); if(edInv) edInv.addEventListener("input",()=>{ clearInvalid(edInv); const ap=document.getElementById("bugAreaPick"); if(ap) clearInvalid(ap); });
+      const edInv=document.getElementById("bugDesc"); if(edInv) edInv.addEventListener("input",()=>{ clearInvalid(edInv); });
       wireBugModalDrag();
       // Editor de descripción enriquecido: guardado de selección y borrado de chips por su cruz.
       const ed=document.getElementById("bugDesc");
@@ -6563,7 +6901,7 @@
       const a=document.getElementById("bugArea"); if(a) a.value="";
       bugResetExtraFields();
       bugUiMentionsMap={}; bugDescSavedRange=null;
-      bugLastUiTarget=null; if(typeof bugUiPicking!=="undefined" && bugUiPicking) bugUiPickEnd();
+      bugLastUiTarget=null; bugUpdateReferenceButton(); if(typeof bugUiPicking!=="undefined" && bugUiPicking) bugUiPickEnd();
       clearInterval(bugTimerInterval); bugTimerInterval=null;
       closePasteZone(); hideTimerBar(); hideBugNote(); renderBugThumbs();
       resetBugModalPosition(); updateDebugButtonState();
@@ -6611,13 +6949,14 @@
       const d=document.getElementById("bugDesc"); if(d) d.innerHTML="";
       const a=document.getElementById("bugArea"); if(a) a.value="";
       bugResetExtraFields();
-      bugUiMentionsMap={}; bugDescSavedRange=null; bugLastUiTarget=null;
+      bugUiMentionsMap={}; bugDescSavedRange=null; bugLastUiTarget=null; bugUpdateReferenceButton();
       hideBugNote();
     }
     // v9.5.0: reinicia los campos de Bug Report v2.1 (severidad/esperado/obtenido) y limpia marcas de inválido.
     function bugResetExtraFields(){
       // v9.5.1: severidad/esperado/obtenido retirados; solo se limpian marcas de inválido de los campos vigentes.
       ["bugTitle","bugDesc","bugAreaPick"].forEach((id)=>{ const el=document.getElementById(id); if(el) el.classList.remove("bug-invalid"); });
+      bugUpdateReferenceButton();
     }
     // v9.5.0: resumen de anotaciones por captura (a partir de los metadatos ya presentes en cada screenshot).
     function bugCollectAnnotations(shots){
@@ -6718,21 +7057,21 @@
       const descriptionText=bugSerializeDescription();   // texto real aunque haya chips/menciones
       const descriptionHtml=String((document.getElementById("bugDesc")||{}).innerHTML||"");
       const uiMentions=bugGetUiMentions();
-      const affectedArea=uiMentions.map((m)=>m&&m.label).filter(Boolean).join(", ")||String((document.getElementById("bugArea")||{}).value||"").trim();
-      // v9.5.1: validación mínima obligatoria (Título, Descripción, Zona/herramienta). Severidad/esperado/obtenido retirados.
+      const referenceElement=bugLastUiTarget||null;
+      const affectedArea=(referenceElement&&referenceElement.label)||uiMentions.map((m)=>m&&m.label).filter(Boolean).join(", ")||String((document.getElementById("bugArea")||{}).value||"").trim();
+      // v9.5.23: validación mínima obligatoria solo de título y descripción. La referencia UI es opcional.
       const invalid=[];
       const mark=(id,bad,label)=>{ const el=document.getElementById(id); if(el) el.classList.toggle("bug-invalid",!!bad); if(bad) invalid.push(label); };
       mark("bugTitle",!title,"Título");
       mark("bugDesc",!descriptionText,"Descripción");
-      mark("bugAreaPick",!affectedArea,"Zona/herramienta afectada");
       if(invalid.length){ showBugNote("Completa los campos obligatorios: "+invalid.join(", ")+"."); return; }
-      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!descriptionText,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!bugLastUiTarget});
+      recordUserAction("bugReportSend",{hasTitle:!!title,hasDesc:!!descriptionText,shots:bugDraftShots.length,affectedArea:affectedArea||undefined,uiMentions:uiMentions.length,uiTarget:!!referenceElement});
       let snapshot={}; try{ snapshot=await collectDebugSnapshot(); }catch(e){ recordError("bugReport.snapshot",e); snapshot={snapshotError:String(e&&e.message||e)}; }
       const nowIso=new Date().toISOString();
       // severity/expected/actual se conservan vacíos por compatibilidad defensiva con reportes antiguos (no se piden ni validan).
       const report={ id:"BR-"+Date.now()+"-"+Math.random().toString(36).slice(2,8), ts:nowIso, createdAt:nowIso, version:SCRIPT_VERSION, scriptVersion:SCRIPT_VERSION,
         title, description:descriptionText, descriptionText, descriptionHtml, affectedArea, severity:"", expected:"", actual:"",
-        uiMentions, uiTarget:bugLastUiTarget||undefined, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), annotations:bugCollectAnnotations(bugDraftShots),
+        uiMentions, uiTarget:referenceElement||undefined, referenceElement:referenceElement||undefined, screenshots:bugDraftShots.slice(0,BUG_MAX_SHOTS), annotations:bugCollectAnnotations(bugDraftShots),
         knownErrors:KNOWN_ERRORS, reportedBugsSummary:getReportedBugsSummarySafe(), reportedBugsFull:getReportedBugsSnapshot(), snapshot };
       let reports=loadBugReports(); reports.push(report);
       if(reports.length>BUG_MAX_REPORTS) reports=reports.slice(reports.length-BUG_MAX_REPORTS);
@@ -6787,7 +7126,7 @@
           return { id:r.id, ts:r.ts, createdAt:r.createdAt, version:r.version, scriptVersion:r.scriptVersion, title:r.title,
             description:r.description, descriptionText:r.descriptionText, descriptionHtml:r.descriptionHtml,
             affectedArea:r.affectedArea, severity:r.severity, expected:r.expected, actual:r.actual,
-            uiMentions:r.uiMentions||[], uiTarget:r.uiTarget, annotations:r.annotations||[],
+            uiMentions:r.uiMentions||[], uiTarget:r.uiTarget, referenceElement:r.referenceElement||r.uiTarget||null, annotations:r.annotations||[],
             knownErrors:r.knownErrors, reportedBugsSummary:r.reportedBugsSummary, images, snapshot:r.snapshot };
         });
         files.push({name:"bug_reports.txt",data:enc.encode("﻿"+buildBugReportsText(reports))});
@@ -6831,9 +7170,9 @@
       { id:"BUG-009", phase:"Fase 8 parcial", title:"Falta una lista de trabajo para bugs reportados", issue:"No existía una ventana ligera de seguimiento de bugs.", hotfix:"Se añade la ventana Reported bugs con lista activa, histórico y reapertura de bugs.", expected:"El usuario debe poder revisar bugs, marcarlos como resueltos/no resueltos y reabrirlos desde histórico.", detectedVersion:"v9.3.0", fixedVersion:"v9.4.0", status:"active", comment:"" },
       { id:"BUG-010", phase:"Corregido v9.5.10", title:"Importar GUID con codigo_revision RFI", issue:"Importar registro no aplicaba color RFI por GUID ni marcaba duplicados.", hotfix:"Importacion opcional de codigo_revision con magenta oficial #EC00B639, jerarquia rojo > magenta y duplicados #FFFD3839/#7886CB39.", expected:"Los GUID con RFI deben importarse en magenta por defecto, no pisar rojo DEO y poder mostrar duplicados.", detectedVersion:"v9.1.0", fixedVersion:"v9.5.10", status:"fixed", comment:"" },
       { id:"BUG-011", phase:"Pendiente", title:"Exportación masiva aborta por confirmación de vistas", issue:"Exportación masiva puede abortar por confirmación de vista.", hotfix:"", expected:"Debe exportar en modo permisivo, generar informe por vista y no abortar todo el lote por una vista no confirmada.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
-      { id:"BUG-012", phase:"Pendiente", title:"Selección cercanos necesita modo solo con atajo", issue:"El atajo no separa claramente modo automático y ejecución puntual.", hotfix:"", expected:"Debe existir modo automático y modo solo con atajo sin doble ejecución.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
+      { id:"BUG-012", phase:"Corregido v9.5.19", title:"Selección cercanos necesita modo solo con atajo", issue:"El atajo no separa claramente modo automático y ejecución puntual.", hotfix:"Con Atajo de teclado activo, Selección cercanos solo procesa la selección si la combinación sigue pulsada en el click izquierdo; el combo no arma clicks futuros ni alterna ON/OFF.", expected:"Debe existir modo automático y modo solo mientras el atajo esta pulsado, sin doble ejecución.", detectedVersion:"v9.1.0", fixedVersion:"v9.5.19", status:"fixed", comment:"" },
       { id:"BUG-013", phase:"Pendiente", title:"Mostrar parámetros no separa etiquetas live, guardadas e inspector", issue:"Mostrar parámetros mezcla conceptos de etiquetas e inspector.", hotfix:"", expected:"Debe separar inspector, etiquetas live y etiquetas guardadas.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
-      { id:"BUG-014", phase:"Pendiente", title:"Excluir IFC anidado y colores nativos IFC/Tekla", issue:"Excluir IFC y colores nativos siguen incompletos.", hotfix:"", expected:"Debe mejorar el diagnóstico de IFC anidado y ampliar Color Probe para colores/materiales nativos si la API lo permite.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
+      { id:"BUG-014", phase:"Fase 9 parcial", title:"Excluir IFC anidado y colores nativos IFC/Tekla", issue:"Excluir IFC y colores nativos siguen incompletos.", hotfix:"Se añade fallback experimental por getObjectProperties para colores IFC/Tekla codificados como RGB/hex/appearance en propiedades; si la API no los expone, el diagnóstico lo declara.", expected:"Debe mejorar el diagnóstico de IFC anidado y ampliar Color Probe para colores/materiales nativos si la API lo permite.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
       { id:"BUG-015", phase:"Fase 9 hotfix", title:"Abrir vista confirmaba id sin aplicar presentación", issue:"Abrir vista y exportación masiva podían aceptar una vista por id/nombre aunque Trimble no hubiera aplicado colores/presentación guardados.", hotfix:"Se prioriza el payload completo de la vista y se verifica presentación/colores cuando la vista declara estado visual.", expected:"Abrir vista y exportar deben usar la vista realmente aplicada o avisar si Trimble solo cambió metadatos.", detectedVersion:"v9.5.4", fixedVersion:"v9.5.5", status:"active", comment:"" },
       { id:"BUG-016", phase:"Fase 9 hotfix", title:"Exportación masiva omitía vistas por confirmación tardía", issue:"Trimble podía aplicar una vista segundos después de que activateViewById la hubiera marcado como no confirmada, dejando la exportación masiva sin CSV aunque la vista activa exportara bien justo después.", hotfix:"selectView solo recibe id:string, se añade recuperación tardía de vista activa y reintentos extra de lectura de colores antes de omitir.", expected:"La exportación masiva no debe descartar una vista que Trimble acaba aplicando con colores exportables.", detectedVersion:"v9.5.7", fixedVersion:"v9.5.8", status:"active", comment:"" }
     ];
@@ -7185,9 +7524,11 @@
       cdiag.swatchRule="El círculo del swatch usa swatchCss = rgb sólido (sin alfa); la comparación/exclusión usa normalizedColor (#RRGGBBAA). Ningún color válido se pinta en blanco por alfa.";
       cdiag.rule="Todo color válido se normaliza a #RRGGBBAA; alfa ausente -> FF; no interpretable -> '"+COLOR_ILLEGIBLE_TEXT+"' (nunca blanco).";
       // v8.10.2: distinción presentación vs colores nativos IFC/Tekla (no expuestos por getColoredObjects).
-      cdiag.getColoredObjectsTotal=colored.length;
-      cdiag.nativeColorsNote="getColoredObjects solo expone colores aplicados por presentación/herramientas; los colores nativos del IFC/Tekla no son accesibles por esta API.";
+      cdiag.detectedEntriesTotal=colored.length;
+      cdiag.nativeColorsNote="v9.5.22 intenta leer color desde getObjects/getObjectProperties antes de usar getColoredObjects como fallback de presentación/API. Si ambos no devuelven color, los colores nativos IFC/Tekla pueden no estar expuestos por la Workspace API.";
       cdiag.lastColorFallback=lastColorFallbackDiag;
+      cdiag.lastColorDetection=lastColorDetectionDiag;
+      cdiag.lastNativeColorProbe=lastNativeColorDiag;
       try{ if(API.viewer&&typeof API.viewer.getPresentation==="function"){ const pres=await API.viewer.getPresentation(); cdiag.presentationCurrent=pres?String(safeJson(pres)).slice(0,500):null; } }catch(e){ cdiag.presentationError=e.message; }
       add("COLOR_DIAG",safeJsonDeep(cdiag,2));
       // ===== EXCLUDE_MODELS_DIAG (v8.10.0 / ampliado v8.11.1): exclusión por modelo/IFC =====
