@@ -1184,7 +1184,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.5.4";
+    const SCRIPT_VERSION = "v9.5.5";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const REVISION_CODE_COLORS = new Set(["#EC00B6FF","#AD1457FF","#B85AD0FF","#DCA1DCFF","#FC0D1BFF","#D50002FF","#E67C73FF"]);
@@ -1618,6 +1618,78 @@
       if(cached) return {ok:true,view:cached.raw,normalized:cached,source:"cache"};
       return {ok:false,reason:"vista no encontrada"};
     }
+    function visualValueHasContent(v){
+      if(v==null) return false;
+      if(Array.isArray(v)) return v.length>0;
+      if(typeof v==="object") return Object.keys(v).length>0;
+      if(typeof v==="string") return v.trim()!=="";
+      if(typeof v==="number") return Number.isFinite(v)&&v!==0;
+      return false;
+    }
+    function presentationHasVisualState(pres){
+      if(!pres||typeof pres!=="object") return false;
+      if(Array.isArray(pres)) return pres.length>0;
+      const arrayKeys=["elements","elementTypes","objects","objectStates","modelObjectIds"];
+      for(const k of arrayKeys){ if(Array.isArray(pres[k])&&pres[k].length>0) return true; }
+      const trueKeys=["ghost","transparent","wireframe","isCriticalEnabled","isDocumentsEnabled","isIgnoredEnabled","isNewEnabled","isNotesEnabled","isPendingEnabled","isResolvedEnabled"];
+      for(const k of trueKeys){ if(pres[k]===true) return true; }
+      if(typeof pres.transparencyLevel==="number"&&pres.transparencyLevel!==100) return true;
+      for(const k of Object.keys(pres)){
+        const lk=k.toLowerCase();
+        if((lk.includes("color")||lk.includes("state")||lk.includes("presentation"))&&visualValueHasContent(pres[k])) return true;
+      }
+      return false;
+    }
+    function viewHasSavedVisualState(view){
+      const seen=new Set();
+      const walk=(obj,depth)=>{
+        if(!obj||typeof obj!=="object"||depth>6||seen.has(obj)) return false;
+        seen.add(obj);
+        if(Array.isArray(obj)){ for(const item of obj){ if(walk(item,depth+1)) return true; } return false; }
+        for(const k of Object.keys(obj)){
+          const lk=k.toLowerCase(); const v=obj[k];
+          if(lk==="presentation"||lk==="presentations"){ if(presentationHasVisualState(v)) return true; }
+          else if(lk.includes("objectstate")||lk.includes("visualstate")||lk.includes("colored")||lk==="colors"||lk==="color"||lk==="hiddenobjects"||lk==="visibleobjects"){
+            if(visualValueHasContent(v)) return true;
+          }
+          if(v&&typeof v==="object"&&walk(v,depth+1)) return true;
+        }
+        return false;
+      };
+      return walk(view,0);
+    }
+    async function probeAppliedViewVisualState(){
+      const diag={checked:false,presentationAvailable:false,presentationHasState:false,coloredObjectsAvailable:false,coloredObjectsTotal:null,applied:false};
+      try{
+        if(API&&API.viewer&&typeof API.viewer.getPresentation==="function"){
+          diag.checked=true; diag.presentationAvailable=true;
+          const pres=await API.viewer.getPresentation();
+          diag.presentationHasState=presentationHasVisualState(pres);
+          diag.presentationSample=pres?String(safeJson(pres)).slice(0,300):null;
+        }
+      }catch(e){ diag.presentationError=String(e&&e.message||e); recordError("probeViewVisual.presentation",e); }
+      try{
+        if(API&&API.viewer&&typeof API.viewer.getColoredObjects==="function"){
+          diag.checked=true; diag.coloredObjectsAvailable=true;
+          const groups=await API.viewer.getColoredObjects(); let total=0;
+          for(const g of (groups||[])) total+=((g.objects||[]).length);
+          diag.coloredObjectsTotal=total;
+        }
+      }catch(e){ diag.coloredObjectsError=String(e&&e.message||e); recordError("probeViewVisual.colors",e); }
+      diag.applied=!!(diag.presentationHasState||(Number(diag.coloredObjectsTotal)>0));
+      return diag;
+    }
+    async function waitForAppliedViewVisualState(expectVisual,delays){
+      if(!expectVisual) return {ok:true,expected:false,reason:"la vista no declara estado visual guardado"};
+      let last=null; const waits=Array.isArray(delays)&&delays.length?delays:[350,700,1200,1800];
+      for(const d of waits){
+        await sleep(d);
+        last=await probeAppliedViewVisualState();
+        if(!last.checked) return {ok:true,expected:true,unchecked:true,reason:"la API no permite verificar presentación/colores",last};
+        if(last.applied) return {ok:true,expected:true,reason:"presentación/colores aplicados",last};
+      }
+      return {ok:false,expected:true,reason:"vista activa por metadatos, pero presentación/colores no aplicados",last};
+    }
     const FOLDER_KEYS=["folder","folderid","foldername","group","groupid","groupname","grouptitle","parent","parentid","parentname","set","viewset","viewsetid","viewsetname","category","collection"];
     function detectFolder(view){ if(!view||typeof view!=="object") return ""; for(const k of Object.keys(view)){ if(FOLDER_KEYS.includes(k.toLowerCase())){ const val=view[k]; if(val==null||val==="") continue; if(typeof val!=="object") return String(val); if(Array.isArray(val)){ const first=val.find((x)=>x); if(first!=null) return (typeof first==="object")?String(first.name||first.title||first.id||""):String(first); } else return String(val.name||val.title||val.groupName||val.id||""); } } return ""; }
     // ----- Grupos de vistas: caché interna para metadatos heredados de vistas (no usada por exportación masiva) -----
@@ -1833,13 +1905,11 @@
     function showExportCancel(on){ const el=document.getElementById("exportCancel"); if(el) el.style.display=on?"inline-block":"none"; }
     function showImportCancel(on){ const el=document.getElementById("importCancel"); if(el) el.style.display=on?"inline-block":"none"; }
     // Cambio de vista activa: la API no documenta un único método; se prueban los candidatos conocidos.
-    // v9.5.1: activación de vista REAL. NO se da por buena solo porque un método no lance error: tras cada intento
-    // (método × payload) se verifica con verifyActiveView. Se prioriza el payload string (compatible con consumidores
-    // que llaman API.view[método](idString), p.ej. exportación masiva). Devuelve objeto con diagnóstico, conservando
-    // .ok/.method para compatibilidad con consumidores previos.
+    // v9.5.5: se prioriza el objeto completo de la vista. Confirmar solo id/nombre no basta: en algunos proyectos
+    // Trimble cambia el metadato de vista activa pero no aplica la presentación/colores guardados.
     async function activateViewById(viewId){
       const id=String(viewId||"");
-      const diag={ viewId:id, viewName:"", startedAt:new Date().toISOString(), finishedAt:null, methodsTried:[], payloadsTried:[], errors:{}, results:[], confirmedMethod:"", confirmedPayload:"", reason:"" };
+      const diag={ viewId:id, viewName:"", startedAt:new Date().toISOString(), finishedAt:null, methodsTried:[], payloadsTried:[], errors:{}, results:[], confirmedMethod:"", confirmedPayload:"", metaConfirmedMethod:"", metaConfirmedPayload:"", expectedVisualState:false, lastVisual:null, reason:"" };
       const finish=(extra)=>{ diag.finishedAt=new Date().toISOString(); lastViewActivationDiagnostics=diag; return Object.assign({viewId:id,diagnostics:diag},extra); };
       if(!id) return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:"viewId vacío"});
       if(!(API&&API.view)) return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:"API.view no disponible"});
@@ -1848,20 +1918,24 @@
       const norm=(det&&det.ok&&det.normalized)||viewsCache.find((v)=>v.id===id)||null;
       const viewName=(norm&&norm.name)||""; diag.viewName=viewName;
       const want=norm?{id:norm.id,name:norm.name}:{id};
-      // 2) Payloads candidatos (string primero por compatibilidad), describiéndolos sin volcar objetos enormes.
+      const rawView=(det&&det.view&&typeof det.view==="object")?det.view:null;
+      const normRaw=(norm&&norm.raw&&typeof norm.raw==="object")?norm.raw:null;
+      const expectVisual=viewHasSavedVisualState(rawView||normRaw);
+      diag.expectedVisualState=expectVisual;
+      // 2) Payloads candidatos: objeto completo primero; {id}/string quedan como fallback.
       const payloads=[]; const seen=new Set();
       const pushPayload=(label,val)=>{ if(val===undefined||val===null||seen.has(label)) return; seen.add(label); payloads.push({label,val}); };
-      pushPayload("id:string", id);
+      if(rawView) pushPayload("view.raw", rawView);
+      if(normRaw&&normRaw!==rawView) pushPayload("normalized.raw", normRaw);
       pushPayload("{id}", {id});
-      if(det&&det.view&&typeof det.view==="object") pushPayload("view.raw", det.view);
-      if(norm&&norm.raw&&typeof norm.raw==="object" && norm.raw!==(det&&det.view)) pushPayload("normalized.raw", norm.raw);
+      pushPayload("id:string", id);
       // 3) Métodos disponibles de API.view.
       const methodNames=["setView","selectView","setCurrentView","activateView","applyView","goToView"];
       const available=methodNames.filter((m)=>typeof API.view[m]==="function");
       diag.methodsTried=available.slice();
       if(!available.length){ diag.reason="la API no expone un método para activar vistas"; return finish({ok:false,sent:false,confirmed:false,attempts:0,reason:diag.reason,name:viewName}); }
-      let sentAny=false, lastError=null, lastMethod="";
-      // Payload por fuera, método por dentro: agota TODOS los métodos con el id-string antes de pasar a otro payload.
+      let sentAny=false, lastError=null, lastMethod="", metaConfirmed=false, lastVisual=null;
+      // Payload por fuera, método por dentro: agota todos los métodos de un payload antes de pasar al siguiente.
       for(const p of payloads){
         for(const m of available){
           lastMethod=m; const tag=m+"("+p.label+")";
@@ -1872,13 +1946,25 @@
             const ver=await verifyActiveView(want,{delays:[200,500]});
             diag.results.push({method:m,payload:p.label,confirmed:!!ver.confirmed,by:ver.by||"",attempts:ver.attempts});
             if(ver.confirmed){
-              diag.confirmedMethod=m; diag.confirmedPayload=p.label; diag.reason="confirmada";
-              return finish({ok:true,sent:true,confirmed:true,method:m,payloadLabel:p.label,by:ver.by,attempts:ver.attempts,name:viewName,verification:ver});
+              metaConfirmed=true; diag.metaConfirmedMethod=m; diag.metaConfirmedPayload=p.label;
+              const visual=await waitForAppliedViewVisualState(expectVisual,[350,700,1200,1800]);
+              lastVisual=visual; diag.lastVisual=visual;
+              diag.results[diag.results.length-1].visualExpected=expectVisual;
+              diag.results[diag.results.length-1].visualOk=!!visual.ok;
+              diag.results[diag.results.length-1].visualReason=visual.reason||"";
+              if(visual.ok){
+                diag.confirmedMethod=m; diag.confirmedPayload=p.label; diag.reason=expectVisual?"confirmada con presentación/colores":"confirmada";
+                return finish({ok:true,sent:true,confirmed:true,metaConfirmed:true,visualExpected:expectVisual,visualOk:true,method:m,payloadLabel:p.label,by:ver.by,attempts:ver.attempts,name:viewName,verification:ver,visualVerification:visual});
+              }
             }
           }catch(e){
             lastError=e; diag.errors[tag]=String(e&&e.message||e); recordError("activateView."+m,e);
           }
         }
+      }
+      if(metaConfirmed&&expectVisual&&lastVisual&&!lastVisual.ok){
+        diag.reason=lastVisual.reason||"vista activa por metadatos, pero presentación/colores no aplicados";
+        return finish({ ok:false, sent:true, confirmed:false, metaConfirmed:true, visualExpected:true, visualOk:false, attempts:diag.results.length, method:diag.metaConfirmedMethod||"", payloadLabel:diag.metaConfirmedPayload||"", lastMethod, name:viewName, reason:diag.reason, visualVerification:lastVisual });
       }
       diag.reason = sentAny ? "enviado pero la API no confirmó el cambio de vista (ningún método/payload)" : (lastError?("error en todos los métodos: "+(lastError.message||lastError)):"la API no aceptó ningún método de activación");
       return finish({ ok:false, sent:sentAny, confirmed:false, attempts:diag.results.length, method:diag.confirmedMethod||"", lastMethod, lastError:(lastError&&(lastError.message||String(lastError)))||null, name:viewName, reason:diag.reason });
@@ -4232,12 +4318,16 @@
       const id=String(viewId||""); if(!id) return {ok:false,sent:false,confirmed:false,reason:"viewId vacío"};
       const cached=viewsCache.find((v)=>v.id===id);
       const name=cached?cached.name:id;
-      // v9.5.1: activateViewById ya prueba métodos/payloads y VERIFICA internamente; usamos su confirmación directa.
+      // v9.5.5: activateViewById verifica id/nombre y, si procede, que Trimble aplique presentación/colores.
       const act=await activateViewById(id);
       if(act.confirmed){
         log("Vista activa confirmada con "+act.method+" ("+(act.by||"id")+"): "+name);
         try{ await loadViewIntoUpdateForm(id,{fromActive:true}); }catch(e){ recordError("setActiveViewCandidate.loadForm",e); }
         return {ok:true,sent:true,confirmed:true,method:act.method,by:act.by,attempts:act.attempts,name};
+      }
+      if(act.metaConfirmed&&act.visualExpected&&!act.visualOk){
+        log("Vista activa por id/nombre, pero Trimble no aplicó presentación/colores: "+name);
+        return {ok:false,sent:true,confirmed:false,method:act.method||act.lastMethod||"",reason:act.reason||"Presentación/colores no aplicados.",attempts:act.attempts,name};
       }
       if(act.sent){
         log("Cambio de vista enviado con "+(act.lastMethod||"?")+" pero la API no lo confirmó: "+name);
@@ -4283,6 +4373,7 @@
         return;
       }
       if(res.confirmed){ activeViewSearchLastConfirmedId=target.id; log("Vista activa confirmada por "+(res.by||"id")+": "+target.name); setProgress("Vista activa: "+target.name); }
+      else if(/presentaci[oó]n|colores/i.test(res.reason||"")){ log("La vista se marcó activa, pero no se aplicaron presentación/colores."); setProgress("Vista sin presentación/colores aplicados."); }
       else { log("Cambio de vista enviado, pero la API no lo confirmó todavía."); setProgress("Cambio enviado; la API no lo confirmó aún."); }
     }
     // Seleccionar una sugerencia NO activa la vista: solo fija selección y carga "Actualizar vista".
@@ -5248,6 +5339,7 @@
       "getCurrentView TypeError: Cannot read properties of undefined (reading 'find')",
       "Vista activa no lista a tiempo: requiere lectura resiliente con reintentos",
       "Exportación masiva puede fallar por verificación estricta de la vista activa",
+      "Abrir vista puede confirmar id/nombre sin aplicar presentación/colores guardados",
       "Etiquetas 3D pueden no renderizarse en vistas guardadas",
       "Colores Tekla/IFC nativos pueden no detectarse (la API solo expone color de presentación)",
       "Selección ocultos pudo ocultar el modelo en versiones anteriores",
@@ -6386,7 +6478,8 @@
       { id:"BUG-011", phase:"Pendiente", title:"Exportación masiva aborta por confirmación de vistas", issue:"Exportación masiva puede abortar por confirmación de vista.", hotfix:"", expected:"Debe exportar en modo permisivo, generar informe por vista y no abortar todo el lote por una vista no confirmada.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
       { id:"BUG-012", phase:"Pendiente", title:"Selección cercanos necesita modo solo con atajo", issue:"El atajo no separa claramente modo automático y ejecución puntual.", hotfix:"", expected:"Debe existir modo automático y modo solo con atajo sin doble ejecución.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
       { id:"BUG-013", phase:"Pendiente", title:"Mostrar parámetros no separa etiquetas live, guardadas e inspector", issue:"Mostrar parámetros mezcla conceptos de etiquetas e inspector.", hotfix:"", expected:"Debe separar inspector, etiquetas live y etiquetas guardadas.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
-      { id:"BUG-014", phase:"Pendiente", title:"Excluir IFC anidado y colores nativos IFC/Tekla", issue:"Excluir IFC y colores nativos siguen incompletos.", hotfix:"", expected:"Debe mejorar el diagnóstico de IFC anidado y ampliar Color Probe para colores/materiales nativos si la API lo permite.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" }
+      { id:"BUG-014", phase:"Pendiente", title:"Excluir IFC anidado y colores nativos IFC/Tekla", issue:"Excluir IFC y colores nativos siguen incompletos.", hotfix:"", expected:"Debe mejorar el diagnóstico de IFC anidado y ampliar Color Probe para colores/materiales nativos si la API lo permite.", detectedVersion:"v9.1.0", fixedVersion:"", status:"active", comment:"" },
+      { id:"BUG-015", phase:"Fase 9 hotfix", title:"Abrir vista confirmaba id sin aplicar presentación", issue:"Abrir vista y exportación masiva podían aceptar una vista por id/nombre aunque Trimble no hubiera aplicado colores/presentación guardados.", hotfix:"Se prioriza el payload completo de la vista y se verifica presentación/colores cuando la vista declara estado visual.", expected:"Abrir vista y exportar deben usar la vista realmente aplicada o avisar si Trimble solo cambió metadatos.", detectedVersion:"v9.5.4", fixedVersion:"v9.5.5", status:"active", comment:"" }
     ];
     const REPORTED_BUGS_DEFAULT_IDS=new Set(REPORTED_BUGS_DEFAULTS.map((b)=>b.id));
     let reportedBugsState=[];
