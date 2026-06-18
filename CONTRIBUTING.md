@@ -11,7 +11,7 @@ Para probar tus cambios:
 
 1. Publica tu versión en un hosting estático con HTTPS (GitHub Pages sirve perfectamente).
 2. Añádela como extensión personalizada en Trimble Connect for Browser mediante la URL de su `manifest.json`.
-3. Usa el botón **Debug** (menú Desarrollador) para obtener `DEO_debug.txt`, que vuelca las claves de la API, la vista activa, las vistas del proyecto y el resultado de las conversiones de GUID. Es la mejor base para diagnosticar problemas.
+3. Usa el **Bug Report** (panel Desarrollador) para crear un reporte y descargarlo como ZIP: incluye un TXT/JSON de diagnóstico (claves de la API, vista activa, vistas del proyecto, conversiones de GUID, etc.), las capturas con anotaciones y la lista de Reported bugs. Es la mejor base para diagnosticar problemas.
 
 ## Estilo
 

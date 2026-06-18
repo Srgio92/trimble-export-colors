@@ -3,6 +3,19 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.5.23 - 2026-06-18
+
+Entrada consolidada que sincroniza el CHANGELOG con el estado real de `index.html` (`SCRIPT_VERSION = v9.5.23`). Las versiones v9.5.5–v9.5.23 se desarrollaron de forma offline sin notas individuales; los cambios se han **reconstruido de forma conservadora** a partir del código actual y de los snapshots de `old_code/`. Pueden faltar matices menores no atribuibles a una versión concreta.
+
+- **Importar registro**: color de aplicación configurable por código de revisión —**magenta por defecto para los GUID con código RFI**, sin prevalecer sobre el rojo DEO—, con selector de color (swatches) y opción para mostrar duplicados (`importRfiMagenta`, `importShowDuplicates`). Resuelve la limitación previa de importar solo en rojo.
+- **Detección de colores nativos IFC/Tekla**: nueva lógica que intenta extraer el color real desde las propiedades del objeto además del color de presentación, con diagnóstico de detección.
+- **Apertura/cambio de vistas más robusto**: detección del estado visual aplicado de la vista (presentación), espera y recuperación de vistas activadas con retardo, sobre la reparación de activación del hotfix v9.5.1.
+- **Buscador "Vista activa"**: modos de orden (por fecha, texto natural, orden Trimble) y mejoras de comportamiento de las sugerencias.
+- **Selección cercanos**: atajo de teclado reelaborado (gestión de pulsación/soltado de la combinación) y sensibilidad por curva ajustable.
+- Ajustes varios de interfaz manteniendo el estilo compacto.
+
+> Nota sobre versiones intermedias no listadas: **v9.5.1** fue un hotfix del núcleo de apertura/cambio de vistas (la activación se verifica realmente y no se da por buena solo porque un método de la API no lance error) y la simplificación del Bug Report (retirada de los campos Severidad, Comportamiento esperado y Comportamiento obtenido añadidos en v9.5.0). **v9.5.2–v9.5.4** fueron ajustes intermedios de UI y vistas.
+
 ## v9.5.4 - 2026-06-16
 
 - Mejoras de UI en varias herramientas, manteniendo el estilo compacto y los controles existentes.
