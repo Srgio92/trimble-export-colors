@@ -43,7 +43,7 @@
     .quick-color-btn:hover, .quick-color-btn:focus-visible { outline: 2px solid #1c7fd6; outline-offset: 1px; }
     .qc-swatch { width: 20px; height: 20px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.35); }
     .quick-color-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin: 0 0 6px; }
-    .quick-edit-btn { width:26px; height:24px; padding:2px; background:transparent; border:none; display:inline-flex; align-items:center; justify-content:center; }
+    .quick-edit-btn { width:30px; height:28px; padding:1px; background:transparent; border:none; display:inline-flex; align-items:center; justify-content:center; }
     .quick-custom-colors { display:inline-flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:center; }
     .quick-add-color { border-color:#d1d5db; background:#fff; position:relative; color:#111827; border-radius:50%; }
     .quick-add-color .qc-add-plus { opacity:0; font-size:19px; line-height:1; font-weight:bold; }
@@ -384,7 +384,7 @@
     .bug-area-pick:hover { background:#eaf3fd; box-shadow:0 0 0 1px #1c7fd6 inset; }
     .bug-area-pick:active { transform:scale(.92); }
     .bug-area-pick.is-active, .bug-area-pick.has-target { color:#1c7fd6; border-color:#1c7fd6; }
-    .bug-area-pick svg { width:16px; height:16px; display:block; }
+    .bug-area-pick svg { width:16px; height:16px; display:block; transform:translate(1px,1.5px); }
     .bug-area-pick.is-active { background:#1c7fd6; }
     .bug-area-pick.is-active svg { stroke:#fff; }
     /* Selector visual de elementos UI (resalte + barra flotante) */
@@ -518,7 +518,7 @@
     #selInspector .insp-title, #selInspector .insp-line { padding-left:0; }
     .insp-config-note { color:#6b7280; font-size:11px; margin:0 0 2px; }
     /* #6 Icono de edición tipo lápiz que escribe */
-    .writing-icon { width:20px; height:20px; overflow:visible; }
+    .writing-icon { width:24px; height:24px; overflow:visible; }
     .writing-trace, .writing-pencil-outline { fill:none; stroke:#9ca3ad; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
     .writing-trace { stroke-width:2.15; }
     .writing-pencil-outline { stroke-width:1.55; }
@@ -637,6 +637,8 @@
     .av-search-input:focus { border-color: transparent; box-shadow: none; outline: none; }
     .av-search-go { position: absolute; right: 2px; top: -1px; bottom: -1px; width: 32px; min-width: 32px; height: auto; box-sizing: border-box; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-left: 1px solid #d7dde5; border-radius: 0 5px 5px 0; background: #f8fafc; z-index: 2; }
     .av-search-go:hover, .av-search-go:focus-visible { background: #eef6ff; outline: none; }
+    #avMultiToggle.funnel-active { border-color: #1c7fd6; background: #eef6ff; box-shadow: 0 0 0 1px #1c7fd6 inset, 0 0 0 2px rgba(28,127,214,.28); outline: none; }
+    #avMultiToggle.funnel-active svg { stroke: #1c7fd6; }
     .av-search.av-multi-mode .av-search-go { display: none; }
     .av-search.av-multi-mode .av-search-input { padding-right: 8px; }
     .av-search.av-multi-mode .av-search-count { display: none; }
@@ -1024,7 +1026,7 @@
                 <button type="button" id="activeViewSearchGo" class="icon-btn av-search-go" title="Ir a la vista seleccionada" aria-label="Ir a la vista seleccionada"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
                 <div id="activeViewSearchSuggest" class="av-search-suggest" style="display:none;"></div>
               </div>
-              <button type="button" id="avMultiToggle" class="icon-btn av-search-multi" title="Selección múltiple de vistas" aria-label="Selección múltiple de vistas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/></svg></button>
+              <button type="button" id="avMultiToggle" class="icon-btn av-search-multi" title="Selección múltiple de vistas" aria-label="Selección múltiple de vistas" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/></svg></button>
               <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Orden: establecido en Trimble" aria-label="Orden: establecido en Trimble"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
             </div>
             <div id="activeViewLoadStatus" class="av-search-loading" aria-live="polite"></div>
@@ -1248,7 +1250,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.7.0";
+    const SCRIPT_VERSION = "v9.7.2";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const TRIMBLE_OFFICIAL_COLORS = {
@@ -1287,6 +1289,7 @@
     const CANDIDATE_BBOX_BATCH = 400;
     const PROPS_BATCH = 60;
     const NATIVE_COLOR_SCAN_CAP = 6000;
+    const PARAM_SCAN_CAP = 12000;
     const LOG_MAX_LINES = 160;
     const MAX_PARAM_MARKUPS = 200;
     // Offset vertical mínimo (mm) para que la etiqueta quede claramente por encima del objeto y no quede enterrada en vistas densas.
@@ -1318,6 +1321,7 @@
     let hiddenBusy=false;                    // markHiddenObjectsWhite() en curso (evita carrera con "Ver ocultos")
     let pendingViewHiddenState=null;         // intención de "Ver ocultos" guardada durante la detección
     let csvAvailableParametersCache=[];
+    let lastParamScanDiag=null;
     let draggedColumnIndex=null;
 
     // ===================== LOG / DEBUG =====================
@@ -1547,23 +1551,53 @@
     function selectedColumns(){ return COLUMNS; }
 
     // ===================== ESCANEO DE PARÁMETROS =====================
-    async function scanModelParameters(){
+    async function scanModelParameters(options={}){
       const names=new Set();
+      const diag={ts:new Date().toISOString(),source:"none",modelsChecked:0,objectsChecked:0,totalVisible:null,truncated:false,fullModel:!!options.fullModel,errors:[]};
       try{
-        let sample=await safeGetSelection();
-        if(sample.length===0){ const colored=await getColoredObjectEntries().catch(()=>[]); sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId})); }
+        let sample=[];
+        if(!options.fullModel){
+          sample=await safeGetSelection();
+          if(sample.length) diag.source="selection";
+        }
+        if(sample.length===0 && !options.fullModel){
+          const colored=await getColoredObjectEntries().catch((e)=>{ diag.errors.push("colored: "+(e&&e.message?e.message:e)); return []; });
+          sample=colored.slice(0,2000).map((x)=>({modelId:x.modelId,runtimeId:x.objectRuntimeId}));
+          if(sample.length) diag.source="coloredObjects";
+        }
+        if((options.fullModel||sample.length===0) && typeof getModelObjectsMap==="function"){
+          try{
+            const cap=Number(options.maxObjects)||PARAM_SCAN_CAP;
+            const mm=await getModelObjectsMap();
+            let total=0; sample=[];
+            for(const [modelId,ids] of mm.entries()){
+              diag.modelsChecked++;
+              total+=ids.length;
+              for(const rid of ids){
+                if(sample.length>=cap){ diag.truncated=true; break; }
+                sample.push({modelId,runtimeId:rid});
+              }
+              if(sample.length>=cap) break;
+            }
+            diag.totalVisible=total; diag.source=sample.length?"getObjects":diag.source;
+          }catch(e){ diag.errors.push("getObjects: "+(e&&e.message?e.message:e)); recordError("scanModelParameters.getObjects",e); }
+        }
         const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
+        if(!diag.modelsChecked) diag.modelsChecked=byModel.size;
         for(const [modelId,ids] of byModel.entries()){
-          for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const x of flattenProps(p)) if(x.name) names.add(String(x.name).trim()); }
+          for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const name of collectParameterNames(p)) names.add(name); }
+          diag.objectsChecked+=ids.length;
         }
       }catch(e){ recordError("scanModelParameters",e); }
+      diag.parametersFound=names.size;
+      lastParamScanDiag=diag;
       csvAvailableParametersCache=[...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
       return csvAvailableParametersCache;
     }
     async function refreshCsvAvailableParameters(){
       const hint=document.getElementById("csvParamHint");
       if(hint) hint.textContent="Leyendo parámetros disponibles del modelo...";
-      await scanModelParameters();
+      await scanModelParameters({fullModel:true});
       updateCsvColumnSelect();
       if(hint) hint.textContent="Parámetros disponibles: "+csvAvailableParametersCache.length+". Usa + para añadir la columna seleccionada.";
     }
@@ -1612,8 +1646,14 @@
       function updateSelect(){
         const sel=document.getElementById(opts.selectId); if(!sel) return; const keep=sel.value; sel.innerHTML="";
         const ph=document.createElement("option"); ph.value=""; ph.disabled=true; ph.selected=true; ph.hidden=true; ph.textContent="Añadir parámetro..."; sel.appendChild(ph);
+        const missingDefaults=(opts.defaults||[]).filter((p)=>p && !params.some((x)=>x.toLowerCase()===String(p).toLowerCase()));
+        if(missingDefaults.length){
+          const dgrp=document.createElement("optgroup"); dgrp.label="Valores predeterminados";
+          for(const p of missingDefaults){ const o=document.createElement("option"); o.value=p; o.textContent=p; dgrp.appendChild(o); }
+          sel.appendChild(dgrp);
+        }
         const source=localAvailable||csvAvailableParametersCache||[];
-        const available=source.filter((p)=>p && !params.some((x)=>x.toLowerCase()===p.toLowerCase()));
+        const available=source.filter((p)=>p && !params.some((x)=>x.toLowerCase()===p.toLowerCase()) && !missingDefaults.some((x)=>String(x).toLowerCase()===String(p).toLowerCase()));
         const grp=document.createElement("optgroup"); grp.label=localAvailable?"Parámetros del objeto seleccionado":"Parámetros del modelo";
         if(available.length){ for(const p of available){ const o=document.createElement("option"); o.value=p; o.textContent=p; grp.appendChild(o); } }
         else { const o=document.createElement("option"); o.disabled=true; o.value=""; o.textContent=(csvAvailableParametersCache&&csvAvailableParametersCache.length)?"No quedan parámetros":"Pulsa \u21BB para leer parámetros"; grp.appendChild(o); }
@@ -1629,30 +1669,39 @@
           if(sel.length){
             const propsMap=await getPropertiesCached(sel[0].modelId,[sel[0].runtimeId]);
             const p=propsMap.get(sel[0].runtimeId)||{};
-            const names=[...new Set(flattenNamed(p).map((x)=>String(x.name||"").trim()).filter((n)=>n&&n!=="class"&&n!=="product.name"))];
+            const names=collectParameterNames(p);
             if(names.length){ localAvailable=names.sort((a,b)=>a.localeCompare(b)); updateSelect(); log("Parámetros del objeto seleccionado: "+names.length+"."); return; }
           }
         }catch(e){ recordError("paramPicker.refresh",e); }
-        await scanModelParameters(); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+".");
+        await scanModelParameters({fullModel:true}); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+".");
       }
       function wire(){ const a=document.getElementById(opts.addId); if(a) a.onclick=add; const r=document.getElementById(opts.refreshId); if(r) r.onclick=()=>refresh(); const rs=opts.resetId?document.getElementById(opts.resetId):null; if(rs) rs.onclick=()=>{ resetDefaults(); log("Parámetros restaurados por defecto."); }; buildList(); updateSelect(); }
       return { getParams, setParams, resetDefaults, buildList, updateSelect, refresh, wire };
     }
     // v8.9.0: defaults por tipología = campos útiles del inspector. El cambio se guarda en localStorage y refresca inspector (y markups solo si están activos).
     function paramProfileChanged(key){ saveParamProfiles(); if(PARAM_USE_3D_MARKUPS) scheduleParamMarkups(key); scheduleSelectionInspector(); }
-    const namesPicker=makeParamPicker({listId:"namesParamList",addId:"namesParamAdd",selectId:"namesParamSelect",refreshId:"namesParamRefresh",resetId:"namesParamReset",defaults:["Name","Assembly/Cast unit Mark","Profile","Material"],onChange:()=>paramProfileChanged("names")});
-    const boltsPicker=makeParamPicker({listId:"boltsParamList",addId:"boltsParamAdd",selectId:"boltsParamSelect",refreshId:"boltsParamRefresh",resetId:"boltsParamReset",defaults:["Assembly/Cast unit Mark","Bolt Name","Bolt size","Bolt length","Bolt standard","Material","Bolt hole diameter"],onChange:()=>paramProfileChanged("bolts")});
-    const weldsPicker=makeParamPicker({listId:"weldsParamList",addId:"weldsParamAdd",selectId:"weldsParamSelect",refreshId:"weldsParamRefresh",resetId:"weldsParamReset",defaults:["Assembly/Cast unit Mark","Type 1","Size 1","Actual length 1","Length","Assembly type"],onChange:()=>paramProfileChanged("welds")});
+    const OLD_NAMES_PARAM_DEFAULTS=["Name","Assembly/Cast unit Mark","Profile","Material"];
+    const NAMES_PARAM_DEFAULTS=["Reference","Name","Material","Layer"];
+    const BOLTS_PARAM_DEFAULTS=["Assembly/Cast unit Mark","Bolt Name","Bolt size","Bolt length","Bolt standard","Material","Bolt hole diameter"];
+    const WELDS_PARAM_DEFAULTS=["Assembly/Cast unit Mark","Type 1","Size 1","Actual length 1","Length","Assembly type"];
+    const namesPicker=makeParamPicker({listId:"namesParamList",addId:"namesParamAdd",selectId:"namesParamSelect",refreshId:"namesParamRefresh",resetId:"namesParamReset",defaults:NAMES_PARAM_DEFAULTS,onChange:()=>paramProfileChanged("names")});
+    const boltsPicker=makeParamPicker({listId:"boltsParamList",addId:"boltsParamAdd",selectId:"boltsParamSelect",refreshId:"boltsParamRefresh",resetId:"boltsParamReset",defaults:BOLTS_PARAM_DEFAULTS,onChange:()=>paramProfileChanged("bolts")});
+    const weldsPicker=makeParamPicker({listId:"weldsParamList",addId:"weldsParamAdd",selectId:"weldsParamSelect",refreshId:"weldsParamRefresh",resetId:"weldsParamReset",defaults:WELDS_PARAM_DEFAULTS,onChange:()=>paramProfileChanged("welds")});
     // Persistencia de perfiles de parámetros por tipología (v8.9.0). Corrupto -> se ignora y quedan defaults.
-    const PARAM_PROFILES_KEY="deo.paramInspectorProfiles.v1";
+    const PARAM_PROFILES_KEY="deo.paramInspectorProfiles.v2";
+    const PARAM_PROFILES_OLD_KEY="deo.paramInspectorProfiles.v1";
     function saveParamProfiles(){ try{ localStorage.setItem(PARAM_PROFILES_KEY,JSON.stringify({names:namesPicker.getParams(),bolts:boltsPicker.getParams(),welds:weldsPicker.getParams()})); }catch(e){ recordError("saveParamProfiles",e); } }
     function applyStoredParamProfiles(){
       try{
-        const raw=localStorage.getItem(PARAM_PROFILES_KEY); if(!raw) return;
+        let raw=localStorage.getItem(PARAM_PROFILES_KEY);
+        const fromOld=!raw;
+        if(!raw) raw=localStorage.getItem(PARAM_PROFILES_OLD_KEY);
+        if(!raw) return;
         const data=JSON.parse(raw); if(!data||typeof data!=="object") return;
         const clean=(a)=>Array.isArray(a)?a.filter((x)=>typeof x==="string"&&x.trim()).slice(0,40):null;
+        const sameList=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((x,i)=>String(x).trim().toLowerCase()===String(b[i]).trim().toLowerCase());
         const n=clean(data.names), b=clean(data.bolts), w=clean(data.welds);
-        if(n&&n.length) namesPicker.setParams(n);
+        if(n&&n.length) namesPicker.setParams(fromOld&&sameList(n,OLD_NAMES_PARAM_DEFAULTS)?NAMES_PARAM_DEFAULTS:n);
         if(b&&b.length) boltsPicker.setParams(b);
         if(w&&w.length) weldsPicker.setParams(w);
       }catch(e){ recordError("applyStoredParamProfiles",e); }
@@ -1669,6 +1718,7 @@
     let viewsCacheBuiltAt=0;
     let viewsCacheLoading=null;      // promesa en curso: evita llamadas concurrentes a getViews()
     let viewsCacheStable=false;
+    let viewsCacheLoadingStrong=false;
     let viewsCountCacheRef=null;
     let lastViewsLoadDiagnostics=null;
     let lastActiveViewDiagnostics=null;
@@ -1819,17 +1869,23 @@
       try{ localStorage.setItem(key,JSON.stringify({count:Number(count)||0,timestamp:Date.now(),version:SCRIPT_VERSION})); }catch(e){}
     }
     async function loadViewsCache(force=false, options={}){
-      if(viewsCacheLoading) return viewsCacheLoading;   // deduplica llamadas concurrentes, incluso si una llamada nueva fuerza refresco
+      const strong=!!(force||options.strong);
+      if(viewsCacheLoading){
+        if(strong&&!viewsCacheLoadingStrong){ try{ await viewsCacheLoading; }catch(e){} return loadViewsCache(true,options); }
+        return viewsCacheLoading;
+      }   // deduplica llamadas concurrentes; una petición fuerte relanza tras una débil en curso
       const stableTtl=45000;
       if(!force&&viewsCacheStable&&viewsCacheBuiltAt&&(Date.now()-viewsCacheBuiltAt)<stableTtl) return viewsCache;
       const p=(async ()=>{
         if(!(API&&API.view&&typeof API.view.getViews==="function")){ recordError("loadViewsCache",new Error("API.view.getViews no disponible")); return viewsCache; }
         const started=Date.now();
         const cache=await readViewsCountCache();
-        const maxAttempts=Number(options.maxAttempts)||10;
-        const maxDurationMs=Number(options.maxDurationMs)||14000;
-        const delayMs=Number(options.delayMs)||450;
-        const stablePasses=Number(options.stablePasses)||3;
+        const maxAttempts=Number(options.maxAttempts)||(strong?16:10);
+        const maxDurationMs=Number(options.maxDurationMs)||(strong?24000:14000);
+        const delayMs=Number(options.delayMs)||(strong?600:450);
+        const stablePasses=Number(options.stablePasses)||(strong?4:3);
+        const minAttempts=Number(options.minAttempts)||(strong?8:0);
+        const minDurationMs=Number(options.minDurationMs)||(strong?4500:0);
         let bestCount=-1, stable=0, attempts=0, lastError=null;
         viewsCacheStable=false;
         setViewsLoadingStatus(viewsCache.length?("Cargando vistas… "+viewsCache.length+" detectadas"):"Cargando vistas…");
@@ -1852,7 +1908,7 @@
           setViewsLoadingStatus("Cargando vistas… "+Math.max(bestCount,0)+" detectadas");
           const expected=cache.count||0;
           const requiredStable=(expected&&bestCount<expected)?(stablePasses+2):stablePasses;
-          if(stable>=requiredStable) break;
+          if(stable>=requiredStable && attempts>=minAttempts && (Date.now()-started)>=minDurationMs) break;
           if((Date.now()-started)>=maxDurationMs) break;
           await sleep(delayMs);
         }
@@ -1865,7 +1921,8 @@
         return viewsCache;
       })();
       viewsCacheLoading=p;
-      try{ return await p; } finally{ if(viewsCacheLoading===p) viewsCacheLoading=null; }
+      viewsCacheLoadingStrong=strong;
+      try{ return await p; } finally{ if(viewsCacheLoading===p){ viewsCacheLoading=null; viewsCacheLoadingStrong=false; } }
     }
     async function getActiveViewResilient(options={}){
       const maxAttempts=options.attempts||6;
@@ -2294,10 +2351,46 @@
     async function getCurrentColorMap(){ const map=new Map(); let colored=[]; try{ colored=await getColoredObjectEntries(); }catch(e){ colored=[]; } for(const c of colored) map.set(c.modelId+":"+c.objectRuntimeId,c.normalizedColor); return map; }
 
     // ===================== PROPIEDADES =====================
-    function flattenProps(propsList){ const flat=[]; const walk=(obj)=>{ if(!obj||typeof obj!=="object") return; if(Array.isArray(obj)){ obj.forEach(walk); return; } const name=obj.name??obj.Name??obj.key??obj.propertyName; const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue; const unit=obj.unit??obj.units??obj.Unit??""; if(name!==undefined&&value!==undefined&&typeof value!=="object") flat.push({name:String(name),value:String(value),unit:String(unit||"")}); for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]); }; walk(propsList); return flat; }
+    function propNodeName(obj){ return obj&&typeof obj==="object"?(obj.name??obj.Name??obj.key??obj.propertyName):undefined; }
+    function propNodeValue(obj){ return obj&&typeof obj==="object"?(obj.value??obj.Value??obj.nominalValue??obj.displayValue):undefined; }
+    function propPathLabel(parts){ return (parts||[]).map((p)=>String(p||"").trim()).filter(Boolean).join("."); }
+    function pushPropEntry(flat,name,value,unit,pathParts){
+      const clean=String(name||"").trim(); if(!clean) return;
+      const val=String(value??""); const u=String(unit||"");
+      flat.push({name:clean,value:val,unit:u,path:propPathLabel(pathParts)});
+      const path=propPathLabel([...(pathParts||[]),clean]);
+      if(path&&normKey(path)!==normKey(clean)) flat.push({name:path,value:val,unit:u,path});
+    }
+    function flattenProps(propsList){
+      const flat=[]; const seen=new WeakSet();
+      const walk=(obj,path=[])=>{
+        if(!obj||typeof obj!=="object") return;
+        if(seen.has(obj)) return; seen.add(obj);
+        if(Array.isArray(obj)){ obj.forEach((x)=>walk(x,path)); return; }
+        const name=propNodeName(obj);
+        const value=propNodeValue(obj);
+        const unit=obj.unit??obj.units??obj.Unit??"";
+        const hasScalar=value!==undefined&&value!==null&&typeof value!=="object";
+        const cleanName=name!==undefined?String(name).trim():"";
+        if(cleanName&&hasScalar) pushPropEntry(flat,cleanName,value,unit,path);
+        const childPath=(cleanName&&!hasScalar)?path.concat(cleanName):path;
+        for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k],childPath);
+      };
+      walk(propsList,[]);
+      return flat;
+    }
+    function collectParameterNames(p){
+      const names=new Map();
+      for(const x of flattenProps(p)){
+        const name=String(x.name||"").trim();
+        if(!name||name==="class"||name==="product.name") continue;
+        const key=normKey(name); if(key&&!names.has(key)) names.set(key,name);
+      }
+      return [...names.values()].sort((a,b)=>a.localeCompare(b,"es"));
+    }
     function propsSearchText(p){ const chunks=[]; try{ if(p.class) chunks.push(p.class);}catch(e){} for(const x of flattenProps(p)) chunks.push(x.name,x.value); return chunks.join(" ").toLowerCase(); }
     function getNameValues(p){ const values=[]; for(const x of flattenProps(p)){ if(String(x.name||"").trim().toLowerCase()==="name") values.push(String(x.value||"").trim()); } try{ if(p&&p.name!=null) values.push(String(p.name).trim()); }catch(e){} try{ if(p&&p.product&&p.product.name!=null) values.push(String(p.product.name).trim()); }catch(e){} return [...new Set(values.filter(Boolean))]; }
-    function getParamValue(p,paramName){ const target=String(paramName||"").trim().toLowerCase(); if(!target) return ""; if(target==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>String(x.name||"").trim().toLowerCase()===target); return hit?String(hit.value??""):""; }
+    function getParamValue(p,paramName){ const target=String(paramName||"").trim(); const targetKey=normKey(target); if(!targetKey) return ""; if(targetKey==="name"){ const nv=getNameValues(p); return nv.length?nv[0]:""; } const flat=flattenProps(p); const hit=flat.find((x)=>normKey(x.name)===targetKey); return hit?String(hit.value??""):""; }
     async function getPropertiesCached(modelId,ids){ if(!propsCache.has(modelId)) propsCache.set(modelId,new Map()); const cache=propsCache.get(modelId); const result=new Map(); const missing=[]; for(const id of ids){ if(cache.has(id)) result.set(id,cache.get(id)); else missing.push(id); } for(let i=0;i<missing.length;i+=PROPS_BATCH){ const chunk=missing.slice(i,i+PROPS_BATCH); try{ const props=await API.viewer.getObjectProperties(modelId,chunk); for(let j=0;j<chunk.length;j++){ const p=props&&props[j]?props[j]:{}; cache.set(chunk[j],p); result.set(chunk[j],p); } }catch(e){ recordError("getProperties",e); } } return result; }
     async function safeGetSelection(){ if(!API||!API.viewer) return []; let sel=[]; try{ sel=await API.viewer.getSelection(); }catch(e){ recordError("getSelection",e); return []; } const out=[]; const arr=Array.isArray(sel)?sel:(sel&&sel.modelObjectIds)?sel.modelObjectIds:[]; for(const item of arr||[]){ const modelId=item.modelId; const ids=item.objectRuntimeIds||item.runtimeIds||item.objectIds||[]; for(const id of ids) out.push({modelId,runtimeId:Number(id)}); } const res=out.filter((o)=>o.modelId&&Number.isFinite(o.runtimeId)); noteSelectionSnapshot(res); return res; }
     // v8.10.0: ¿hay una vista guardada activa? Heurística defensiva — getCurrentView devuelve un objeto con id
@@ -2695,12 +2788,20 @@
       showExportCancel(true);
       const enc=new TextEncoder(); const eta=createEtaEstimator(chosen.length,{initialPerItemMs:2000});
       const zipFiles=[]; const usedNames=new Set();
-      const report=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Modo: "+(strict?"estricto (aborta al primer fallo)":"permisivo (omite vistas con fallo)"),"Vistas seleccionadas: "+chosen.length,"Cambio de vista: activateViewById por vista (método/payload verificado en cada iteración)",""];
+      const reportHeader=["DEO Tools "+SCRIPT_VERSION+" - Informe de exportación masiva","Fecha: "+new Date().toLocaleString(),"Modo: "+(strict?"estricto (aborta al primer fallo)":"permisivo (omite vistas con fallo)"),"Vistas seleccionadas: "+chosen.length];
+      const reportFailures=[]; const reportEmpty=[]; const reportCompleted=[];
+      const reportLine=(viewName,detail)=>"- "+(viewName||"(sin nombre)")+": "+detail;
+      const pushReportSection=(target,title,items)=>{
+        target.push("",title+" ("+items.length+")");
+        if(items.length) target.push(...items);
+        else target.push("- Ninguna");
+      };
       let okViews=0, emptyViews=0, failViews=0, totalRows=0, aborted=false;
       try{
         for(let i=0;i<chosen.length;i++){
           if(massExportCancel){ log("Exportación masiva cancelada por el usuario."); break; }
           const v=chosen[i];
+          const viewNotes=[];
           setProgress("Exportando "+(i+1)+"/"+chosen.length+" vistas · ETA "+eta.etaText());
           let act=null;
           try{ act=await activateViewById(v.id); }
@@ -2709,7 +2810,7 @@
             const recovered=await recoverLateActivatedView(v,act);
             if(recovered&&recovered.confirmed){
               act=recovered;
-              report.push("- "+v.name+": confirmación tardía aceptada ("+(act.by||"?")+").");
+              viewNotes.push("confirmación tardía aceptada ("+(act.by||"?")+").");
             } else if(recovered&&recovered.reason) {
               act.reason=recovered.reason;
             }
@@ -2720,20 +2821,40 @@
             lastMassExport.lastMethod=(act&&(act.method||act.lastMethod))||"activateViewById";
             const reason=(act&&(act.reason||act.lastError))||"vista no confirmada";
             const sentTxt=(act&&act.sent)?"enviada pero no confirmada":"no enviada";
-            report.push("- "+v.name+": FALLO al activar/verificar la vista ("+sentTxt+"; "+reason+"). Omitida para evitar exportar datos de otra vista.");
-            if(strict){ aborted=true; report.push("  Modo estricto: exportación abortada tras el fallo."); break; }
+            let detail="FALLO al activar/verificar la vista ("+sentTxt+"; "+reason+"). Omitida para evitar exportar datos de otra vista.";
+            if(viewNotes.length) detail+=" "+viewNotes.join(" ");
+            if(strict){ aborted=true; detail+=" Modo estricto: exportación abortada tras el fallo."; }
+            reportFailures.push(reportLine(v.name,detail));
+            if(strict){ break; }
             eta.skip(); continue;
           }
           lastMassExport.lastMethod=(act.method||"activateViewById")+(act.payloadLabel?(" / "+act.payloadLabel):"");
           let entries=null; try{ entries=await getColoredObjectEntriesForExportView(); }catch(e){ recordError("exportMassive.colors",e); }
-          if(!Array.isArray(entries)){ failViews++; lastMassExport.lastFailedView=v.name; report.push("- "+v.name+": FALLO al leer colores (omitida). Vista activada con "+(act.method||"?")+"("+(act.payloadLabel||"?")+")."); if(strict){ aborted=true; report.push("  Modo estricto: exportación abortada tras el fallo."); break; } eta.skip(); continue; }
-          if(!entries.length){ emptyViews++; report.push("- "+v.name+": sin objetos coloreados (omitida). Vista activada con "+(act.method||"?")+"("+(act.payloadLabel||"?")+")."); eta.skip(); continue; }
+          if(!Array.isArray(entries)){
+            failViews++; lastMassExport.lastFailedView=v.name;
+            let detail="FALLO al leer colores (omitida). Vista activada con "+(act.method||"?")+"("+(act.payloadLabel||"?")+").";
+            if(viewNotes.length) detail+=" "+viewNotes.join(" ");
+            if(strict){ aborted=true; detail+=" Modo estricto: exportación abortada tras el fallo."; }
+            reportFailures.push(reportLine(v.name,detail));
+            if(strict){ break; }
+            eta.skip(); continue;
+          }
+          if(!entries.length){
+            emptyViews++;
+            let detail="sin objetos coloreados (omitida). Vista activada con "+(act.method||"?")+"("+(act.payloadLabel||"?")+").";
+            if(viewNotes.length) detail+=" "+viewNotes.join(" ");
+            reportEmpty.push(reportLine(v.name,detail));
+            eta.skip(); continue;
+          }
           const revisionBase=computeRevisionBase(v.name);
           const rows=await buildRows(entries,revisionBase,v.name,wantGuid);
           const csv=rowsToCsv(rows,cols);
           let base=sanitizeFilename(v.name)||("vista_"+(i+1)); let nm=base+".csv"; let k=2; while(usedNames.has(nm.toLowerCase())){ nm=base+"_"+(k++)+".csv"; } usedNames.add(nm.toLowerCase());
           zipFiles.push({name:nm,data:enc.encode("\uFEFF"+csv)});
-          okViews++; totalRows+=rows.length; report.push("- "+v.name+": "+rows.length+" fila(s) -> "+nm+" (vista confirmada por "+(act.by||"?")+"; "+(act.method||"?")+"("+(act.payloadLabel||"?")+"))");
+          okViews++; totalRows+=rows.length;
+          let detail=rows.length+" fila(s) -> "+nm+" (vista confirmada por "+(act.by||"?")+"; "+(act.method||"?")+"("+(act.payloadLabel||"?")+"))";
+          if(viewNotes.length) detail+=" "+viewNotes.join(" ");
+          reportCompleted.push(reportLine(v.name,detail));
           eta.complete();
           await sleep(0);
         }
@@ -2748,7 +2869,12 @@
         lastMassExport.zipFilesCount=0;
         return;
       }
-      report.push("","ESTADO: "+status,"Vistas con datos: "+okViews,"Vistas vacías: "+emptyViews,"Vistas con fallo: "+failViews,"Filas totales: "+totalRows,"Columnas: "+cols.map((c)=>c.header).join(", "),"Cambio de vista: activateViewById por vista","Último método/payload: "+(lastMassExport.lastMethod||"n/a"));
+      const report=reportHeader.slice();
+      report.push("","ESTADO: "+status,"Vistas con datos: "+okViews,"Vistas vacías: "+emptyViews,"Vistas con fallo: "+failViews,"Filas totales: "+totalRows);
+      report.push("","ITEMS CONSIDERADOS DURANTE LA EXTRACCIÓN","Columnas: "+cols.map((c)=>c.header).join(", "),"Cambio de vista: activateViewById por vista","Cambio de vista: activateViewById por vista (método/payload verificado en cada iteración)","Último método/payload: "+(lastMassExport.lastMethod||"n/a"));
+      pushReportSection(report,"VISTAS CON FALLO",reportFailures);
+      pushReportSection(report,"VISTAS VACÍAS",reportEmpty);
+      pushReportSection(report,"VISTAS CON DATOS COMPLETADAS",reportCompleted);
       zipFiles.push({name:"_informe.txt",data:enc.encode("\uFEFF"+report.join("\n"))});
       const zipName="DEO_export_masiva_"+new Date().toISOString().slice(0,10)+(status!=="COMPLETADA"?("_"+status.toLowerCase()):"")+".zip";
       downloadBlob(zipName,zipStore(zipFiles));
@@ -2803,10 +2929,21 @@
       saveImportColors(); updateImportColorSwatches();
       log("Importar registro: "+(IMPORT_COLOR_LABELS[key]||key)+" cambiado a "+colorObjToHex(importColorConfig[key])+".");
     }
+    function openImportColorPalette(el){
+      if(!el) return;
+      const key=el.getAttribute("data-import-color");
+      if(!IMPORT_COLOR_DEFAULTS[key]) return;
+      const color=getImportColor(key);
+      const input=document.getElementById("quickColorInput"); if(input) input.value="#"+hex2(color.r)+hex2(color.g)+hex2(color.b);
+      const alpha=document.getElementById("quickAlphaInput"); if(alpha) alpha.value=String(color.a==null?255:color.a);
+      showQuickColorPopover(el,{type:"importColor",key});
+    }
     function wireImportColorSwatches(){
       loadImportColors();
       document.querySelectorAll("[data-import-color]").forEach((el)=>{
-        el.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); showQuickColorPopover(el,{type:"importColor",key:el.getAttribute("data-import-color")}); });
+        el.addEventListener("pointerdown",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); openImportColorPalette(el); });
+        el.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); });
+        el.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); ev.stopPropagation(); openImportColorPalette(el); } });
       });
     }
     function isReviewedTrue(v){ return ["TRUE","VERDADERO","1","YES","SI","SÍ"].includes(String(v||"").trim().toUpperCase()); }
@@ -2899,14 +3036,18 @@
     async function expandImportInputs(files){
       const out=[];
       for(const f of files){
-        if(/\.zip$/i.test(f.name)||f.type==="application/zip"){
+        const fileName=String(f.name||"");
+        const fileType=String(f.type||"").toLowerCase();
+        const isZip=/\.zip$/i.test(fileName)||/zip|compressed/.test(fileType);
+        const isCsv=/\.csv$/i.test(fileName)||/csv/.test(fileType)||(!/\.[a-z0-9]+$/i.test(fileName)&&!isZip);
+        if(isZip){
           try{
             const ab=await f.arrayBuffer(); const csvs=await unzipCsvEntries(ab);
             for(const c of csvs){ const txt=c.text; out.push({name:c.name,text:()=>Promise.resolve(txt)}); }
             log("ZIP "+f.name+": "+csvs.length+" CSV interno(s).");
             if(!csvs.length) log("ZIP "+f.name+": no contiene CSV.");
           }catch(e){ recordError("expandImportInputs.zip",e); log("No se pudo abrir el ZIP "+f.name+": "+(e&&e.message?e.message:e)); }
-        } else if(/\.csv$/i.test(f.name)||f.type==="text/csv"||!/\.[a-z0-9]+$/i.test(f.name)){ out.push(f); }
+        } else if(isCsv){ out.push(f); }
         else log("Ignorado (no es CSV ni ZIP): "+f.name);
       }
       return out;
@@ -3505,17 +3646,27 @@
     // la class y product.name. Con guard de ciclos.
     function flattenNamed(p){
       const flat=[]; const seen=new WeakSet();
-      const walk=(obj)=>{ if(!obj||typeof obj!=="object"||seen.has(obj)) return; seen.add(obj);
-        if(Array.isArray(obj)){ obj.forEach(walk); return; }
-        const name=obj.name??obj.Name??obj.key??obj.propertyName;
-        const value=obj.value??obj.Value??obj.nominalValue??obj.displayValue;
-        if(name!==undefined){
-          if(value!==undefined && typeof value!=="object") flat.push({name:String(name),value:String(value)});
-          else flat.push({name:String(name),value:""}); // contenedor/property set con nombre
-        }
-        for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k]);
+      const add=(name,value,pathParts)=>{
+        const clean=String(name||"").trim(); if(!clean) return;
+        const val=String(value??"");
+        flat.push({name:clean,value:val,path:propPathLabel(pathParts)});
+        const path=propPathLabel([...(pathParts||[]),clean]);
+        if(path&&normKey(path)!==normKey(clean)) flat.push({name:path,value:val,path});
       };
-      walk(p);
+      const walk=(obj,path=[])=>{ if(!obj||typeof obj!=="object"||seen.has(obj)) return; seen.add(obj);
+        if(Array.isArray(obj)){ obj.forEach((x)=>walk(x,path)); return; }
+        const name=propNodeName(obj);
+        const value=propNodeValue(obj);
+        const cleanName=name!==undefined?String(name).trim():"";
+        const hasScalar=value!==undefined&&value!==null&&typeof value!=="object";
+        if(cleanName){
+          if(hasScalar) add(cleanName,value,path);
+          else add(cleanName,"",path); // contenedor/property set con nombre
+        }
+        const childPath=(cleanName&&!hasScalar)?path.concat(cleanName):path;
+        for(const k of Object.keys(obj)) if(typeof obj[k]==="object") walk(obj[k],childPath);
+      };
+      walk(p,[]);
       try{ if(p&&p.class!=null) flat.push({name:"class",value:String(p.class)}); }catch(e){}
       try{ if(p&&p.product&&p.product.name!=null) flat.push({name:"product.name",value:String(p.product.name)}); }catch(e){}
       return flat;
@@ -3527,6 +3678,14 @@
       for(const w of wants){ const hit=flat.find((x)=>normKey(x.name)===w && String(x.value||"").trim()); if(hit) return String(hit.value).trim(); }
       return "";
     }
+    const PARAM_DEFAULT_ALIASES={
+      reference:["Pset_Column Common.Reference","Pset Column Common.Reference","PsetColumnCommon.Reference","Reference"],
+      name:["Ifc Column Type.Name","IfcColumnType.Name","Ifc Type.Name","Type.Name","Name"],
+      material:["Ifc Material.Material","IfcMaterial.Material","Material"],
+      layer:["Presentation Layers.Layer","PresentationLayers.Layer","Layer"]
+    };
+    function paramAliasesForName(name){ const key=normKey(name); return PARAM_DEFAULT_ALIASES[key]||[name]; }
+    function findParamValue(p,name){ return findPropByAliases(p,paramAliasesForName(name)); }
     // ¿Existe alguna clave (por nombre) que coincida con los alias? (presencia, ignora valor).
     function hasAnyName(p,aliases){ const flat=flattenNamed(p); const wants=aliases.map(normKey); return flat.some((x)=>{ const nk=normKey(x.name); return wants.some((w)=>nk===w); }); }
     // Texto de búsqueda que incluye nombres de property set, class y product.name.
@@ -3590,7 +3749,7 @@
       paramMarkupDiag[toolKey]=diag;
       return diag;
     }
-    function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const val=getParamValue(p,name); if(val===""||val==null) continue; if(String(name).trim().toLowerCase()==="name") lines.push(val); else lines.push(name+": "+val); } return lines.join("\n"); }
+    function buildParamLabel(p,params){ const lines=[]; for(const name of params){ const key=String(name).trim(); const val=findParamValue(p,key)||getParamValue(p,key); if(val===""||val==null) continue; if(key.toLowerCase()==="name") lines.push(val); else lines.push(key+": "+val); } return lines.join("\n"); }
     // --- Resolución robusta de nombres (v8.8.4): evita nombres genéricos tipo BEAM/PLATE/... ---
     const GENERIC_NAME_SET=new Set(["beam","plate","bolt","bolt assembly","object","part","assembly","item","element","member","nut","washer","screw","weld","profile","column","brace","slab","wall","unknown","no name"]);
     function isGenericName(s){ const t=String(s||"").trim().toLowerCase(); if(!t) return true; return GENERIC_NAME_SET.has(t); }
@@ -3684,8 +3843,8 @@
       const lines=[];
       for(const name of params){
         const key=String(name).trim();
-        if(key.toLowerCase()==="name"){ if(resolvedName) lines.push(resolvedName); }
-        else { const val=findPropByAliases(p,[key]); if(val) lines.push(key+": "+val); }
+        if(key.toLowerCase()==="name"){ const val=findParamValue(p,key)||resolvedName; if(val) lines.push(val); }
+        else { const val=findParamValue(p,key); if(val) lines.push(key+": "+val); }
       }
       return lines.join("\n");
     }
@@ -3695,7 +3854,7 @@
       for(const name of params){
         const key=String(name).trim();
         if(key.toLowerCase()==="name"){ const nv=resolveBestNameLocal(p); if(nv.text) lines.push(nv.text); continue; }
-        const val=findPropByAliases(p,[key]); if(val) lines.push(key+": "+val);
+        const val=findParamValue(p,key); if(val) lines.push(key+": "+val);
       }
       return lines.join("\n");
     }
@@ -3789,13 +3948,15 @@
       return holeText+" | "+boltSlotPart(p);
     }
     const PARAM_LINE_FORMATTERS={
-      name:(p)=>{ const nv=resolveBestNameLocal(p); return nv.text||""; },
+      reference:(p)=>{ const v=findParamValue(p,"Reference"); return v?"Reference: "+v:""; },
+      name:(p)=>{ const v=findParamValue(p,"Name"); if(v) return v; const nv=resolveBestNameLocal(p); return nv.text||""; },
       assemblycastunitmark:(p)=>{ const v=findPropByAliases(p,["Assembly/Cast unit Mark","Cast unit Mark","Assembly mark","Part mark"]); return v?"Mark: "+v:""; },
       boltname:(p)=>{ const v=findPropByAliases(p,["Bolt Name"]); return v?"Bolt: "+v:""; },
       boltsize:(p)=>{ const s=findPropByAliases(p,["Bolt size","NominalDiameter"]); const l=findPropByAliases(p,["Bolt length","NominalLength"]); if(!s&&!l) return ""; return "Size: Ø"+boltDimPlain(s||"?")+(l?" x "+boltDimPlain(l):"")+" mm"; },
       boltlength:(p,ctx)=>{ if(ctx&&ctx.hasNorm("boltsize")) return ""; const l=findPropByAliases(p,["Bolt length","NominalLength"]); return l?"Length: "+boltDimPlain(l)+" mm":""; },
       boltstandard:(p)=>{ const v=findPropByAliases(p,["Bolt standard"]); return v?"Standard: "+v:""; },
-      material:(p)=>{ const v=findPropByAliases(p,["Material"]); return v?"Material: "+v:""; },
+      material:(p)=>{ const v=findParamValue(p,"Material"); return v?"Material: "+v:""; },
+      layer:(p)=>{ const v=findParamValue(p,"Layer"); return v?"Layer: "+v:""; },
       boltholediameter:(p)=>boltHoleAndSlotLine(p),
       boltcount:(p)=>{ const v=findPropByAliases(p,["Bolt count"]); return v?"x"+v:""; },
       type1:(p)=>{ const v=findPropByAliases(p,["Type1","Type 1"]); return v?"Type: "+v:""; },
@@ -3822,7 +3983,7 @@
         const fmt=PARAM_LINE_FORMATTERS[normKey(name)];
         let line="";
         if(fmt) line=fmt(p,ctx);
-        else { const v=findPropByAliases(p,[name]); line=v?(name+": "+v):""; }
+        else { const v=findParamValue(p,name); line=v?(name+": "+v):""; }
         if(line) lines_pushUnique(lines,line);
       }
       return lines;
@@ -4697,7 +4858,12 @@
     function cvShareTokensEl(scope){ return document.getElementById(scope+"_shareTokens"); }
     function cvShareEntryEl(scope){ return document.getElementById(scope+"_shareEntry"); }
     function cvShareSuggestEl(scope){ return document.getElementById(scope+"_shareSuggest"); }
-    function cvGetShareTokens(scope){ return (cvShareTokenState[scope]||[]).slice(); }
+    function cvGetShareTokens(scope){
+      const arr=(cvShareTokenState[scope]||[]).slice();
+      if(arr.length) return arr;
+      const hidden=cvShareHidden(scope);
+      return hidden?parseTemplateList(hidden.value):[];
+    }
     function cvSetShareTokens(scope,list){
       if(!cvShareScopeOk(scope)) return;
       const seen=new Set(), arr=[];
@@ -4731,12 +4897,13 @@
     function cvAddShareToken(scope,v){
       const raw=String(v||"").trim(); if(!raw) return;
       const m=cvFindMember(raw);
-      if(!m){ cvFlagShareInvalid(scope,"Sin coincidencia: elige una persona o grupo de la lista."); return; }
-      const token=m.email||m.name; if(!token){ cvFlagShareInvalid(scope,"Sin coincidencia válida."); return; }
+      if(!m){ cvFlagShareInvalid(scope,"Sin coincidencia: elige una persona o grupo de la lista."); return false; }
+      const token=m.email||m.name; if(!token){ cvFlagShareInvalid(scope,"Sin coincidencia válida."); return false; }
       cvSetShareTokens(scope,cvGetShareTokens(scope).concat([token]));
       const input=cvShareEntryEl(scope); if(input) input.value="";
       cvClearShareInvalid(scope);
       cvHideShareSuggest(scope);
+      return true;
     }
     function cvActiveUserDomain(){ try{ const u=templateCurrentUser||{}; const email=String(u.email||u.username||"").toLowerCase(); const at=email.indexOf("@"); return at>=0?email.slice(at+1):""; }catch(e){ return ""; } }
     // Orden: 1) coincidencia directa (empieza por el término), 2) mismo dominio del usuario activo, 3) resto alfabético.
@@ -4778,7 +4945,12 @@
     function cvLabelsTokensEl(scope){ return document.getElementById(scope+"_labelsTokens"); }
     function cvLabelsEntryEl(scope){ return document.getElementById(scope+"_labelsEntry"); }
     function cvLabelsSuggestEl(scope){ return document.getElementById(scope+"_labelsSuggest"); }
-    function cvGetLabelTokens(scope){ return (cvLabelTokenState[scope]||[]).slice(); }
+    function cvGetLabelTokens(scope){
+      const arr=(cvLabelTokenState[scope]||[]).slice();
+      if(arr.length) return arr;
+      const hidden=cvLabelsHidden(scope);
+      return hidden?parseTemplateList(hidden.value):[];
+    }
     function cvSetLabelTokens(scope,list){
       if(!cvLabelScopeOk(scope)) return;
       const seen=new Set(), arr=[];
@@ -4809,6 +4981,7 @@
       cvSetLabelTokens(scope,cvGetLabelTokens(scope).concat([token]));
       const input=cvLabelsEntryEl(scope); if(input) input.value="";
       cvHideLabelSuggest(scope);
+      return true;
     }
     function cvLabelSuggestions(scope,q){
       const term=String(q||"").trim().toLowerCase(); if(!term) return [];
@@ -4836,6 +5009,25 @@
       cvRenderLabelTokens(scope);
     }
     function parseTemplateList(v){ return String(v||"").split(/[;,\n]+/).map((x)=>x.trim()).filter(Boolean); }
+    function cvCommitPendingMetaInputs(scope){
+      let ok=true;
+      const shareInput=cvShareEntryEl(scope);
+      const shareRaw=String((shareInput&&shareInput.value)||"").trim();
+      if(shareRaw){
+        for(const part of parseTemplateList(shareRaw)){
+          const added=cvAddShareToken(scope,part);
+          if(added===false) ok=false;
+        }
+        if(ok&&shareInput) shareInput.value="";
+      }
+      const labelInput=cvLabelsEntryEl(scope);
+      const labelRaw=String((labelInput&&labelInput.value)||"").trim();
+      if(labelRaw){
+        for(const part of parseTemplateList(labelRaw)) cvAddLabelToken(scope,part);
+        if(labelInput) labelInput.value="";
+      }
+      return ok;
+    }
     function selectedNewTemplate(){ const sel=document.getElementById("newTemplateSelect"); if(!sel||!sel.value) return null; return loadTemplates().find((t)=>t.name===sel.value)||null; }
     function buildViewSpec(name,tpl){
       const spec={name,description:name};
@@ -4958,8 +5150,18 @@
       if(typeof res==="object") return String(res.id||res.viewId||res.guid||"");
       return "";
     }
+    async function cvResolveSavedViewId(res,desc){
+      const direct=cvExtractViewId(res); if(direct) return direct;
+      const name=String(desc||"").trim(); if(!name) return "";
+      try{
+        await loadViewsCache(true,{strong:true,maxAttempts:8,maxDurationMs:9000,delayMs:500,stablePasses:3,minAttempts:3,minDurationMs:1200});
+        const matches=viewsCache.filter((v)=>String(v.name||"")===name||String(v.description||"")===name);
+        if(matches.length) return String(matches[matches.length-1].id||"");
+      }catch(e){ recordError("cvResolveSavedViewId",e); }
+      return "";
+    }
     async function cvVerifyAfterSave(viewId, reqShare, reqLabels){
-      const out={shareMsg:"",labelMsg:""};
+      const out={shareMsg:"",labelMsg:"",shareOk:!(reqShare&&reqShare.length),labelOk:!(reqLabels&&reqLabels.length)};
       if(!viewId) return out;
       let det=null; try{ det=await getViewDetailResilient(viewId); }catch(e){ recordError("cvVerifyAfterSave",e); }
       if(!det||!det.ok) return out;
@@ -4967,11 +5169,13 @@
       if(reqLabels&&reqLabels.length){
         const got=parseTemplateList(cvViewTags(view)).map((x)=>x.toLowerCase());
         const all=reqLabels.every((l)=>got.includes(String(l).toLowerCase()));
+        out.labelOk=all;
         out.labelMsg=all?"Etiquetas confirmadas.":"Etiquetas no confirmadas por la API.";
       }
       if(reqShare&&reqShare.length){
         const got=parseTemplateList(cvViewPeople(view)).map((x)=>x.toLowerCase());
         const all=reqShare.every((s)=>got.includes(String(s).toLowerCase()));
+        out.shareOk=all;
         out.shareMsg=all?"Compartición confirmada.":"Compartición no confirmada por la API.";
       }
       return out;
@@ -4983,10 +5187,67 @@
       if(share&&share.length){ spec.sharedWith=share; spec.shareWith=share; spec.assignees=share; spec.sharedUsers=share.map((e)=>({email:e})); }
       return spec;
     }
+    function cvUserObjects(share){ return (share||[]).map((e)=>({email:e})); }
+    function cvLabelObjects(labels){ return (labels||[]).map((name)=>({name,label:name,value:name,title:name})); }
+    function cvMetaSaveCandidates(viewId,desc,author,share,labels){
+      const base={id:viewId,name:desc,description:desc}; if(author) base.author=author;
+      const candidates=[Object.assign({},base)];
+      if((labels&&labels.length)||(share&&share.length)){
+        candidates.push(Object.assign({},base,cvBuildSpec(desc,author,share,labels)));
+        const c2=Object.assign({},base);
+        if(labels&&labels.length){ c2.tags=cvLabelObjects(labels); c2.labels=cvLabelObjects(labels); c2.tagNames=labels; c2.labelNames=labels; }
+        if(share&&share.length){ c2.sharedUsers=cvUserObjects(share); c2.sharedWith=cvUserObjects(share); c2.shareWith=share; c2.assignees=cvUserObjects(share); }
+        candidates.push(c2);
+        const c3=Object.assign({},base,{metadata:{}});
+        if(labels&&labels.length){ c3.metadata.tags=labels; c3.metadata.labels=labels; c3.tags=labels; c3.labels=labels; }
+        if(share&&share.length){ c3.metadata.sharedWith=share; c3.metadata.shareWith=share; c3.sharedWith=share; c3.sharedUsers=cvUserObjects(share); }
+        candidates.push(c3);
+      }
+      const seen=new Set();
+      return candidates.filter((c)=>{ const key=safeJson(c); if(seen.has(key)) return false; seen.add(key); return true; });
+    }
+    function cvVerifySatisfied(verify,share,labels){
+      const shareOk=!(share&&share.length)||verify.shareOk===true;
+      const labelOk=!(labels&&labels.length)||verify.labelOk===true;
+      return shareOk&&labelOk;
+    }
+    async function cvApplyViewMeta(viewId,desc,author,share,labels){
+      const result={ok:false,sent:false,verify:null,errors:[]};
+      if(!viewId||!(API&&API.view&&typeof API.view.updateView==="function")) return result;
+      const candidates=cvMetaSaveCandidates(viewId,desc,author,share,labels);
+      for(let i=0;i<candidates.length;i++){
+        try{
+          await API.view.updateView(candidates[i]);
+          result.sent=true;
+          const verify=await cvVerifyAfterSave(viewId,share,labels);
+          result.verify=verify;
+          if(cvVerifySatisfied(verify,share,labels)){ result.ok=true; result.method="payload "+(i+1); return result; }
+        }catch(e){
+          result.errors.push(e&&e.message?e.message:String(e));
+          recordError("cvApplyViewMeta.payload"+(i+1),e);
+        }
+      }
+      return result;
+    }
+    function cvMetaTail(meta,share,labels){
+      const msgs=[];
+      if(meta&&meta.verify){
+        if(meta.verify.shareMsg) msgs.push(meta.verify.shareMsg);
+        if(meta.verify.labelMsg) msgs.push(meta.verify.labelMsg);
+      }
+      const requested=(share&&share.length)||(labels&&labels.length);
+      if(requested && meta && !meta.ok && !msgs.length){
+        msgs.push(meta.sent?"Metadatos enviados; la API no los confirmó.":"Metadatos no aceptados por la API.");
+      }
+      return msgs.join(" ");
+    }
     function cvViewPeople(view){
-      const cands=view&&(view.assignees||view.sharedWith||view.sharedUsers||view.shareWith||view.members);
-      if(!Array.isArray(cands)) return "";
-      return cands.map((x)=> typeof x==="string"?x:((x&&(x.email||x.name||x.displayName||x.id))||"") ).filter(Boolean).join(", ");
+      let cands=view&&(view.assignees||view.sharedWith||view.sharedUsers||view.shareWith||view.members);
+      if((!cands||(Array.isArray(cands)&&!cands.length)) && view&&view.metadata&&typeof view.metadata==="object"){
+        cands=view.metadata.assignees||view.metadata.sharedWith||view.metadata.sharedUsers||view.metadata.shareWith||cands;
+      }
+      if(!Array.isArray(cands)) return String(cands||"");
+      return cands.map((x)=> typeof x==="string"?x:((x&&(x.email||x.mail||x.userEmail||x.name||x.displayName||x.id||(x.user&&(x.user.email||x.user.name))||(x.member&&(x.member.email||x.member.name))))||"") ).filter(Boolean).join(", ");
     }
     // v9.3.0: lee etiquetas desde el detalle completo. Prueba claves reales (tags/labels) y, si están vacías, metadata.
     // Solo se extraen nombres legibles; los IDs sueltos (tagIds/labelIds) no se convierten en nombres inventados.
@@ -5023,6 +5284,7 @@
       ensureCreateAutoFields(); tplAutosizeAll(document.getElementById("tplFoldCreate"));
       const val=cvValidateScope("tplNew");
       if(!val.ok){ log("Crear vista: campos obligatorios pendientes ("+val.missing.join(", ")+")."); return; }
+      if(!cvCommitPendingMetaInputs("cvNew")){ log("Crear vista: hay destinatarios sin coincidencia en Compartir con."); setProgress("Elige personas o grupos válidos antes de crear la vista."); return; }
       const desc=templateNameFromValues(getScopeValues("tplNew"));
       if(!desc){ setProgress("Completa al menos un campo para generar el título de la vista."); log("Crear vista: falta nombre generado."); return; }
       const author=String((tplEl("tplNew","author")||{}).value||"").trim();
@@ -5035,10 +5297,10 @@
         let created=null;
         try{ created=await API.view.createView(spec); }
         catch(metaErr){ recordError("cvCreateView.metaSpec",metaErr); log("Crear vista: la API no aceptó metadatos; se crea solo con título/descripción."); created=await API.view.createView({name:desc,description:desc}); }
-        const newId=cvExtractViewId(created);
+        const newId=await cvResolveSavedViewId(created,desc);
+        const meta=newId?await cvApplyViewMeta(newId,desc,author,share,labels):{ok:false,sent:false,verify:null};
         await populateUpdateViews();
-        const verify=await cvVerifyAfterSave(newId,share,labels);
-        const tail=[verify.shareMsg,verify.labelMsg].filter(Boolean).join(" ");
+        const tail=cvMetaTail(meta,share,labels);
         log("Vista creada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."+(tail?" "+tail:""));
         setProgress("Vista guardada: "+desc+(tail?". "+tail:""));
       }catch(e){ recordError("cvCreateView",e); log("ERROR creando vista: "+(e&&e.message?e.message:e)); setProgress("Error creando vista."); }
@@ -5050,6 +5312,7 @@
       ensureScopeAutoFields("tplUpd"); tplAutosizeAll(document.getElementById("tplFoldUpdate"));
       const val=cvValidateScope("tplUpd");
       if(!val.ok){ log("Actualizar vista: campos obligatorios pendientes ("+val.missing.join(", ")+")."); return; }
+      if(!cvCommitPendingMetaInputs("cvUpd")){ log("Actualizar vista: hay destinatarios sin coincidencia en Compartir con."); setProgress("Elige personas o grupos válidos antes de actualizar la vista."); return; }
       const desc=templateNameFromValues(getScopeValues("tplUpd")); if(!desc){ setProgress("Falta nombre de vista generado."); return; }
       const author=String((tplEl("tplUpd","author")||{}).value||"").trim();
       const share=cvGetShareTokens("cvUpd");
@@ -5059,11 +5322,8 @@
       try{
         setProgress("Actualizando estado de la vista seleccionada...");
         await API.view.updateView({id:viewId}); // captura el estado actual del visor
-        let spec=null; try{ if(API.view.getView) spec=await API.view.getView(viewId); }catch(e){ recordError("cvUpdateView.getView",e); }
-        if(spec && typeof spec==="object"){ Object.assign(spec,cvBuildSpec(desc,author,share,labels)); spec.id=viewId; await API.view.updateView(spec); }
-        else { await API.view.updateView(Object.assign({id:viewId},cvBuildSpec(desc,author,share,labels))); }
-        const verify=await cvVerifyAfterSave(viewId,share,labels);
-        const tail=[verify.shareMsg,verify.labelMsg].filter(Boolean).join(" ");
+        const meta=await cvApplyViewMeta(viewId,desc,author,share,labels);
+        const tail=cvMetaTail(meta,share,labels);
         log("Vista actualizada: "+desc+" (compartir:"+share.length+", etiquetas:"+labels.length+")."+(tail?" "+tail:""));
         setProgress("Vista guardada: "+desc+(tail?". "+tail:""));
         const info=document.getElementById("tplUpdateParseInfo"); if(info) info.textContent="Vista guardada."+(tail?" "+tail:"");
@@ -5255,6 +5515,8 @@
     function avMultiPanelOpen(){ const p=document.getElementById("avMultiPanel"); return !!(p&&p.style.display!=="none"); }
     function setAvMultiMode(open){
       const root=document.getElementById("activeViewSearch"); if(root) root.classList.toggle("av-multi-mode",!!open);
+      const multiToggle=document.getElementById("avMultiToggle");
+      if(multiToggle){ multiToggle.classList.toggle("funnel-active",!!open); multiToggle.setAttribute("aria-pressed",open?"true":"false"); }
       const inp=document.getElementById("activeViewSearchInput");
       if(inp){
         inp.placeholder=open?"Filtrar vistas…":"Buscar vista…";
@@ -5928,7 +6190,7 @@
       log("Acciones rápidas: seleccionados "+matched+" objeto(s) con "+param+" = "+value+"."); setProgress("Seleccionados "+matched+" objeto(s).");
     }
     async function refreshQuickAll(){
-      await scanModelParameters();
+      await scanModelParameters({fullModel:true});
       populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
       populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
       const p1=(document.getElementById("qsParam1")||{}).value||"";
@@ -6130,7 +6392,7 @@
       const editColor=document.getElementById("quickColorEdit"); if(editColor) editColor.onclick=()=>{ quickColorEditMode=!quickColorEditMode; renderQuickCustomColors(); };
       // v8.10.7 (#9): sin botón Aceptar. Al elegir un color en el selector nativo se añade directamente (con la transparencia seleccionada).
       const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,c); hideQuickColorPopover(); return; } if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
-      document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")) hideQuickColorPopover(); });
+      document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")&&!ev.target.closest(".import-color-swatch")) hideQuickColorPopover(); });
       // El bloque completo actúa como botón: click o Enter/Espacio ejecutan Quantity Surveyor; copiar/limpiar se excluyen.
       const quantBlock=document.getElementById("quantifyBlock");
       if(quantBlock){
@@ -6149,7 +6411,7 @@
       // v8.10.1: el quick-select (Assembly type / Bolt standard) vive ahora en "Selector de items".
       // El escaneo de parámetros se dispara al abrir esa herramienta.
       const group=document.getElementById("includeTool"); let firstOpen=true;
-      if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await scanModelParameters(); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
+      if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await scanModelParameters({fullModel:true}); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
     }
 
     // ===================== TOOLTIPS =====================
@@ -6181,16 +6443,34 @@
     // visor y vuelve a leer modelos/colores/parámetros/Name; conserva las preferencias del usuario
     // (exclusiones, selección, perfiles). Sin estados visibles persistentes: el icono gira mientras trabaja y
     // el botón se deshabilita para ignorar clics duplicados (no dispara refrescos simultáneos).
-    let viewerRefreshBusy=false;
+    let viewerRefreshBusy=false, viewerRefreshPromise=null, workspaceRefreshTimer=null;
     // v9.4.3: durante la carga inicial de datos del modelo el botón global parpadea (halo azul) y gira (flechas).
     function setGlobalRefreshLoading(on){ const btn=document.getElementById("globalViewerRefresh"); if(!btn) return; btn.classList.toggle("is-stale",!!on); btn.classList.toggle("is-refreshing",!!on); }
-    async function refreshViewerDataGlobal(){
-      if(viewerRefreshBusy) return;
+    function detailOpen(id){ const el=document.getElementById(id); return !!(el&&el.open); }
+    async function refreshOpenViewTools(forceViews=true){
+      await loadViewsCache(!!forceViews,{strong:true,maxAttempts:18,maxDurationMs:28000,delayMs:650,stablePasses:5,minAttempts:9,minDurationMs:6000});
+      if(detailOpen("viewTemplateTool")){
+        try{ await populateUpdateViews(); }catch(e){ recordError("refreshOpenViewTools.populateUpdateViews",e); }
+        try{ if(typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()) syncAvMultiViewsFromCache(); }catch(e){ recordError("refreshOpenViewTools.avMulti",e); }
+        try{ await cvSyncActiveViewIntoForm(); }catch(e){ recordError("refreshOpenViewTools.cvSync",e); }
+      }
+      const massPanel=document.getElementById("massViewsPanel");
+      const ext=document.getElementById("extendedExport");
+      if((detailOpen("exportTool")&&ext&&ext.checked)||(massPanel&&massPanel.style.display!=="none")){
+        massLoaded=true;
+        try{ await populateMassViews(false); }catch(e){ recordError("refreshOpenViewTools.massViews",e); }
+      }
+      return viewsCache.length;
+    }
+    async function refreshViewerDataGlobal(options={}){
+      if(viewerRefreshBusy) return viewerRefreshPromise;
       const btn=document.getElementById("globalViewerRefresh");
       if(!API){ setProgress("No conectado a Trimble Connect."); return; }
-      viewerRefreshBusy=true;
-      if(btn){ btn.disabled=true; btn.classList.add("is-refreshing"); }
+      viewerRefreshBusy=true; setGlobalRefreshLoading(true);
+      if(btn) btn.disabled=true;
+      const p=(async ()=>{
       try{
+        setProgress("Actualizando datos del visor...");
         // Invalidación de cachés dependientes del visor (mantiene exclusiones/selección del usuario).
         nameValuesCache=null;
         csvAvailableParametersCache=[];
@@ -6200,6 +6480,9 @@
         nativeColorCache=null;
         lastNativeColorDiag=null;
         lastColorDetectionDiag=null;
+        viewsCacheStable=false;
+        // Vistas guardadas: carga fuerte y sincronización de herramientas desplegadas.
+        const loadedViews=await refreshOpenViewTools(true);
         // Modelos IFC cargados y colores de presentación.
         await populateExcludeModels();
         await populateExcludeColors();
@@ -6208,7 +6491,7 @@
         if((colorMode&&colorMode.checked)||(colorWrap&&colorWrap.style.display!=="none")) await populateIncludeColors();
         // Valores Name y parámetros del modelo.
         await populateNameValues();
-        await scanModelParameters();
+        await scanModelParameters({fullModel:true});
         updateCsvColumnSelect();
         namesPicker.updateSelect(); boltsPicker.updateSelect(); weldsPicker.updateSelect();
         populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
@@ -6220,15 +6503,20 @@
         // Presentación/vista activa y selección dependientes del visor.
         scheduleSelectionInspector();
         scheduleProcessSelection();
-        log("Datos del visor actualizados (botón global).");
+        log("Datos del visor actualizados (botón global): "+loadedViews+" vista(s), "+csvAvailableParametersCache.length+" parámetro(s).");
         setProgress("Datos del visor actualizados.");
       }catch(e){
         recordError("refreshViewerDataGlobal",e);
         log("ERROR actualizando datos del visor: "+(e&&e.message?e.message:e));
       }finally{
-        if(btn){ btn.classList.remove("is-refreshing"); btn.disabled=false; }
+        setGlobalRefreshLoading(false);
+        if(btn) btn.disabled=false;
         viewerRefreshBusy=false;
+        viewerRefreshPromise=null;
       }
+      })();
+      viewerRefreshPromise=p;
+      return p;
     }
     // Trabajo 10: cierra las sugerencias flotantes al hacer scroll (evita cajas desalineadas).
     function closeAllFloatingSuggests(){
@@ -6260,7 +6548,7 @@
       loadMassStrict();
       const massStrict=document.getElementById("massStrictMode"); if(massStrict) massStrict.addEventListener("change",()=>{ saveMassStrict(); log("Exportación masiva: modo "+(massStrict.checked?"ESTRICTO (aborta al primer fallo)":"permisivo (omite vistas con fallo)")+"."); });
       if(ext) ext.addEventListener("change",async ()=>{ const on=ext.checked; if(massPanel) massPanel.style.display=on?"block":"none"; if(massCount) massCount.style.display=on?"inline-block":"none"; if(on&&!massLoaded){ massLoaded=true; await populateMassViews(false); } });
-      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=()=>{ massLoaded=true; populateMassViews(true); };
+      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=async ()=>{ massLoaded=true; await refreshViewerDataGlobal({reason:"massViewsRefresh"}); };
       const massSort=document.getElementById("massViewsSort"); if(massSort) massSort.onclick=()=>{ massViewsSortMode=cycleViewSortMode(massViewsSortMode); renderMassViewsList(); };
       const massToggleAll=document.getElementById("massViewsToggleAll"); if(massToggleAll) massToggleAll.onclick=()=>{ if(massViews.length&&massViewsSelected.size===massViews.length){ massViewsSelected.clear(); } else { massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); } renderMassViewsList(); };
       const exportCancelBtn=document.getElementById("exportCancel"); if(exportCancelBtn) exportCancelBtn.onclick=()=>{ massExportCancel=true; setProgress("Cancelando exportación..."); };
@@ -6357,7 +6645,25 @@
       document.getElementById("cancelOp").onclick=()=>{ cancelRequested=true; setProgress("Cancelando..."); };
       syncNearUiState(); syncIncludeUiState(); syncHiddenUiState();
     }
-    function handleWorkspaceEvent(event){ if(event==="viewer.onSelectionChanged"){ markNearShortcutSelectionGesture(); scheduleProcessSelection(); if(PARAM_USE_3D_MARKUPS) scheduleAllParamMarkups(); scheduleSelectionInspector(); } }
+    function workspaceEventName(event){
+      if(typeof event==="string") return event;
+      if(event&&typeof event==="object"){
+        const c=[event.event,event.type,event.name,event.action,event.topic,event.command,event.message];
+        for(const x of c){ if(typeof x==="string"&&x) return x; }
+      }
+      return "";
+    }
+    function scheduleWorkspaceViewerRefresh(reason){
+      if(!API) return;
+      setGlobalRefreshLoading(true);
+      clearTimeout(workspaceRefreshTimer);
+      workspaceRefreshTimer=setTimeout(()=>{ workspaceRefreshTimer=null; refreshViewerDataGlobal({reason:reason||"workspace"}); },900);
+    }
+    function handleWorkspaceEvent(event){
+      const name=workspaceEventName(event);
+      if(name==="viewer.onSelectionChanged"||/selection/i.test(name)){ markNearShortcutSelectionGesture(); scheduleProcessSelection(); if(PARAM_USE_3D_MARKUPS) scheduleAllParamMarkups(); scheduleSelectionInspector(); return; }
+      if(/view|model|file/i.test(name)) scheduleWorkspaceViewerRefresh(name);
+    }
 
     async function main(){
       buildColumnsUI(); wireUI(); initTooltips();
