@@ -1250,7 +1250,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.7.2";
+    const SCRIPT_VERSION = "v9.7.7";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const TRIMBLE_OFFICIAL_COLORS = {
@@ -1880,12 +1880,19 @@
         if(!(API&&API.view&&typeof API.view.getViews==="function")){ recordError("loadViewsCache",new Error("API.view.getViews no disponible")); return viewsCache; }
         const started=Date.now();
         const cache=await readViewsCountCache();
-        const maxAttempts=Number(options.maxAttempts)||(strong?16:10);
-        const maxDurationMs=Number(options.maxDurationMs)||(strong?24000:14000);
+        let maxAttempts=Number(options.maxAttempts)||(strong?16:10);
+        let maxDurationMs=Number(options.maxDurationMs)||(strong?24000:14000);
         const delayMs=Number(options.delayMs)||(strong?600:450);
         const stablePasses=Number(options.stablePasses)||(strong?4:3);
-        const minAttempts=Number(options.minAttempts)||(strong?8:0);
-        const minDurationMs=Number(options.minDurationMs)||(strong?4500:0);
+        let minAttempts=Number(options.minAttempts)||(strong?8:0);
+        let minDurationMs=Number(options.minDurationMs)||(strong?4500:0);
+        const expected=cache.count||0;
+        if(expected>0){
+          if(!options.maxAttempts) maxAttempts=Math.max(maxAttempts,strong?22:18);
+          if(!options.maxDurationMs) maxDurationMs=Math.max(maxDurationMs,strong?36000:30000);
+          if(!options.minAttempts) minAttempts=Math.max(minAttempts,strong?10:8);
+          if(!options.minDurationMs) minDurationMs=Math.max(minDurationMs,strong?9000:6500);
+        }
         let bestCount=-1, stable=0, attempts=0, lastError=null;
         viewsCacheStable=false;
         setViewsLoadingStatus(viewsCache.length?("Cargando vistas… "+viewsCache.length+" detectadas"):"Cargando vistas…");
@@ -1906,18 +1913,21 @@
             stable++;
           }
           setViewsLoadingStatus("Cargando vistas… "+Math.max(bestCount,0)+" detectadas");
-          const expected=cache.count||0;
-          const requiredStable=(expected&&bestCount<expected)?(stablePasses+2):stablePasses;
-          if(stable>=requiredStable && attempts>=minAttempts && (Date.now()-started)>=minDurationMs) break;
-          if((Date.now()-started)>=maxDurationMs) break;
+          const elapsed=Date.now()-started;
+          const belowExpected=expected>0&&bestCount>=0&&bestCount<expected;
+          const requiredStable=belowExpected?Math.max(stablePasses+6,8):stablePasses;
+          const hardLimit=attempts>=maxAttempts||elapsed>=maxDurationMs;
+          if(stable>=requiredStable && attempts>=minAttempts && elapsed>=minDurationMs && (!belowExpected||hardLimit)) break;
+          if(hardLimit) break;
           await sleep(delayMs);
         }
-        viewsCacheStable=true;
-        if(bestCount>=0) writeViewsCountCache(cache.key,bestCount);
+        const endedBelowExpected=expected>0&&bestCount>=0&&bestCount<expected;
+        viewsCacheStable=!endedBelowExpected||strong;
+        if(bestCount>=0&&(!endedBelowExpected||strong)) writeViewsCountCache(cache.key,bestCount);
         setViewsLoadingStatus("");
-        lastViewsLoadDiagnostics={source:"view.getViews",attempts,durationMs:Date.now()-started,viewsFound:viewsCache.length,lastKnownViewCount:cache.count||0,stablePasses:stable,stable:stable>=stablePasses,lastError:lastError&&(lastError.message||String(lastError))};
+        lastViewsLoadDiagnostics={source:"view.getViews",attempts,durationMs:Date.now()-started,viewsFound:viewsCache.length,lastKnownViewCount:expected,belowLastKnown:endedBelowExpected,stablePasses:stable,stable:stable>=stablePasses,lastError:lastError&&(lastError.message||String(lastError))};
         if(lastError) log("Aviso: no se pudieron completar las vistas del proyecto ("+(lastError.message||lastError)+").");
-        else log("Vistas cargadas: "+viewsCache.length+(cache.count&&viewsCache.length<cache.count?" (menor que la última caché fiable, aceptado tras estabilizarse)":""));
+        else log("Vistas cargadas: "+viewsCache.length+(endedBelowExpected?(" / "+expected+" esperadas por caché; aceptado solo tras límite de carga"):""));
         return viewsCache;
       })();
       viewsCacheLoading=p;
@@ -3052,10 +3062,14 @@
       }
       return out;
     }
-    async function importCsvFiles(files){
+    async function importCsvFiles(files,options){
+      options=options||{};
       const importRfiMagenta=(document.getElementById("importRfiMagenta")||{}).checked!==false;
       const importShowDuplicates=!!((document.getElementById("importShowDuplicates")||{}).checked);
-      clearLog(); setProgress("Importando colores DEO: leyendo "+files.length+" archivo(s)..."); cancelRequested=false; log(SCRIPT_VERSION+" - Importar CSV revisado_deo TRUE"+(importRfiMagenta?" y codigo_revision":"")+" ("+files.length+" archivo/s)");
+      if(!options.preserveLog) clearLog();
+      const progressLabel=options.progressLabel||"Importando colores DEO";
+      setProgress(progressLabel+": leyendo "+files.length+" archivo(s)..."); cancelRequested=false;
+      log(options.logPrefix||(SCRIPT_VERSION+" - Importar CSV revisado_deo TRUE"+(importRfiMagenta?" y codigo_revision":"")+" ("+files.length+" archivo/s)"));
       const directMap=new Map();
       const guidItems=new Map();
       const revisionMap=new Map();
@@ -5356,7 +5370,7 @@
         await loadViewIntoUpdateForm(activeViewSearchSelectedId,{fromFold:true});
       } else {
         await cvSyncActiveViewIntoForm();
-        if(!activeViewSearchSelectedId){ const info=document.getElementById("tplUpdateParseInfo"); if(info && !String(info.textContent||"").trim()) info.textContent="Selecciona una vista en el buscador superior."; }
+        if(!activeViewSearchSelectedId){ const info=document.getElementById("tplUpdateParseInfo"); if(info) info.textContent=""; }
       }
     }
     // ===================== Buscador global de "Vista activa" (Configurar vista, v9.0.5) =====================
@@ -5387,7 +5401,7 @@
     async function loadViewIntoUpdateForm(viewId, options={}){
       const id=String(viewId||"");
       const info=document.getElementById("tplUpdateParseInfo");
-      if(!id){ if(info) info.textContent="Selecciona una vista en el buscador superior."; return {ok:false,reason:"viewId vacío"}; }
+      if(!id){ if(info) info.textContent=""; return {ok:false,reason:"viewId vacío"}; }
       const seq=++viewFormLoadSeq;
       if(info) info.textContent="Cargando vista…";
       const det=await getViewDetailResilient(id);
@@ -5439,7 +5453,7 @@
     async function cvSyncActiveViewIntoForm(){
       const info=document.getElementById("tplUpdateParseInfo");
       const r=await getActiveViewResilient();
-      if(!r.ok){ if(info && !String(info.textContent||"").trim()) info.textContent="Selecciona una vista en el buscador superior."; return; }
+      if(!r.ok){ if(info) info.textContent=""; return; }
       const norm=r.normalized;
       let match=viewsCache.find((v)=>v.id===norm.id);
       if(!match && norm.name) match=viewsCache.find((v)=>v.name===norm.name);
@@ -5449,7 +5463,7 @@
         await loadViewIntoUpdateForm(match.id,{fromActive:true});
       } else {
         const inp=document.getElementById("activeViewSearchInput"); if(inp) inp.value=norm.name||"";
-        if(info) info.textContent=norm.name?("La vista activa no aparece en la lista: "+norm.name):"Selecciona una vista en el buscador superior.";
+        if(info) info.textContent=norm.name?("La vista activa no aparece en la lista: "+norm.name):"";
       }
     }
     function avUpdateCount(){ const el=document.getElementById("activeViewSearchCount"); if(el) el.textContent=activeViewSearchViews.length?(activeViewSearchViews.length+" vista(s)"):""; }
@@ -5531,6 +5545,73 @@
       const rfi=document.getElementById("importRfiMagenta"); if(rfi && rfi.checked!==true) rfi.checked=true;
       const dup=document.getElementById("importShowDuplicates"); if(dup && dup.checked!==true) dup.checked=true;
     }
+    const AV_MULTI_TEMP_COLS=[
+      {key:"guidIfc",header:"GUID_IFC"},
+      {key:"color",header:"color"},
+      {key:"revisionCode",header:"codigo_revision"},
+      {key:"reviewedDeo",header:"revisado_deo"},
+      {key:"viewName",header:"view_name"}
+    ];
+    function avMultiMemoryCsvFile(name,csv){
+      return {name,type:"text/csv",text:()=>Promise.resolve(csv)};
+    }
+    function avMultiTempCsvName(view,index){
+      const base=sanitizeFilename((view&&view.name)||("vista_"+(index+1)))||("vista_"+(index+1));
+      return base+"_multi_view_temp.csv";
+    }
+    function avMultiCountObjects(groups){
+      let n=0;
+      for(const g of (Array.isArray(groups)?groups:[])){
+        const objects=g&&(g.objects||g.objectRuntimeIds||g.runtimeIds);
+        if(Array.isArray(objects)) n+=objects.length;
+      }
+      return n;
+    }
+    function avMultiModelLabel(modelId){
+      const id=String(modelId||"");
+      try{ return (modelIdToDisplayName&&modelIdToDisplayName.get(id))||id; }catch(e){ return id; }
+    }
+    function avMultiModelHints(entries){
+      const ids=[...new Set((entries||[]).map((e)=>String(e&&e.modelId||"")).filter(Boolean))];
+      return ids.map(avMultiModelLabel).filter(Boolean);
+    }
+    async function avMultiWaitBaseModels(done,total,eta){
+      let last=-1, stable=0, best=0;
+      for(let attempt=1;attempt<=12;attempt++){
+        if(cancelRequested) return {ok:false,cancelled:true,objects:best,attempts:attempt};
+        let count=0;
+        try{ count=avMultiCountObjects(await API.viewer.getObjects()); }
+        catch(e){ recordError("avMulti.waitBase.getObjects",e); }
+        best=Math.max(best,count);
+        if(count>0&&count===last) stable++; else stable=0;
+        last=count;
+        setProgress("Preparando IFC base: "+done+"/"+total+" vista(s) completadas · "+count+" objeto(s) · ETA "+(eta?eta.etaText():"--:--"));
+        if(count>0&&stable>=2) return {ok:true,objects:count,attempts:attempt};
+        await sleep(500);
+      }
+      return {ok:best>0,objects:best,attempts:12,timeout:true};
+    }
+    async function avMultiResetToBaseState(done,total,eta){
+      let resetUsed=false;
+      if(API&&API.viewer&&typeof API.viewer.reset==="function"){
+        try{
+          setProgress("Abriendo IFC base: "+done+"/"+total+" vista(s) completadas · ETA "+(eta?eta.etaText():"--:--"));
+          await API.viewer.reset();
+          resetUsed=true;
+          await sleep(500);
+          log("Abrir selección múltiple: viewer.reset ejecutado antes de importar colores combinados.");
+        }catch(e){
+          recordError("avMulti.viewer.reset",e);
+          log("Abrir selección múltiple: no se pudo ejecutar viewer.reset; se importará sobre el estado actual del visor.");
+        }
+      } else {
+        log("Abrir selección múltiple: la Workspace API no expone viewer.reset; no se puede abrir automáticamente una base IFC limpia desde la extensión.");
+      }
+      const wait=await avMultiWaitBaseModels(done,total,eta);
+      if(resetUsed&&wait.ok) log("Abrir selección múltiple: IFC base preparado con "+wait.objects+" objeto(s) detectado(s).");
+      else if(!wait.ok) log("Abrir selección múltiple: no se pudo confirmar una carga estable de objetos antes de importar; se continúa con diagnóstico.");
+      return {resetUsed,wait};
+    }
     function syncAvMultiViewsFromCache(){
       const prev=new Set(avMultiSelected);
       avMultiViews=viewsCache.map((v)=>({id:String(v.id||""),name:readableViewName(v)||"Vista sin nombre",description:v.description||"",group:v.group||"",createdOn:v.createdOn||readViewDateValue(v.raw||v,"created"),modifiedOn:v.modifiedOn||readViewDateValue(v.raw||v,"modified"),searchText:v.searchText||viewEntrySearchText(v)})).filter((v)=>v.id);
@@ -5578,48 +5659,74 @@
     async function avMultiOpenSelection(){
       if(avMultiBusy) return;
       if(!API||!API.viewer){ log("Abrir vistas: visor no disponible."); setProgress("Visor no disponible."); return; }
-      const ids=avMultiViews.filter((v)=>avMultiSelected.has(v.id)).map((v)=>v.id);
-      if(ids.length<2){ log("Abrir vistas: selecciona al menos dos vistas."); setProgress("Selecciona al menos dos vistas."); return; }
+      const chosen=avMultiViews.filter((v)=>avMultiSelected.has(v.id));
+      if(chosen.length<2){ log("Abrir vistas: selecciona al menos dos vistas."); setProgress("Selecciona al menos dos vistas."); return; }
       ensureMultiViewScopeDefaults();
-      const useMagenta=(document.getElementById("importRfiMagenta")||{}).checked!==false;
-      const showDup=!!((document.getElementById("importShowDuplicates")||{}).checked);
       avMultiBusy=true; cancelRequested=false; showImportCancel(true);
       const btn=document.getElementById("avMultiOpen"); if(btn) btn.disabled=true;
-      const directMap=new Map(), revisionMap=new Map(), duplicateRedMap=new Map(), duplicateMagentaMap=new Map();
-      const seen=new Map();
-      const addTo=(map,modelId,rid)=>{ if(!map.has(modelId)) map.set(modelId,new Set()); map.get(modelId).add(rid); };
-      const eta=createEtaEstimator(ids.length,{initialPerItemMs:2500});
-      let processed=0, failed=0;
+      const eta=createEtaEstimator(chosen.length,{initialPerItemMs:2800});
+      const tempFiles=[], failures=[], emptyViews=[];
+      let completed=0, failed=0, empty=0, totalRows=0;
       try{
-        for(let i=0;i<ids.length;i++){
+        log(SCRIPT_VERSION+" - Abrir selección múltiple: export temporal + importación combinada por GUID ("+chosen.length+" vista/s).");
+        log("Abrir selección múltiple: la Workspace API no expone apertura automática de una ventana nueva; se intentará limpiar la vista actual con viewer.reset antes de importar.");
+        for(let i=0;i<chosen.length;i++){
           if(cancelRequested){ log("Abrir vistas: cancelado por el usuario."); break; }
-          const id=ids[i]; const cached=viewsCache.find((v)=>v.id===id); const name=cached?cached.name:id;
-          setProgress("Abriendo "+eta.state.done+"/"+ids.length+" vista(s) · ETA "+eta.etaText());
+          const v=chosen[i], id=v.id, name=v.name||id;
+          setProgress("Preparando selección múltiple: "+completed+"/"+chosen.length+" vista(s) completadas · ETA "+eta.etaText());
           let act=null; try{ act=await activateViewById(id); }catch(e){ recordError("avMulti.activate",e); }
-          if(!(act&&act.confirmed)){ failed++; log("Abrir vistas: no se confirmó la vista "+name+" ("+((act&&act.reason)||"")+")."); eta.skip(); continue; }
+          if(!(act&&act.confirmed) && act&&act.sent){
+            const recovered=await recoverLateActivatedView(v,act);
+            if(recovered&&recovered.confirmed){ act=recovered; log("Abrir selección múltiple: confirmación tardía aceptada para "+name+"."); }
+          }
+          if(!(act&&act.confirmed)){
+            failed++;
+            failures.push(name+" ("+((act&&act.reason)||"vista no confirmada")+")");
+            log("Abrir vistas: no se confirmó la vista "+name+" ("+((act&&act.reason)||"")+").");
+            eta.skip();
+            continue;
+          }
           let entries=[]; try{ entries=await getColoredObjectEntriesForExportView(); }catch(e){ recordError("avMulti.colors",e); }
           if(!Array.isArray(entries)) entries=[];
-          for(const e of entries){
-            const cn=e.normalizedColor||e.color; const modelId=e.modelId; const rid=Number(e.objectRuntimeId);
-            if(!modelId||!Number.isFinite(rid)) continue;
-            const key=modelId+":"+rid; const s=seen.get(key)||{red:0,magenta:0};
-            if(isReviewedDeoColor(cn)){ s.red++; if(showDup&&s.red>1) addTo(duplicateRedMap,modelId,rid); else addTo(directMap,modelId,rid); }
-            else if(useMagenta && isMagentaColor(cn)){ if(s.red>0){ seen.set(key,s); continue; } s.magenta++; if(showDup&&s.magenta>1) addTo(duplicateMagentaMap,modelId,rid); else addTo(revisionMap,modelId,rid); }
-            else { continue; }
-            seen.set(key,s);
+          if(!entries.length){
+            empty++; emptyViews.push(name);
+            log("Abrir selección múltiple: "+name+" no tiene colores exportables.");
+            completed++;
+            eta.complete();
+            continue;
           }
-          processed++; eta.complete(); await sleep(0);
+          const rowsAll=await buildRows(entries,computeRevisionBase(name),name,true);
+          const rows=rowsAll.filter((r)=>String(r.guidIfc||"").trim());
+          if(!rows.length){
+            empty++; emptyViews.push(name);
+            log("Abrir selección múltiple: "+name+" no tiene GUID_IFC resoluble para importar.");
+            completed++;
+            eta.complete();
+            continue;
+          }
+          const csv=rowsToCsv(rows,AV_MULTI_TEMP_COLS);
+          tempFiles.push(avMultiMemoryCsvFile(avMultiTempCsvName(v,i),csv));
+          totalRows+=rows.length; completed++;
+          const models=avMultiModelHints(entries);
+          log("Abrir selección múltiple: export temporal "+(i+1)+"/"+chosen.length+" -> "+name+"; "+rows.length+" fila(s)"+(models.length?("; IFC/modelos: "+models.join(", ")):"")+".");
+          eta.complete();
+          setProgress("Preparando selección múltiple: "+completed+"/"+chosen.length+" vista(s) completadas · ETA "+eta.etaText());
+          await sleep(0);
         }
-        setProgress("Abrir vistas: aplicando colores combinados…");
-        let painted=0;
-        if(useMagenta){
-          painted+=await paintImportMap(revisionMap,{color:getImportColor("revisionMagenta"),opacity:100,visible:true},"magenta (multi-vista)");
-          if(showDup) painted+=await paintImportMap(duplicateMagentaMap,{color:getImportColor("duplicateMagenta"),opacity:100,visible:true},"duplicado magenta (multi-vista)");
+        if(!tempFiles.length){
+          log("Abrir selección múltiple: no hay CSV temporales importables. Fallos: "+failed+", vacías/sin GUID: "+empty+".");
+          setProgress("Abrir selección múltiple: sin datos importables.");
+          return;
         }
-        painted+=await paintImportMap(directMap,{color:{...IMPORT_REVIEWED_RED},opacity:100,visible:true},"rojo (multi-vista)");
-        if(showDup) painted+=await paintImportMap(duplicateRedMap,{color:getImportColor("duplicateRed"),opacity:100,visible:true},"duplicado rojo (multi-vista)");
-        log("Abrir vistas múltiples: "+processed+"/"+ids.length+" vista(s) procesada(s)"+(failed?(", "+failed+" no confirmada(s)"):"")+"; "+painted+" objeto(s) coloreado(s) (rojo DEO"+(useMagenta?" + magenta RFI":"")+") sobre los modelos abiertos.");
-        setProgress("Abrir vistas: "+processed+" vista(s) aplicadas · "+painted+" objeto(s).");
+        await avMultiResetToBaseState(completed,chosen.length,eta);
+        if(cancelRequested){ log("Abrir selección múltiple: cancelado antes de importar colores."); setProgress("Abrir selección múltiple cancelada."); return; }
+        setProgress("Importando selección múltiple: "+completed+"/"+chosen.length+" vista(s) completadas · "+tempFiles.length+" CSV temporal(es) · ETA "+eta.etaText());
+        await importCsvFiles(tempFiles,{preserveLog:true,progressLabel:"Importando selección múltiple",logPrefix:SCRIPT_VERSION+" - Importar CSV temporal de selección múltiple ("+tempFiles.length+" archivo/s)"});
+        if(cancelRequested){ log("Abrir selección múltiple: cancelado durante la importación combinada."); setProgress("Abrir selección múltiple cancelada durante la importación."); return; }
+        if(failures.length) log("Abrir selección múltiple: vistas con fallo ("+failures.length+"): "+failures.slice(0,8).join(" | ")+(failures.length>8?" ...":""));
+        if(emptyViews.length) log("Abrir selección múltiple: vistas vacías/sin GUID ("+emptyViews.length+"): "+emptyViews.slice(0,8).join(" | ")+(emptyViews.length>8?" ...":""));
+        log("Abrir selección múltiple: "+completed+"/"+chosen.length+" vista(s) completadas; "+failed+" fallo(s); "+empty+" vacía(s)/sin GUID; "+totalRows+" fila(s) temporales importadas por GUID.");
+        setProgress("Abrir selección múltiple: "+completed+"/"+chosen.length+" vista(s) completadas · ETA 00:00");
       }catch(e){ recordError("avMultiOpenSelection",e); log("ERROR Abrir vistas múltiples: "+(e&&e.message?e.message:e)); setProgress("Error al abrir vistas múltiples."); }
       finally{ avMultiBusy=false; showImportCancel(false); updateAvMultiOpenState(); }
     }
@@ -6106,6 +6213,8 @@
     let quickCustomColors=[], quickColorEditMode=false, quickPaletteTarget=null;
     function loadQuickCustomColors(){ try{ const a=JSON.parse(localStorage.getItem(QUICK_CUSTOM_COLORS_KEY)||"[]"); quickCustomColors=Array.isArray(a)?a.filter((c)=>/^#[0-9a-fA-F]{8}$/.test(c)).slice(0,18):[]; }catch(e){ quickCustomColors=[]; } }
     function saveQuickCustomColors(){ try{ localStorage.setItem(QUICK_CUSTOM_COLORS_KEY,JSON.stringify(quickCustomColors)); }catch(e){ recordError("saveQuickCustomColors",e); } }
+    function quickPaletteAlphaValue(){ const el=document.getElementById("quickAlphaInput"); const n=Number(el&&el.value); return Number.isFinite(n)?Math.max(0,Math.min(255,Math.round(n))):255; }
+    function paletteColorWithCurrentAlpha(hex){ return colorObjToHex(hexToColorObj(hex,quickPaletteAlphaValue())); }
     function hexToColorObj(hex,alpha){ const h=String(hex||"").replace("#",""); if(h.length<6) return {r:0,g:0,b:0,a:255}; const a=(alpha==null&&h.length>=8)?parseInt(h.slice(6,8),16):(alpha==null?255:Number(alpha)); return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a}; }
     function colorObjToHex(c){ return "#"+hex2(c.r)+hex2(c.g)+hex2(c.b)+hex2(c.a==null?255:c.a); }
     function renderQuickCustomColors(){
@@ -6120,10 +6229,15 @@
     }
     function buildQuickPalette(){
       const pal=document.getElementById("quickColorPalette"); if(!pal||pal.childElementCount) return;
-      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; const a=analyzeColor(hex); b.style.background=a.swatchCss||hex; b.title=hex; b.onclick=()=>{ if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,hex); hideQuickColorPopover(); return; } const c=colorObjToHex(hexToColorObj(hex)); if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
+      QUICK_PALETTE.forEach((hex)=>{ const b=document.createElement("button"); b.type="button"; b.className="quick-palette-swatch"; const a=analyzeColor(hex); b.style.background=a.swatchCss||hex; b.title=hex; b.onclick=()=>{ const picked=paletteColorWithCurrentAlpha(hex); if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,picked); hideQuickColorPopover(); return; } if(!quickCustomColors.includes(picked)) quickCustomColors.push(picked); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); }; pal.appendChild(b); });
+    }
+    function ensureQuickColorPopoverGlobal(){
+      const pop=document.getElementById("quickColorPopover");
+      if(pop&&pop.parentElement!==document.body) document.body.appendChild(pop);
     }
     function showQuickColorPopover(anchorEl,target){
       quickPaletteTarget=target||null;
+      ensureQuickColorPopoverGlobal();
       const pop=document.getElementById("quickColorPopover"), anchor=anchorEl||document.getElementById("qcAddColor"); if(!pop||!anchor) return;
       buildQuickPalette(); const r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+6)+"px"; pop.style.display="block";
     }
@@ -6387,11 +6501,12 @@
     }
     function wireQuickActions(){
       for(const id of Object.keys(QUICK_COLORS)){ const b=document.getElementById(id); if(b) b.onclick=()=>applyQuickColor(QUICK_COLORS[id]); }
+      ensureQuickColorPopoverGlobal();
       loadQuickCustomColors(); renderQuickCustomColors(); buildQuickPalette();
       const addColor=document.getElementById("qcAddColor"); if(addColor) addColor.onclick=(ev)=>{ ev.stopPropagation(); const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none") hideQuickColorPopover(); else showQuickColorPopover(); };
       const editColor=document.getElementById("quickColorEdit"); if(editColor) editColor.onclick=()=>{ quickColorEditMode=!quickColorEditMode; renderQuickCustomColors(); };
       // v8.10.7 (#9): sin botón Aceptar. Al elegir un color en el selector nativo se añade directamente (con la transparencia seleccionada).
-      const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const alpha=Number((document.getElementById("quickAlphaInput")||{}).value||255); const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",alpha)); if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,c); hideQuickColorPopover(); return; } if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
+      const colorInput=document.getElementById("quickColorInput"); if(colorInput) colorInput.addEventListener("change",()=>{ const c=colorObjToHex(hexToColorObj(colorInput.value||"#1c7fd6",quickPaletteAlphaValue())); if(quickPaletteTarget&&quickPaletteTarget.type==="importColor"){ setImportColorFromPalette(quickPaletteTarget.key,c); hideQuickColorPopover(); return; } if(!quickCustomColors.includes(c)) quickCustomColors.push(c); saveQuickCustomColors(); renderQuickCustomColors(); hideQuickColorPopover(); });
       document.addEventListener("click",(ev)=>{ const pop=document.getElementById("quickColorPopover"); if(pop&&pop.style.display!=="none"&&!ev.target.closest("#quickColorPopover")&&!ev.target.closest("#qcAddColor")&&!ev.target.closest(".import-color-swatch")) hideQuickColorPopover(); });
       // El bloque completo actúa como botón: click o Enter/Espacio ejecutan Quantity Surveyor; copiar/limpiar se excluyen.
       const quantBlock=document.getElementById("quantifyBlock");
@@ -6448,7 +6563,7 @@
     function setGlobalRefreshLoading(on){ const btn=document.getElementById("globalViewerRefresh"); if(!btn) return; btn.classList.toggle("is-stale",!!on); btn.classList.toggle("is-refreshing",!!on); }
     function detailOpen(id){ const el=document.getElementById(id); return !!(el&&el.open); }
     async function refreshOpenViewTools(forceViews=true){
-      await loadViewsCache(!!forceViews,{strong:true,maxAttempts:18,maxDurationMs:28000,delayMs:650,stablePasses:5,minAttempts:9,minDurationMs:6000});
+      await loadViewsCache(!!forceViews,{strong:true,maxAttempts:32,maxDurationMs:52000,delayMs:700,stablePasses:6,minAttempts:12,minDurationMs:10000});
       if(detailOpen("viewTemplateTool")){
         try{ await populateUpdateViews(); }catch(e){ recordError("refreshOpenViewTools.populateUpdateViews",e); }
         try{ if(typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()) syncAvMultiViewsFromCache(); }catch(e){ recordError("refreshOpenViewTools.avMulti",e); }
