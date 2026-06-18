@@ -631,10 +631,11 @@
     #viewTemplateTool > summary.view-template-summary .av-search-help { float: right; margin: -1px 0 0 6px; }
     #viewTemplateTool:not([open]) #avMultiHelpBtn { display: none; }
     .av-multi-panel { margin: 8px 0 0; }
-    .av-search-inputwrap { position: relative; flex: 1; min-width: 0; }
-    .av-search-input { width: 100%; box-sizing: border-box; height: 30px; padding: 4px 36px 4px 8px; border: 1px solid #cfd6df; border-radius: 6px; font-size: 12px; }
-    .av-search-input:focus { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; outline: none; }
-    .av-search-go { position: absolute; right: 2px; top: 2px; width: 28px; min-width: 28px; height: 26px; border: 0; border-left: 1px solid #d7dde5; border-radius: 0 5px 5px 0; background: transparent; z-index: 2; }
+    .av-search-inputwrap { position: relative; flex: 1; min-width: 0; height: 30px; box-sizing: border-box; border: 1px solid #cfd6df; border-radius: 6px; background: #fff; transition: border-color .15s ease, box-shadow .15s ease; }
+    .av-search-inputwrap:focus-within { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; }
+    .av-search-input { width: 100%; box-sizing: border-box; height: 28px; padding: 4px 38px 4px 8px; border: 0; border-radius: 5px; background: transparent; font-size: 12px; outline: none; }
+    .av-search-input:focus { border-color: transparent; box-shadow: none; outline: none; }
+    .av-search-go { position: absolute; right: 2px; top: -1px; bottom: -1px; width: 32px; min-width: 32px; height: auto; box-sizing: border-box; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-left: 1px solid #d7dde5; border-radius: 0 5px 5px 0; background: #f8fafc; z-index: 2; }
     .av-search-go:hover, .av-search-go:focus-visible { background: #eef6ff; outline: none; }
     .av-search.av-multi-mode .av-search-go { display: none; }
     .av-search.av-multi-mode .av-search-input { padding-right: 8px; }
@@ -739,10 +740,10 @@
     #viewTemplateTool .template-line-meta > .template-field input.tpl-autosize { width:100% !important; max-width:100%; }
 
     /* Fila Código / Ubicación / Nivel / Ejes (flex-grow proporcional al mínimo en px). */
-    #viewTemplateTool .template-line-primary > .template-field:nth-child(1) { flex:86 0 86px; }
-    #viewTemplateTool .template-line-primary > .template-field:nth-child(2) { flex:62 0 62px; }
-    #viewTemplateTool .template-line-primary > .template-field:nth-child(3) { flex:76 0 76px; }
-    #viewTemplateTool .template-line-primary > .template-field:nth-child(4) { flex:66 0 66px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(1) { flex:110 0 110px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(2) { flex:110 0 110px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(3) { flex:90 0 90px; }
+    #viewTemplateTool .template-line-primary > .template-field:nth-child(4) { flex:114 0 114px; }
 
     /* Fila Fecha / Autor (Etiquetas salta a su propia línea, ancho completo). */
     #viewTemplateTool .template-line-meta > .template-field:nth-child(1) { flex:79 0 79px; }
@@ -1048,9 +1049,9 @@
             <div class="tpl-block">
               <div class="template-grid">
                 <div class="template-line template-line-primary">
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="86"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplNew_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
-                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" data-min-px="62" placeholder=""></div>
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplNew" data-min-px="76"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplNew_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplNew_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="3"></div></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="110"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplNew_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplNew_location">Ubicación</label><input type="text" id="tplNew_location" class="tpl-autosize" data-min-ch="14" data-min-px="110" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplNew_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplNew" data-min-px="90"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplNew_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplNew_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="3"></div></div>
                   <div class="template-field tpl-short tpl-autofit"><label for="tplNew_axes">Ejes</label><input type="text" id="tplNew_axes" class="tpl-autosize" data-min-ch="12" data-min-px="66" placeholder=""></div>
                 </div>
                 <div class="template-line template-line-secondary template-line-wide">
@@ -1085,9 +1086,9 @@
               <div class="hint" id="tplUpdateParseInfo"></div>
               <div class="template-grid">
                 <div class="template-line template-line-primary">
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="86"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplUpd_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
-                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" data-min-px="62" placeholder=""></div>
-                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplUpd" data-min-px="76"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplUpd_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplUpd_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="3"></div></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_code">Código</label><div class="tpl-locked-control tpl-code-control" data-min-px="110"><span class="tpl-auto-char tpl-code-prefix">RFI_</span><input type="text" id="tplUpd_code" class="tpl-locked-input tpl-code-locked" autocomplete="off" spellcheck="false"></div></div>
+                  <div class="template-field tpl-medium tpl-autofit"><label for="tplUpd_location">Ubicación</label><input type="text" id="tplUpd_location" class="tpl-autosize" data-min-ch="14" data-min-px="110" placeholder=""></div>
+                  <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_level">Nivel</label><div class="tpl-locked-control tpl-level-control" data-scope="tplUpd" data-min-px="90"><span class="tpl-auto-char tpl-level-prefix">N</span><input type="text" id="tplUpd_level" class="tpl-locked-input tpl-level-head" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="2"><span class="tpl-auto-char tpl-level-sep">-</span><span class="tpl-auto-char tpl-level-n2">N</span><input type="text" id="tplUpd_level_tail" class="tpl-locked-input tpl-level-tail" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="3"></div></div>
                   <div class="template-field tpl-short tpl-autofit"><label for="tplUpd_axes">Ejes</label><input type="text" id="tplUpd_axes" class="tpl-autosize" data-min-ch="12" data-min-px="66" placeholder=""></div>
                 </div>
                 <div class="template-line template-line-secondary template-line-wide">
