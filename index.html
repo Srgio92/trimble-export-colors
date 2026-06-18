@@ -619,22 +619,34 @@
     .dev-updated-row .param-help-btn { float: none; }
     /* Buscador global de "Vista activa" en Configurar vista */
     .av-search { margin: 0 0 10px; }
-    .av-search-labelrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+    .av-search-labelrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+    .av-search-label-main { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
     .av-search-label { display: block; font-size: 11px; color: #4b5563; font-weight: bold; }
     .av-search-count { font-size: 11px; color: #6b7280; }
-    .av-search-go, .av-search-sort, .av-search-refresh, .av-search-multi { flex: 0 0 auto; }
+    .av-search-go, .av-search-sort, .av-search-multi { flex: 0 0 auto; }
     .av-search-row { display: flex; align-items: center; gap: 6px; }
-    /* v9.6.0: botón de ayuda y panel de selección múltiple de vistas (reutiliza estilos de exportación masiva). */
-    .av-search-help { float: none; margin: 0; flex: 0 0 auto; align-self: center; }
+    /* v9.7.0: botón de ayuda y panel de selección múltiple de vistas (reutiliza estilos de exportación masiva). */
+    .av-search-help { float: none; margin: 0 0 0 auto; flex: 0 0 auto; align-self: center; }
+    #viewTemplateTool > summary.view-template-summary { display: list-item; list-style-position: inside; }
+    #viewTemplateTool > summary.view-template-summary .av-search-help { float: right; margin: -1px 0 0 6px; }
+    #viewTemplateTool:not([open]) #avMultiHelpBtn { display: none; }
     .av-multi-panel { margin: 8px 0 0; }
     .av-search-inputwrap { position: relative; flex: 1; min-width: 0; }
-    .av-search-input { width: 100%; box-sizing: border-box; height: 30px; padding: 4px 8px; border: 1px solid #cfd6df; border-radius: 6px; font-size: 12px; }
+    .av-search-input { width: 100%; box-sizing: border-box; height: 30px; padding: 4px 36px 4px 8px; border: 1px solid #cfd6df; border-radius: 6px; font-size: 12px; }
     .av-search-input:focus { border-color: #1c7fd6; box-shadow: 0 0 0 1px #1c7fd6 inset; outline: none; }
+    .av-search-go { position: absolute; right: 2px; top: 2px; width: 28px; min-width: 28px; height: 26px; border: 0; border-left: 1px solid #d7dde5; border-radius: 0 5px 5px 0; background: transparent; z-index: 2; }
+    .av-search-go:hover, .av-search-go:focus-visible { background: #eef6ff; outline: none; }
+    .av-search.av-multi-mode .av-search-go { display: none; }
+    .av-search.av-multi-mode .av-search-input { padding-right: 8px; }
+    .av-search.av-multi-mode .av-search-count { display: none; }
+    .av-search-loading { min-height: 14px; margin: 3px 0 0; font-size: 11px; color: #6b7280; }
     .av-search-suggest { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 50; max-height: 220px; overflow-y: auto; background: #fff; border: 1px solid #cfd6df; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.14); }
     .av-search-item { padding: 6px 9px; font-size: 12px; color: #1f2937; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .av-search-item:hover, .av-search-item.is-active { background: #eaf3fd; }
     .av-search-empty { padding: 6px 9px; font-size: 11px; color: #9ca3af; }
-    .av-search-sort, .av-search-refresh { flex: 0 0 auto; }
+    .av-search-sort { flex: 0 0 auto; }
+    .av-multi-primary-row { display: flex; justify-content: stretch; margin-top: 6px; }
+    .av-multi-primary-row .io-primary-btn { width: 100%; }
     /* Refrescos locales absorbidos por el botón global (se conservan en el DOM por compatibilidad de listeners). */
     #excludeRefresh, #excludeModelsRefresh, #includeRefresh, #qsRefreshAll,
     #namesParamRefresh, #boltsParamRefresh, #weldsParamRefresh, #csvParamRefresh { display:none !important; }
@@ -1000,22 +1012,21 @@
     <div class="section">
 
       <details class="tool" id="viewTemplateTool">
-        <summary class="subtitle">Configurar vista</summary>
+        <summary class="subtitle view-template-summary"><span class="tool-title-text">Configurar vista</span><button type="button" id="avMultiHelpBtn" class="param-help-btn av-search-help" title="Cómo funciona la selección múltiple" aria-label="Ayuda de selección múltiple">?</button></summary>
         <div class="tool-body">
 
           <div id="activeViewSearch" class="av-search">
-            <div class="av-search-labelrow"><label class="av-search-label" for="activeViewSearchInput">Vista activa</label><span id="activeViewSearchCount" class="av-search-count"></span></div>
+            <div class="av-search-labelrow"><span class="av-search-label-main"><label class="av-search-label" for="activeViewSearchInput">Vista activa</label><span id="activeViewSearchCount" class="av-search-count"></span></span></div>
             <div class="av-search-row">
               <div class="av-search-inputwrap">
                 <input type="text" id="activeViewSearchInput" class="av-search-input" placeholder="Buscar vista…" autocomplete="off">
+                <button type="button" id="activeViewSearchGo" class="icon-btn av-search-go" title="Ir a la vista seleccionada" aria-label="Ir a la vista seleccionada"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
                 <div id="activeViewSearchSuggest" class="av-search-suggest" style="display:none;"></div>
               </div>
-              <button type="button" id="activeViewSearchGo" class="icon-btn av-search-go" title="Ir a la vista seleccionada" aria-label="Ir a la vista seleccionada"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1c7fd6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
               <button type="button" id="avMultiToggle" class="icon-btn av-search-multi" title="Selección múltiple de vistas" aria-label="Selección múltiple de vistas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/></svg></button>
-              <button type="button" id="avMultiHelpBtn" class="param-help-btn av-search-help" title="Cómo funciona la selección múltiple" aria-label="Ayuda de selección múltiple">?</button>
-              <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Orden: establecido en Trimble" aria-label="Orden: establecido en Trimble"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg></button>
-              <button type="button" id="activeViewSearchRefresh" class="icon-btn av-search-refresh" title="Actualizar vistas" aria-label="Actualizar vistas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+              <button type="button" id="activeViewSearchSort" class="funnel-btn av-search-sort" title="Orden: establecido en Trimble" aria-label="Orden: establecido en Trimble"><svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="none"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg></button>
             </div>
+            <div id="activeViewLoadStatus" class="av-search-loading" aria-live="polite"></div>
             <div id="avMultiHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;">
               <li>La <strong>selección múltiple</strong> permite abrir/procesar varias vistas a la vez.</li>
               <li>Se cargan los IFC necesarios asociados a esas vistas (según los modelos abiertos en el visor).</li>
@@ -1027,8 +1038,8 @@
             </ul></div>
             <div id="avMultiPanel" class="av-multi-panel" style="display:none;">
               <div class="mass-views-head"><button type="button" id="avMultiToggleAll" class="link-btn">Seleccionar todas</button><span id="avMultiCount" class="mass-views-count">0/0 vistas</span></div>
-              <div id="avMultiList" class="mass-views-list">Pulsa el botón de actualizar para leer las vistas…</div>
-              <div class="row" style="margin-top:6px;"><button type="button" id="avMultiOpen">Abrir selección</button></div>
+              <div id="avMultiList" class="mass-views-list">Cargando vistas…</div>
+              <div class="av-multi-primary-row"><button type="button" id="avMultiOpen" class="io-primary-btn" disabled>Abrir selección actual</button></div>
             </div>
           </div>
 
@@ -1236,7 +1247,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.6.0";
+    const SCRIPT_VERSION = "v9.7.0";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const TRIMBLE_OFFICIAL_COLORS = {
@@ -1653,17 +1664,57 @@
     // ===================== CAPA CENTRAL DE VISTAS (v9.1.1) =====================
     // Caché única de vistas para buscador, "Actualizar vista" y export. Defensiva ante getViews()/
     // getCurrentView() lentos, parciales o que lanzan (TypeError interno de la API de Trimble).
-    let viewsCache=[];               // [{id,name,description,raw}]
+    let viewsCache=[];               // [{id,name,description,createdOn,modifiedOn,group,searchText,raw}]
     let viewsCacheBuiltAt=0;
     let viewsCacheLoading=null;      // promesa en curso: evita llamadas concurrentes a getViews()
+    let viewsCacheStable=false;
+    let viewsCountCacheRef=null;
+    let lastViewsLoadDiagnostics=null;
     let lastActiveViewDiagnostics=null;
     let lastViewActivationDiagnostics=null; // v9.5.1: diagnóstico del último intento de ABRIR/cambiar de vista
     let viewFormLoadSeq=0;           // token anti-mezcla al cargar el formulario de "Actualizar vista"
+    const VIEW_COUNT_CACHE_PREFIX="deo.views.lastKnownCount.v1.";
+    function viewKeyHash(str){
+      let h=2166136261;
+      const s=String(str||"");
+      for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+      return (h>>>0).toString(36);
+    }
+    function viewStableId(v){
+      if(!v||typeof v!=="object") return "";
+      const keys=["id","viewId","guid","viewGuid","uuid","uid","identifier"];
+      for(const k of keys){ if(v[k]!=null&&String(v[k]).trim()) return String(v[k]).trim(); }
+      const parts=[
+        readableViewName(v)||"",
+        String(v.description||""),
+        viewGroupText(v),
+        String(readViewDateValue(v,"created")||""),
+        String(readViewDateValue(v,"modified")||""),
+        String(v.createdBy||v.author||v.owner||v.ownerId||"")
+      ].map((x)=>String(x||"").trim()).filter(Boolean);
+      return parts.length?("cmp:"+viewKeyHash(parts.join("|"))):"";
+    }
+    function viewGroupText(v){
+      if(!v||typeof v!=="object") return "";
+      try{ if(typeof detectFolderDeep==="function"){ const deep=detectFolderDeep(v); if(deep) return String(deep); } }catch(e){}
+      try{ if(typeof detectFolder==="function"){ const folder=detectFolder(v); if(folder) return String(folder); } }catch(e){}
+      const keys=["folder","folderName","folderPath","group","groupName","path","parentName","category"];
+      for(const k of keys){ if(v[k]!=null&&String(v[k]).trim()) return String(v[k]).trim(); }
+      return "";
+    }
+    function viewEntrySearchText(entry){
+      if(!entry) return "";
+      const raw=entry.raw||{};
+      const parts=[entry.name,entry.description,entry.group,entry.createdOn,entry.modifiedOn,raw.name,raw.description,raw.folder,raw.folderName,raw.group,raw.groupName,raw.path,raw.tags,raw.labels];
+      return parts.map((x)=>Array.isArray(x)?x.join(" "):String(x||"")).join(" ").toLowerCase();
+    }
     function normalizeViewEntry(v){
       if(!v||typeof v!=="object") return null;
-      const id=String(v.id||v.viewId||"");
+      const id=viewStableId(v);
       if(!id) return null;
-      return { id, name:readableViewName(v)||"Vista sin nombre", description:String(v.description||""), createdOn:readViewDateValue(v,"created"), modifiedOn:readViewDateValue(v,"modified"), raw:v };
+      const entry={ id, name:readableViewName(v)||"Vista sin nombre", description:String(v.description||""), createdOn:readViewDateValue(v,"created"), modifiedOn:readViewDateValue(v,"modified"), group:viewGroupText(v), raw:v };
+      entry.searchText=viewEntrySearchText(entry);
+      return entry;
     }
     const naturalCollator=new Intl.Collator("es",{numeric:true,sensitivity:"base"});
     function naturalTextCompare(a,b){ return naturalCollator.compare(String(a||""),String(b||"")); }
@@ -1703,21 +1754,114 @@
       if(mode==="modified") return "fecha de modificación";
       return "establecido en Trimble";
     }
-    async function loadViewsCache(force=false){
-      if(!force && viewsCacheLoading) return viewsCacheLoading;   // deduplica llamadas concurrentes
+    function dedupeViewEntries(raw){
+      const seen=new Set(), norm=[];
+      (Array.isArray(raw)?raw:[]).forEach((v)=>{ const n=normalizeViewEntry(v); if(!n||seen.has(n.id)) return; seen.add(n.id); norm.push(n); });
+      return norm;
+    }
+    function applyViewsCache(norm){
+      viewsCache=Array.isArray(norm)?norm:[];
+      viewsCacheBuiltAt=Date.now();
+      activeViewSearchViews=viewsCache.map((v)=>({id:v.id,name:v.name,description:v.description,group:v.group,createdOn:v.createdOn,modifiedOn:v.modifiedOn,searchText:v.searchText}));
+      templateViewsCache=viewsCache.map((v)=>Object.assign({},v.raw,{id:v.id,viewId:(v.raw&&v.raw.viewId)||v.id}));
+      avUpdateCount();
+      const inp=document.getElementById("activeViewSearchInput");
+      const box=document.getElementById("activeViewSearchSuggest");
+      if(box&&box.style.display!=="none"&&typeof renderActiveViewSuggest==="function") renderActiveViewSuggest(inp?inp.value:"");
+      if(typeof syncAvMultiViewsFromCache==="function"&&typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()) syncAvMultiViewsFromCache();
+    }
+    function setViewsLoadingStatus(text){
+      const el=document.getElementById("activeViewLoadStatus");
+      if(el) el.textContent=text||"";
+    }
+    async function getViewsCountCacheRef(){
+      if(viewsCountCacheRef) return viewsCountCacheRef;
+      const parts=["path:"+(location&&location.pathname?location.pathname:"")];
+      try{
+        const projectApi=API&&API.project;
+        const getter=projectApi&&(projectApi.getCurrentProject||projectApi.getProject);
+        if(typeof getter==="function"){
+          const p=await getter.call(projectApi);
+          if(p) parts.push("project:"+(p.id||p.projectId||p.guid||p.name||JSON.stringify(p).slice(0,120)));
+        }
+      }catch(e){}
+      try{
+        if(API&&API.viewer&&typeof API.viewer.getModels==="function"){
+          const models=await API.viewer.getModels();
+          if(Array.isArray(models)&&models.length) parts.push("models:"+models.map((m)=>m.id||m.modelId||m.guid||m.name||"").filter(Boolean).sort().join(","));
+        }
+      }catch(e){}
+      try{
+        const userApi=API&&(API.user||API.account);
+        const getter=userApi&&(userApi.getCurrentUser||userApi.getUser||userApi.getMe);
+        if(typeof getter==="function"){
+          const u=await getter.call(userApi);
+          if(u) parts.push("user:"+(u.id||u.userId||u.email||u.name||JSON.stringify(u).slice(0,80)));
+        }
+      }catch(e){}
+      const signature=parts.filter(Boolean).join("|")||"unknown";
+      viewsCountCacheRef={key:VIEW_COUNT_CACHE_PREFIX+viewKeyHash(signature),signature};
+      return viewsCountCacheRef;
+    }
+    async function readViewsCountCache(){
+      try{
+        const ref=await getViewsCountCacheRef();
+        const raw=localStorage.getItem(ref.key);
+        if(!raw) return {key:ref.key,count:0,timestamp:0};
+        const data=JSON.parse(raw);
+        const count=Number(data&&data.count);
+        return {key:ref.key,count:Number.isFinite(count)&&count>=0?count:0,timestamp:Number(data&&data.timestamp)||0};
+      }catch(e){ return {key:"",count:0,timestamp:0}; }
+    }
+    function writeViewsCountCache(key,count){
+      if(!key) return;
+      try{ localStorage.setItem(key,JSON.stringify({count:Number(count)||0,timestamp:Date.now(),version:SCRIPT_VERSION})); }catch(e){}
+    }
+    async function loadViewsCache(force=false, options={}){
+      if(viewsCacheLoading) return viewsCacheLoading;   // deduplica llamadas concurrentes, incluso si una llamada nueva fuerza refresco
+      const stableTtl=45000;
+      if(!force&&viewsCacheStable&&viewsCacheBuiltAt&&(Date.now()-viewsCacheBuiltAt)<stableTtl) return viewsCache;
       const p=(async ()=>{
         if(!(API&&API.view&&typeof API.view.getViews==="function")){ recordError("loadViewsCache",new Error("API.view.getViews no disponible")); return viewsCache; }
-        let raw=null;
-        try{ raw=await API.view.getViews(); }
-        catch(e){ recordError("loadViewsCache.getViews",e); log("Aviso: no se pudieron leer las vistas del proyecto."); return viewsCache; }
-        if(!Array.isArray(raw)){ recordError("loadViewsCache",new Error("getViews no devolvió un array")); log("Aviso: respuesta de vistas no válida."); return viewsCache; }
-        const norm=raw.map(normalizeViewEntry).filter(Boolean);
-        viewsCache=norm; viewsCacheBuiltAt=Date.now();
-        activeViewSearchViews=norm.map((v)=>({id:v.id,name:v.name,createdOn:v.createdOn,modifiedOn:v.modifiedOn}));
-        templateViewsCache=norm.map((v)=>v.raw);
-        avUpdateCount();
-        log("Vistas cargadas: "+norm.length);
-        return norm;
+        const started=Date.now();
+        const cache=await readViewsCountCache();
+        const maxAttempts=Number(options.maxAttempts)||10;
+        const maxDurationMs=Number(options.maxDurationMs)||14000;
+        const delayMs=Number(options.delayMs)||450;
+        const stablePasses=Number(options.stablePasses)||3;
+        let bestCount=-1, stable=0, attempts=0, lastError=null;
+        viewsCacheStable=false;
+        setViewsLoadingStatus(viewsCache.length?("Cargando vistas… "+viewsCache.length+" detectadas"):"Cargando vistas…");
+        for(let i=0;i<maxAttempts;i++){
+          if(typeof cancelRequested!=="undefined"&&cancelRequested&&options.respectCancel) break;
+          attempts=i+1;
+          let raw=null, norm=[];
+          try{ raw=await API.view.getViews(); }
+          catch(e){ lastError=e; recordError("loadViewsCache.getViews",e); break; }
+          if(!Array.isArray(raw)){ lastError=new Error("getViews no devolvió un array"); recordError("loadViewsCache",lastError); break; }
+          norm=dedupeViewEntries(raw);
+          const count=norm.length;
+          if(count>bestCount){
+            bestCount=count; stable=0; applyViewsCache(norm);
+          } else if(count===bestCount){
+            stable++;
+          } else {
+            stable++;
+          }
+          setViewsLoadingStatus("Cargando vistas… "+Math.max(bestCount,0)+" detectadas");
+          const expected=cache.count||0;
+          const requiredStable=(expected&&bestCount<expected)?(stablePasses+2):stablePasses;
+          if(stable>=requiredStable) break;
+          if((Date.now()-started)>=maxDurationMs) break;
+          await sleep(delayMs);
+        }
+        viewsCacheStable=true;
+        if(bestCount>=0) writeViewsCountCache(cache.key,bestCount);
+        setViewsLoadingStatus("");
+        lastViewsLoadDiagnostics={source:"view.getViews",attempts,durationMs:Date.now()-started,viewsFound:viewsCache.length,lastKnownViewCount:cache.count||0,stablePasses:stable,stable:stable>=stablePasses,lastError:lastError&&(lastError.message||String(lastError))};
+        if(lastError) log("Aviso: no se pudieron completar las vistas del proyecto ("+(lastError.message||lastError)+").");
+        else log("Vistas cargadas: "+viewsCache.length+(cache.count&&viewsCache.length<cache.count?" (menor que la última caché fiable, aceptado tras estabilizarse)":""));
+        return viewsCache;
       })();
       viewsCacheLoading=p;
       try{ return await p; } finally{ if(viewsCacheLoading===p) viewsCacheLoading=null; }
@@ -4957,15 +5101,18 @@
     // ===================== Buscador global de "Vista activa" (Configurar vista, v9.0.5) =====================
     let activeViewSearchViews=[], activeViewSearchSelectedId="", activeViewSearchPendingId="", activeViewSearchLastConfirmedId="", activeViewSearchSortMode="trimble", activeViewSuggestPointerInside=false;
     function avSearchOrderedViews(){ return sortViewsForMode(activeViewSearchViews,activeViewSearchSortMode); }
-    function avSetInputToSelected(){ const inp=document.getElementById("activeViewSearchInput"); if(!inp) return; const v=activeViewSearchViews.find((x)=>x.id===activeViewSearchSelectedId); inp.value=v?v.name:""; }
+    function avSearchText(v){ return String((v&&v.searchText)||[v&&v.name,v&&v.description,v&&v.group,v&&v.createdOn,v&&v.modifiedOn].join(" ")).toLowerCase(); }
+    function avMatchesFilter(v,term){ const t=String(term||"").trim().toLowerCase(); return !t||avSearchText(v).includes(t); }
+    function avSetInputToSelected(){ if(typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()) return; const inp=document.getElementById("activeViewSearchInput"); if(!inp) return; const v=activeViewSearchViews.find((x)=>x.id===activeViewSearchSelectedId); inp.value=v?v.name:""; }
     function avHideSuggest(){ const box=document.getElementById("activeViewSearchSuggest"); if(box) box.style.display="none"; }
     function avSearchRoot(){ return document.getElementById("activeViewSearch"); }
     function avShouldKeepSuggestOpen(){ const root=avSearchRoot(); return !!(root&&root.contains(document.activeElement))||activeViewSuggestPointerInside; }
     function avMaybeHideSuggest(){ setTimeout(()=>{ if(avShouldKeepSuggestOpen()) return; avHideSuggest(); avSetInputToSelected(); },120); }
     function renderActiveViewSuggest(filter){
       const box=document.getElementById("activeViewSearchSuggest"); if(!box) return;
+      if(typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()){ avHideSuggest(); return; }
       const term=String(filter||"").trim().toLowerCase();
-      let list=avSearchOrderedViews(); if(term) list=list.filter((v)=>v.name.toLowerCase().includes(term));
+      let list=avSearchOrderedViews(); if(term) list=list.filter((v)=>avMatchesFilter(v,term));
       box.innerHTML="";
       if(!list.length){ const e=document.createElement("div"); e.className="av-search-empty"; e.textContent="Sin vistas que coincidan."; box.appendChild(e); box.style.display="block"; return; }
       list.slice(0,200).forEach((v)=>{
@@ -5049,7 +5196,7 @@
     function avResolveTyped(text){
       const term=String(text||"").trim(); if(!term) return null;
       let t=activeViewSearchViews.find((v)=>v.name.toLowerCase()===term.toLowerCase());
-      if(!t){ const f=activeViewSearchViews.filter((v)=>v.name.toLowerCase().includes(term.toLowerCase())); if(f.length===1) t=f[0]; }
+      if(!t){ const f=activeViewSearchViews.filter((v)=>avMatchesFilter(v,term)); if(f.length===1) t=f[0]; }
       return t||null;
     }
     // "Ir a vista": requiere una vista REALMENTE seleccionada y la activa de forma no bloqueante.
@@ -5076,7 +5223,16 @@
       log("Vista seleccionada: "+v.name);
       await loadViewIntoUpdateForm(v.id,{fromSelect:true});
     }
-    function avToggleSort(){ activeViewSearchSortMode=cycleViewSortMode(activeViewSearchSortMode); avUpdateSortButton(); const inp=document.getElementById("activeViewSearchInput"); renderActiveViewSuggest(inp?inp.value:""); }
+    function avToggleSort(){
+      activeViewSearchSortMode=cycleViewSortMode(activeViewSearchSortMode);
+      avUpdateSortButton();
+      const inp=document.getElementById("activeViewSearchInput");
+      if(typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()) renderAvMultiList();
+      else {
+        const box=document.getElementById("activeViewSearchSuggest");
+        if(box&&box.style.display!=="none") renderActiveViewSuggest(inp?inp.value:"");
+      }
+    }
     function avUpdateSortButton(){ const b=document.getElementById("activeViewSearchSort"); if(!b) return; const on=activeViewSearchSortMode!=="trimble"; const label=viewSortModeLabel(activeViewSearchSortMode); b.classList.toggle("funnel-active",on); b.title="Orden: "+label; b.setAttribute("aria-label","Orden: "+label); }
     // Refresca la lista de vistas conservando la selección si la vista sigue existiendo.
     async function avOnRefresh(){
@@ -5087,28 +5243,57 @@
       else if(prevId){ activeViewSearchSelectedId=""; log("Vista activa: la vista seleccionada ya no existe; selección limpiada."); }
       avSetInputToSelected();
       const inp=document.getElementById("activeViewSearchInput");
-      renderActiveViewSuggest(inp?inp.value:"");
-      if(typeof avMultiPanelOpen==="function" && avMultiPanelOpen()) await populateAvMultiViews(false);
+      if(typeof avMultiPanelOpen==="function" && avMultiPanelOpen()) syncAvMultiViewsFromCache();
+      else renderActiveViewSuggest(inp?inp.value:"");
     }
-    // ===================== v9.6.0: Selección múltiple en "Abrir vista" =====================
+    // ===================== v9.7.0: Selección múltiple en "Abrir vista" =====================
     // Abre/procesa varias vistas: activa cada una, lee su registro de color (export temporal en memoria), acumula
     // y aplica combinado sobre los modelos abiertos reutilizando la tubería de Importar registro (paintImportMap +
     // opciones RFI/duplicados/colores). No descarga archivos. Aislado: no altera el flujo de "Ir a vista".
-    let avMultiViews=[]; const avMultiSelected=new Set(); const avMultiRange=createRangeSelector(); let avMultiScopeInit=false; let avMultiBusy=false;
+    let avMultiViews=[], avMultiVisibleViews=[], avMultiFilterText=""; const avMultiSelected=new Set(); const avMultiRange=createRangeSelector(); let avMultiScopeInit=false; let avMultiBusy=false;
     function avMultiPanelOpen(){ const p=document.getElementById("avMultiPanel"); return !!(p&&p.style.display!=="none"); }
+    function setAvMultiMode(open){
+      const root=document.getElementById("activeViewSearch"); if(root) root.classList.toggle("av-multi-mode",!!open);
+      const inp=document.getElementById("activeViewSearchInput");
+      if(inp){
+        inp.placeholder=open?"Filtrar vistas…":"Buscar vista…";
+        if(open){ inp.value=avMultiFilterText||""; avHideSuggest(); }
+        else { avMultiFilterText=""; avSetInputToSelected(); }
+      }
+      if(!open){ const help=document.getElementById("avMultiHelpBox"); if(help) help.style.display="none"; }
+      avUpdateCount(); updateAvMultiCount();
+    }
     function ensureMultiViewScopeDefaults(){
       if(avMultiScopeInit) return; avMultiScopeInit=true;     // inicializa una sola vez (no destructivo en cada uso)
       const rfi=document.getElementById("importRfiMagenta"); if(rfi && rfi.checked!==true) rfi.checked=true;
       const dup=document.getElementById("importShowDuplicates"); if(dup && dup.checked!==true) dup.checked=true;
     }
+    function syncAvMultiViewsFromCache(){
+      const prev=new Set(avMultiSelected);
+      avMultiViews=viewsCache.map((v)=>({id:String(v.id||""),name:readableViewName(v)||"Vista sin nombre",description:v.description||"",group:v.group||"",createdOn:v.createdOn||readViewDateValue(v.raw||v,"created"),modifiedOn:v.modifiedOn||readViewDateValue(v.raw||v,"modified"),searchText:v.searchText||viewEntrySearchText(v)})).filter((v)=>v.id);
+      const valid=new Set(avMultiViews.map((v)=>v.id));
+      avMultiSelected.clear(); for(const id of prev) if(valid.has(id)) avMultiSelected.add(id);
+      renderAvMultiList();
+    }
+    function updateAvMultiOpenState(){ const btn=document.getElementById("avMultiOpen"); if(btn) btn.disabled=avMultiBusy||avMultiSelected.size<2; }
     function updateAvMultiCount(){
-      const el=document.getElementById("avMultiCount"); if(el) el.textContent=avMultiSelected.size+"/"+avMultiViews.length+" vistas";
-      const b=document.getElementById("avMultiToggleAll"); if(b) b.textContent=(avMultiViews.length&&avMultiSelected.size===avMultiViews.length)?"Deseleccionar todas":"Seleccionar todas";
+      const visible=avMultiVisibleViews.length, total=avMultiViews.length;
+      const selectedVisible=avMultiVisibleViews.filter((v)=>avMultiSelected.has(v.id)).length;
+      const el=document.getElementById("avMultiCount"); if(el) el.textContent=avMultiSelected.size+" seleccionada(s) · "+visible+"/"+total+" visibles";
+      const b=document.getElementById("avMultiToggleAll");
+      if(b){
+        const allVisible=visible>0&&selectedVisible===visible;
+        b.textContent=avMultiFilterText?(allVisible?"Deseleccionar visibles":"Seleccionar visibles"):(allVisible?"Deseleccionar todas":"Seleccionar todas");
+      }
+      updateAvMultiOpenState();
     }
     function renderAvMultiList(){
       const cont=document.getElementById("avMultiList"); if(!cont) return; cont.innerHTML="";
-      if(!avMultiViews.length){ cont.textContent="No hay vistas. Pulsa actualizar."; updateAvMultiCount(); return; }
-      const list=sortViewsForMode(avMultiViews,activeViewSearchSortMode);
+      if(!avMultiViews.length){ avMultiVisibleViews=[]; cont.textContent=viewsCacheLoading?"Cargando vistas…":"No hay vistas disponibles."; updateAvMultiCount(); return; }
+      const term=String(avMultiFilterText||"").trim();
+      const list=sortViewsForMode(avMultiViews.filter((v)=>avMatchesFilter(v,term)),activeViewSearchSortMode);
+      avMultiVisibleViews=list;
+      if(!list.length){ cont.textContent="Sin vistas que coincidan."; updateAvMultiCount(); return; }
       avMultiRange.reset(); const ordered=[];
       list.forEach((v,index)=>{
         const row=document.createElement("label"); row.className="mass-view-row"; row.title=v.name;
@@ -5125,17 +5310,13 @@
     async function populateAvMultiViews(force){
       const cont=document.getElementById("avMultiList"); if(cont) cont.textContent="Leyendo vistas…";
       try{ await loadViewsCache(!!force); }catch(e){ recordError("populateAvMultiViews",e); }
-      const prev=new Set(avMultiSelected);
-      avMultiViews=viewsCache.map((v)=>({id:String(v.id||v.viewId||""),name:readableViewName(v)||"Vista sin nombre",createdOn:v.createdOn||readViewDateValue(v.raw||v,"created"),modifiedOn:v.modifiedOn||readViewDateValue(v.raw||v,"modified")})).filter((v)=>v.id);
-      const valid=new Set(avMultiViews.map((v)=>v.id));
-      avMultiSelected.clear(); for(const id of prev) if(valid.has(id)) avMultiSelected.add(id);
-      renderAvMultiList();
+      syncAvMultiViewsFromCache();
     }
     async function avMultiOpenSelection(){
       if(avMultiBusy) return;
       if(!API||!API.viewer){ log("Abrir vistas: visor no disponible."); setProgress("Visor no disponible."); return; }
       const ids=avMultiViews.filter((v)=>avMultiSelected.has(v.id)).map((v)=>v.id);
-      if(ids.length<1){ log("Abrir vistas: selecciona al menos una vista."); setProgress("Selecciona vistas en la lista."); return; }
+      if(ids.length<2){ log("Abrir vistas: selecciona al menos dos vistas."); setProgress("Selecciona al menos dos vistas."); return; }
       ensureMultiViewScopeDefaults();
       const useMagenta=(document.getElementById("importRfiMagenta")||{}).checked!==false;
       const showDup=!!((document.getElementById("importShowDuplicates")||{}).checked);
@@ -5177,19 +5358,19 @@
         log("Abrir vistas múltiples: "+processed+"/"+ids.length+" vista(s) procesada(s)"+(failed?(", "+failed+" no confirmada(s)"):"")+"; "+painted+" objeto(s) coloreado(s) (rojo DEO"+(useMagenta?" + magenta RFI":"")+") sobre los modelos abiertos.");
         setProgress("Abrir vistas: "+processed+" vista(s) aplicadas · "+painted+" objeto(s).");
       }catch(e){ recordError("avMultiOpenSelection",e); log("ERROR Abrir vistas múltiples: "+(e&&e.message?e.message:e)); setProgress("Error al abrir vistas múltiples."); }
-      finally{ avMultiBusy=false; showImportCancel(false); if(btn) btn.disabled=false; }
+      finally{ avMultiBusy=false; showImportCancel(false); updateAvMultiOpenState(); }
     }
     function initActiveViewSearch(){
       const inp=document.getElementById("activeViewSearchInput");
       const box=document.getElementById("activeViewSearchSuggest");
       avUpdateSortButton();
       if(inp){
-        inp.addEventListener("focus",()=>renderActiveViewSuggest(inp.value));   // muestra la lista completa con el input vacío
-        inp.addEventListener("input",()=>{ activeViewSearchPendingId=""; renderActiveViewSuggest(inp.value); });
+        inp.addEventListener("focus",()=>{ if(avMultiPanelOpen()) return; renderActiveViewSuggest(inp.value); });   // muestra la lista completa con el input vacío
+        inp.addEventListener("input",()=>{ activeViewSearchPendingId=""; if(avMultiPanelOpen()){ avMultiFilterText=inp.value; renderAvMultiList(); } else renderActiveViewSuggest(inp.value); });
         inp.addEventListener("blur",()=>avMaybeHideSuggest());
         inp.addEventListener("keydown",(ev)=>{
-          if(ev.key==="Escape"){ avHideSuggest(); avSetInputToSelected(); inp.blur(); }
-          else if(ev.key==="Enter"){ ev.preventDefault(); const t=avResolveTyped(inp.value); if(t){ avSelectView(t); } else { log("Vista activa: no hay ninguna vista que coincida con el texto."); } }
+          if(ev.key==="Escape"){ avHideSuggest(); if(avMultiPanelOpen()){ avMultiFilterText=""; inp.value=""; renderAvMultiList(); } else avSetInputToSelected(); inp.blur(); }
+          else if(ev.key==="Enter"&&!avMultiPanelOpen()){ ev.preventDefault(); const t=avResolveTyped(inp.value); if(t){ avSelectView(t); } else { log("Vista activa: no hay ninguna vista que coincida con el texto."); } }
         });
       }
       if(box){
@@ -5200,17 +5381,17 @@
       document.addEventListener("mousedown",(ev)=>{
         const root=avSearchRoot();
         if(root&&root.contains(ev.target)) return;
-        activeViewSuggestPointerInside=false; avHideSuggest(); avSetInputToSelected();
+        activeViewSuggestPointerInside=false; avHideSuggest(); if(!avMultiPanelOpen()) avSetInputToSelected();
       });
       const go=document.getElementById("activeViewSearchGo"); if(go) go.addEventListener("click",(ev)=>{ ev.preventDefault(); avGoToView(); });
       const sort=document.getElementById("activeViewSearchSort"); if(sort) sort.addEventListener("click",(ev)=>{ ev.preventDefault(); avToggleSort(); });
-      const refresh=document.getElementById("activeViewSearchRefresh"); if(refresh) refresh.addEventListener("click",async (ev)=>{ ev.preventDefault(); await avOnRefresh(); });
-      // v9.6.0: selección múltiple de vistas.
+      // v9.7.0: selección múltiple de vistas.
       const multiToggle=document.getElementById("avMultiToggle");
-      if(multiToggle) multiToggle.addEventListener("click",async (ev)=>{ ev.preventDefault(); const p=document.getElementById("avMultiPanel"); if(!p) return; const open=(p.style.display==="none"); p.style.display=open?"block":"none"; multiToggle.classList.toggle("funnel-active",open); if(open){ ensureMultiViewScopeDefaults(); if(!avMultiViews.length) await populateAvMultiViews(false); else renderAvMultiList(); } });
+      if(multiToggle) multiToggle.addEventListener("click",async (ev)=>{ ev.preventDefault(); const p=document.getElementById("avMultiPanel"); if(!p) return; const open=(p.style.display==="none"); p.style.display=open?"block":"none"; multiToggle.classList.toggle("funnel-active",open); setAvMultiMode(open); if(open){ ensureMultiViewScopeDefaults(); avMultiFilterText=""; if(inp) inp.value=""; await populateAvMultiViews(false); } });
       const multiHelp=document.getElementById("avMultiHelpBtn"); if(multiHelp) multiHelp.addEventListener("click",(ev)=>{ ev.preventDefault(); ev.stopPropagation(); const b=document.getElementById("avMultiHelpBox"); if(b) b.style.display=(b.style.display==="none")?"block":"none"; });
-      const multiAll=document.getElementById("avMultiToggleAll"); if(multiAll) multiAll.addEventListener("click",(ev)=>{ ev.preventDefault(); if(avMultiViews.length&&avMultiSelected.size===avMultiViews.length){ avMultiSelected.clear(); } else { avMultiSelected.clear(); for(const v of avMultiViews) avMultiSelected.add(v.id); } renderAvMultiList(); });
+      const multiAll=document.getElementById("avMultiToggleAll"); if(multiAll) multiAll.addEventListener("click",(ev)=>{ ev.preventDefault(); const list=avMultiVisibleViews.length?avMultiVisibleViews:[]; const allVisible=list.length&&list.every((v)=>avMultiSelected.has(v.id)); if(allVisible){ for(const v of list) avMultiSelected.delete(v.id); } else { for(const v of list) avMultiSelected.add(v.id); } renderAvMultiList(); });
       const multiOpen=document.getElementById("avMultiOpen"); if(multiOpen) multiOpen.addEventListener("click",(ev)=>{ ev.preventDefault(); avMultiOpenSelection(); });
+      setAvMultiMode(avMultiPanelOpen());
     }
     function wireTemplateScope(scope){
       for(const f of TEMPLATE_FIELDS){
@@ -5232,7 +5413,7 @@
       cvWireLabelAutocomplete("cvNew"); cvWireLabelAutocomplete("cvUpd");
       const createBtn=document.getElementById("cvCreateBtn"); if(createBtn) createBtn.onclick=()=>cvCreateView();
       const updSel=document.getElementById("updateViewSelect"); if(updSel) updSel.addEventListener("change",cvLoadSelectedView);
-      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await loadViewsCache(true); await populateUpdateViews(); await cvPreloadCurrentView(); };
+      const refresh=document.getElementById("updateRefreshViews"); if(refresh) refresh.onclick=async ()=>{ await avOnRefresh(); await cvPreloadCurrentView(); };
       const updBtn=document.getElementById("cvUpdateBtn"); if(updBtn) updBtn.onclick=()=>cvUpdateView();
       const tool=document.getElementById("viewTemplateTool"); if(tool) tool.addEventListener("toggle",async ()=>{ if(tool.open) await cvOnOpenConfigureView(); });
       const updFold=document.getElementById("tplFoldUpdate"); if(updFold) updFold.addEventListener("toggle",async ()=>{ if(updFold.open) await cvOnOpenUpdateFold(); });
