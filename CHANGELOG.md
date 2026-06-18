@@ -3,6 +3,13 @@
 Registro reconstruido a partir del historial real de `index.html` subido a GitHub.
 Cada entrada indica, cuando existe, la versión declarada en `SCRIPT_VERSION`; cuando el archivo no declara versión interna, se identifica por fecha y hash corto del commit.
 
+## v9.6.0 - 2026-06-18
+
+- ETA/progreso: estimador reutilizable con `performance.now()`, suavizado por fases (inicial/estable/final), ventana dinámica y amortiguación de subidas, para que el ETA no salte. Aplicado a exportación masiva e importación de registros.
+- Importación de registros: contador visible de archivos procesados (`x/N archivo(s)`) que avanza solo al cerrar cada archivo, junto al ETA.
+- "Abrir vista": nueva selección múltiple de vistas (botón propio + panel con lista y "Abrir selección"), que activa cada vista, lee su registro de color en memoria y lo aplica combinado sobre los modelos abiertos reutilizando la tubería de Importar registro (opciones RFI/duplicados y colores existentes, activadas por defecto; sin duplicar ventanas). Incluye botón de ayuda `?`. Pendiente de validación en Trimble Viewer.
+- Selección por rango con `Shift` en las listas de "Abrir vista" múltiple y de exportación masiva (estado de rango por lista, reseteado al re-renderizar).
+
 ## v9.5.23 - 2026-06-18
 
 Entrada consolidada que sincroniza el CHANGELOG con el estado real de `index.html` (`SCRIPT_VERSION = v9.5.23`). Las versiones v9.5.5–v9.5.23 se desarrollaron de forma offline sin notas individuales; los cambios se han **reconstruido de forma conservadora** a partir del código actual y de los snapshots de `old_code/`. Pueden faltar matices menores no atribuibles a una versión concreta.
