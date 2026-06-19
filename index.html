@@ -617,6 +617,7 @@
     /* v9.4.3: el botón ? va en la misma línea de "Última modificación", alineado al extremo derecho. */
     .dev-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .dev-updated-row .param-help-btn { float: none; }
+    .dev-perf-summary { font-size: 11px; color: #5b6472; margin-top: 4px; }
     /* Buscador global de "Vista activa" en Configurar vista */
     .av-search { margin: 0 0 10px; }
     .av-search-labelrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
@@ -1237,6 +1238,7 @@
     <div class="section">
       <div class="dev-meta" id="devVersion"></div>
       <div class="dev-meta dev-updated-row"><span id="devUpdated"></span><button type="button" id="devHelpBtn" class="param-help-btn" title="Cómo funciona" aria-label="Cómo funciona">?</button></div>
+      <div class="dev-meta dev-perf-summary" id="perfDiagSummary">Rendimiento: sin operaciones registradas.</div>
       <div id="devHelpBox" class="param-help-box" style="display:none;"><ul style="margin:0;padding-left:16px;"><li>Muestra la versión, la fecha y el registro de consola.</li><li><strong>Bug Report</strong> permite crear reportes con capturas, anotaciones y menciones de la interfaz.</li><li>El botón de descarga (al pasar el ratón sobre el botón Bug Report) se activa cuando existen reportes guardados.</li></ul></div>
       <details class="tool">
         <summary class="subtitle">Registro de consola</summary>
@@ -1250,7 +1252,7 @@
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <script>
     // ===================== CONSTANTES =====================
-    const SCRIPT_VERSION = "v9.8.0";
+    const SCRIPT_VERSION = "v9.8.1";
     function getLastUpdatedLabel(){ const d=new Date(document.lastModified); if(!Number.isNaN(d.getTime())){ try{return d.toLocaleString("es-ES",{timeZone:"Europe/Madrid"});}catch(e){return d.toLocaleString("es-ES");} } return "No disponible"; }
 
     const TRIMBLE_OFFICIAL_COLORS = {
@@ -1321,6 +1323,10 @@
     let hiddenBusy=false;                    // markHiddenObjectsWhite() en curso (evita carrera con "Ver ocultos")
     let pendingViewHiddenState=null;         // intención de "Ver ocultos" guardada durante la detección
     let csvAvailableParametersCache=[];
+    let csvAvailableParametersCacheBuiltAt=0;
+    const PARAM_CACHE_TTL_MS = 180000;
+    const PERF_DIAG_MAX = 80;
+    const performanceDiagnostics=[];
     let lastParamScanDiag=null;
     let draggedColumnIndex=null;
 
@@ -1331,6 +1337,61 @@
     const setProgress=(t)=>{ const el=document.getElementById("progress"); if(el) el.textContent=t; };
     function showCancel(on){ const el=document.getElementById("cancelOp"); if(el) el.style.display=on?"inline-block":"none"; }
     function recordError(ctx,err){ errorHistory.push({ts:new Date().toISOString(),ctx,message:err&&err.message?err.message:String(err),stack:err&&err.stack?String(err.stack).slice(0,2000):""}); if(errorHistory.length>80) errorHistory.shift(); }
+    function perfNow(){ try{ return performance&&typeof performance.now==="function"?performance.now():Date.now(); }catch(e){ return Date.now(); } }
+    function perfSmallValue(v){
+      if(v==null||typeof v==="number"||typeof v==="boolean") return v;
+      if(typeof v==="string") return v.length>140?v.slice(0,140)+"...":v;
+      if(Array.isArray(v)) return {length:v.length,sample:v.slice(0,8).map(perfSmallValue)};
+      if(typeof v==="object"){
+        const out={};
+        for(const k of Object.keys(v).slice(0,20)) out[k]=perfSmallValue(v[k]);
+        return out;
+      }
+      return String(v);
+    }
+    function perfStart(name,reason,extra){
+      return {name:String(name||"op"),reason:String(reason||""),startedAt:new Date().toISOString(),t0:perfNow(),extra:perfSmallValue(extra||{})};
+    }
+    function updatePerfSummary(){
+      try{
+        const el=document.getElementById("perfDiagSummary"); if(!el) return;
+        const last=performanceDiagnostics[performanceDiagnostics.length-1];
+        if(!last){ el.textContent="Rendimiento: sin operaciones registradas."; return; }
+        el.textContent="Rendimiento: "+last.name+" · "+last.status+" · "+last.durationMs+" ms · "+(last.reason||"sin motivo");
+      }catch(e){}
+    }
+    function perfEnd(op,status,sizes,error){
+      if(!op) return;
+      try{
+        const end=perfNow();
+        const entry={name:op.name,reason:op.reason,startedAt:op.startedAt,endedAt:new Date().toISOString(),durationMs:Math.round(end-op.t0),status:status||"ok",sizes:perfSmallValue(sizes||{})};
+        if(op.extra&&Object.keys(op.extra).length) entry.extra=op.extra;
+        if(error) entry.error=String(error&&error.message?error.message:error).slice(0,220);
+        performanceDiagnostics.push(entry);
+        if(performanceDiagnostics.length>PERF_DIAG_MAX) performanceDiagnostics.splice(0,performanceDiagnostics.length-PERF_DIAG_MAX);
+        updatePerfSummary();
+      }catch(e){}
+    }
+    function perfSkipped(name,reason,sizes){ const op=perfStart(name,reason); perfEnd(op,"skipped",sizes); }
+    async function perfMeasure(name,reason,fn,extra){
+      const op=perfStart(name,reason,extra);
+      try{ const result=await fn(); perfEnd(op,"ok",(result&&result.__perfSizes)||{}); return result; }
+      catch(e){ perfEnd(op,"error",{},e); throw e; }
+    }
+    function parameterCacheFresh(ttlMs){
+      const ttl=Number(ttlMs)||PARAM_CACHE_TTL_MS;
+      return !!(csvAvailableParametersCache&&csvAvailableParametersCache.length&&csvAvailableParametersCacheBuiltAt&&(Date.now()-csvAvailableParametersCacheBuiltAt)<ttl);
+    }
+    async function ensureModelParameters(options){
+      options=options||{};
+      const needFull=!!options.fullModel;
+      const lastFull=!!(lastParamScanDiag&&lastParamScanDiag.fullModel);
+      if(!options.force && parameterCacheFresh(options.ttlMs) && (!needFull||lastFull)){
+        perfSkipped("parameters.scan",options.reason||"cache",{parameters:csvAvailableParametersCache.length,cacheAgeMs:Date.now()-csvAvailableParametersCacheBuiltAt,fullModel:lastFull});
+        return csvAvailableParametersCache;
+      }
+      return scanModelParameters({fullModel:needFull,maxObjects:options.maxObjects,reason:options.reason});
+    }
 
     // ===================== DIAGNÓSTICO (Bug Report / Debug) =====================
     // Historial circular de acciones del usuario (ligero; nunca objetos grandes).
@@ -1552,6 +1613,7 @@
 
     // ===================== ESCANEO DE PARÁMETROS =====================
     async function scanModelParameters(options={}){
+      const perf=perfStart("parameters.scan",options.reason||(options.fullModel?"fullModel":"sample"),{fullModel:!!options.fullModel,maxObjects:Number(options.maxObjects)||PARAM_SCAN_CAP});
       const names=new Set();
       const diag={ts:new Date().toISOString(),source:"none",modelsChecked:0,objectsChecked:0,totalVisible:null,truncated:false,fullModel:!!options.fullModel,errors:[]};
       try{
@@ -1588,16 +1650,18 @@
           for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const name of collectParameterNames(p)) names.add(name); }
           diag.objectsChecked+=ids.length;
         }
-      }catch(e){ recordError("scanModelParameters",e); }
+      }catch(e){ recordError("scanModelParameters",e); diag.errors.push(e&&e.message?e.message:String(e)); }
       diag.parametersFound=names.size;
       lastParamScanDiag=diag;
       csvAvailableParametersCache=[...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+      csvAvailableParametersCacheBuiltAt=Date.now();
+      perfEnd(perf,diag.errors.length?"okWithErrors":"ok",{parameters:csvAvailableParametersCache.length,models:diag.modelsChecked,objects:diag.objectsChecked,source:diag.source,fullModel:diag.fullModel,truncated:diag.truncated,errors:diag.errors.length});
       return csvAvailableParametersCache;
     }
     async function refreshCsvAvailableParameters(){
       const hint=document.getElementById("csvParamHint");
       if(hint) hint.textContent="Leyendo parámetros disponibles del modelo...";
-      await scanModelParameters({fullModel:true});
+      await scanModelParameters({fullModel:true,reason:"csvParamRefresh"});
       updateCsvColumnSelect();
       if(hint) hint.textContent="Parámetros disponibles: "+csvAvailableParametersCache.length+". Usa + para añadir la columna seleccionada.";
     }
@@ -1673,7 +1737,7 @@
             if(names.length){ localAvailable=names.sort((a,b)=>a.localeCompare(b)); updateSelect(); log("Parámetros del objeto seleccionado: "+names.length+"."); return; }
           }
         }catch(e){ recordError("paramPicker.refresh",e); }
-        await scanModelParameters({fullModel:true}); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+".");
+        await scanModelParameters({fullModel:true,reason:"paramPickerReload"}); updateSelect(); log("Parámetros disponibles: "+csvAvailableParametersCache.length+".");
       }
       function wire(){ const a=document.getElementById(opts.addId); if(a) a.onclick=add; const r=document.getElementById(opts.refreshId); if(r) r.onclick=()=>refresh(); const rs=opts.resetId?document.getElementById(opts.resetId):null; if(rs) rs.onclick=()=>{ resetDefaults(); log("Parámetros restaurados por defecto."); }; buildList(); updateSelect(); }
       return { getParams, setParams, resetDefaults, buildList, updateSelect, refresh, wire };
@@ -1875,9 +1939,10 @@
         return viewsCacheLoading;
       }   // deduplica llamadas concurrentes; una petición fuerte relanza tras una débil en curso
       const stableTtl=45000;
-      if(!force&&viewsCacheStable&&viewsCacheBuiltAt&&(Date.now()-viewsCacheBuiltAt)<stableTtl) return viewsCache;
+      if(!force&&viewsCacheStable&&viewsCacheBuiltAt&&(Date.now()-viewsCacheBuiltAt)<stableTtl){ perfSkipped("views.load","cache",{views:viewsCache.length,cacheAgeMs:Date.now()-viewsCacheBuiltAt}); return viewsCache; }
       const p=(async ()=>{
-        if(!(API&&API.view&&typeof API.view.getViews==="function")){ recordError("loadViewsCache",new Error("API.view.getViews no disponible")); return viewsCache; }
+        const perf=perfStart("views.load",strong?"strong":"normal",{force:!!force,strong});
+        if(!(API&&API.view&&typeof API.view.getViews==="function")){ const err=new Error("API.view.getViews no disponible"); recordError("loadViewsCache",err); perfEnd(perf,"error",{views:viewsCache.length},err); return viewsCache; }
         const started=Date.now();
         const cache=await readViewsCountCache();
         let maxAttempts=Number(options.maxAttempts)||(strong?16:10);
@@ -1928,6 +1993,7 @@
         lastViewsLoadDiagnostics={source:"view.getViews",attempts,durationMs:Date.now()-started,viewsFound:viewsCache.length,lastKnownViewCount:expected,belowLastKnown:endedBelowExpected,stablePasses:stable,stable:stable>=stablePasses,lastError:lastError&&(lastError.message||String(lastError))};
         if(lastError) log("Aviso: no se pudieron completar las vistas del proyecto ("+(lastError.message||lastError)+").");
         else log("Vistas cargadas: "+viewsCache.length+(endedBelowExpected?(" / "+expected+" esperadas por caché; aceptado solo tras límite de carga"):""));
+        perfEnd(perf,lastError?"okWithErrors":"ok",{views:viewsCache.length,lastKnownViewCount:expected,attempts,durationMs:Date.now()-started,belowLastKnown:endedBelowExpected,stable:viewsCacheStable});
         return viewsCache;
       })();
       viewsCacheLoading=p;
@@ -2333,27 +2399,39 @@
     }
     async function getColoredObjectEntries(opts){
       opts=opts||{};
-      const native=await getNativeColorEntriesFromProperties(!!opts.forceNative||!!opts.forceObjectProperties);
-      if(native.length&&!opts.includeColoredObjects) return native;
-      let presentation=[];
+      const perf=perfStart("colors.load",opts.reason||"detect",{includeColoredObjects:!!opts.includeColoredObjects,forceNative:!!opts.forceNative||!!opts.forceObjectProperties});
+      let native=[], presentation=[], fallbackError=null, out=[];
       try{
-        presentation=await getPresentationColorEntries();
+        native=await getNativeColorEntriesFromProperties(!!opts.forceNative||!!opts.forceObjectProperties);
+        if(native.length&&!opts.includeColoredObjects){
+          out=native;
+          perfEnd(perf,"ok",{entries:out.length,native:native.length,presentation:0,source:"objectProperties"});
+          return out;
+        }
+        try{
+          presentation=await getPresentationColorEntries();
+        }catch(e){
+          fallbackError=e;
+          recordError("coloredObjectsFallback",e);
+          if(lastColorDetectionDiag) lastColorDetectionDiag.coloredObjectsError=e&&e.message?e.message:String(e);
+        }
+        const validPresentation=presentation.filter((e)=>e.colorValid).length;
+        const diag=lastColorDetectionDiag||baseColorDetectionDiag();
+        diag.coloredObjectsColorCount=validPresentation;
+        diag.colorsFound=native.length+validPresentation;
+        diag.source=native.length?"objectProperties":(validPresentation?"coloredObjects":"none");
+        diag.unsupportedNativeColorSuspected=!native.length&&!validPresentation&&diag.objectsChecked>0;
+        lastNativeColorDiag=diag; lastColorDetectionDiag=diag;
+        if(native.length){
+          const seen=new Set(native.map((e)=>e.modelId+":"+e.objectRuntimeId));
+          out=native.concat(presentation.filter((e)=>!seen.has(e.modelId+":"+e.objectRuntimeId)));
+        } else out=presentation;
+        perfEnd(perf,fallbackError?"okWithErrors":"ok",{entries:out.length,native:native.length,presentation:presentation.length,validPresentation,source:diag.source,unsupportedNativeColorSuspected:!!diag.unsupportedNativeColorSuspected},fallbackError);
+        return out;
       }catch(e){
-        recordError("coloredObjectsFallback",e);
-        if(lastColorDetectionDiag) lastColorDetectionDiag.coloredObjectsError=e&&e.message?e.message:String(e);
+        perfEnd(perf,"error",{native:native.length,presentation:presentation.length},e);
+        throw e;
       }
-      const validPresentation=presentation.filter((e)=>e.colorValid).length;
-      const diag=lastColorDetectionDiag||baseColorDetectionDiag();
-      diag.coloredObjectsColorCount=validPresentation;
-      diag.colorsFound=native.length+validPresentation;
-      diag.source=native.length?"objectProperties":(validPresentation?"coloredObjects":"none");
-      diag.unsupportedNativeColorSuspected=!native.length&&!validPresentation&&diag.objectsChecked>0;
-      lastNativeColorDiag=diag; lastColorDetectionDiag=diag;
-      if(native.length){
-        const seen=new Set(native.map((e)=>e.modelId+":"+e.objectRuntimeId));
-        return native.concat(presentation.filter((e)=>!seen.has(e.modelId+":"+e.objectRuntimeId)));
-      }
-      return presentation;
     }
     async function getColoredObjectEntriesWithRetry(){
       return await getColoredObjectEntries();
@@ -2770,11 +2848,12 @@
 
     // ===================== EXPORTAR =====================
     async function exportActiveView(){
+      const perf=perfStart("export.active","exportActiveView");
       clearLog(); setProgress("Exportando vista activa..."); lastConvertError=""; log(SCRIPT_VERSION);
-      const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
+      const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); perfEnd(perf,"skipped",{reason:"no-columns"}); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
       const entries=await getColoredObjectEntriesWithRetry();
-      if(entries.length===0){ log("No hay objetos coloreados."); setProgress("No hay objetos coloreados."); return; }
+      if(entries.length===0){ log("No hay objetos coloreados."); setProgress("No hay objetos coloreados."); perfEnd(perf,"skipped",{reason:"no-colored-objects"}); return; }
       log("Objetos coloreados: "+entries.length);
       const viewName=viewFullName(await getCurrentViewSpecWithRetry()); log("Vista activa: "+(viewName||"(sin nombre)"));
       const revisionBase=computeRevisionBase(viewName);
@@ -2784,15 +2863,17 @@
       let prefix=extractRevisionCode(viewName)||"EXPORT"; if(customOn&&customText) prefix=sanitizeFilename(customText); else if(revisionBase&&!revisionBase.startsWith("ERROR")) prefix=sanitizeFilename(revisionBase);
       downloadText(prefix+"_trimble_colores_guid_ifc.csv",csv);
       log("CSV generado. Filas: "+rows.length); setProgress("Exportación completada: "+rows.length+" filas.");
+      perfEnd(perf,"ok",{entries:entries.length,rows:rows.length,columns:cols.length});
     }
     // v8.10.7 (#14/#15): recorre SOLO las vistas seleccionadas, genera un CSV por vista y descarga UN único ZIP.
     // Botón Cancelar inline junto a Exportar; ETA por media móvil; el visor solo pide ruta una vez (un ZIP).
     async function exportMassive(){
+      const perf=perfStart("export.massive","exportMassive");
       clearLog(); lastConvertError=""; massExportCancel=false; log(SCRIPT_VERSION+" - Exportación masiva (ZIP, un CSV por vista)");
-      const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); return; }
+      const cols=selectedColumns(); if(cols.length===0){ log("Selecciona al menos una columna."); setProgress("Sin columnas."); perfEnd(perf,"skipped",{reason:"no-columns"}); return; }
       const wantGuid=cols.some((c)=>c.key==="guidIfc");
       const chosen=massViews.filter((v)=>massViewsSelected.has(v.id));
-      if(!chosen.length){ log("Exportación masiva: no hay vistas seleccionadas. No se inicia la exportación."); setProgress("Selecciona al menos una vista para exportar."); return; }
+      if(!chosen.length){ log("Exportación masiva: no hay vistas seleccionadas. No se inicia la exportación."); setProgress("Selecciona al menos una vista para exportar."); perfEnd(perf,"skipped",{reason:"no-views-selected",totalViews:massViews.length}); return; }
       const strict=massStrictEnabled();
       lastMassExport={ selectedCount:chosen.length, totalViews:massViews.length, mode:(strict?"estricto":"permisivo"), lastMethod:"activateViewById", lastStatus:"EN CURSO", lastFailedView:"", zipFilesCount:0, ts:new Date().toISOString() };
       showExportCancel(true);
@@ -2877,6 +2958,7 @@
         log("Exportación masiva ("+status+"): sin CSV generados"+(failViews?(" ("+failViews+" fallo(s) de vista)"):"")+"; no se descarga ZIP vacío.");
         setProgress("Exportación masiva "+status.toLowerCase()+": sin datos.");
         lastMassExport.zipFilesCount=0;
+        perfEnd(perf,status==="COMPLETADA"?"skipped":status.toLowerCase(),{chosen:chosen.length,okViews,emptyViews,failViews,totalRows,zipFiles:0});
         return;
       }
       const report=reportHeader.slice();
@@ -2891,6 +2973,7 @@
       lastMassExport.zipFilesCount=zipFiles.length;
       log("Exportación masiva ("+status+"): "+okViews+" CSV en un ZIP ("+totalRows+" filas). Vacías: "+emptyViews+", fallos: "+failViews+".");
       setProgress("Exportación masiva "+status.toLowerCase()+": "+okViews+" vista(s) en ZIP.");
+      perfEnd(perf,status==="COMPLETADA"?"ok":status.toLowerCase(),{chosen:chosen.length,okViews,emptyViews,failViews,totalRows,zipFiles:zipFiles.length});
     }
 
     // ===================== IMPORTAR (uno o varios CSV) =====================
@@ -3063,6 +3146,7 @@
       return out;
     }
     async function importCsvFiles(files,options){
+      const perf=perfStart("import.csv","importCsvFiles",{files:(files||[]).length});
       options=options||{};
       const importRfiMagenta=(document.getElementById("importRfiMagenta")||{}).checked!==false;
       const importShowDuplicates=!!((document.getElementById("importShowDuplicates")||{}).checked);
@@ -3130,7 +3214,7 @@
         readEta.complete();
       }
 
-      if(trueRows===0 && revisionRows===0){ log("No hay filas con revisado_deo = TRUE ni codigo_revision. No se importa ningun color."); setProgress("Sin colores DEO para importar."); return; }
+      if(trueRows===0 && revisionRows===0){ log("No hay filas con revisado_deo = TRUE ni codigo_revision. No se importa ningun color."); setProgress("Sin colores DEO para importar."); perfEnd(perf,"skipped",{files:files.length,rowsRead,trueRows,revisionRows,reason:"no-color-rows"}); return; }
       showImportCancel(true); setProgress("Importando revisados DEO: resolviendo modelos...");
       let modelIds=[]; try{ const models=await API.viewer.getModels(); modelIds=(models||[]).map((m)=>m.id).filter(Boolean); }catch(e){ recordError("import.getModels",e); }
       try{ const colored=await API.viewer.getColoredObjects(); for(const g of colored||[]) if(g.modelId) modelIds.push(g.modelId); }catch(e){}
@@ -3139,7 +3223,7 @@
       for(const modelId of duplicateRedMap.keys()) modelIds.push(modelId);
       for(const modelId of duplicateMagentaMap.keys()) modelIds.push(modelId);
       modelIds=[...new Set(modelIds)];
-      if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showImportCancel(false); return; }
+      if(modelIds.length===0){ log("No hay modelos cargados."); setProgress("Sin modelos."); showImportCancel(false); perfEnd(perf,"skipped",{files:files.length,rowsRead,trueRows,revisionRows,reason:"no-models"}); return; }
 
       const resolvedGuids=new Set(); let resolvedRuntimeObjects=0;
       const guidEntries=[...guidItems.entries()];
@@ -3224,6 +3308,7 @@
       if(unresolvedDuplicateMagenta.length) log("GUID duplicados magenta no encontrados (muestra de "+Math.min(10,unresolvedDuplicateMagenta.length)+"): "+unresolvedDuplicateMagenta.slice(0,10).join(", "));
       log("Objetos pintados: rojo oficial "+paintedRed+", magenta oficial "+paintedMagenta+", duplicado rojo "+paintedDuplicateRed+", duplicado magenta "+paintedDuplicateMagenta+".");
       setProgress("Importación "+(cancelRequested?"cancelada":"completada")+": "+paintedRed+" rojo, "+paintedMagenta+" magenta, "+paintedDuplicateRed+" dup rojo, "+paintedDuplicateMagenta+" dup magenta.");
+      perfEnd(perf,cancelRequested?"cancelled":"ok",{files:files.length,rowsRead,trueRows,revisionRows,directRows,guidRows,revisionDirectRows,revisionGuidRows,duplicateRedRows,duplicateMagentaRows,paintedRed,paintedMagenta,paintedDuplicateRed,paintedDuplicateMagenta,modelIds:modelIds.length});
     }
 
     // ===================== SELECCIÓN CERCANOS (radio absoluto sobre la semilla real) =====================
@@ -6020,17 +6105,22 @@
       syncSelectPlaceholder(sel);
     }
     async function populateNameValues(){
+      const perf=perfStart("names.load","populateNameValues");
       setProgress("Leyendo valores Name...");
       const values=new Set();
+      let sampled=0;
+      let loadError=null;
       try{
         const sel=await safeGetSelection(); let sample=sel;
         if(sample.length===0){ const mm=await getModelObjectsMap(); sample=[]; for(const [modelId,ids] of mm.entries()) for(const id of ids.slice(0,2000)) sample.push({modelId,runtimeId:id}); }
+        sampled=sample.length;
         const byModel=new Map(); for(const s of sample){ if(!byModel.has(s.modelId)) byModel.set(s.modelId,[]); byModel.get(s.modelId).push(s.runtimeId); }
         for(const [modelId,ids] of byModel.entries()){ for(let i=0;i<ids.length;i+=PROPS_BATCH){ const chunk=ids.slice(i,i+PROPS_BATCH); const pm=await getPropertiesCached(modelId,chunk); for(const p of pm.values()) for(const v of getNameValues(p)) values.add(v); } }
-      }catch(e){ recordError("populateNameValues",e); }
+      }catch(e){ loadError=e; recordError("populateNameValues",e); }
       nameValuesCache=[...values];
       for(const sel of nameSelectElements()) fillNameSelect(sel,nameValuesCache);
       setProgress("Valores Name cargados: "+values.size+".");
+      perfEnd(perf,loadError?"okWithErrors":"ok",{sampled,values:nameValuesCache.length},loadError);
       return nameValuesCache;
     }
     async function populateIncludeValues(){ return populateNameValues(); }
@@ -6057,6 +6147,7 @@
     let lastColorFallbackDiag=null;
     async function populateColorCheckboxes(containerId,targetSet,emptyText){
       const cont=document.getElementById(containerId); if(!cont) return;
+      const perf=perfStart("colors.swatches",containerId);
       cont.innerHTML="";
       let colored=[], coloredError=null;
       try{ colored=await getColoredObjectEntriesWithRetry(); }catch(e){ coloredError=e.message; recordError("populateColors."+containerId,e); }
@@ -6081,6 +6172,7 @@
           cont.textContent=emptyText||"No hay colores aplicados en el modelo.";
         }
         lastColorFallbackDiag=fb;
+        perfEnd(perf,coloredError?"okWithErrors":"ok",{containerId,entries:colored.length,uniqueColors:0,illegible,visibleTotal:fb.visibleObjectsTotal});
         return;
       }
       lastColorFallbackDiag=null;
@@ -6094,6 +6186,7 @@
         row.appendChild(cb); row.appendChild(sw); cont.appendChild(row);
       }
       if(illegible>0){ const row=document.createElement("label"); row.title=COLOR_ILLEGIBLE_TEXT+" ("+illegible+")"; row.setAttribute("aria-label",row.title); const cb=document.createElement("input"); cb.type="checkbox"; cb.disabled=true; const sw=document.createElement("span"); sw.className="swatch swatch-illegible"; row.appendChild(cb); row.appendChild(sw); cont.appendChild(row); }
+      perfEnd(perf,coloredError?"okWithErrors":"ok",{containerId,entries:colored.length,uniqueColors:colors.length,illegible});
     }
     async function populateExcludeColors(){ await populateColorCheckboxes("excludeColors",excludedColors,"No hay colores aplicados en el modelo."); }
     async function populateIncludeColors(){ await populateColorCheckboxes("includeColors",includeColors,"No hay colores aplicados en el modelo."); }
@@ -6124,8 +6217,9 @@
     let modelIdToDisplayName=new Map();
     // v8.11.1: Task 4 — nunca tocar API.viewer si API no está inicializada (degrada en lugar de romper).
     async function getLoadedModelsList(){
+      const perf=perfStart("models.load","getLoadedModelsList");
       const diag={getModelsTotal:null,openByObjectsTotal:null,source:"",notes:[]};
-      if(!API||!API.viewer){ diag.notes.push("API no inicializada (se reintenta tras conexión)"); lastModelsListDiag=diag; return []; }
+      if(!API||!API.viewer){ diag.notes.push("API no inicializada (se reintenta tras conexión)"); lastModelsListDiag=diag; perfEnd(perf,"skipped",{models:0,reason:"api-not-ready"}); return []; }
       let nameById=new Map(); let getModelsOrder=[];
       try{
         if(typeof API.viewer.getModels==="function"){
@@ -6173,7 +6267,9 @@
       diag.registry=modelRegistry.map((g)=>({name:g.displayName,normalizedName:g.normalizedName,primaryModelId:g.primaryModelId,aliases:g.aliases}));
       lastModelsListDiag=diag;
       // Compat: un item por identidad lógica, enriquecido con normalizedName y aliases.
-      return modelRegistry.map((g)=>({id:g.primaryModelId,name:g.displayName,normalizedName:g.normalizedName,aliases:g.aliases}));
+      const out=modelRegistry.map((g)=>({id:g.primaryModelId,name:g.displayName,normalizedName:g.normalizedName,aliases:g.aliases}));
+      perfEnd(perf,diag.notes.length?"okWithWarnings":"ok",{models:out.length,getModelsTotal:diag.getModelsTotal,openByObjectsTotal:diag.openByObjectsTotal,usedFallback:!!diag.usedFallback});
+      return out;
     }
     // v8.11.1: re-deriva ids excluidos a partir de los nombres excluidos + modelos cargados. Descarta ids
     // huérfanos (persistidos antiguos sin correspondencia actual) y mantiene la intención durable por nombre.
@@ -6329,15 +6425,29 @@
       try{ await API.viewer.setSelection(mapSetToSelector(matchMap),"set"); }catch(e){ recordError("selectByParamValue.set",e); }
       log("Acciones rápidas: seleccionados "+matched+" objeto(s) con "+param+" = "+value+"."); setProgress("Seleccionados "+matched+" objeto(s).");
     }
-    async function refreshQuickAll(){
-      await scanModelParameters({fullModel:true});
-      populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
-      populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
-      const p1=(document.getElementById("qsParam1")||{}).value||"";
-      const p2=(document.getElementById("qsParam2")||{}).value||"";
-      await buildQuickParamIndex("qsParam1","qsValue1");
-      if(p2 && quickIndexCacheKey(p2)!==quickIndexCacheKey(p1)) await buildQuickParamIndex("qsParam2","qsValue2");
-      else populateQuickValueFromCache("qsParam2","qsValue2");
+    async function refreshQuickAll(options){
+      options=options||{};
+      const perf=perfStart("quickSelector.refresh",options.reason||"quickAll",{force:!!options.force,fullModel:!!options.fullModel,reindex:options.reindex!==false});
+      try{
+        await ensureModelParameters({fullModel:!!options.fullModel,force:!!options.force,reason:options.reason||"quickSelector"});
+        populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
+        populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+        if(options.reindex===false){
+          populateQuickValueFromCache("qsParam1","qsValue1");
+          populateQuickValueFromCache("qsParam2","qsValue2");
+          perfEnd(perf,"ok",{parameters:csvAvailableParametersCache.length,reindexed:false});
+          return;
+        }
+        const p1=(document.getElementById("qsParam1")||{}).value||"";
+        const p2=(document.getElementById("qsParam2")||{}).value||"";
+        await buildQuickParamIndex("qsParam1","qsValue1");
+        if(p2 && quickIndexCacheKey(p2)!==quickIndexCacheKey(p1)) await buildQuickParamIndex("qsParam2","qsValue2");
+        else populateQuickValueFromCache("qsParam2","qsValue2");
+        perfEnd(perf,"ok",{parameters:csvAvailableParametersCache.length,indexes:quickParamIndexCache.size,reindexed:true});
+      }catch(e){
+        perfEnd(perf,"error",{parameters:csvAvailableParametersCache.length,indexes:quickParamIndexCache.size},e);
+        throw e;
+      }
     }
     // ===================== CUANTIFICAR SELECCIÓN (v8.10.0) =====================
     const QUANT_PARAM_ALIASES={
@@ -6544,13 +6654,13 @@
       const p2=document.getElementById("qsParam2"); if(p2) p2.addEventListener("change",()=>populateQuickValueFromCache("qsParam2","qsValue2"));
       const s1=document.getElementById("qsSelect1"); if(s1) s1.onclick=()=>selectByParamValue("qsParam1","qsValue1");
       const s2=document.getElementById("qsSelect2"); if(s2) s2.onclick=()=>selectByParamValue("qsParam2","qsValue2");
-      const rAll=document.getElementById("qsRefreshAll"); if(rAll) rAll.onclick=()=>refreshQuickAll();
+      const rAll=document.getElementById("qsRefreshAll"); if(rAll) rAll.onclick=()=>refreshQuickAll({force:true,fullModel:true,reason:"quickRefreshButton"});
       populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
       setQuickValueOptions("qsValue1",[]); setQuickValueOptions("qsValue2",[]);
       // v8.10.1: el quick-select (Assembly type / Bolt standard) vive ahora en "Selector de items".
       // El escaneo de parámetros se dispara al abrir esa herramienta.
       const group=document.getElementById("includeTool"); let firstOpen=true;
-      if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await scanModelParameters({fullModel:true}); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
+      if(group) group.addEventListener("toggle",async ()=>{ if(group.open && firstOpen){ firstOpen=false; await ensureModelParameters({fullModel:false,reason:"includeToolOpen"}); populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1); populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2); } });
     }
 
     // ===================== TOOLTIPS =====================
@@ -6578,16 +6688,40 @@
         toggle.dispatchEvent(new Event("change",{bubbles:true}));
       });
     }
-    // v8.10.8: refresco central de datos del visor (botón global ↻). Invalida las cachés que dependen del
-    // visor y vuelve a leer modelos/colores/parámetros/Name; conserva las preferencias del usuario
-    // (exclusiones, selección, perfiles). Sin estados visibles persistentes: el icono gira mientras trabaja y
-    // el botón se deshabilita para ignorar clics duplicados (no dispara refrescos simultáneos).
-    let viewerRefreshBusy=false, viewerRefreshPromise=null, workspaceRefreshTimer=null;
-    // v9.4.3: durante la carga inicial de datos del modelo el botón global parpadea (halo azul) y gira (flechas).
-    function setGlobalRefreshLoading(on){ const btn=document.getElementById("globalViewerRefresh"); if(!btn) return; btn.classList.toggle("is-stale",!!on); btn.classList.toggle("is-refreshing",!!on); }
+    // v8.10.8 / v9.8.1: refresco central desacoplado.
+    // Inicial/manual pueden mostrar el botón global cargando; eventos del visor solo disparan background silencioso.
+    let viewerRefreshBusy=false, viewerRefreshPromise=null, workspaceRefreshTimer=null, backgroundRefreshBusy=false, backgroundRefreshPromise=null, globalRefreshVisualToken=0;
+    // v9.4.3: durante la carga inicial/manual de datos el botón global parpadea (halo azul) y gira (flechas).
+    function setGlobalRefreshLoading(on,token){ if(token!=null&&token!==globalRefreshVisualToken) return; const btn=document.getElementById("globalViewerRefresh"); if(!btn) return; btn.classList.toggle("is-stale",!!on); btn.classList.toggle("is-refreshing",!!on); }
+    function beginGlobalRefreshVisual(){ const token=++globalRefreshVisualToken; const btn=document.getElementById("globalViewerRefresh"); setGlobalRefreshLoading(true,token); if(btn) btn.disabled=true; return token; }
+    function endGlobalRefreshVisual(token){ setGlobalRefreshLoading(false,token); const btn=document.getElementById("globalViewerRefresh"); if(btn&&token===globalRefreshVisualToken) btn.disabled=false; }
     function detailOpen(id){ const el=document.getElementById(id); return !!(el&&el.open); }
-    async function refreshOpenViewTools(forceViews=true){
-      await loadViewsCache(!!forceViews,{strong:true,maxAttempts:32,maxDurationMs:52000,delayMs:700,stablePasses:6,minAttempts:12,minDurationMs:10000});
+    function checked(id){ const el=document.getElementById(id); return !!(el&&el.checked); }
+    function visibleByDisplay(id){ const el=document.getElementById(id); return !!(el&&el.style.display!=="none"); }
+    function currentRefreshTargets(){
+      const colorMode=checked("colorModeToggle");
+      const exportMass=detailOpen("exportTool")&&checked("extendedExport");
+      const massPanelVisible=visibleByDisplay("massViewsPanel");
+      const viewTools=detailOpen("viewTemplateTool")||exportMass||massPanelVisible;
+      const params=detailOpen("paramGroup")||detailOpen("namesTool")||detailOpen("boltsTool")||detailOpen("weldsTool")||checked("namesToggle")||checked("boltsToggle")||checked("weldsToggle");
+      const exclude=detailOpen("excludeTool")||checked("excludeToggle");
+      const include=detailOpen("includeTool")||checked("includeToggle");
+      const csvTools=detailOpen("exportTool")||detailOpen("importTool")||detailOpen("viewTemplateTool");
+      const quick=detailOpen("includeTool");
+      return {viewTools,params,exclude,include,colorMode,csvTools,quick,any:viewTools||params||exclude||include||csvTools||detailOpen("hiddenTool")||detailOpen("nearTool")};
+    }
+    function invalidateViewerCaches(scope){
+      scope=scope||{};
+      if(scope.properties){ propsCache.clear(); nameValuesCache=null; csvAvailableParametersCache=[]; csvAvailableParametersCacheBuiltAt=0; quickParamIndexCache.clear(); }
+      if(scope.colors){ nativeColorCache=null; lastNativeColorDiag=null; lastColorDetectionDiag=null; lastColorFallbackDiag=null; }
+      if(scope.views) viewsCacheStable=false;
+    }
+    async function refreshOpenViewTools(forceViews=true,options={}){
+      const strong=options.strong!==undefined?!!options.strong:!!forceViews;
+      const loadOptions=strong
+        ? {strong:true,maxAttempts:32,maxDurationMs:52000,delayMs:700,stablePasses:6,minAttempts:12,minDurationMs:10000}
+        : {strong:false,maxAttempts:18,maxDurationMs:30000,delayMs:700,stablePasses:4,minAttempts:6,minDurationMs:3500};
+      await loadViewsCache(!!forceViews,Object.assign(loadOptions,options.loadOptions||{}));
       if(detailOpen("viewTemplateTool")){
         try{ await populateUpdateViews(); }catch(e){ recordError("refreshOpenViewTools.populateUpdateViews",e); }
         try{ if(typeof avMultiPanelOpen==="function"&&avMultiPanelOpen()) syncAvMultiViewsFromCache(); }catch(e){ recordError("refreshOpenViewTools.avMulti",e); }
@@ -6601,61 +6735,124 @@
       }
       return viewsCache.length;
     }
-    async function refreshViewerDataGlobal(options={}){
+    async function refreshViewerDataInitial(reason){
       if(viewerRefreshBusy) return viewerRefreshPromise;
-      const btn=document.getElementById("globalViewerRefresh");
       if(!API){ setProgress("No conectado a Trimble Connect."); return; }
-      viewerRefreshBusy=true; setGlobalRefreshLoading(true);
-      if(btn) btn.disabled=true;
+      viewerRefreshBusy=true;
+      const token=beginGlobalRefreshVisual();
+      const perf=perfStart("refresh.initial",reason||"initial");
       const p=(async ()=>{
       try{
-        setProgress("Actualizando datos del visor...");
-        // Invalidación de cachés dependientes del visor (mantiene exclusiones/selección del usuario).
-        nameValuesCache=null;
-        csvAvailableParametersCache=[];
-        quickParamIndexCache.clear();
-        propsCache.clear();
-        lastColorFallbackDiag=null;
-        nativeColorCache=null;
-        lastNativeColorDiag=null;
-        lastColorDetectionDiag=null;
-        viewsCacheStable=false;
-        // Vistas guardadas: carga fuerte y sincronización de herramientas desplegadas.
-        const loadedViews=await refreshOpenViewTools(true);
-        // Modelos IFC cargados y colores de presentación.
+        setProgress("Cargando datos iniciales del visor...");
+        invalidateViewerCaches({views:true,colors:true});
+        const loadedViews=await refreshOpenViewTools(true,{strong:true});
         await populateExcludeModels();
-        await populateExcludeColors();
-        const colorMode=document.getElementById("colorModeToggle");
-        const colorWrap=document.getElementById("includeColorsWrap");
-        if((colorMode&&colorMode.checked)||(colorWrap&&colorWrap.style.display!=="none")) await populateIncludeColors();
-        // Valores Name y parámetros del modelo.
-        await populateNameValues();
-        await scanModelParameters({fullModel:true});
+        const modelsCount=(typeof modelRegistry!=="undefined"&&Array.isArray(modelRegistry))?modelRegistry.length:0;
+        if((detailOpen("excludeTool")||checked("excludeToggle"))) await populateExcludeColors();
+        if(detailOpen("includeTool")||checked("includeToggle")){ await populateNameValues(); if(checked("colorModeToggle")) await populateIncludeColors(); }
+        await ensureModelParameters({fullModel:false,reason:"initial"});
         updateCsvColumnSelect();
         namesPicker.updateSelect(); boltsPicker.updateSelect(); weldsPicker.updateSelect();
         populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
         populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
-        // Reindexar valores rápidos solo si el Selector de items está en uso (evita escaneos pesados de más).
-        const includeTool=document.getElementById("includeTool");
-        const includeOn=document.getElementById("includeToggle")&&document.getElementById("includeToggle").checked;
-        if((includeTool&&includeTool.open)||includeOn) await refreshQuickAll();
-        // Presentación/vista activa y selección dependientes del visor.
+        if(detailOpen("includeTool")||checked("includeToggle")) await refreshQuickAll({fullModel:false,reindex:false,reason:"initial.quick"});
         scheduleSelectionInspector();
         scheduleProcessSelection();
-        log("Datos del visor actualizados (botón global): "+loadedViews+" vista(s), "+csvAvailableParametersCache.length+" parámetro(s).");
-        setProgress("Datos del visor actualizados.");
+        log("Datos iniciales del visor cargados: "+loadedViews+" vista(s), "+modelsCount+" modelo(s), "+csvAvailableParametersCache.length+" parámetro(s).");
+        setProgress("Datos iniciales del visor cargados.");
+        perfEnd(perf,"ok",{views:loadedViews,models:modelsCount,parameters:csvAvailableParametersCache.length});
       }catch(e){
-        recordError("refreshViewerDataGlobal",e);
-        log("ERROR actualizando datos del visor: "+(e&&e.message?e.message:e));
+        recordError("refreshViewerDataInitial",e);
+        log("ERROR cargando datos iniciales del visor: "+(e&&e.message?e.message:e));
+        perfEnd(perf,"error",{},e);
       }finally{
-        setGlobalRefreshLoading(false);
-        if(btn) btn.disabled=false;
+        endGlobalRefreshVisual(token);
         viewerRefreshBusy=false;
         viewerRefreshPromise=null;
       }
       })();
       viewerRefreshPromise=p;
       return p;
+    }
+    async function refreshViewerDataManual(reason){
+      if(viewerRefreshBusy) return viewerRefreshPromise;
+      if(!API){ setProgress("No conectado a Trimble Connect."); return; }
+      viewerRefreshBusy=true;
+      const token=beginGlobalRefreshVisual();
+      const perf=perfStart("refresh.manual",reason||"manual");
+      const p=(async ()=>{
+        const targets=currentRefreshTargets();
+        let loadedViews=viewsCache.length, models=[];
+        try{
+          setProgress("Actualizando datos visibles del visor...");
+          if(backgroundRefreshBusy&&backgroundRefreshPromise){ try{ await backgroundRefreshPromise; }catch(e){} }
+          invalidateViewerCaches({views:true});
+          if(targets.viewTools||targets.csvTools||!targets.any) loadedViews=await refreshOpenViewTools(true,{strong:true});
+          models=await getLoadedModelsList();
+          if(targets.exclude){ await populateExcludeModels(); await populateExcludeColors(); await populateNameValues(); }
+          if(targets.include){ await populateNameValues(); if(targets.colorMode) await populateIncludeColors(); await refreshQuickAll({fullModel:false,reindex:false,reason:"manual.include"}); }
+          if(targets.params||targets.csvTools){ await ensureModelParameters({fullModel:false,reason:"manual.params"}); updateCsvColumnSelect(); namesPicker.updateSelect(); boltsPicker.updateSelect(); weldsPicker.updateSelect(); }
+          if(targets.quick&&!targets.include) await refreshQuickAll({fullModel:false,reindex:false,reason:"manual.quick"});
+          populateQuickParamSelect("qsParam1",QUICK_PARAM_DEFAULTS.qsParam1);
+          populateQuickParamSelect("qsParam2",QUICK_PARAM_DEFAULTS.qsParam2);
+          scheduleSelectionInspector(); scheduleProcessSelection();
+          log("Datos del visor actualizados manualmente: "+loadedViews+" vista(s), "+models.length+" modelo(s), "+csvAvailableParametersCache.length+" parámetro(s).");
+          setProgress("Datos del visor actualizados.");
+          perfEnd(perf,"ok",{views:loadedViews,models:models.length,parameters:csvAvailableParametersCache.length,targets});
+        }catch(e){
+          recordError("refreshViewerDataManual",e);
+          log("ERROR actualizando datos del visor: "+(e&&e.message?e.message:e));
+          perfEnd(perf,"error",{views:loadedViews,models:models.length,targets},e);
+        }finally{
+          endGlobalRefreshVisual(token);
+          viewerRefreshBusy=false;
+          viewerRefreshPromise=null;
+        }
+      })();
+      viewerRefreshPromise=p;
+      return p;
+    }
+    async function runBackgroundDataRefresh(reason){
+      if(viewerRefreshBusy){ perfSkipped("refresh.background",reason||"workspace",{reason:"visual-refresh-running"}); return viewerRefreshPromise; }
+      if(backgroundRefreshBusy) return backgroundRefreshPromise;
+      if(!API) return;
+      backgroundRefreshBusy=true;
+      const perf=perfStart("refresh.background",reason||"workspace");
+      const p=(async ()=>{
+        const targets=currentRefreshTargets();
+        let loadedViews=viewsCache.length, modelsCount=null;
+        try{
+          const reasonText=String(reason||"");
+          const modelOrFile=/model|file/i.test(reasonText);
+          const viewChanged=/view/i.test(reasonText);
+          if(modelOrFile) invalidateViewerCaches({properties:true,colors:true});
+          if(viewChanged) invalidateViewerCaches({views:true});
+          if(viewChanged||targets.viewTools||targets.csvTools) loadedViews=await refreshOpenViewTools(false,{strong:false});
+          if(modelOrFile||targets.exclude){ const models=await getLoadedModelsList(); modelsCount=models.length; if(targets.exclude) await populateExcludeModels(); }
+          if((targets.params||targets.csvTools||targets.quick) && !parameterCacheFresh()){ await ensureModelParameters({fullModel:false,reason:"background.params"}); updateCsvColumnSelect(); }
+          if(targets.include && !nameValuesCache) await populateNameValues();
+          scheduleSelectionInspector(); scheduleProcessSelection();
+          perfEnd(perf,"ok",{views:loadedViews,models:modelsCount,parameters:csvAvailableParametersCache.length,targets});
+        }catch(e){
+          recordError("runBackgroundDataRefresh",e);
+          perfEnd(perf,"error",{views:loadedViews,models:modelsCount,targets},e);
+        }finally{
+          backgroundRefreshBusy=false;
+          backgroundRefreshPromise=null;
+        }
+      })();
+      backgroundRefreshPromise=p;
+      return p;
+    }
+    function scheduleBackgroundDataRefresh(reason){
+      if(!API) return;
+      clearTimeout(workspaceRefreshTimer);
+      workspaceRefreshTimer=setTimeout(()=>{ workspaceRefreshTimer=null; runBackgroundDataRefresh(reason||"workspace"); },1200);
+    }
+    async function refreshViewerDataGlobal(options={}){
+      if(options&&options.initial) return refreshViewerDataInitial(options.reason||"initial");
+      if(options&&options.background) return runBackgroundDataRefresh(options.reason||"background");
+      return refreshViewerDataManual((options&&options.reason)||"manual");
     }
     // Trabajo 10: cierra las sugerencias flotantes al hacer scroll (evita cajas desalineadas).
     function closeAllFloatingSuggests(){
@@ -6667,7 +6864,7 @@
       const bugDownloadBtn=document.getElementById("bugDownloadBtn"); if(bugDownloadBtn) bugDownloadBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); downloadBugReports(); });
       const reportedBugsBtn=document.getElementById("reportedBugsBtn"); if(reportedBugsBtn) reportedBugsBtn.addEventListener("click",(ev)=>{ ev.stopPropagation(); ev.preventDefault(); try{ openReportedBugs(); }catch(err){ recordError("reportedBugs.open",err); log("ERROR Reported bugs: "+(err&&err.message?err.message:err)); } });
       updateDebugButtonState();
-      const globalRefresh=document.getElementById("globalViewerRefresh"); if(globalRefresh) globalRefresh.onclick=()=>refreshViewerDataGlobal();
+      const globalRefresh=document.getElementById("globalViewerRefresh"); if(globalRefresh) globalRefresh.onclick=()=>refreshViewerDataManual("globalButton");
       wireSummarySwitch("nearSummarySwitch","nearToggle","nearTool");
       wireSummarySwitch("excludeSummarySwitch","excludeToggle","excludeTool");
       wireSummarySwitch("hiddenSummarySwitch","hiddenSelectionToggle","hiddenTool");
@@ -6687,7 +6884,7 @@
       loadMassStrict();
       const massStrict=document.getElementById("massStrictMode"); if(massStrict) massStrict.addEventListener("change",()=>{ saveMassStrict(); log("Exportación masiva: modo "+(massStrict.checked?"ESTRICTO (aborta al primer fallo)":"permisivo (omite vistas con fallo)")+"."); });
       if(ext) ext.addEventListener("change",async ()=>{ const on=ext.checked; if(massPanel) massPanel.style.display=on?"block":"none"; if(massCount) massCount.style.display=on?"inline-block":"none"; if(on&&!massLoaded){ massLoaded=true; await populateMassViews(false); } });
-      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=async ()=>{ massLoaded=true; await refreshViewerDataGlobal({reason:"massViewsRefresh"}); };
+      const massRefresh=document.getElementById("massViewsRefresh"); if(massRefresh) massRefresh.onclick=async ()=>{ massLoaded=true; await refreshViewerDataManual("massViewsRefresh"); };
       const massSort=document.getElementById("massViewsSort"); if(massSort) massSort.onclick=()=>{ massViewsSortMode=cycleViewSortMode(massViewsSortMode); renderMassViewsList(); };
       const massToggleAll=document.getElementById("massViewsToggleAll"); if(massToggleAll) massToggleAll.onclick=()=>{ if(massViews.length&&massViewsSelected.size===massViews.length){ massViewsSelected.clear(); } else { massViewsSelected.clear(); for(const v of massViews) massViewsSelected.add(v.id); } renderMassViewsList(); };
       const exportCancelBtn=document.getElementById("exportCancel"); if(exportCancelBtn) exportCancelBtn.onclick=()=>{ massExportCancel=true; setProgress("Cancelando exportación..."); };
@@ -6794,9 +6991,7 @@
     }
     function scheduleWorkspaceViewerRefresh(reason){
       if(!API) return;
-      setGlobalRefreshLoading(true);
-      clearTimeout(workspaceRefreshTimer);
-      workspaceRefreshTimer=setTimeout(()=>{ workspaceRefreshTimer=null; refreshViewerDataGlobal({reason:reason||"workspace"}); },900);
+      scheduleBackgroundDataRefresh(reason||"workspace");
     }
     function handleWorkspaceEvent(event){
       const name=workspaceEventName(event);
@@ -6814,15 +7009,9 @@
       API=await ws.connect(window.parent,(event)=>{ try{ handleWorkspaceEvent(event); }catch(e){ recordError("wsCallback",e); } });
       log("Conectado a Trimble Connect.\nCódigo de versión: "+SCRIPT_VERSION);
       setProgress("Conectado a Trimble Connect.");
-      // v9.4.3: carga inicial de datos del modelo → halo azul parpadeante + giro de flechas en el botón global.
-      setGlobalRefreshLoading(true);
-      try{
-        await initTemplateTool();
-        await refreshViewerDataGlobal();
-        updateCsvColumnSelect();
-      } finally {
-        setGlobalRefreshLoading(false);
-      }
+      await initTemplateTool();
+      await refreshViewerDataInitial("connect");
+      updateCsvColumnSelect();
 
       document.getElementById("export").onclick=async ()=>{ if(opRunning) return; opRunning=true; const btn=document.getElementById("export"); btn.disabled=true; const massive=document.getElementById("extendedExport").checked; recordUserAction("exportStart",{massive}); try{ if(massive) await exportMassive(); else await exportActiveView(); recordUserAction("exportEnd",{massive,ok:true}); }catch(err){ recordError("export",err); log("ERROR: "+err.message); recordUserAction("exportEnd",{massive,ok:false}); }finally{ opRunning=false; btn.disabled=false; showCancel(false); } };
       // Botón principal = Bug Report: abre el modal. preventDefault evita que el click sobre el <summary> colapse
@@ -6904,6 +7093,7 @@
       snap.now=new Date().toISOString();
       grab("log",()=>logLines.slice(-200));
       grab("errorHistory",()=>errorHistory.slice(-80));
+      grab("performanceDiagnostics",()=>performanceDiagnostics.slice(-PERF_DIAG_MAX));
       const tg=(id)=>{ const el=document.getElementById(id); return el?!!el.checked:null; };
       grab("toggles",()=>({ near:tg("nearToggle"), exclude:tg("excludeToggle"), include:tg("includeToggle"), colorMode:tg("colorModeToggle"), hiddenSelection:tg("hiddenSelectionToggle"), viewHidden:tg("viewHiddenToggle"), names:tg("namesToggle"), bolts:tg("boltsToggle"), welds:tg("weldsToggle"), extendedExport:tg("extendedExport") }));
       let selection=[];
@@ -7047,6 +7237,7 @@
 
       // Diagnóstico de descargas
       snap.lastDownloadDiagnostics=lastDownloadDiagnostics;
+      snap.performanceDiagnostics=performanceDiagnostics.slice(-PERF_DIAG_MAX);
 
       // Diagnóstico de almacenamiento
       grab("storage",()=>{
@@ -7113,6 +7304,7 @@
       if(s.selection) L.push("Selección actual: "+s.selection.count+" objeto(s).");
       if(s.lastNonEmptySelection) L.push("Última selección no vacía: "+s.lastNonEmptySelection.total+" objeto(s), "+Object.keys(s.lastNonEmptySelection.byModel||{}).length+" modelo(s).");
       L.push("Acciones de usuario registradas: "+n(s.userActionHistory)+".");
+      if(s.performanceDiagnostics) L.push("Rendimiento: "+s.performanceDiagnostics.length+" operación(es) registradas; última="+((s.performanceDiagnostics[s.performanceDiagnostics.length-1]||{}).name||"n/a")+".");
       if(t.viewTemplate) L.push("Configurar vista: autor crear='"+(t.viewTemplate.authorNew||"")+"', actualizar='"+(t.viewTemplate.authorUpd||"")+"' (fuente autor: "+((t.viewTemplate.authorSource&&t.viewTemplate.authorSource.source)||"?")+"); fecha crear="+((t.viewTemplate.dateNew&&t.viewTemplate.dateNew.visual)||"")+".");
       if(t.massExport) L.push("Exportación masiva: "+(t.massExport.extendedExport?"ON":"OFF")+", "+n(t.massExport.selected)+"/"+(t.massExport.viewsCount||0)+" vistas seleccionadas.");
       if(t.quantitySurveyor) L.push("Quantity Surveyor: "+(t.quantitySurveyor.hasResult?"con resultado":"sin resultado")+(t.quantitySurveyor.panelVisible?" (panel visible)":"")+".");
@@ -7936,8 +8128,9 @@
     }
 
     async function downloadBugReports(){
+      const perf=perfStart("bugReport.download","downloadBugReports");
       const reports=loadBugReports();
-      if(!reports.length){ updateDebugButtonState(); return; }
+      if(!reports.length){ updateDebugButtonState(); perfEnd(perf,"skipped",{reports:0}); return; }
       const stamp=new Date().toISOString().replace(/[:.]/g,"-");
       try{
         const enc=new TextEncoder();
@@ -7961,6 +8154,8 @@
         });
         files.push({name:"bug_reports.txt",data:enc.encode("﻿"+buildBugReportsText(reports))});
         files.push({name:"bug_reports.json",data:enc.encode(safeJsonDeep(jsonReports,2))});
+        const perfForZip=performanceDiagnostics.concat([{name:"bugReport.download",reason:"downloadBugReports",startedAt:perf.startedAt,endedAt:new Date().toISOString(),durationMs:Math.round(perfNow()-perf.t0),status:"in_progress",sizes:{reports:reports.length,files:files.length}}]).slice(-PERF_DIAG_MAX);
+        files.push({name:"performance_diagnostics.json",data:enc.encode(safeJsonDeep(perfForZip,2))});
         // v9.5.0: lista completa de Reported bugs (seguimiento) + resumen, junto al TXT/imágenes existentes.
         let rbSnapshot=[], rbSummary={total:0,active:0,unresolved:0,resolved:0,withComments:0};
         try{ rbSnapshot=getReportedBugsSnapshot(); rbSummary=getReportedBugsSummarySafe(); }catch(e){ recordError("bugReport.reportedBugs",e); }
@@ -7977,12 +8172,14 @@
         // No se borran los reportes: re-descarga ilimitada. Se marca el estado "descargado" de forma PERSISTENTE.
         markAllReportsDownloaded(); updateDebugButtonState();
         log("Bug reports (ZIP) descargados ("+reports.length+"). Conservados para re-descarga; estado 'descargado' persistido.");
+        perfEnd(perf,"ok",{reports:reports.length,files:files.length,perfEntries:performanceDiagnostics.length});
       }catch(e){
         recordError("bugReport.zip",e);
         // Fallback: TXT plano si el ZIP falla. Tampoco se borran los reportes.
         downloadText("DEO_bug_reports_"+SCRIPT_VERSION+"_"+stamp+".txt",buildBugReportsText(reports),"text/plain");
         markAllReportsDownloaded(); updateDebugButtonState();
         log("Bug reports (TXT fallback) descargados ("+reports.length+"). Conservados para re-descarga.");
+        perfEnd(perf,"okWithErrors",{reports:reports.length},e);
       }
     }
 
@@ -8251,6 +8448,7 @@
       add("VERSION",{SCRIPT_VERSION,documentLastModified:document.lastModified,now:new Date().toString(),url:location.href,userAgent:navigator.userAgent});
       try{ add("REPORTED BUGS (resumen)",reportedBugsSummary()); }catch(e){}
       add("LOG",logLines);
+      add("PERFORMANCE_DIAGNOSTICS",performanceDiagnostics.slice(-PERF_DIAG_MAX));
       try{ add("SNAPSHOT COMÚN (Fase 0: acciones, toolState, apiCapabilities, almacenamiento, identidad)",safeJsonDeep(await collectDebugSnapshot(),2)); }catch(e){ add("SNAPSHOT COMÚN ERROR",e.message); }
       try{ add("Object.keys(API)",Object.keys(API||{})); }catch(e){}
       try{ add("Object.keys(API.viewer)",Object.keys((API&&API.viewer)||{})); }catch(e){}
